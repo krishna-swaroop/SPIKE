@@ -4,7 +4,7 @@
 
 ### **1. Build the C++ Solver**
 ```bash
-cd C:\Users\example\Documents\agws\KiCAD_plugins\SPIKE
+cd <SPIKE-checkout>
 cmake -B build -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake
 cmake --build build --config Release
 ```
@@ -99,7 +99,7 @@ dir "%USERPROFILE%\Documents\KiCad\9.0\3rdparty\plugins\SPIKE"
 
 ### **Source Code**
 ```
-C:\Users\example\Documents\agws\KiCAD_plugins\SPIKE\
+<SPIKE-checkout>\
 ├── src\peec\peec_solver.cpp      # PEEC implementation
 ├── src\peec\peec_solver.hpp      # PEEC interface
 ├── tests\test_peec.cpp           # Unit tests
@@ -108,7 +108,7 @@ C:\Users\example\Documents\agws\KiCAD_plugins\SPIKE\
 
 ### **Build Output**
 ```
-C:\Users\example\Documents\agws\KiCAD_plugins\SPIKE\build\Release\
+<SPIKE-checkout>\build\Release\
 ├── spike_peec.lib                # PEEC library
 ├── spike_thermal.lib             # Thermal library
 ├── test_peec.exe                 # Test executable
@@ -117,7 +117,7 @@ C:\Users\example\Documents\agws\KiCAD_plugins\SPIKE\build\Release\
 
 ### **Plugin Installation**
 ```
-C:\Users\example\Documents\KiCad\9.0\3rdparty\plugins\SPIKE\
+<LOCAL_USER_HOME>\Documents\KiCad\9.0\3rdparty\plugins\SPIKE\
 ├── __init__.py                   # Plugin code
 ├── metadata.json                 # Plugin metadata
 └── __pycache__\                  # Python cache (auto-generated)

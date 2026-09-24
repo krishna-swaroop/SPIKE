@@ -1,7 +1,7 @@
 {
-  "tool": "C:\\Users\\example\\Documents\\agws\\KiCAD_plugins\\SPIKE\\tools\\hdl\\oss-cad-suite\\oss-cad-suite\\bin\\iverilog.exe",
+  "tool": "<SPIKE-checkout>\\tools\\hdl\\oss-cad-suite\\oss-cad-suite\\bin\\iverilog.exe",
   "argv": [
-    "C:\\Users\\example\\Documents\\agws\\KiCAD_plugins\\SPIKE\\tools\\hdl\\oss-cad-suite\\oss-cad-suite\\bin\\iverilog.exe",
+    "<SPIKE-checkout>\\tools\\hdl\\oss-cad-suite\\oss-cad-suite\\bin\\iverilog.exe",
     "-g2012",
     "-Wall",
     "-s",

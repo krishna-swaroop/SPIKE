@@ -9,7 +9,7 @@ Run commands from the SPIKE repository root.
 ## 1. Import And Inspect
 
 ```powershell
-python -m python.spike_core.cli --output modular-design.json --quiet import "C:\Users\example\Documents\Github\TEST\removed-board\removed-board.kicad_pcb"
+python -m python.spike_core.cli --output modular-design.json --quiet import "<LOCAL_USER_HOME>\Documents\Github\TEST\removed-board\removed-board.kicad_pcb"
 python -m python.spike_core.cli inspect modular-design.json
 python -m python.spike_core.cli inspect modular-design.json --section stackup
 python -m python.spike_core.cli inspect modular-design.json --section nets
