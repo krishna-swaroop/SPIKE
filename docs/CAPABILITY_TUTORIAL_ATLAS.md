@@ -60,7 +60,7 @@ The project also contains non-solver extensions (for example inventory,
 conversion and MCAD). “Two extensions” here means the two bundled **solver**
 extensions, not the complete extension catalog. A missing example, screenshot,
 runtime dependency or validated physical claim must stay visibly pending; see
-[solver status](SOLVER_STATUS.md) and [release gates](PUBLIC_RELEASE_READINESS.md).
+[solver status](SOLVER_STATUS.md).
 
 ## Explicitly pending, so not presented as completed tutorials
 

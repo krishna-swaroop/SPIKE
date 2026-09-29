@@ -4,9 +4,6 @@ Use this page as the entry point for checked-in documentation. Capability and
 validation documents describe what exists; planning documents must not be used
 as evidence that a workflow is implemented.
 
-Current integration checkpoint: [stability fixes, wave assessment and release
-work plan (2026-09-05)](STABILIZATION_RELEASE_PLAN_20260905.md).
-
 ## Users and operators
 
 | Need | Start here | Then read |

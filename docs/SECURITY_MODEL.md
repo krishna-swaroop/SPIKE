@@ -32,70 +32,12 @@ Node.js and npm are build-time tools only. A released desktop installer contains
 
 ## Supply chain
 
-- Commit `app/package-lock.json`.
-- Use `npm ci` in reproducible builds.
-- Run `npm audit --audit-level=high` and review every exception.
-- Pin Rust dependencies through `Cargo.lock` for release builds.
-- Generate SBOMs for frontend, Rust, Python, and native solver dependencies.
-- Production-candidate Windows SBOM and provenance evidence use the strict
-  `spike/windows-release-sbom/v1` and `spike/windows-release-provenance/v1`
-  schemas. `check_windows_release_inputs.py`,
-  `build_windows_release_provenance.py`, and
-  `verify_windows_release_provenance.py` are offline, fail-closed controls;
-  `windows_cms.ps1` signs/verifies the SHA-256 detached CMS dependency-lock
-  sidecar using an approved release certificate.
-- A future production-candidate build creates that CMS sidecar before
-  packaging, stages only exact public evidence beside installers through
-  `stage_windows_release_evidence.py`, and uses
-  `tauri.production.conf.json` to embed the CMS sidecar, review inputs, pinned
-  Python locks, signing policy, and draft EULA. Staging is path/digest-bound,
-  preserves installer bytes, and never stages signing keys. Post-signing
-  SBOM/provenance build and verification bind the staged inputs and an explicit
-  packaged-worker root; these are integrity controls, not approval or
-  qualification claims.
-- Do not bypass incomplete release inputs: the 36-wheel Windows CPython 3.12
-  runtime is exact and hash-pinned in
-  `requirements-runtime-windows-x64.txt`, with an offline `--require-hashes`
-  dry run passing. `config/windows-component-inventory.json` is a present,
-  current `spike/windows-component-inventory/v1` record of 474 Windows x64
-  lock-derived components (303 `bundled`, 171 `build-only`; 276 Rust, 143 npm,
-  55 Python). Its exactly matching
-  `licenses/windows-component-approvals.json` has 474 `pending_review`
-  decisions, so it is not an approved component inventory. The notice bundle
-  remains incomplete. A schema-backed non-decisional reviewer packet now
-  deterministically queues all 474 identities (303 bundled / 171 build-only),
-  with 39 non-SPDX-shaped declarations and 2 unresolved `LicenseRef` values;
-  every entry still requires notice text and legal review. The packet grants
-  no approval or redistribution right. The required CMS sidecar is absent; legal
-  redistribution approval and notice coverage remain pending. Consequently no
-  signed candidate or clean-VM evidence exists; Wave 1 remains incomplete,
-  Wave 2 is unopened, and no physics promotion is implied.
-- Review licenses before adding dependencies.
-- Review solver licenses separately for source use, redistribution, linking,
-  hosted execution, and commercial use; "open source" alone is insufficient.
-- Build release artifacts in a clean CI environment.
-- Sign installers and publish checksums.
-- A Windows signed candidate must enumerate exactly one MSI and one NSIS file
-  after signing, with final SHA-256 values, expected signer thumbprint, and
-  RFC 3161 timestamp-authority identity. Authenticode `Valid` alone is not an
-  acceptance or release-qualification claim.
-- Keep the Windows Authenticode private key in an approved certificate
-  store/HSM or isolated signing service. Do not place PFX files, passwords,
-  token PINs, or equivalent private-key material in source control, manifests,
-  CI artifacts, environment dumps, or logs.
-- Human clean-machine evidence for a signed candidate binds the installer file
-  and SHA-256, installer-manifest SHA-256, signer thumbprint, and timestamp
-  authority. This prevents evidence transfer to a later rebuild or another
-  installer type with the same version.
-- Clean-machine harness v2 also binds the returned staged inputs, executing
-  runner, pre-install residue, and copied environment attestation. A provider
-  label or unsigned attestation is never treated as proof of isolation; all ten
-  interaction and pixel checks remain human-reviewed.
-- Windows notice candidate collection joins by full PURL plus component
-  identity, uses deterministic root-relative locators, bounds candidate text to
-  4 MiB, rejects traversal/symlinks/stale locks, and isolates npm and wheel
-  subcomponents. Candidate discovery never grants redistribution approval or
-  notice completeness.
+- Keep dependency lockfiles and use reproducible builds.
+- Review dependency updates and their licenses before packaging them.
+- Generate dependency notices and a software bill of materials for released packages.
+- Build release artifacts in a clean environment, sign installers when available,
+  and publish checksums alongside downloads.
+- Keep signing keys and credentials out of source control, logs, and build artifacts.
 
 ## Updates and data
 

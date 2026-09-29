@@ -200,7 +200,7 @@ inventory/reduction live in `si_network_workflow.py`, `si_passives.py` and
 | `schemas` | JSON wire-contract envelopes |
 | `docs/ENGINEERING_GOVERNANCE.md` | Review and release policy |
 | `LICENSE` and `LICENSING.md` | Repository license boundary and contributor provenance policy |
-| `THIRD_PARTY_NOTICES.md` | Release-blocking external software and asset provenance register |
+| `THIRD_PARTY_NOTICES.md` | Third-party software and example-source attribution |
 
 ## Documentation ownership
 

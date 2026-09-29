@@ -8,7 +8,7 @@
     "tests/python",
     "benchmarks"
   ],
-  "files_scanned": 827,
+  "files_scanned": 935,
   "scope": "Recorded links and DOIs only; not proof of reading, adoption, accuracy or license permission. Includes non-paper links.",
   "excluded": [
     "private repositories",
@@ -19,11 +19,46 @@
   ],
   "references": [
     {
+      "url": "http://127.0.0.1:11434",
+      "occurrences": [
+        {
+          "file": "docs/LOCAL_LLM_MCP.md",
+          "line": 41
+        },
+        {
+          "file": "python/spike_core/local_llm.py",
+          "line": 19
+        }
+      ]
+    },
+    {
+      "url": "http://127.0.0.1:1234",
+      "occurrences": [
+        {
+          "file": "docs/LOCAL_LLM_MCP.md",
+          "line": 41
+        },
+        {
+          "file": "python/spike_core/local_llm.py",
+          "line": 19
+        }
+      ]
+    },
+    {
       "url": "http://127.0.0.1:5187/fixtures/engineering-report-tabs-preview.html",
       "occurrences": [
         {
           "file": "docs/ENGINEERING_REPORTS.md",
           "line": 35
+        }
+      ]
+    },
+    {
+      "url": "http://127.0.0.1:{cls.http.server_address",
+      "occurrences": [
+        {
+          "file": "tests/python/test_local_llm.py",
+          "line": 62
         }
       ]
     },
@@ -42,6 +77,15 @@
         {
           "file": "docs/SERDES_ACTUATOR_DELIVERY.md",
           "line": 44
+        }
+      ]
+    },
+    {
+      "url": "https://ansys.synopsys.com/en-in/simulation-topics/what-is-power-integrity",
+      "occurrences": [
+        {
+          "file": "docs/PI_REFERENCE_COVERAGE_20260924.md",
+          "line": 50
         }
       ]
     },
@@ -122,7 +166,7 @@
       "occurrences": [
         {
           "file": "docs/SI_WORKFLOW.md",
-          "line": 188
+          "line": 255
         }
       ]
     },
@@ -136,11 +180,20 @@
       ]
     },
     {
+      "url": "https://arxiv.org/abs/2207.13697",
+      "occurrences": [
+        {
+          "file": "docs/validation/PEEC_REFINEMENT_REPAIR.md",
+          "line": 174
+        }
+      ]
+    },
+    {
       "url": "https://arxiv.org/abs/2310.12087",
       "occurrences": [
         {
           "file": "docs/PEEC_VOLUME_CORRECTION_20260924.md",
-          "line": 146
+          "line": 212
         }
       ]
     },
@@ -149,7 +202,7 @@
       "occurrences": [
         {
           "file": "docs/ANALYSIS_AND_MESH_ROADMAP.md",
-          "line": 82
+          "line": 93
         }
       ]
     },
@@ -158,7 +211,7 @@
       "occurrences": [
         {
           "file": "docs/ANALYSIS_AND_MESH_ROADMAP.md",
-          "line": 80
+          "line": 91
         },
         {
           "file": "python/spike_core/mom_surface_basis.py",
@@ -194,11 +247,29 @@
       ]
     },
     {
+      "url": "https://data.nist.gov/od/id/mds2-3404",
+      "occurrences": [
+        {
+          "file": "docs/CORRELATION_EVIDENCE.md",
+          "line": 31
+        }
+      ]
+    },
+    {
+      "url": "https://dev-docs.kicad.org/en/file-formats/sexpr-intro/index.html",
+      "occurrences": [
+        {
+          "file": "docs/validation/PEEC_REFINEMENT_REPAIR.md",
+          "line": 157
+        }
+      ]
+    },
+    {
       "url": "https://dev-docs.kicad.org/en/file-formats/sexpr-intro/index.html#_custom_pad_options",
       "occurrences": [
         {
           "file": "docs/CAD_NEUTRAL_NATIVE_MULTIPHYSICS_FOUNDATION.md",
-          "line": 716
+          "line": 713
         }
       ]
     },
@@ -221,11 +292,63 @@
       ]
     },
     {
+      "url": "https://dlmf.nist.gov/1.14",
+      "occurrences": [
+        {
+          "file": "docs/validation/PEEC_REFINEMENT_REPAIR.md",
+          "line": 148
+        },
+        {
+          "file": "src/peec/sparse_magnetic_energy.hpp",
+          "line": 71
+        }
+      ]
+    },
+    {
+      "url": "https://dlmf.nist.gov/10.22",
+      "occurrences": [
+        {
+          "file": "docs/validation/PEEC_REFINEMENT_REPAIR.md",
+          "line": 147
+        },
+        {
+          "file": "src/peec/sparse_magnetic_energy.hpp",
+          "line": 71
+        }
+      ]
+    },
+    {
+      "url": "https://dlmf.nist.gov/18.12.E11",
+      "occurrences": [
+        {
+          "file": "docs/validation/PEEC_FOUNDATION_INCREMENT_20260928.md",
+          "line": 91
+        },
+        {
+          "file": "src/peec/annular_inductance.cpp",
+          "line": 180
+        }
+      ]
+    },
+    {
+      "url": "https://dlmf.nist.gov/18.14.E1",
+      "occurrences": [
+        {
+          "file": "docs/validation/PEEC_FOUNDATION_INCREMENT_20260928.md",
+          "line": 92
+        },
+        {
+          "file": "src/peec/annular_inductance.cpp",
+          "line": 181
+        }
+      ]
+    },
+    {
       "url": "https://doc.cgal.org/latest/Triangulation_2/classCGAL_1_1Constrained__Delaunay__triangulation__2.html",
       "occurrences": [
         {
           "file": "docs/CAD_NEUTRAL_NATIVE_MULTIPHYSICS_FOUNDATION.md",
-          "line": 724
+          "line": 721
         }
       ]
     },
@@ -336,7 +459,16 @@
       "occurrences": [
         {
           "file": "docs/CAD_NEUTRAL_NATIVE_MULTIPHYSICS_FOUNDATION.md",
-          "line": 718
+          "line": 715
+        }
+      ]
+    },
+    {
+      "url": "https://docs.ollama.com/capabilities/tool-calling",
+      "occurrences": [
+        {
+          "file": "docs/LOCAL_LLM_MCP.md",
+          "line": 32
         }
       ]
     },
@@ -344,20 +476,16 @@
       "url": "https://docs.openems.de/",
       "occurrences": [
         {
-          "file": "python/spike_core/external_engines.py",
-          "line": 293
+          "file": "tests/python/test_external_engines.py",
+          "line": 135
         },
         {
           "file": "tests/python/test_external_engines.py",
-          "line": 123
+          "line": 295
         },
         {
           "file": "tests/python/test_external_engines.py",
-          "line": 283
-        },
-        {
-          "file": "tests/python/test_external_engines.py",
-          "line": 365
+          "line": 408
         },
         {
           "file": "tests/python/test_openems_geometry_admission.py",
@@ -365,7 +493,7 @@
         },
         {
           "file": "tests/python/test_openems_geometry_admission.py",
-          "line": 134
+          "line": 136
         },
         {
           "file": "tests/python/test_pcb_entity_ports.py",
@@ -374,11 +502,38 @@
       ]
     },
     {
-      "url": "https://docs.openems.de/python/CSXCAD/CSXCAD.html",
+      "url": "https://docs.openems.de/en/latest/concepts/mesh.html",
       "occurrences": [
         {
-          "file": "python/spike_core/openems_assembly_geometry.py",
-          "line": 123
+          "file": "docs/validation/OPENEMS_ACTUAL_GRID_20260928.md",
+          "line": 37
+        }
+      ]
+    },
+    {
+      "url": "https://docs.openems.de/en/latest/concepts/primitives.html",
+      "occurrences": [
+        {
+          "file": "docs/validation/OPENEMS_BOARD_COMPARISON_20260927.md",
+          "line": 209
+        }
+      ]
+    },
+    {
+      "url": "https://docs.openems.de/en/latest/install/clone-build-install.html",
+      "occurrences": [
+        {
+          "file": "docs/PI_SI_OPENEMS_TUTORIAL.md",
+          "line": 222
+        }
+      ]
+    },
+    {
+      "url": "https://docs.openems.de/en/latest/python/manual_install.html#windows",
+      "occurrences": [
+        {
+          "file": "docs/PI_SI_OPENEMS_TUTORIAL.md",
+          "line": 190
         }
       ]
     },
@@ -386,12 +541,12 @@
       "url": "https://docs.openems.de/python/openEMS/Tutorials/Simple_Patch_Antenna.html",
       "occurrences": [
         {
-          "file": "docs/validation/OPENEMS_REFERENCE_VALIDATION.md",
-          "line": 22
+          "file": "docs/validation/OPENEMS_ACTUAL_GRID_20260928.md",
+          "line": 66
         },
         {
-          "file": "python/spike_core/openems_benchmarks.py",
-          "line": 14
+          "file": "docs/validation/OPENEMS_REFERENCE_VALIDATION.md",
+          "line": 29
         }
       ]
     },
@@ -418,11 +573,20 @@
       "occurrences": [
         {
           "file": "docs/PEEC_VOLUME_CORRECTION_20260924.md",
-          "line": 142
+          "line": 208
         },
         {
           "file": "src/peec/volume_inductance.cpp",
           "line": 16
+        }
+      ]
+    },
+    {
+      "url": "https://doi.org/10.1016/j.crma.2004.08.004",
+      "occurrences": [
+        {
+          "file": "python/spike_core/peec_conforming_dc.py",
+          "line": 12
         }
       ]
     },
@@ -503,7 +667,11 @@
       "occurrences": [
         {
           "file": "docs/PEEC_VOLUME_CORRECTION_20260924.md",
-          "line": 141
+          "line": 207
+        },
+        {
+          "file": "src/peec/annular_inductance.cpp",
+          "line": 42
         },
         {
           "file": "src/peec/volume_inductance.cpp",
@@ -574,6 +742,15 @@
       ]
     },
     {
+      "url": "https://example.com:11434",
+      "occurrences": [
+        {
+          "file": "tests/python/test_local_llm.py",
+          "line": 88
+        }
+      ]
+    },
+    {
       "url": "https://example.invalid/component",
       "occurrences": [
         {
@@ -587,7 +764,7 @@
       "occurrences": [
         {
           "file": "tests/python/test_project_package_v3.py",
-          "line": 890
+          "line": 892
         }
       ]
     },
@@ -627,7 +804,7 @@
       "occurrences": [
         {
           "file": "docs/MULTIBOARD_HARNESS_ASSEMBLIES.md",
-          "line": 134
+          "line": 167
         }
       ]
     },
@@ -640,11 +817,19 @@
         },
         {
           "file": "docs/HARNESS_PI.md",
-          "line": 70
+          "line": 71
         },
         {
           "file": "docs/MARBLE_CLI_QUALIFICATION_PLAN.md",
           "line": 33
+        },
+        {
+          "file": "docs/PI_SI_WORKED_CASEBOOK.md",
+          "line": 158
+        },
+        {
+          "file": "docs/SI_USER_GUIDE.md",
+          "line": 5
         }
       ]
     },
@@ -654,6 +839,23 @@
         {
           "file": "docs/MARBLE_CLI_QUALIFICATION_PLAN.md",
           "line": 18
+        },
+        {
+          "file": "docs/THERMAL_USER_GUIDE.md",
+          "line": 146
+        }
+      ]
+    },
+    {
+      "url": "https://github.com/BerkeleyLab/Marble/tree/v1.4.4",
+      "occurrences": [
+        {
+          "file": "docs/THERMAL_USER_GUIDE.md",
+          "line": 7
+        },
+        {
+          "file": "docs/THERMAL_USER_GUIDE.md",
+          "line": 136
         }
       ]
     },
@@ -702,7 +904,7 @@
         },
         {
           "file": "docs/MULTIBOARD_HARNESS_ASSEMBLIES.md",
-          "line": 133
+          "line": 166
         }
       ]
     },
@@ -765,15 +967,6 @@
       ]
     },
     {
-      "url": "https://github.com/OLIMEX/MOD-OLED-128x64",
-      "occurrences": [
-        {
-          "file": "docs/STABILIZATION_RELEASE_PLAN_20260905.md",
-          "line": 21
-        }
-      ]
-    },
-    {
       "url": "https://github.com/Open-Cascade-SAS/OCCT/wiki/xde",
       "occurrences": [
         {
@@ -787,7 +980,16 @@
       "occurrences": [
         {
           "file": "docs/HARNESS_PI.md",
-          "line": 77
+          "line": 78
+        }
+      ]
+    },
+    {
+      "url": "https://github.com/jaseg/sampling-mesh-monitor",
+      "occurrences": [
+        {
+          "file": "docs/CORRELATION_EVIDENCE.md",
+          "line": 30
         }
       ]
     },
@@ -806,6 +1008,15 @@
         {
           "file": "tests/python/test_windows_release_provenance.py",
           "line": 403
+        }
+      ]
+    },
+    {
+      "url": "https://github.com/thliebig/openEMS-Project/releases",
+      "occurrences": [
+        {
+          "file": "docs/PI_SI_OPENEMS_TUTORIAL.md",
+          "line": 192
         }
       ]
     },
@@ -909,6 +1120,19 @@
       ]
     },
     {
+      "url": "https://github.com/wayri/SPIKE-Main/blob/pi-si-guided-casebook/docs/MARBLE_R293_SI_TUTORIAL.md",
+      "occurrences": [
+        {
+          "file": "docs/CAPABILITY_TUTORIAL_ATLAS.md",
+          "line": 36
+        },
+        {
+          "file": "docs/CAPABILITY_TUTORIAL_ATLAS.md",
+          "line": 38
+        }
+      ]
+    },
+    {
       "url": "https://gitlab.com/ohwr/project/wr-switch-hw",
       "occurrences": [
         {
@@ -922,7 +1146,7 @@
       "occurrences": [
         {
           "file": "docs/ANALYSIS_AND_MESH_ROADMAP.md",
-          "line": 77
+          "line": 88
         }
       ]
     },
@@ -940,7 +1164,7 @@
       "occurrences": [
         {
           "file": "docs/SI_WORKFLOW.md",
-          "line": 182
+          "line": 249
         }
       ]
     },
@@ -992,6 +1216,24 @@
       ]
     },
     {
+      "url": "https://lmstudio.ai/docs/app/mcp",
+      "occurrences": [
+        {
+          "file": "docs/LOCAL_LLM_MCP.md",
+          "line": 13
+        }
+      ]
+    },
+    {
+      "url": "https://lmstudio.ai/docs/developer/openai-compat/tools",
+      "occurrences": [
+        {
+          "file": "docs/LOCAL_LLM_MCP.md",
+          "line": 32
+        }
+      ]
+    },
+    {
       "url": "https://meep.readthedocs.io/en/master/Python_User_Interface/#near-to-far-field-spectra",
       "occurrences": [
         {
@@ -1001,6 +1243,15 @@
         {
           "file": "python/spike_core/huygens_far_field.py",
           "line": 13
+        }
+      ]
+    },
+    {
+      "url": "https://modelcontextprotocol.io/specification/2025-11-25/basic/lifecycle",
+      "occurrences": [
+        {
+          "file": "docs/LOCAL_LLM_MCP.md",
+          "line": 3
         }
       ]
     },
@@ -1027,7 +1278,7 @@
       "occurrences": [
         {
           "file": "docs/RESULT_VISUALIZATION_AND_LIMITS.md",
-          "line": 52
+          "line": 72
         }
       ]
     },
@@ -1072,7 +1323,7 @@
       "occurrences": [
         {
           "file": "docs/CAD_NEUTRAL_NATIVE_MULTIPHYSICS_FOUNDATION.md",
-          "line": 722
+          "line": 719
         }
       ]
     },
@@ -1081,11 +1332,20 @@
       "occurrences": [
         {
           "file": "docs/CAD_NEUTRAL_NATIVE_MULTIPHYSICS_FOUNDATION.md",
-          "line": 727
+          "line": 724
         },
         {
           "file": "docs/RESEARCH_AND_CLEAN_ROOM_ENGINEERING.md",
           "line": 151
+        }
+      ]
+    },
+    {
+      "url": "https://physics.nist.gov/cuu/Constants/Table/allascii.txt",
+      "occurrences": [
+        {
+          "file": "docs/COMPONENT_THERMAL.md",
+          "line": 156
         }
       ]
     },
@@ -1103,7 +1363,7 @@
       "occurrences": [
         {
           "file": "docs/TRACE_RESULT_GRAPHS.md",
-          "line": 33
+          "line": 36
         }
       ]
     },
@@ -1113,6 +1373,45 @@
         {
           "file": "docs/VISUALIZATION_ARCHITECTURE.md",
           "line": 17
+        }
+      ]
+    },
+    {
+      "url": "https://quicksearch.dla.mil/qsDocDetails.aspx?ident_number=35789",
+      "occurrences": [
+        {
+          "file": "docs/EMI_WORKFLOW.md",
+          "line": 103
+        },
+        {
+          "file": "docs/EMI_WORKFLOW.md",
+          "line": 104
+        },
+        {
+          "file": "python/spike_core/emi.py",
+          "line": 40
+        },
+        {
+          "file": "python/spike_core/emi.py",
+          "line": 46
+        }
+      ]
+    },
+    {
+      "url": "https://research.ibm.com/publications/nonorthogonal-peec-formulation-for-time-and-frequency-domain-em-and-circuit-modeling",
+      "occurrences": [
+        {
+          "file": "docs/validation/PEEC_REFINEMENT_REPAIR.md",
+          "line": 172
+        }
+      ]
+    },
+    {
+      "url": "https://resources.altium.com/p/power-integrity-analysis",
+      "occurrences": [
+        {
+          "file": "docs/PI_REFERENCE_COVERAGE_20260924.md",
+          "line": 53
         }
       ]
     },
@@ -1242,6 +1541,41 @@
       ]
     },
     {
+      "url": "https://webstore.iec.ch/copyright",
+      "occurrences": [
+        {
+          "file": "docs/EMI_WORKFLOW.md",
+          "line": 114
+        }
+      ]
+    },
+    {
+      "url": "https://webstore.iec.ch/en/publication/64645",
+      "occurrences": [
+        {
+          "file": "docs/EMI_WORKFLOW.md",
+          "line": 102
+        },
+        {
+          "file": "python/spike_core/emi.py",
+          "line": 28
+        }
+      ]
+    },
+    {
+      "url": "https://webstore.iec.ch/en/publication/65836",
+      "occurrences": [
+        {
+          "file": "docs/EMI_WORKFLOW.md",
+          "line": 101
+        },
+        {
+          "file": "python/spike_core/emi.py",
+          "line": 34
+        }
+      ]
+    },
+    {
       "url": "https://white-rabbit-collaboration-website.web.cern.ch/wr-technology/",
       "occurrences": [
         {
@@ -1256,6 +1590,15 @@
         {
           "file": "docs/VALIDATION_PROGRAM.md",
           "line": 30
+        }
+      ]
+    },
+    {
+      "url": "https://www.ecadstar.com/en/blog/power-integrity-in-pcb-design/",
+      "occurrences": [
+        {
+          "file": "docs/PI_REFERENCE_COVERAGE_20260924.md",
+          "line": 51
         }
       ]
     },
@@ -1331,7 +1674,7 @@
       "occurrences": [
         {
           "file": "docs/SI_WORKFLOW.md",
-          "line": 184
+          "line": 251
         }
       ]
     },
@@ -1354,6 +1697,24 @@
         {
           "file": "docs/SERDES_ACTUATOR_DELIVERY.md",
           "line": 72
+        }
+      ]
+    },
+    {
+      "url": "https://www.ieee802.org/3/hssg/public/sep06/law_01_0906.pdf",
+      "occurrences": [
+        {
+          "file": "docs/PI_SI_WORKED_CASEBOOK.md",
+          "line": 136
+        }
+      ]
+    },
+    {
+      "url": "https://www.ieee802.org/3/minutes/mar05/0305_ap_open_report.pdf",
+      "occurrences": [
+        {
+          "file": "docs/PI_SI_WORKED_CASEBOOK.md",
+          "line": 139
         }
       ]
     },
@@ -1425,20 +1786,11 @@
       ]
     },
     {
-      "url": "https://www.kicad.org/sponsors/become-a-sponsor/",
-      "occurrences": [
-        {
-          "file": "docs/BUSINESS_PLAN.md",
-          "line": 143
-        }
-      ]
-    },
-    {
       "url": "https://www.mdpi.com/2673-4117/7/6/261",
       "occurrences": [
         {
           "file": "docs/PEEC_VOLUME_CORRECTION_20260924.md",
-          "line": 149
+          "line": 215
         }
       ]
     },
@@ -1447,7 +1799,7 @@
       "occurrences": [
         {
           "file": "docs/SI_WORKFLOW.md",
-          "line": 190
+          "line": 257
         }
       ]
     },
@@ -1524,11 +1876,20 @@
       ]
     },
     {
-      "url": "https://www.raspberrypi.com/documentation/microcontrollers/microcontroller-chips.html",
+      "url": "https://www.pcb-hero.com/blogs/lickys-column/dc-analysis-and-power-integrity-in-pcb-design",
       "occurrences": [
         {
-          "file": "docs/STABILIZATION_RELEASE_PLAN_20260905.md",
-          "line": 24
+          "file": "docs/PI_REFERENCE_COVERAGE_20260924.md",
+          "line": 54
+        }
+      ]
+    },
+    {
+      "url": "https://www.powerelectronictips.com/power-power-integrity-analysis-high-speed-digital-faq/",
+      "occurrences": [
+        {
+          "file": "docs/PI_REFERENCE_COVERAGE_20260924.md",
+          "line": 56
         }
       ]
     },
@@ -1564,7 +1925,43 @@
       "occurrences": [
         {
           "file": "docs/SI_WORKFLOW.md",
-          "line": 192
+          "line": 259
+        }
+      ]
+    },
+    {
+      "url": "https://www.wonderfulpcb.com/blog/power-integrity-simulation-analytics-pcb-design/",
+      "occurrences": [
+        {
+          "file": "docs/PI_REFERENCE_COVERAGE_20260924.md",
+          "line": 55
+        }
+      ]
+    },
+    {
+      "url": "https://www.youtube.com/watch?v=NOGw-M-DPN8&t=26s",
+      "occurrences": [
+        {
+          "file": "docs/PI_REFERENCE_COVERAGE_20260924.md",
+          "line": 57
+        }
+      ]
+    },
+    {
+      "url": "https://www.youtube.com/watch?v=ZJsKYZO8dyE&t=69s",
+      "occurrences": [
+        {
+          "file": "docs/PI_REFERENCE_COVERAGE_20260924.md",
+          "line": 57
+        }
+      ]
+    },
+    {
+      "url": "https://www.zuken.com/en/blog/mastering-power-integrity/",
+      "occurrences": [
+        {
+          "file": "docs/PI_REFERENCE_COVERAGE_20260924.md",
+          "line": 52
         }
       ]
     },

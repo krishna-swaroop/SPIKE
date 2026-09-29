@@ -1,37 +1,23 @@
-# SPIKE Third-Party Notice Register
+# Third-party notices and example sources
 
-This register is incomplete and is a release-blocking audit record, not a grant
-of rights. Every distributed package must generate a version-specific notice
-bundle and SBOM from verified artifacts.
+SPIKE uses open-source libraries and can connect to separately installed tools. Their own license files govern those components. This page also records the sources of boards and images shown in SPIKE documentation.
 
-| Component | Evidence in workspace | Current handling | Release action |
-| --- | --- | --- | --- |
-| FreeCAD SPIKE Workbench | `integrations/freecad/SPIKEWorkbench/LICENSE` | MIT component | Preserve copyright, permission, and warranty text; confirm contributors |
-| SPIKE FreeCAD 1.1.3 local captures | `integrations/freecad/SPIKEWorkbench/docs/images/linked-kicad-board.jpg` and `solver-thermal-result.jpg`; capture and scope in `docs/ASSET_PROVENANCE.md` under that workbench | Local SPIKE demo PCB and workbench shown in FreeCAD UI; thermal output is approximate demonstration evidence | Confirm demo-board ownership and FreeCAD UI redistribution rights, review captured local paths, and retain the approximate-result caption before publishing or copying to a standalone repository |
-| sparseLizard native adapter | `integrations/sparselizard-native/LICENSE` and SPDX headers | GPL-2.0-or-later linked executable | Keep process-isolated; satisfy GPL source and notice duties or exclude from distribution |
-| sparseLizard upstream source/runtime | `runtime/external/sparselizard/source/` | GPL upstream material | Do not place in proprietary package without complete GPL review and compliance |
-| ngspice runtime | `runtime/external/Spice64/docs/COPYING` | Mixed component licenses | Produce component-level notice/SBOM; keep process-isolated; review redistribution |
-| openEMS runtime | `runtime/external/openems-0.0.36/` | License evidence incomplete locally | Exclude until upstream licenses, source obligations, dependency notices, hashes, and SBOM are captured |
-| OpenFOAM | external installation in `dependencies.lock.json` | Optional external process | Do not bundle by default; record exact distribution and adapter obligations |
-| FloTHERM | customer-provided proprietary product | Optional connector | Never bundle or download; require customer entitlement and permitted API use |
-| NumPy/SciPy and packaged Python dependencies | worker/package output | Multiple permissive and component licenses | Generate notices and SBOM from the final worker artifact |
-| Shapely 2.1.2 and its bundled GEOS | Windows CPython 3.12 runtime wheel SHA-256 `743044b4cfb34f9a67205cee9279feaf60ba7d02e69febc2afc609047cb49179`; installed wheel metadata and `licenses/` directory | Shapely BSD 3-Clause; wheel metadata identifies GEOS under LGPL-2.1 | Include the Shapely and GEOS license files and corresponding-source/compliance review for the exact redistributed wheel; add both to the artifact SBOM |
-| Tauri opener plugin | `app/package-lock.json` and `app/src-tauri/Cargo.lock`; `tauri-plugin-opener` crate manifest states `Apache-2.0 OR MIT` | Opens the fixed SPIKE issue URL in the system browser with a scoped desktop capability | Include the exact JavaScript and Rust plugin versions and their notices in the final desktop SBOM/notice bundle |
-| Robert Fennis's EMerge | Optional user-installed solver; SPIKE adapter at `extensions/emerge_suite/` | EMerge is a separate project and is not included in the SPIKE Windows installers | Acknowledge upstream ownership and review the exact EMerge distribution's license and API terms before any future bundling |
-| uysan `iot-esp-eth` ESP32 board and reference media | `examples/esp32/source/` and `examples/esp32/evidence/upstream_*.png`; upstream commit `0b9eb3500cd8ccdd6193c81e1406bfe9281d88e6`, board SHA-256 `3199ce0a25f8987020e716d82a4a35d9b6b04541d33b2f2e46406376713eab33` | Open hardware source under CERN-OHL-P-2.0; upstream screenshots and measurement plots remain upstream reference evidence, separate from SPIKE solves | Retain `examples/esp32/source/LICENSE.md`, source revision and origin; review each upstream image's ownership before packaging or promotion |
-| Berkeley Lab Marble v1.4.4 board documentation image | `app/public/help/marble-v1.4.4-top.png`; source `BerkeleyLab/Marble` tag `v1.4.4`, commit `a426777d92c0f22a546d4740b419a3937e0c1f90`, `docs/marble_top.png`, SHA-256 `51d0c4d72879262f079f5c13222306967246509a71ed5484be4a276e1ab23568` | Copyright 2019-2023 The Regents of the University of California through Lawrence Berkeley National Laboratory; documentation states CERN OHL v1.2 and a U.S. Government rights notice. Copied unchanged as board-identification context, not SPIKE result evidence | Preserve the upstream README copyright, license and government notice; include the image and this provenance record together |
-| Berkeley Lab Marble v1.4.4 front-copper artwork | `app/public/help/marble-v1.4.4-f-cu.svg`; generated by KiCad CLI 10 from the pinned `Marble.kicad_pcb`; SHA-256 `0f37237ac668b0d104ec483298402e29997953e140c7f4ad9e9d323d3c02ce07` | Derived board documentation under the same upstream copyright, CERN OHL v1.2 statement and U.S. Government rights notice. This is a source-layer export, not a SPIKE UI screenshot or solver result | Preserve the upstream README and source/revision record; caption the asset as a KiCad front-copper export |
-| SPIKE Marble v1.4.4 UI captures | `app/public/help/marble-workspace-3d.png` (`29aa5d1217e269b020f588fbacae3659c7ac8930eb434c298d041e1665978491`), `marble-layout-layers.png` (`334d46de40bfd68f49f35e70d365d1d0f8d33b8436b86cb116b0053189fb4849`), `marble-net-names.png` (`39ae6059f546ef884ab8907121af82fa163c9996d8f0dfe53911e66711577bfe`), and `marble-report-preview.png` (`ffea91253f1b07dd54c222e847777132da2e4eab8c9c1da5bd6fd85ac4a6b79a`); source board is the pinned Marble commit above | SPIKE 0.2.12 local-development browser captures made 2026-09-20 after source import. Workspace components are procedural; report says ANALYSIS NOT RUN. These do not establish native-worker execution or a solver result | Preserve this capture scope and the Marble source copyright, license, government notice, revision, and board hash with redistributed captures |
+## Software and integrations
 
-## Asset Provenance Still Required
+| Project | How SPIKE uses it | Source and terms |
+| --- | --- | --- |
+| KiCad | PCB import and example board files | [KiCad project](https://www.kicad.org/); KiCad and board authors retain their own notices. |
+| Tauri, React, Three.js, Lucide, and Plotly.js | Desktop interface, 3D view, icons, and plots | Versions are recorded in `app/package-lock.json` and `app/src-tauri/Cargo.lock`. Plotly.js is MIT-licensed; consult each package's included license. |
+| NumPy, SciPy, PyVista, wxPython, nanobind, Matplotlib, mplcursors, ReportLab, Apache Arrow/PyArrow, jsonschema, and Eigen | Python worker, native kernels, visualization, and reports | Versions are recorded in the Python requirements and native build files. Consult each installed package's license. |
+| Shapely and GEOS | Geometry handling | Shapely is BSD 3-Clause; its bundled GEOS library is identified under LGPL-2.1 in the Windows wheel metadata. |
+| FreeCAD SPIKE Workbench | Optional geometry exchange | The workbench under `integrations/freecad/SPIKEWorkbench/` has its own MIT license. FreeCAD is a separate project. |
+| Robert Fennis's EMerge | Optional antenna and EM solver used through `extensions/emerge_suite/` | EMerge is separately installed and retains its own terms; it is not included with SPIKE. |
+| ngspice, openEMS/CSXCAD, and OpenFOAM | Optional circuit, EM, and airflow engines | These are separate projects and installations. See their own distributions for license details. |
+| sparseLizard | Optional native adapter | `integrations/sparselizard-native/LICENSE` identifies the adapter as GPL-2.0-or-later; the upstream runtime has its own GPL notices. |
 
-The PI/SI trace graph workbench loads the existing `plotly.js-dist-min` 3.7.0
-dependency (Plotly, Inc., MIT; upstream https://github.com/plotly/plotly.js).
-The installed distribution license is `app/node_modules/plotly.js-dist-min/LICENSE`.
-Preserve its copyright/license and bundled dependency notices in distributions.
-SPIKE's graph projection and controls are independently authored; no wayriCAD
-implementation or documentation images are included in this feature.
+## Boards and documentation images
 
-Commercial release also requires ownership or redistribution evidence for demo
-boards, screenshots, help media, icons, fonts, 3D models, SPICE/IBIS models,
-validation datasets, and reports. Absence from this table does not imply approval.
+- **ESP32 example:** The `iot-esp-eth` board by uysan is included under CERN-OHL-P-2.0. Its source, license, and upstream revision are recorded in [examples/esp32/source/LICENSE.md](examples/esp32/source/LICENSE.md) and the [worked example](examples/esp32/README.md). Upstream reference images and measurements are labeled separately from SPIKE results.
+- **Marble reference board:** Berkeley Lab's Marble v1.4.4 board and documentation are credited to the Regents of the University of California through Lawrence Berkeley National Laboratory. The upstream documentation states CERN OHL v1.2 and a U.S. Government rights notice. The board-documentation image and front-copper SVG in `app/public/help/` come from the pinned source recorded in [Help maintenance](docs/HELP_MAINTENANCE.md). SPIKE interface captures showing Marble are labeled as captures; the report preview says analysis was not run.
+
+If a source or credit is missing, please [open an issue](https://github.com/wayri/SPIKE-Main/issues). Preserve the original license and attribution when reusing third-party material.

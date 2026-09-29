@@ -112,5 +112,18 @@ generate reports. See the [CLI reference](docs/CLI.md).
 ## License
 
 SPIKE-owned code and documentation are licensed under [Apache 2.0](LICENSE).
-External engines, board designs, and models may have their own terms. See [licensing details](LICENSING.md) and
+Dependencies, external engines, and example boards retain their own licenses;
+see [third-party notices](THIRD_PARTY_NOTICES.md).
+
+## Acknowledgements
+
+- The KiCad project and its contributors for the PCB ecosystem SPIKE works with.
+- The Tauri, React, Three.js, Plotly.js, and Lucide projects behind the desktop interface and plots.
+- The NumPy, SciPy, Shapely/GEOS, PyVista, wxPython, nanobind, Matplotlib, mplcursors, ReportLab, Apache Arrow, jsonschema, and Eigen projects used by the Python and native tooling.
+- The ngspice, openEMS, OpenFOAM, and FreeCAD communities, and Robert Fennis for EMerge, which SPIKE can connect to when separately installed.
+- Berkeley Lab and the Regents of the University of California for the Marble reference board, and uysan for the open `iot-esp-eth` ESP32 board used in the worked example.
+- Contributors, testers, issue reporters, and documentation authors who help improve SPIKE.
+
+If we have missed a credit, please open an issue or pull request. License and
+source details for included examples and integrations are in the
 [third-party notices](THIRD_PARTY_NOTICES.md).

@@ -9,8 +9,19 @@ import reference from "./helpReference.generated.json";
 import controls from "./helpControls.generated.json";
 import "./helpCenter.css";
 
-const documents = import.meta.glob("../../docs/*.md", { eager: true, query: "?raw", import: "default" }) as Record<string, string>;
-const rootDocuments = import.meta.glob(["../../TROUBLESHOOTING.md", "../../QUICK_REFERENCE.md", "../../DEVELOPMENT.md", "../../TESTING.md"], { eager: true, query: "?raw", import: "default" }) as Record<string, string>;
+const documents = import.meta.glob([
+  "../../docs/WORKBENCH_HANDBOOK.md", "../../docs/USER_TASK_SEQUENCES.md",
+  "../../docs/HELP_FAQ.md", "../../docs/CLI.md", "../../docs/CLI_WORKFLOW.md",
+  "../../docs/ERROR_CODE_CATALOG.md", "../../docs/THERMAL_USER_GUIDE.md",
+  "../../docs/SI_USER_GUIDE.md", "../../docs/PI_SI_OPENEMS_TUTORIAL.md",
+  "../../docs/SIMULATION_STUDIES.md", "../../docs/LOCAL_LLM_MCP.md",
+  "../../docs/ODB_AND_HARNESS_EXTENSIONS.md", "../../docs/MCAD_EXPORT.md",
+  "../../docs/RESULT_VISUALIZATION_AND_LIMITS.md", "../../docs/SOLVER_STATUS.md",
+  "../../docs/EMI_WORKFLOW.md", "../../docs/THERMAL_WORKFLOW.md",
+  "../../docs/SI_WORKFLOW.md", "../../docs/PI_PATH_ANALYSIS.md",
+  "../../docs/EXTERNAL_ENGINE_INTEROPERABILITY.md", "../../docs/PROJECT_FORMAT.md",
+], { eager: true, query: "?raw", import: "default" }) as Record<string, string>;
+const rootDocuments = import.meta.glob(["../../TROUBLESHOOTING.md", "../../QUICK_REFERENCE.md"], { eager: true, query: "?raw", import: "default" }) as Record<string, string>;
 function plain(node: ReactNode): string {
   return Children.toArray(node).map(child => isValidElement<{ children?: ReactNode }>(child) ? plain(child.props.children) : typeof child === "string" || typeof child === "number" ? String(child) : "").join(" ");
 }

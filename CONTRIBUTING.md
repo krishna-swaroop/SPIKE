@@ -100,8 +100,7 @@ window sizes. Long-running work must use the worker process and leave the UI
 event loop responsive.
 
 Packaging changes require clean-machine, offline, upgrade, and uninstall
-tests. Dependency and license manifests must be updated. Commercial packaging
-also requires every item in the `LICENSING.md` release gate.
+tests. Dependency and license manifests must be updated for the actual package.
 
 ## Design rules
 

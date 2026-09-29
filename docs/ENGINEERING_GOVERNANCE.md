@@ -101,9 +101,6 @@ blocking defects.
 - `docs/IMPORTER_ARCHITECTURE.md`: source-agnostic EDA ingestion.
 - `docs/CONTRACTS.md` and `schemas/`: wire contracts and compatibility rules.
 - `docs/adr/`: accepted architecture decisions.
-- `docs/BUSINESS_PLAN.md`: product, pricing, revenue, and sustainability.
-- `docs/DEPLOYMENT_STRATEGY.md`: installers, CI, cloud, privacy, and upgrades.
 - `docs/ENGINEERING_GOVERNANCE.md`: quality and release policy.
-- `codex_migration/`: migration status and legacy history.
 
 Every public feature should have one user document, one API/contract description, and one validation fixture or an explicit statement explaining why a fixture is not yet possible.

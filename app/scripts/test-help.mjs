@@ -9,6 +9,11 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { searchHelp, resolveHelpLink, helpSlug } from '../src/helpModel.ts';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const helpSource = fs.readFileSync(path.join(root, 'src/HelpCenter.tsx'), 'utf8');
+assert.ok(!helpSource.includes('../../docs/*.md'), 'Help must use a curated public document list');
+for (const privateName of ['OPEN_SOURCE_RELEASE_PLAN', 'BUSINESS_PLAN', 'DEPLOYMENT_STRATEGY', 'STABILIZATION_RELEASE_PLAN', 'PUBLIC_RELEASE_READINESS']) {
+  assert.ok(!helpSource.includes(privateName), `Internal document ${privateName} must not ship in Help`);
+}
 const reference = JSON.parse(fs.readFileSync(path.join(root, 'src/helpReference.generated.json'), 'utf8'));
 const controls = JSON.parse(fs.readFileSync(path.join(root, 'src/helpControls.generated.json'), 'utf8'));
 assert.equal(new Set(reference.errors.map(e => e.code)).size, reference.errors.length);
