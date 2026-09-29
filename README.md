@@ -26,6 +26,12 @@ before an analysis is run.*
 two-conductor model of the board; the [ESP32 example](examples/esp32/README.md)
 records its inputs, assumptions, and plots.*
 
+![ESP32 board and EMerge radiation pattern in the SPIKE viewport](examples/esp32/evidence/emerge_pattern_in_spike_viewport.png)
+
+*The ESP32 board and its EMerge-powered radiation pattern together in SPIKE's
+3D viewport at 2.45 GHz. This saved run uses a simplified two-conductor
+antenna model; the surface shows relative far-field shape, not absolute gain.*
+
 For more examples, see the [thermal walkthrough](docs/THERMAL_USER_GUIDE.md),
 [SI walkthrough](docs/SI_USER_GUIDE.md), and
 [simulation studies guide](docs/SIMULATION_STUDIES.md).
