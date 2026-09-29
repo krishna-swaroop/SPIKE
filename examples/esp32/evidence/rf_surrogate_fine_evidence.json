@@ -28,7 +28,7 @@
     "frequency_stop_hz": 2600000000.0,
     "frequency_points": 3,
     "mesh_resolution_mm": 1.0,
-    "python_executable": "<SPIKE-checkout>\\.venv-emerge3\\Scripts\\python.exe"
+    "python_executable": ".venv-emerge3\\Scripts\\python.exe"
   },
   "assumptions": {
     "source_board_sha256": "3199ce0a25f8987020e716d82a4a35d9b6b04541d33b2f2e46406376713eab33",

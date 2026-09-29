@@ -2915,7 +2915,7 @@
       ]
     },
     "board_binding": {
-      "source_path": "<SPIKE-checkout>\\app\\public\\demo\\ebrake1.kicad_pcb",
+      "source_path": "app\\public\\demo\\ebrake1.kicad_pcb",
       "source_sha256": "d0117300c730688ce2311c2908cec041c537689f59aa4527ffa6bdec68a2edca",
       "design_id": "kicad-d0117300c730688ce2311c29",
       "design_name": "ebrake1",

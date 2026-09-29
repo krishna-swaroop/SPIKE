@@ -1,6 +1,6 @@
 {
   "contract": "spike/openems-board-readiness-probe/v1",
-  "board": "<SPIKE-checkout>\\examples\\esp32\\source\\iot-esp-eth-ind.kicad_pcb",
+  "board": "examples\\esp32\\source\\iot-esp-eth-ind.kicad_pcb",
   "board_sha256": "3199ce0a25f8987020e716d82a4a35d9b6b04541d33b2f2e46406376713eab33",
   "net": "/cpu/ANT",
   "frequency_hz": [

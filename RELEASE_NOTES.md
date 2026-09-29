@@ -409,7 +409,7 @@ installer and installed-image evidence is recorded separately after verification
 **Status:** unsigned engineering preview; installed for the current Windows user
 
 - Built MSI and NSIS installers from the current tree and installed the NSIS
-  current-user package at `<LOCAL_USER_HOME>\AppData\Local\Programs\SPIKE`.
+  current-user package at `%LOCALAPPDATA%\Programs\SPIKE`.
 - Packaged-worker verification passes all 1,084 declared file hashes, 15/15
   native benchmarks, and 8/8 source/package runtime-parity checks. The installed
   desktop executable exactly matches the release executable.

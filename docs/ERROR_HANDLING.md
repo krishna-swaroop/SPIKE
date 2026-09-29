@@ -218,5 +218,5 @@ The focused suite must verify:
 Run:
 
 ```powershell
-& '<LOCAL_USER_HOME>\AppData\Local\Python\bin\python.exe' -m unittest tests.python.test_errors -v
+python -m unittest tests.python.test_errors -v
 ```

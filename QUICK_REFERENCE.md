@@ -117,7 +117,7 @@ dir "%USERPROFILE%\Documents\KiCad\9.0\3rdparty\plugins\SPIKE"
 
 ### **Plugin Installation**
 ```
-<LOCAL_USER_HOME>\Documents\KiCad\9.0\3rdparty\plugins\SPIKE\
+<KiCad-user-plugins>\SPIKE\
 ├── __init__.py                   # Plugin code
 ├── metadata.json                 # Plugin metadata
 └── __pycache__\                  # Python cache (auto-generated)

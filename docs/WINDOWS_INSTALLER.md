@@ -157,7 +157,7 @@ Extraction at `artifacts/windows/installer-smoke-20260827-r18/PFiles/SPIKE` has 
 
 The current tree is released as application `0.2.0-alpha.2`, numeric Windows
 package `0.2.1`, and installed for the current user at
-`<LOCAL_USER_HOME>\AppData\Local\Programs\SPIKE`.
+`%LOCALAPPDATA%\Programs\SPIKE`.
 
 - `SPIKE_0.2.1_x64_en-US.msi`: 123,897,127 bytes, SHA-256
   `0d49e667175c28530f4344f1c3d321bac611257f5e9c3c55d4cd59e21a039822`
@@ -190,7 +190,7 @@ or physics qualification.
 
 The current working tree was rebuilt without `-SkipWorker` and deployed to the
 current Windows user at
-`<LOCAL_USER_HOME>\AppData\Local\Programs\SPIKE`. The generated preview manifest
+`%LOCALAPPDATA%\Programs\SPIKE`. The generated preview manifest
 timestamp is `2026-08-28T01:58:00.9517649+05:30`:
 
 - MSI: 123,827,116 bytes, SHA-256

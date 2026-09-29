@@ -33,7 +33,7 @@
       ]
     }
   },
-  "runtime_executable": "<SPIKE-checkout>\\.venv-emerge3\\Scripts\\python.exe",
+  "runtime_executable": ".venv-emerge3\\Scripts\\python.exe",
   "solver": "EMerge/3.0.0a19",
   "status": "completed",
   "model_status": "unvalidated",

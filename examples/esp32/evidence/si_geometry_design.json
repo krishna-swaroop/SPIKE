@@ -5,7 +5,7 @@
     "source_format": "kicad",
     "source_digest": "3199ce0a25f8987020e716d82a4a35d9b6b04541d33b2f2e46406376713eab33",
     "native_id": "kicad-3199ce0a25f8987020e716d8",
-    "artifact_path": "<SPIKE-checkout>\\examples\\esp32\\source\\iot-esp-eth-ind.kicad_pcb"
+    "artifact_path": "examples\\esp32\\source\\iot-esp-eth-ind.kicad_pcb"
   },
   "frame": {
     "frame_id": "board",

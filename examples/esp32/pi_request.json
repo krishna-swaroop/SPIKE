@@ -5,7 +5,7 @@
     "design_id": "kicad-3199ce0a25f8987020e716d8",
     "name": "iot-esp-eth-ind",
     "source_format": "kicad",
-    "source_path": "<SPIKE-checkout>\\examples\\esp32\\source\\iot-esp-eth-ind.kicad_pcb",
+    "source_path": "examples\\esp32\\source\\iot-esp-eth-ind.kicad_pcb",
     "units": "mm",
     "layers": [
       {
