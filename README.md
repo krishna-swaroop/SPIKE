@@ -11,7 +11,7 @@ SPIKE runs locally and includes a command-line interface. Version 0.3.0 is a
 community preview, available as source and an unsigned Windows x64 installer.
 
 [Download SPIKE for Windows](https://github.com/wayri/SPIKE-Main/releases/tag/v0.3.0)
-· [Try the ESP32 example](examples/esp32/README.md)
+· [Five-minute ESP32 walkthrough](docs/ESP32_QUICKSTART.md)
 · [User guides](docs/README.md)
 · [Build from source](docs/DEVELOPER_GUIDE.md)
 
@@ -32,6 +32,11 @@ Current limits are summarized below and described in
 [Solver Status](docs/SOLVER_STATUS.md).
 
 ## ESP32 PCB and antenna simulation examples
+
+Start with the [five-minute walkthrough](docs/ESP32_QUICKSTART.md) to import
+the board, open saved thermal and antenna results, and probe the viewport.
+The [60–90-second demo guide](docs/ESP32_DEMO_GUIDE.md) walks through the same
+views as a short presentation and includes a recording outline.
 
 ![ESP32 board imported into SPIKE's 3D viewport](examples/esp32/evidence/viewport_3d.png)
 
@@ -132,6 +137,17 @@ generate reports. See the [CLI reference](docs/CLI.md).
 - [Local LLM and MCP setup](docs/LOCAL_LLM_MCP.md) for LM Studio or Ollama
 - [Contributing](CONTRIBUTING.md), [developer setup](docs/DEVELOPER_GUIDE.md), and [architecture](ARCHITECTURE.md)
 - [Report a bug](https://github.com/wayri/SPIKE-Main/issues/new?template=bug_report.yml) with a small reproducible example; review your report before sharing board data
+
+## Help improve SPIKE
+
+Tried the same board or circuit in another tool? We'd love to hear how the
+results and workflow compare, including where SPIKE falls short. If you can,
+share a small example you have permission to publish, the tool versions and
+settings, and what differed. Comparisons with measurements are welcome too.
+Matching geometry, materials, ports, and boundary conditions makes differences
+easier to investigate. [Open an issue](https://github.com/wayri/SPIKE-Main/issues)
+with your observations; a brief usability note is just as welcome as a detailed
+numerical comparison.
 
 ## License
 

@@ -7,6 +7,8 @@ describes which analyses are available and what their results mean.
 
 | Task | Guide |
 | --- | --- |
+| Try SPIKE in five minutes | [ESP32 quickstart](ESP32_QUICKSTART.md) |
+| Present or record a short demo | [ESP32 demo guide](ESP32_DEMO_GUIDE.md) |
 | Import a board and explore the desktop | [User tasks](USER_TASK_SEQUENCES.md) · [Result visualization](RESULT_VISUALIZATION_AND_LIMITS.md) |
 | Run power analysis | [PI paths](PI_PATH_ANALYSIS.md) · [DC solver](DC_SOLVER.md) · [Transient PI](TRANSIENT_PI.md) |
 | Run signal analysis | [SI user guide](SI_USER_GUIDE.md) · [SI workflow](SI_WORKFLOW.md) |
