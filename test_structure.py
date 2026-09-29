@@ -61,7 +61,7 @@ def main():
         ("ARCHITECTURE.md", "Architecture documentation"),
         ("DEVELOPMENT.md", "Development guide"),
         ("RELEASE_NOTES.md", "Release notes"),
-        ("codex_migration/DONE.md", "Current completion tracker"),
+        ("docs/SUBSYSTEM_INDEX.md", "Subsystem index"),
     ]
     for filename, desc in docs:
         total_checks += 1
