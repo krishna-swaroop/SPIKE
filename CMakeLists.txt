@@ -15,6 +15,8 @@ set(SPIKES_ENGINE_VERSION
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+# Static kernels are linked into the Python extension on Linux.
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 # Build type default
 if(NOT CMAKE_BUILD_TYPE)
