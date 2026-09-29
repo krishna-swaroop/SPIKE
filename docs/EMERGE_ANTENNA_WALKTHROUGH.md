@@ -109,7 +109,7 @@ same SPIKE analysis-result checks used by the extension host.
 
 | Evidence | Recorded value or artifact |
 |---|---|
-| Board source, license, revision, SHA-256 | [Generated KiCad 10 board](../examples/emerge/antenna_example.kicad_pcb), MIT project fixture, SHA-256 `f8fd038633c5b49a3867c8f09dc4fb3341b9be5a4a3cd961a088dbde6a77a2f0`. KiCad 10.0.6 DRC with zone refill: 0 violations, 0 unconnected items. |
+| Board source, license, revision, SHA-256 | [Generated KiCad 10 board](../examples/emerge/antenna_example.kicad_pcb), covered by the repository's Apache-2.0 license, SHA-256 `f8fd038633c5b49a3867c8f09dc4fb3341b9be5a4a3cd961a088dbde6a77a2f0`. KiCad 10.0.6 DRC with zone refill: 0 violations, 0 unconnected items. |
 | EMerge version/interpreter | 3.0.0a19 prerelease in project-local `.venv-emerge3`; existing 2.8.9 environment preserved. |
 | Signal/return nets, pad IDs, port count | RF / GND; F.Cu signal `51d0c420-4c7b-4da5-b9ec-001000000011`, B.Cu return `51d0c420-4c7b-4da5-b9ec-001000000012`; one 50 Ω port. |
 | Stackup, modeled geometry, omitted features | 40 × 30 mm rectangular two-layer board, 1.6 mm FR-4 dielectric with εr 4.3, F.Cu patch/feed, filled B.Cu ground. Surface PEC and dielectric loss tangent omission are reported warnings. |

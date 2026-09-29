@@ -4,6 +4,12 @@ SPIKE-owned code and documentation are licensed under the [Apache License 2.0](L
 
 Libraries, solver engines, example boards, models, images, and other material from outside SPIKE retain their own licenses. The SPIKES Studio application and the FreeCAD workbench have separate application and license boundaries, even where their source is kept in this repository. See [third-party notices](THIRD_PARTY_NOTICES.md) and the license supplied with each component for details.
 
+SPIKE's extension code is part of this repository and follows the repository
+license unless a file or extension states otherwise. An extension that connects
+to a separately installed engine does not include that engine or change its
+license. Users obtain optional engines from their own projects under those
+projects' terms.
+
 A SPIKE screenshot may show a third-party board or model. SPIKE's license does not replace the terms attached to that material. Please preserve source attributions and applicable notices when redistributing examples or screenshots.
 
 ## Contributions

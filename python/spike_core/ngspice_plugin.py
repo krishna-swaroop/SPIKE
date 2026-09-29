@@ -71,7 +71,7 @@ def ngspice_manifest() -> SolverPluginManifest:
         state="available" if executable else "unavailable",
         model_status="solver_dependent" if executable else "unsupported",
         validation="The adapter is operational only for explicit netlists. Extracted PCB RLC co-simulation requires separate validation.",
-        license="ngspice: primarily BSD-3-Clause with component exceptions; SPIKE adapter: MIT",
+        license="ngspice: see the installed distribution's component licenses; SPIKE adapter: Apache-2.0",
         bundled=False,
         priority=60,
         limits={

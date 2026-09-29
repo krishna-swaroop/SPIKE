@@ -121,7 +121,11 @@ see [third-party notices](THIRD_PARTY_NOTICES.md).
 - The KiCad project and its contributors for the PCB ecosystem SPIKE works with.
 - The Tauri, React, Three.js, Plotly.js, and Lucide projects behind the desktop interface and plots.
 - The NumPy, SciPy, Shapely/GEOS, PyVista, wxPython, nanobind, Matplotlib, mplcursors, ReportLab, Apache Arrow, jsonschema, and Eigen projects used by the Python and native tooling.
-- The ngspice, openEMS, OpenFOAM, and FreeCAD communities, and Robert Fennis for EMerge, which SPIKE can connect to when separately installed.
+- [ngspice](https://ngspice.sourceforge.io/) and its contributors for the optional circuit engine.
+- [openEMS](https://openems.de/) and [CSXCAD](https://github.com/thliebig/CSXCAD) contributors for the optional electromagnetic solver and geometry tools.
+- Robert Fennis and the [EMerge](https://github.com/FennisRobert/EMerge) contributors for the optional electromagnetic solver used in the ESP32 antenna example.
+- The [OpenFOAM](https://www.openfoam.com/) community for the optional airflow solver.
+- The [FreeCAD](https://www.freecad.org/) community for the optional mechanical CAD integration.
 - Berkeley Lab and the Regents of the University of California for the Marble reference board, and uysan for the open `iot-esp-eth` ESP32 board used in the worked example.
 - Contributors, testers, issue reporters, and documentation authors who help improve SPIKE.
 

@@ -96,10 +96,9 @@ capacitance, harmonic magnetodynamics, Maxwell fields, and lumped-circuit
 coupling are displayed separately from implemented SPIKE adapter capabilities.
 Their presence never enables a Run command.
 
-Because a linked adapter is a GPL derivative, redistribution requires a
-GPL-compatible adapter license and the applicable source, notice, and dependency
-obligations. The process boundary is an engineering isolation measure, not legal
-advice or an automatic commercial-licensing exemption.
+A linked sparseLizard adapter must comply with sparseLizard's GPL-2.0-or-later
+terms, including applicable source and notice obligations when redistributed.
+The separate-process design does not remove those obligations.
 
 ## EMI Pipeline
 

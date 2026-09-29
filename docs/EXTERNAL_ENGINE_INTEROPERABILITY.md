@@ -45,10 +45,9 @@ DesignIR + AnalysisSpec
   -> provenance, visualization, comparison, and report consumers
 ```
 
-External engines are never downloaded implicitly. Developer-runtime detection
-checks configured runtime paths and `PATH`. Merely opening a project cannot
-install or execute an engine. Binary signatures and administrator allowlists
-remain production-packaging gates rather than current discovery guarantees.
+External engines are never downloaded implicitly. Runtime detection checks
+configured paths and `PATH`. Merely opening a project cannot install or execute
+an engine. Discovery does not authenticate an installed binary.
 
 ## CLI surface
 
@@ -288,12 +287,14 @@ resident-memory controls. The 16 GiB limit is an output quota, not a RAM limit.
   `python/spike_core/openems_adapter_source.py` over isolated stdin. The exported
   `run_openems.py` is never an execution authority.
 - Engine logs are artifacts and must not be interpreted as trusted HTML.
-- Bundling or redistributing an engine requires a current license, platform,
-  export-control, and maintenance review.
-- Production bundles must add signed manifests or administrator allowlists
-  before claiming authenticated third-party engine discovery.
-- openEMS is GPL-3.0-or-later; the SPIKE adapter remains MIT. Distribution must
-  preserve the applicable license boundary and notices.
+- SPIKE does not bundle openEMS. The [openEMS solver](https://github.com/thliebig/openEMS)
+  is GPL-3.0-or-later; SPIKE's adapter source is Apache-2.0 under the
+  [repository license](../LICENSE). Each separately installed component keeps
+  its own license. If you redistribute a component, follow its license and
+  include the notices and source it requires.
+- Signed manifests or administrator allowlists would be packaging controls;
+  they are not conditions of either license or guarantees of current runtime
+  discovery.
 
 ## Validation requirements
 

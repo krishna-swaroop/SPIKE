@@ -10,7 +10,7 @@ The Nubis Communications SignalIntegrity project is a useful behavioral
 reference for interconnected S-parameter blocks, de-embedding, virtual probing,
 calibration, waveform processing, and eye-diagram workflows. Its implementation
 is GPL-3.0-or-later, so SPIKE does not copy, vendor, import, or link that code
-into the MIT/open-core core.
+into SPIKE's Apache-2.0-licensed modules.
 
 SignalIntegrity may be supported later as an optional external-process adapter.
 That adapter must exchange files or versioned JSON through SPIKE's solver

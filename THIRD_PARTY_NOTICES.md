@@ -11,8 +11,8 @@ SPIKE uses open-source libraries and can connect to separately installed tools. 
 | NumPy, SciPy, PyVista, wxPython, nanobind, Matplotlib, mplcursors, ReportLab, Apache Arrow/PyArrow, jsonschema, and Eigen | Python worker, native kernels, visualization, and reports | Versions are recorded in the Python requirements and native build files. Consult each installed package's license. |
 | Shapely and GEOS | Geometry handling | Shapely is BSD 3-Clause; its bundled GEOS library is identified under LGPL-2.1 in the Windows wheel metadata. |
 | FreeCAD SPIKE Workbench | Optional geometry exchange | The workbench under `integrations/freecad/SPIKEWorkbench/` has its own MIT license. FreeCAD is a separate project. |
-| Robert Fennis's EMerge | Optional antenna and EM solver used through `extensions/emerge_suite/` | EMerge is separately installed and retains its own terms; it is not included with SPIKE. |
-| ngspice, openEMS/CSXCAD, and OpenFOAM | Optional circuit, EM, and airflow engines | These are separate projects and installations. See their own distributions for license details. |
+| Robert Fennis's [EMerge](https://github.com/FennisRobert/EMerge) | Optional antenna and EM solver used through `extensions/emerge_suite/` | Separately installed; [EMerge's license](https://github.com/FennisRobert/EMerge/blob/main/LICENSE) identifies GPL-2.0-or-later Gmsh-derived components and a CC0 materials database. SPIKE does not include the EMerge runtime. |
+| [ngspice](https://ngspice.sourceforge.io/), [openEMS/CSXCAD](https://openems.de/), and [OpenFOAM](https://www.openfoam.com/) | Optional circuit, EM, and airflow engines | Separately installed; each project supplies its own license. SPIKE does not include these runtimes. |
 | sparseLizard | Optional native adapter | `integrations/sparselizard-native/LICENSE` identifies the adapter as GPL-2.0-or-later; the upstream runtime has its own GPL notices. |
 
 ## Boards and documentation images

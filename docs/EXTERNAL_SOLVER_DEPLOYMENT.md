@@ -176,7 +176,7 @@ documented ECXML/API/export workflow permitted by the customer's entitlement.
 SPIKE must not ship Siemens binaries, license files, installers, or activation
 logic. The connector must record engine version, entitlement/connection state
 without secrets, project units, material mapping, boundary conditions, and
-imported-result provenance. The open-core product must continue to provide an
+imported-result provenance. SPIKE must continue to provide an
 independent OpenFOAM path.
 
 ## ECAD/MCAD And FreeCAD

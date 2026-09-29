@@ -52,7 +52,7 @@ differential channels.
 
 The Nubis/Teledyne LeCroy SignalIntegrity project is GPLv3. SPIKE may use its
 published workflow ideas and standard mathematics, but GPL implementation code
-must not be copied into or linked with SPIKE's MIT/open-core modules.
+must not be copied into SPIKE's Apache-2.0-licensed modules.
 
 A future optional adapter must therefore run as a separate process and exchange
 only documented RLGC, Touchstone, waveform, or JSON data. The adapter manifest

@@ -953,13 +953,12 @@ ambient paths, and optional backward-Euler RC transients. It is an approximate
 engineering precheck: geometry spreading, radiation, airflow, conjugate heat
 transfer, electrothermal feedback, and release qualification remain absent.
 
-## Commercialization boundary
+## License boundary
 
-The schemas, package specification, importer SDK direction, and conformance
-fixtures may be openly documented. Native solver implementations and advanced
-workflows may remain proprietary. External adapter licences must be reviewed
-before distribution or embedding; process isolation is an engineering boundary,
-not legal advice or an automatic licence solution.
+SPIKE-owned schemas, documentation, fixtures, and solver code follow the
+[repository license](../LICENSING.md) unless a file states another license.
+Separately installed engines retain their own terms; running them in a separate
+process does not change those terms.
 
 No release may claim a capability solely because an external GPL or other
 third-party engine can run it. The capability ledger and release gates require
