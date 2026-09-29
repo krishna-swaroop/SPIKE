@@ -71,5 +71,4 @@ and its values are not absolute antenna gain.
   the relevant worker or external engine and a complete setup.
 
 Continue with the [full ESP32 example](../examples/esp32/README.md) for inputs,
-solver settings, and rerun instructions, or the [short demo guide](ESP32_DEMO_GUIDE.md)
-to present these views to someone else.
+solver settings, and rerun instructions.

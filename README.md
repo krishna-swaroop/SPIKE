@@ -35,8 +35,6 @@ Current limits are summarized below and described in
 
 Start with the [five-minute walkthrough](docs/ESP32_QUICKSTART.md) to import
 the board, open saved thermal and antenna results, and probe the viewport.
-The [60–90-second demo guide](docs/ESP32_DEMO_GUIDE.md) walks through the same
-views as a short presentation and includes a recording outline.
 
 ![ESP32 board imported into SPIKE's 3D viewport](examples/esp32/evidence/viewport_3d.png)
 
@@ -151,7 +149,9 @@ numerical comparison.
 
 ## License
 
-SPIKE-owned code and documentation are licensed under [Apache 2.0](LICENSE).
+Copyright 2026 Yawar B (wayri) and SPIKE contributors.
+SPIKE-owned code and documentation are licensed under [Apache 2.0](LICENSE),
+except where a file or directory specifies different terms.
 Dependencies, external engines, and example boards retain their own licenses;
 see [third-party notices](THIRD_PARTY_NOTICES.md).
 

@@ -2,6 +2,12 @@
 
 SPIKE uses open-source libraries and can connect to separately installed tools. Their own license files govern those components. This page also records the sources of boards and images shown in SPIKE documentation.
 
+SPIKE's Apache-2.0 license covers its own code; it does not relicense these
+components. Bundled dependencies retain their license and notice files.
+Optional solver runtimes are obtained separately from their upstream projects.
+An adapter's license and the connected engine's license are separate; consult
+the license for the version you install or redistribute.
+
 ## Software and integrations
 
 | Project | How SPIKE uses it | Source and terms |
