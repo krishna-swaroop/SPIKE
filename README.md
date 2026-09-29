@@ -17,10 +17,19 @@ community preview, available as source and an unsigned Windows x64 installer.
 
 An [experimental Linux build](docs/LINUX_EXPERIMENTAL.md) is being tested.
 
-**Work in progress:** SPIKE is provided **AS IS**, without warranty or
-guarantee, as set out in the [Apache License 2.0](LICENSE). Check inputs,
-assumptions, and results before relying on them. Current limits are summarized
-below and described in [Solver Status](docs/SOLVER_STATUS.md).
+**Disclaimer:** SPIKE is a work in progress and is provided **AS IS**, without
+warranty or guarantee of any kind, including accuracy, reliability, or fitness
+for a particular purpose. Use it at your own risk. To the extent permitted by
+applicable law, and unless otherwise agreed in writing, Yawar B (wayri) and
+the contributors are not liable for any damage, loss, or other consequences
+arising from using or being unable to use SPIKE, including incorrect results,
+design errors, equipment damage, data loss, or financial loss. You are
+responsible for checking inputs, assumptions, and results before relying on
+them. This summarizes the warranty and liability provisions in the
+[Apache License 2.0](LICENSE); the license terms govern.
+
+Current limits are summarized below and described in
+[Solver Status](docs/SOLVER_STATUS.md).
 
 ## ESP32 PCB and antenna simulation examples
 
