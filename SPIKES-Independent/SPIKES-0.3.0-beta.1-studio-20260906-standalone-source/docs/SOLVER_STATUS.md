@@ -341,7 +341,7 @@ comparison evidence and cannot independently promote a native SPIKE workflow.
   qualification yet
 - Competitive claim gate: whole-product ngspice parity/superiority is blocked.
   The ten fail-closed gates and current machine-readable status are documented
-  in `docs/SPIKES_COMPETITIVE_GATES.md` and
+  in the separate engine tests and
   `docs/validation/spikes-ngspice-competitive-gate.json`.
 - Benchmarks: a bounded accuracy-first harness supplies analytical cases,
   warmups/repeats, hashes, explicit timing scope, and a no-shell external JSON
