@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: Apache-2.0
 """Read-only mesh topology diagnostic for the pinned removed-board DC case."""
 from __future__ import annotations
 
