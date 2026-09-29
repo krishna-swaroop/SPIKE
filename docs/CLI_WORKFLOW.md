@@ -44,7 +44,7 @@ python -m python.spike_core.cli report dc-result.json --report-format csv --repo
 data. Run only when preflight reports `can_solve: true`. Add `--include-cells`
 only when full cell geometry is needed inline; otherwise use `mesh-preview`.
 The result includes voltages, currents, copper loss, mesh data, warnings, and
-provenance. A completed run alone does not establish convergence or accuracy.
+run settings. A completed run alone does not establish convergence or accuracy.
 
 ## Prepare and run AC R/L extraction
 
@@ -72,7 +72,7 @@ python -m python.spike_core.cli report ac-result.json --report-format html --rep
 
 The AC result reports series resistance, partial inductance,
 single-reference approximate capacitance and dielectric conductance, complex
-impedance versus frequency, warnings, and provenance. It does not establish
+impedance versus frequency, warnings, and run details. It does not establish
 validated multiport PDN impedance or arbitrary-geometry capacitance.
 
 ## Other commands

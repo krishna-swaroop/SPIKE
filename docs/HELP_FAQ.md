@@ -22,7 +22,7 @@ No. The exact diagnostic entry identifies recoverable and retryable states and g
 
 ## Why did opening a project lose the original CAD connection?
 
-A project retains an embedded source snapshot and identities. It is not a continuously synchronized CAD session. Review source provenance, import diagnostics and the active design before importing a changed board. Save an independent revision if you need a baseline.
+A project retains an embedded board snapshot and object identities. It is not a continuously synchronized CAD session. Review the board source, import diagnostics, and active design before importing a changed board. Save an independent revision if you need a baseline.
 
 ## Why is the 3D board blank or slow?
 
@@ -50,7 +50,7 @@ Time-domain analysis requires explicit DC, a suitable uniform frequency grid and
 
 ## Does importing IBIS or a SPICE model make the model accurate?
 
-No. Verify model provenance, pin mapping, supported syntax, corners and operating conditions. The SI endpoint reduction has explicit approximation limits. Nonlinear switching and protocol-compliance claims require the corresponding supported model and independent evidence.
+No. Check where the model came from, its pin mapping, supported syntax, corners, and operating conditions. The SI endpoint reduction has explicit approximation limits. Nonlinear switching and protocol-compliance claims require the corresponding supported model and independent evidence.
 
 ## Why is my prepared thermal or EMI case not a result?
 
@@ -58,7 +58,7 @@ Preparation writes a case. Execution requires a ready compatible adapter and suc
 
 ## Does the thermal color map contain all solver samples?
 
-The visualization may use a bounded sample preview. Inspect field counts and retained artifact/provenance metadata. The UI must not manufacture unsampled values. See [Thermal workflow](THERMAL_WORKFLOW.md) for the exact display limit and unit conversions.
+The visualization may use a bounded sample preview. Check the field sample count and saved result details. The UI must not manufacture unsampled values. See [Thermal workflow](THERMAL_WORKFLOW.md) for the exact display limit and unit conversions.
 
 ## Why are probes empty or in different units?
 

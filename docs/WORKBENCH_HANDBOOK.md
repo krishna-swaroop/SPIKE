@@ -37,7 +37,7 @@ See [DC solver](DC_SOLVER.md), [PI path analysis](PI_PATH_ANALYSIS.md), and [Sol
 
 ## PI: AC extraction and PDN
 
-Define the source-to-load path, explicit reference/return, frequency range, point count, via plating and mesh settings. Extract the supported geometry parasitics, then inspect port definitions and provenance before using the result in a circuit. Do not interpret partial inductance as a complete loop result without the corresponding return definition. PDN candidate comparison requires the same topology, limits and operating assumptions across candidates.
+Define the source-to-load path, explicit reference/return, frequency range, point count, via plating and mesh settings. Extract the supported geometry parasitics, then inspect port definitions and run settings before using the result in a circuit. Do not interpret partial inductance as a complete loop result without the corresponding return definition. PDN candidate comparison requires the same topology, limits and operating assumptions across candidates.
 
 **Example:** retain one baseline request, change one decoupling candidate, and compare the impedance curves and limit crossings on the same frequency grid. Record ESR/ESL and mounting assumptions. A lower sampled peak alone does not establish broadband stability or regulator-loop stability.
 
@@ -112,7 +112,7 @@ See [Network workbench](SIGNAL_INTEGRITY_NETWORK_WORKBENCH.md) and [Engine gates
 
 Define the domain, candidate nets, return paths, excitation, requested frequency range, probes and resource limits. Run preflight and the screening pre-pass before selecting a qualified external field route. Review the generated test schematic. The chamber view exposes setup geometry, DUT placement and observations; geometry alone does not establish a solved radiated-emission field.
 
-**Example:** retain a baseline excitation and return, then change one return-path assumption. Compare screening evidence under the same setup. For a field run, retain the prepared case, runtime provenance, convergence and returned field data. Prepared, screened, blocked and solved are distinct outcomes.
+**Example:** retain a baseline excitation and return, then change one return-path assumption. Compare screening evidence under the same setup. For a field run, keep the prepared case, solver version, convergence information, and returned field data. Prepared, screened, blocked and solved are distinct outcomes.
 
 See [EMI workflow](EMI_WORKFLOW.md) and [Chamber workflow](emi-chamber-workflow.md).
 
@@ -136,7 +136,7 @@ See [Visualization and limits](RESULT_VISUALIZATION_AND_LIMITS.md).
 
 ## Reports, exports and verification
 
-Preview the engineering report after selecting the relevant PI, SI or Thermal workspace. Verify result identity, model status, units, numerical warnings, plots and provenance. Print/PDF uses the report preview's print action. Probe CSV exports measurements; Touchstone exports network data; SPICE exports the explicit circuit; STEP exports available mechanical geometry. Save instance retains a project revision. Export buttons do not create solver results.
+Preview the engineering report after selecting the relevant PI, SI or Thermal workspace. Check the selected result, model status, units, numerical warnings, plots, and run settings. Print/PDF uses the report preview's print action. Probe CSV exports measurements; Touchstone exports network data; SPICE exports the explicit circuit; STEP exports available mechanical geometry. Save instance retains a project revision. Export buttons do not create solver results.
 
 Accuracy and validation runs the installed benchmark corpus. Inspect the individual check and tolerance; a passing corpus does not validate every model or every physical regime. External Engine Center distinguishes detection, registration, readiness and qualification. Settings includes interface, visualization, resource and shortcut preferences.
 

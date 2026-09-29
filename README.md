@@ -44,7 +44,7 @@ For more examples, see the [thermal walkthrough](docs/THERMAL_USER_GUIDE.md),
 | Signal integrity | Analyze loaded RLGC or Touchstone channels with explicit ports and terminations; inspect S-parameters, reflection/VSWR, TDR/TDT, waveforms, eyes, and NEXT/FEXT. | Port-network results do not contain spatial E/H fields. Nonlinear IBIS-AMI models and protocol checks are not implemented in this workflow. |
 | Thermal | Solve object-node, 2D board-plate, and layered steady/transient board models with explicit powers, heat paths and boundaries. Compare still-air, sealed-box, and forced-air presets; inspect layer maps, temperature history, case/junction estimates and board-aligned result overlays. | Cooling presets use specified heat-transfer coefficients instead of solving airflow. Board grids omit detailed package geometry and conjugate heat transfer. |
 | Electromagnetics | Run EMerge on the exported antenna model and view its solved S-parameters, 2D cuts, and sampled 3D radiation pattern in SPIKE. The EM workspace also offers separate openEMS and internal screening workflows. | The SPIKE-to-EMerge adapter exports selected antenna and reference copper as a two-layer model with one dielectric; other layers and components are omitted. The 3D display interpolates and normalizes EMerge's solved angular samples, so its radius and color show relative pattern shape rather than absolute gain. |
-| Visualization and reports | Orbit or inspect the board in 2D/3D, toggle geometry and result layers, probe returned values, compare studies, and preview/export reports with units, provenance, warnings, and validity state. | Only quantities returned by the selected analysis can be plotted or probed. |
+| Visualization and reports | Orbit or inspect the board in 2D/3D, toggle geometry and result layers, probe returned values, compare studies, and preview/export reports with units, run settings, warnings, and result status. | Only quantities returned by the selected analysis can be plotted or probed. |
 | Automation | Use the local worker/CLI, extension manager, solver manager, and opt-in MCP bridge. LM Studio and Ollama can call an allowlisted local tool set for inspection, setup, studies, and admitted analyses. | Local models need a separately installed runtime and tool-capable model. MCP access does not grant arbitrary file writes, shell commands, extension trust, or unsupported solves. |
 
 ### Circuit simulation choices
@@ -82,7 +82,7 @@ describe installation, permissions, and session trust for other local packages.
 | [Net Inventory](extensions/net-inventory/spike-extension.json) | Example SDK utility that counts normalized nets and conductors and emits report data. | Inventory only; it performs no numerical analysis. |
 
 The [extension analysis contract](docs/EXTENSION_ANALYSIS_API.md) binds external
-results to the current design and checks schema, provenance, units, and bounds;
+results to the current design and checks their format, source, units, and bounds;
 these checks do not repeat an external engine's calculation. The SDK's
 [field-data and mesh-field examples](extension_sdk/README.md) demonstrate
 handoff and display, not supported solver integrations.

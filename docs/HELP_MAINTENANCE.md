@@ -21,7 +21,7 @@ The control inventory records every matched JSX button/input/select/textarea and
 
 Dynamic options, controls generated outside these JSX primitives, and every runtime state are not claimed as exhaustively exercised. Add authored explanations and representative runtime captures as these controls evolve. Do not call a static inventory complete interaction verification.
 
-## Screenshot provenance
+## Screenshot sources
 
 Historical workspace/layout/report screenshots are retained as archival assets. Current user-facing PCB examples use Marble v1.4.4 captures from the running SPIKE interface and retain their source and capture scope in the captions.
 

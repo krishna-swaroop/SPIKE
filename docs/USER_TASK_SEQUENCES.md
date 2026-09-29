@@ -25,7 +25,7 @@ over this workflow guidance. For executable capability limits, read
 7. Run **Preview mesh** and correct terminal, connectivity, time, or memory
    preflight issues. A passing preflight is not convergence evidence.
 8. Run DC and wait for a completed or failed operation. Inspect result status,
-   model status, provenance, fields, probes, warnings, and convergence evidence.
+   model status, run settings, fields, probes, warnings, and convergence information.
 9. Save the project, then choose **Reports -> Engineering**.
 
 ![Marble v1.4.4 in the SPIKE 3D workspace](../app/public/help/marble-workspace-3d.png)
@@ -33,7 +33,7 @@ over this workflow guidance. For executable capability limits, read
 *Evidence: SPIKE 0.2.12 local browser capture after source-importing Marble
 v1.4.4. The component bodies are procedural models; this does not demonstrate
 the native desktop worker or a completed solver result. See
-`THIRD_PARTY_NOTICES.md` for the pinned revision and provenance.*
+`THIRD_PARTY_NOTICES.md` for the board source and license.*
 
 ## Inspect layout and select electrical objects
 
@@ -121,7 +121,7 @@ location, or a populated probe table.
 2. Use a connected-conductor mesh for supported DC/quasi-static paths. A 3D
    conductor-volume preview is geometry inspection, not a full-wave result.
 3. Save terminal placement, mesh, limits, and solver choice before running.
-4. Read provenance and model status before interpreting a heatmap or probe.
+4. Check run settings and model status before interpreting a heatmap or probe.
    `Approximate`, `Unsupported`, and `Failed to converge` are distinct states.
 5. For publishable DC work, compare at least three mesh sizes and retain the
    convergence comparison with the result.
@@ -147,17 +147,17 @@ pin mapping, or ngspice handoff.
 
 ## Create and review an engineering report
 
-1. Save the project and confirm the selected result has intended provenance,
+1. Save the project and confirm the selected result has the intended settings,
    warnings, status, and probes.
 2. Choose **Reports -> Engineering** to open the integrated preview.
 3. Review definition, source/load table, stackup, analytics, fields, warnings,
-   solver provenance, validation state, and reproducibility record.
+   solver version, result status, and saved run details.
 4. If the banner says **ANALYSIS NOT RUN**, use the document only as a setup
    and design record; return to the analysis workflow for numerical output.
 5. Use **Print** for the operating-system print/PDF route or **Export HTML**
    for an interactive self-contained report.
 6. Open the exported artifact offline and confirm that values, units, warnings,
-   model status, and provenance match the preview.
+   model status, and run details match the preview.
 7. For `SPIKE-BE-REPORT-E-0001`, follow
    [report recovery](../TROUBLESHOOTING.md#report-generation-or-export-fails).
 

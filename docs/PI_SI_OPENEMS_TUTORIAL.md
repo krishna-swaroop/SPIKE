@@ -10,7 +10,7 @@ and saved results, but cannot run the local worker or native file dialogs.
 **Result status matters.** The workflows below are engineering previews. An
 imported board, a completed preflight, and a plotted result do not establish
 mesh convergence or agreement with a fabricated board. Check the result's
-`status`, `model_status`, warnings, ports, units, and provenance before using
+`status`, `model_status`, warnings, ports, units, and run details before using
 numbers. See the current [solver status](SOLVER_STATUS.md) and
 [validation record](validation/SI_CAPABILITY_VOLUME_PEEC_20260928.md).
 
@@ -64,7 +64,7 @@ identified as assumptions.
 3. Select a compatible installed internal solver in **Solver Manager**. Run
    **Preview mesh** and fix connectivity, terminal, or resource diagnostics.
 4. Run the DC solve. Inspect the voltage at the load, source-to-load drop,
-   branch current, current density, loss, warnings, and result provenance.
+   branch current, current density, loss, warnings, and run details.
 5. Repeat at several mesh sizes with the same terminals and material
    assumptions. Save the project and open **Reports → Engineering** for a
    reviewable result record.
@@ -339,7 +339,7 @@ meet that bar.
 For error codes and longer recovery procedures, see the
 [error catalog](ERROR_CODE_CATALOG.md) and [troubleshooting guide](../TROUBLESHOOTING.md).
 
-## Image provenance
+## Image credits
 
 Figures 1, 2, 4, and 6 reuse SPIKE-owned reviewed help captures already in
 this repository; their captions state what is and is not shown. Figures 3, 5,

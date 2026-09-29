@@ -111,7 +111,7 @@ is wrapped to ±180 degrees. This is an experimental integration: an admitted re
 and independent correlation are reviewed. A far-field pattern is not a
 calibrated EMI compliance prediction.
 
-## Developer notes and method provenance
+## How the adapter works
 
 `board_adapter.py` admits DesignIR and constructs `spike/emerge-board-case/v1`.
 `runner.py` calls EMerge's PCB geometry, mesher, frequency sweep, lumped port,

@@ -2108,7 +2108,7 @@ export default function App() {
       projectPayload: projectData(),
     });
     setReportPreview({ fileName: reportName, html: reportHtml });
-    setStatus(result || resultRecords.length ? "Engineering report preview ready with analytics, results, probes, and provenance" : "Report preview ready without a completed analysis result");
+    setStatus(result || resultRecords.length ? "Engineering report preview ready with results, probes, and run details" : "Report preview ready without a completed analysis result");
   };
   const exportPreparedReport = async () => {
     if (!reportPreview) return;

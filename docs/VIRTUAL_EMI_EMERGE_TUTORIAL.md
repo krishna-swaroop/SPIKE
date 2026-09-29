@@ -54,7 +54,7 @@ $py = 'build/qualification-py311/Scripts/python.exe'
 The recorded preflight returned `can_screen: true`, `can_prepare: true`,
 `can_run: false`, with `EMI_SOLVER_UNAVAILABLE`. Here `can_run` refers to the
 EM tab's eligible **openEMS field-scan** route, not the EMerge extension. The
-screen returned `completed_screening_only`; its provenance says
+screen returned `completed_screening_only`; the saved result records
 `field_solver_executed: false` and `compliance_prediction: false`. This board
 has only one candidate RF net, so its normalized score is `0`: **there is no
 comparative ranking**, and zero does not mean low radiation or safety.

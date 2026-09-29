@@ -167,7 +167,7 @@ export function validateSiProtocolSuite(value: unknown): string[] {
     if (rule?.operator !== "informational" && !Number.isFinite(rule?.value)) errors.push(`rules[${index}].value must be finite.`);
     if (rule?.operator === "range" && (!Number.isFinite(rule?.maximum) || Number(rule.maximum) < Number(rule.value))) errors.push(`rules[${index}] range maximum is invalid.`);
   });
-  if (!suite.provenance?.title?.trim() || !suite.provenance?.locator?.trim()) errors.push("provenance title and locator are required.");
+  if (!suite.provenance?.title?.trim() || !suite.provenance?.locator?.trim()) errors.push("source title and locator are required.");
   if (suite.qualification === "validated" && suite.custom) errors.push("A custom builder definition cannot self-assert validated qualification.");
   return errors;
 }

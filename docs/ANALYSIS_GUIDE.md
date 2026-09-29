@@ -29,7 +29,7 @@ available only after a trusted EMerge extension runtime probe reports
 The guide then points to the EMerge net/port, sweep, mesh, Run, and result
 controls. EMerge radiation opens **EM → EMerge**. Runtime availability is not
 solver readiness, and EMerge S-parameter results remain `unvalidated`. Results
-retain their model status, warnings, and provenance. See the
+retain their model status, warnings, and run details. See the
 [EMerge antenna walkthrough](EMERGE_ANTENNA_WALKTHROUGH.md) for a concrete
 two-layer setup and interpretation of its 3D pattern and S-parameter plots.
 

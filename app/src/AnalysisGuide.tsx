@@ -22,7 +22,7 @@ const importStep: GuideStep = {
 
 const resultStep: GuideStep = {
   title: "Inspect the result",
-  instruction: "Open the result view and inspect plots, warnings, model status, and provenance. A visible curve alone does not establish solver validation.",
+  instruction: "Open the result view and inspect plots, warnings, model status, and run details. A visible curve alone does not establish solver validation.",
   destination: "results",
   selectors: ['[data-guide="emerge-result"]', '.result-visualizer', '[data-guide="results"]', '.extension-output'],
   optional: true,
@@ -99,7 +99,7 @@ const flows: Record<GuideFlow, { label: string; capability: string; next: string
       ...resultStep,
       destination: "emerge-em-result",
       selectors: ['[data-guide="emerge-em-result"]'],
-      instruction: "Inspect solved and display-interpolated 3D patterns, angular plots, and the chamber overlay. The bench visibility control changes only the view. Review units, model status, warnings and provenance; relative patterns are not an EMI compliance prediction.",
+      instruction: "Inspect solved and display-interpolated 3D patterns, angular plots, and the chamber overlay. The bench visibility control changes only the view. Review units, model status, warnings, and run settings; relative patterns are not an EMI compliance prediction.",
     }],
   },
   pi: {

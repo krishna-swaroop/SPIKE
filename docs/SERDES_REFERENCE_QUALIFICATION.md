@@ -60,7 +60,7 @@ This scope also excludes 10GBASE-T. BASE-T requires a twisted-pair PHY with
 PAM16 signaling, DSP, echo/crosstalk cancellation and protocol-specific link
 behavior that this linear NRZ workflow does not implement.
 
-## Method provenance
+## Reference sources
 
 The 10.3125 GBd reference rate is motivated by the IEEE 802.3 public presentation
 [10GBASE-KR PMD](https://ieee802.org/3/ap/public/jan05/brink_01_0105.pdf).

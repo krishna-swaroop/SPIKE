@@ -217,7 +217,7 @@ export default function SiWorkflowWorkbench({ design, initialResult, initialStep
     {rec(result.touchstone).error ? <p className="sparam-error">Export: {String(rec(result.touchstone).error)}</p> : null}
     <p>Time domain: <b>{String(rec(result.time_domain).status)}</b> · Passivity: <b>{String(rec(rec(rec(result.network).checks).passivity).status)}</b> · Reciprocity: <b>{String(rec(rec(rec(result.network).checks).reciprocity).status)}</b> · Compliance: not evaluated</p>
     <SiWorkflowPlots result={result} />
-    {result.extraction ? <details><summary>Channel provenance and external port mapping</summary><pre>{pretty(result.extraction)}</pre></details> : null}
+    {result.extraction ? <details><summary>Channel source and external port mapping</summary><pre>{pretty(result.extraction)}</pre></details> : null}
     {Array.isArray(result.resonance_fits) && result.resonance_fits.length > 0 ? <details open><summary>Declared RLC resonance / Q fits (not physical-mode qualification)</summary><pre>{pretty(result.resonance_fits)}</pre></details> : null}
     <details open><summary>Noise, effective passive values and model limitations</summary><pre>{pretty({ noise: result.noise, passives: result.passives, ibis: result.ibis, warnings: result.warnings, limitations: result.limitations })}</pre></details>
   </>)}

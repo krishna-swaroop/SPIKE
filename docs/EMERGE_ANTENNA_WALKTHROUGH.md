@@ -60,7 +60,7 @@ After a completed EMerge radiation run, SPIKE opens the **EM** workspace in
 beside the imported board, where it can be rotated and probed. **EM → Chamber**
 opens the separate bench view and **EM → Board + pattern** returns to the board.
 The results pane shows the interactive 3D surface, angular cut, S-parameters,
-warnings, and provenance. The Extension Manager can also show the result. The 3D
+warnings, and run details. The Extension Manager can also show the result. The 3D
 surface uses EMerge samples on a 13 × 25 theta/phi grid at each solved
 frequency; the surface between samples is display interpolation. Its radius
 is proportional to **relative electric-field amplitude** and its color is
@@ -81,7 +81,7 @@ One port provides S11 only. Compare the resonance or return-loss shape with a
 credible reference only after checking that port position, reference
 impedance, geometry, materials, and frequency definitions agree. SPIKE records
 the result in normal analysis history, with `model_status: unvalidated` and a
-case digest for provenance. Hover a 3D sample to read theta, phi, and relative
+digest that identifies the solved case. Hover a 3D sample to read theta, phi, and relative
 dB. Hover a 2D curve for the nearest solved sample; click or press Enter to pin
 its value. These probes read saved solver samples and do not trigger another solve.
 
