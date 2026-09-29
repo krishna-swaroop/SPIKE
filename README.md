@@ -12,7 +12,7 @@ The separately versioned SPIKES circuit engine has a `0.3.0-beta.1` release
 candidate. See [public release readiness](docs/PUBLIC_RELEASE_READINESS.md) for
 its distribution status.
 
-SPIKE is an offline-first PCB power-integrity workbench with a Tauri desktop
+SPIKE is an offline-first PCB analysis workbench with a Tauri desktop
 host, React/TypeScript interface, native 2D/3D visualization, a versioned local
 Python worker, and replaceable solver modules. It uses normalized design and
 result contracts so the desktop, CLI, reports, CAD adapters, and future EDA or
@@ -91,20 +91,64 @@ hash, import limits, and image provenance are recorded in the
 [Marble qualification plan](docs/MARBLE_CLI_QUALIFICATION_PLAN.md) and
 [third-party notices](THIRD_PARTY_NOTICES.md).
 
-## Supported workflow
+## Capabilities in the engineering preview
 
-- Import KiCad PCB designs into normalized `DesignIR`.
-- Preserve ordered copper layers, stackup, tracks, vias, pads, zones,
-  components, rigid-flex regions, and import diagnostics.
-- Define sources, loads, return paths, probes, mesh settings, and limits.
-- Preview and validate solver geometry.
-- Run installed DC/PEEC-related capabilities through the local worker or CLI.
-- Inspect native layout/3D geometry and solver-provided result fields.
-- Save a SPIKE project package and generate engineering reports.
+| Area | Available workflow | Current limit |
+|---|---|---|
+| Board and project | Import KiCad PCB data into `DesignIR` with ordered stackup, copper, tracks, vias, pads, filled zones, components, rigid-flex regions, and import diagnostics. Inspect 2D layers and the assembled 3D scene; select nets and objects, place probes, and save versioned `.spike` projects with multiple study cases. | Review source-specific import diagnostics and 3D model substitutions. A rendered board is not proof that solver geometry or material properties are complete. |
+| Power integrity and circuits | Set sources, loads, returns, mesh and limits; run capability-gated DC voltage-drop, harness, PEEC, PDN, power-tree, and staged circuit workflows. Explicit converter models can carry voltage and efficiency or loss assumptions. | Most PCB PI paths are approximate or experimental; the PI release gate remains blocked. Footprints alone do not define converter behavior or validated parasitics. |
+| Signal integrity | Analyze loaded RLGC or Touchstone channels with explicit ports and terminations; inspect S-parameters, reflection/VSWR, TDR/TDT, waveforms, eyes, and NEXT/FEXT. | Channel models and board extraction are experimental. Network results do not supply spatial E/H fields, nonlinear IBIS-AMI behavior, or protocol compliance. |
+| Thermal | Solve object-node, 2D board-plate, and layered steady/transient board models with explicit powers, heat paths and boundaries. Compare still-air, sealed-box, and forced-air presets; inspect layer maps, temperature history, case/junction estimates and board-aligned result overlays. | Cooling presets are assumed coefficients, not resolved airflow. Board grids are approximate and uncorrelated with measured boards; package detail and conjugate heat transfer are absent. |
+| Electromagnetics | Use EM setup and screening, inspect external-engine S-parameters and relative 2D/3D antenna radiation patterns in the result viewers and supported viewport displays. | Antenna examples use restricted geometry and unvalidated arbitrary-board physics. The EMI screen and radiation views are not compliance predictions. |
+| Visualization and reports | Orbit or inspect the board in 2D/3D, toggle geometry and result layers, probe returned values, compare studies, and preview/export reports with units, provenance, warnings, and validity state. | A plot or overlay shows returned data; it does not establish convergence, measured correlation, or an engineering signoff. |
+| Automation | Use the local worker/CLI, extension manager, solver manager, and opt-in MCP bridge. LM Studio and Ollama can call an allowlisted local tool set for inspection, setup, studies, and admitted analyses. | Local models need a separately installed runtime and tool-capable model. MCP access does not grant arbitrary file writes, shell commands, extension trust, or unsupported solves. |
 
-KiCad is the implemented native importer. IPC-2581, ODB++, Gerber packages,
-Altium, Cadence Allegro, and Siemens Xpedition are architectural targets, not
-current native-import claims. See [Importer Architecture](docs/IMPORTER_ARCHITECTURE.md).
+KiCad is the implemented native PCB importer. The bundled ODB++ extension adds
+an experimental import path; its normalized `DesignIR` is not a lossless copy
+of the source archive. IPC-2581, Gerber packages, Altium, Cadence Allegro, and
+Siemens Xpedition remain architectural targets, not native-import claims. See
+[Importer Architecture](docs/IMPORTER_ARCHITECTURE.md),
+[task sequences](docs/USER_TASK_SEQUENCES.md), and
+[Solver Status](docs/SOLVER_STATUS.md) for executable paths and validity.
+
+## Bundled extensions
+
+These are the seven packages under [`extensions/`](extensions/). Their Python
+entry points run in separate processes. A bundled package supplies an adapter
+or utility; it does not install an optional third-party engine or validate its
+numerical results. The [Extension Manager and SDK](extension_sdk/README.md)
+describe installation, permissions, and session trust for other local packages.
+
+| Extension | Capability | Dependency and limitation |
+|---|---|---|
+| [OpenEMS Suite](extensions/openems_suite/README.md) | Preflight, prepare, and run explicit-port high-frequency PI and SI interconnect sweeps; import S-parameters and supported near-to-far-field outputs. | Requires separately installed openEMS/CSXCAD. Exactly one excited port per run; no DC PI or thermal coupling. Unsupported PCB topology blocks a solve, and arbitrary-board accuracy remains unvalidated. |
+| [EMerge Suite](extensions/emerge_suite/README.md) | Build a selected-net two-layer PCB model for one/two-port S-parameters, 2D far-field cuts, and sampled 3D radiation patterns, including bounded dielectric-cover examples. | Requires a compatible separate EMerge Python runtime. Limited pads, filled copper, ports, rectangular bounds, dielectric and PEC assumptions; other layers, many board features, and complex surroundings are omitted. Patterns are relative and unvalidated for compliance. |
+| [ODB++ Import](docs/ODB_AND_HARNESS_EXTENSIONS.md) | Import a job archive/folder, choose a board step, inspect import quality, and open the normalized board in SPIKE. | Experimental; unsupported symbols, compositing, and panel step repeats are reported. Keep the original ODB++ export because a `.spike` snapshot is not the source archive. |
+| [Harness Engineering](docs/ODB_AND_HARNESS_EXTENSIONS.md) | Import JSON/CSV/TSV connections, edit wire nets and lengths, validate connectivity, compile an electrical fragment, bind an assembly, and export JSON. | Portable connection model only; proprietary harness databases and real-board qualification are outside this preview. |
+| [MCAD Collaboration](docs/MCAD_EXPORT.md) | Preview a mechanical assembly and export named STEP, FreeCAD, BREP, and metadata artifacts. | Requires installed FreeCAD. Geometry exchange is experimental and does not validate mechanical or thermal physics; inspect listed omissions before export. |
+| [PWM Converter Analysis](extensions/converter-analysis/spike-extension.json) | Check converter-study readiness and create a versioned setup envelope. | Assistant and validator only: the extension does not contribute a converter solver run or independently validate efficiency and loss models. |
+| [Net Inventory](extensions/net-inventory/spike-extension.json) | Example SDK utility that counts normalized nets and conductors and emits report data. | Inventory only; it performs no analysis or numerical validation. |
+
+The [extension analysis contract](docs/EXTENSION_ANALYSIS_API.md) binds external
+results to the current design and checks schema, provenance, units, and bounds;
+SPIKE does not independently validate an external engine's physics. The SDK's
+[field-data and mesh-field examples](extension_sdk/README.md) demonstrate
+handoff and display, not supported solver integrations.
+
+## Other optional integrations
+
+| Integration | Available boundary | Limitation |
+|---|---|---|
+| [ngspice](docs/SOLVER_STATUS.md) | Separate explicit-netlist DC/AC/transient circuit adapter and staged PEEC-to-circuit workflows. | Circuit models and one-way handoff need review; this is not general PCB field/circuit co-simulation or full ngspice compatibility. |
+| [OpenFOAM](docs/THERMAL_WORKFLOW.md) | Experimental local steady open-air natural/forced-convection air-domain cases and imported T/U/p fields where the runtime is configured. | No PCB solids, conjugate heat transfer, enclosure qualification, or measured airflow correlation. |
+| [FreeCAD workbench](integrations/freecad/README.md) | Separate ECAD/MCAD exchange and board/assembly inspection workflow. | A companion integration with separate distribution terms; geometry exchange does not validate a solver result. |
+
+FastHenry, FastCap, and Elmer are discovery or registration entries without
+runnable SPIKE adapters. sparseLizard case preparation and a development
+self-test exist, but arbitrary PCB execution is disabled pending a qualified
+adapter and fixture evidence. See the [external-engine matrix](docs/EXTERNAL_ENGINE_INTEROPERABILITY.md)
+and [Solver Status](docs/SOLVER_STATUS.md) before planning work around these
+engines. None is downloaded automatically.
 
 ## Reference board
 
@@ -255,4 +299,5 @@ The separately versioned SPIKES circuit engine, the `spike-solvers`
 repository, and the FreeCAD workbench retain their existing terms.
 Review [the license boundary and release obligations](LICENSING.md) and
 [third-party notices](THIRD_PARTY_NOTICES.md) before distributing a build.
-The public release gate is still blocked.
+Production and binary release qualification remains open; the current 0.3.0
+source publication is a community preview.
