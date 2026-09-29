@@ -956,10 +956,16 @@ fn contains_worker(workspace: &Path) -> bool {
             .is_file()
 }
 
+#[cfg(debug_assertions)]
 fn source_workspace() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("..")
         .join("..")
+}
+
+#[cfg(not(debug_assertions))]
+fn source_workspace() -> PathBuf {
+    PathBuf::new()
 }
 
 fn is_development_source_workspace(workspace: &Path) -> bool {
@@ -993,9 +999,6 @@ fn resolve_worker_root(app: &tauri::AppHandle) -> Result<PathBuf, String> {
     }
     if let Ok(resource_dir) = app.path().resource_dir() {
         candidates.push(resource_dir);
-    }
-    if !cfg!(debug_assertions) {
-        candidates.push(source_workspace());
     }
     for candidate in candidates {
         let normalized = candidate.canonicalize().unwrap_or(candidate);

@@ -486,6 +486,13 @@ def build(*, keep_work: bool = False) -> tuple[Path, Path]:
     BUILD_ROOT.mkdir(parents=True, exist_ok=True)
     artifact_dir = RESOURCE_ROOT / "spike-worker"
     _remove_managed_tree(artifact_dir, RESOURCE_ROOT)
+    staged_extensions = BUILD_ROOT / "staged-extensions"
+    _remove_managed_tree(staged_extensions, BUILD_ROOT)
+    shutil.copytree(
+        ROOT / "extensions",
+        staged_extensions,
+        ignore=shutil.ignore_patterns("__pycache__", "*.pyc", "*.pyo"),
+    )
 
     command = [
         sys.executable,
@@ -533,7 +540,7 @@ def build(*, keep_work: bool = False) -> tuple[Path, Path]:
         "--add-data",
         f"{ROOT / 'python' / 'spike_core' / 'freecad_assembly_export.py'}{os.pathsep}python/spike_core",
         "--add-data",
-        f"{ROOT / 'extensions'}{os.pathsep}extensions",
+        f"{staged_extensions}{os.pathsep}extensions",
         "--add-data",
         f"{ROOT / 'schemas'}{os.pathsep}schemas",
         str(ROOT / "scripts" / "spike_worker_entry.py"),
@@ -561,6 +568,7 @@ def build(*, keep_work: bool = False) -> tuple[Path, Path]:
         spec = BUILD_ROOT / "spec"
         _remove_managed_tree(work, BUILD_ROOT)
         _remove_managed_tree(spec, BUILD_ROOT)
+        _remove_managed_tree(staged_extensions, BUILD_ROOT)
     return executable, manifest
 
 

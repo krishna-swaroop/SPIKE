@@ -8,9 +8,9 @@ Version 0.3.0 is available as source. SPIKE runs locally and includes a
 command-line interface. See the [setup guide](docs/DEVELOPER_GUIDE.md) to run
 it from a checkout.
 
-The [0.3.0 downloads](https://github.com/wayri/SPIKE-Main/releases/tag/v0.3.0)
-include an unsigned Windows MSI and an [experimental Linux package](docs/LINUX_EXPERIMENTAL.md)
-for Ubuntu 24.04 on x86-64.
+The [0.3.0 release](https://github.com/wayri/SPIKE-Main/releases/tag/v0.3.0)
+currently provides source code. An [experimental Linux build](docs/LINUX_EXPERIMENTAL.md)
+is being tested.
 
 **Work in progress:** SPIKE is provided **AS IS**, without warranty or
 guarantee, as set out in the [Apache License 2.0](LICENSE). Check inputs,
