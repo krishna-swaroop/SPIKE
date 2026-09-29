@@ -1,5 +1,16 @@
 # SPIKE — PCB Simulation for KiCad
 
+[![Latest release: v0.3.0](https://img.shields.io/badge/latest_release-v0.3.0-blue)](https://github.com/wayri/SPIKE-Main/releases/tag/v0.3.0)
+[![Community preview](https://img.shields.io/badge/status-community_preview-orange)](https://github.com/wayri/SPIKE-Main/releases/tag/v0.3.0)
+[![Windows x64 download](https://img.shields.io/badge/download-Windows_x64-0078D4)](https://github.com/wayri/SPIKE-Main/releases/download/v0.3.0/SPIKE_0.3.0_x64-setup.exe)
+[![License: Apache 2.0](https://img.shields.io/badge/license-Apache_2.0-blue)](LICENSE)
+
+[![Power integrity](https://img.shields.io/badge/analysis-power_integrity-476582)](#pcb-analysis-capabilities)
+[![Signal integrity](https://img.shields.io/badge/analysis-signal_integrity-476582)](#pcb-analysis-capabilities)
+[![Thermal analysis](https://img.shields.io/badge/analysis-thermal-476582)](#pcb-analysis-capabilities)
+[![EM and RF](https://img.shields.io/badge/analysis-EM_%26_RF-476582)](#pcb-analysis-capabilities)
+[![Circuit simulation](https://img.shields.io/badge/analysis-circuits-476582)](#circuit-simulation-choices)
+
 SPIKE is an open-source PCB analysis and simulation workbench for KiCad boards.
 Explore **power integrity (PI), signal integrity (SI), board thermal analysis,
 and RF antenna simulation** in one desktop app. Import a board, inspect its
