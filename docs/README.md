@@ -1,101 +1,28 @@
-# SPIKE Documentation Index
+# SPIKE documentation
 
-Use this page as the entry point for checked-in documentation. Capability and
-validation documents describe what exists; planning documents must not be used
-as evidence that a workflow is implemented.
+Start with the guides that match what you want to do. [Solver status](SOLVER_STATUS.md)
+describes which analyses are available and what their results mean.
 
-## Users and operators
+## Use SPIKE
 
-| Need | Start here | Then read |
-|---|---|---|
-| Find the executable PI, SI, thermal and two solver-extension labs | [Capability tutorial atlas](CAPABILITY_TUTORIAL_ATLAS.md) | [Solver status](SOLVER_STATUS.md), [virtual EMI/EMerge lab](VIRTUAL_EMI_EMERGE_TUTORIAL.md) |
-| Complete a desktop task | [User task guide](USER_TASK_SEQUENCES.md) | [Result visualization](RESULT_VISUALIZATION_AND_LIMITS.md), [project format](PROJECT_FORMAT.md) |
-| Learn PI, SI, and OpenEMS Suite step by step | [Illustrated PI/SI and openEMS tutorial](PI_SI_OPENEMS_TUTORIAL.md) | [SI workflow](SI_WORKFLOW.md), [solver status](SOLVER_STATUS.md) |
-| Reproduce PI/SI inputs, outputs, plots and fail-closed gates | [PI/SI worked casebook](PI_SI_WORKED_CASEBOOK.md) | [Capture provenance](tutorial-assets/pi-si-casebook/README.md), [solver status](SOLVER_STATUS.md) |
-| Run the implemented SI suite step by step | [Full SI user guide](SI_USER_GUIDE.md) | [Analytical coupled-line input](../examples/si/analytical-coupled-rlgc.json), [SI capability record](validation/SI_CAPABILITY_VOLUME_PEEC_20260928.md) |
-| Diagnose a failure | [Troubleshooting](../TROUBLESHOOTING.md) | [Error-code catalog](ERROR_CODE_CATALOG.md), [stability and recovery](STABILITY_AND_RECOVERY.md) |
-| Use the CLI | [CLI workflow](CLI_WORKFLOW.md) | [CLI reference](CLI.md) |
-| Connect an offline local LLM | [Local LLM and MCP guide](LOCAL_LLM_MCP.md) | [User task guide](USER_TASK_SEQUENCES.md), [solver status](SOLVER_STATUS.md) |
-| Check solver availability or validity | [Solver status](SOLVER_STATUS.md) | [Validation program](VALIDATION_PROGRAM.md), [release qualification](PI_RELEASE_QUALIFICATION.md) |
-| Understand solver mathematics and research provenance | [Solver handbook](SOLVER_HANDBOOK.md) | [Annotated references](SOLVER_REFERENCES.md), [recorded citation inventory](generated/solver-reference-inventory.json) |
-| Run SERDES and actuator reference checks | [SERDES reference](SERDES_REFERENCE_QUALIFICATION.md) | [Actuator map review](ACTUATOR_FORCE_MAP.md), [delivery and recent research](SERDES_ACTUATOR_DELIVERY.md) |
-| Configure PI | [PI path analysis](PI_PATH_ANALYSIS.md) | [Reference coverage and acceptance](PI_REFERENCE_COVERAGE_20260924.md), [DC solver](DC_SOLVER.md), [transient PI](TRANSIENT_PI.md), [PDN screening](PDN_SCREENING.md) |
-| Configure SI/network analysis | [Signal-integrity workbench](SIGNAL_INTEGRITY_NETWORK_WORKBENCH.md) | [Bounded geometry channels](GEOMETRY_DERIVED_SI_CHANNEL.md), [S-parameter integration](SIGNAL_INTEGRITY_NETWORK_INTEGRATION.md) |
-| Learn board thermal from setup to saved plots | [Illustrated thermal user guide](THERMAL_USER_GUIDE.md) | [Thermal workflow](THERMAL_WORKFLOW.md), [solver status](SOLVER_STATUS.md) |
-| Configure transient or external thermal work | [Thermal workflow](THERMAL_WORKFLOW.md) | [Transient thermal and viewport](TRANSIENT_THERMAL_AND_VIEWPORT.md) |
-| Configure EMI work | [EMI workflow](EMI_WORKFLOW.md) | [Engine gates](SI_SPICE_EMI_RF_ENGINE_GATES.md) |
-| Configure loaded SI and model handling | [SI workflow](SI_WORKFLOW.md) | [Solver status](SOLVER_STATUS.md) |
-| Use an optional external engine | [External-engine interoperability](EXTERNAL_ENGINE_INTEROPERABILITY.md) | [Deployment](EXTERNAL_SOLVER_DEPLOYMENT.md), engine-specific adapter documents |
-| Build a Windows preview installer | [Windows installer](WINDOWS_INSTALLER.md) | [Licensing policy](../LICENSING.md), [release qualification](PI_RELEASE_QUALIFICATION.md) |
-| Qualify the packaged Wave 1 assembly | [Wave 1 packaged acceptance](WAVE_1_PACKAGED_ASSEMBLY_ACCEPTANCE.md) | [Project package v3](SPIKE_PROJECT_PACKAGE_V3.md), [Windows installer](WINDOWS_INSTALLER.md) |
+| Task | Guide |
+| --- | --- |
+| Import a board and explore the desktop | [User tasks](USER_TASK_SEQUENCES.md) · [Result visualization](RESULT_VISUALIZATION_AND_LIMITS.md) |
+| Run power analysis | [PI paths](PI_PATH_ANALYSIS.md) · [DC solver](DC_SOLVER.md) · [Transient PI](TRANSIENT_PI.md) |
+| Run signal analysis | [SI user guide](SI_USER_GUIDE.md) · [SI workflow](SI_WORKFLOW.md) |
+| Explore board temperature | [Thermal user guide](THERMAL_USER_GUIDE.md) · [Thermal workflow](THERMAL_WORKFLOW.md) |
+| Explore antenna and EM results | [EM workflow](EMI_WORKFLOW.md) · [EMerge example](VIRTUAL_EMI_EMERGE_TUTORIAL.md) |
+| Work through examples | [Tutorial atlas](CAPABILITY_TUTORIAL_ATLAS.md) · [ESP32 example](../examples/esp32/README.md) |
+| Connect a local language model | [Local LLM and MCP](LOCAL_LLM_MCP.md) |
+| Diagnose an error | [Troubleshooting](../TROUBLESHOOTING.md) · [Error codes](ERROR_CODE_CATALOG.md) |
+| Use the command line | [CLI workflow](CLI_WORKFLOW.md) · [CLI reference](CLI.md) |
 
-The in-app Help Center is the compact operational reference. The checked-in
-[user task guide](USER_TASK_SEQUENCES.md) provides longer sequences and uses the same
-three reviewed screenshots from `app/public/help`.
+## Develop SPIKE
 
-## Developers
+- [Development setup](../DEVELOPMENT.md) and [architecture](../ARCHITECTURE.md)
+- [Subsystem index](SUBSYSTEM_INDEX.md), [contracts](CONTRACTS.md), and [developer guide](DEVELOPER_GUIDE.md)
+- [Solver handbook](SOLVER_HANDBOOK.md) and [references](SOLVER_REFERENCES.md)
+- [Security model](SECURITY_MODEL.md) and [contributing](../CONTRIBUTING.md)
 
-Read these in order for a new checkout:
-
-1. [Architecture](../ARCHITECTURE.md) for runtime boundaries and dependency
-   direction.
-2. [Development](../DEVELOPMENT.md) for setup, launch paths, and checks.
-3. [Developer guide](DEVELOPER_GUIDE.md) for extension sequences.
-4. [Subsystem index](SUBSYSTEM_INDEX.md) for file ownership.
-5. [Contracts](CONTRACTS.md), [design principles](DESIGN_PRINCIPLES.md), and
-   [language policy](LANGUAGE_POLICY.md) before cross-cutting work.
-6. [Engineering governance](ENGINEERING_GOVERNANCE.md) and
-   [test fixtures](TEST_FIXTURES.md) before changing numerical behavior.
-7. [Research provenance and clean-room engineering](RESEARCH_AND_CLEAN_ROOM_ENGINEERING.md)
-   before deriving or qualifying physics from published work.
-
-## Architecture records
-
-| Boundary | Canonical document |
-|---|---|
-| Runtime and dependency direction | [Architecture](../ARCHITECTURE.md) |
-| Design/result contracts | [Contracts](CONTRACTS.md) |
-| Import adapters | [Importer architecture](IMPORTER_ARCHITECTURE.md) |
-| Solver plugins | [Solver-plugin architecture](SOLVER_PLUGIN_ARCHITECTURE.md) |
-| Desktop visualization | [Visualization architecture](VISUALIZATION_ARCHITECTURE.md) |
-| Extensions | [Extension architecture](EXTENSION_ARCHITECTURE.md) |
-| Proposed FreeCAD assembly and thermal companion | [Extension development plan](FREECAD_ASSEMBLY_THERMAL_EXTENSION_PLAN.md) |
-| FreeCAD placement feedback and solid clearances | [Implemented collaboration workflow](FREECAD_COLLABORATION.md) |
-| Worker/native desktop | [Native desktop runtime](NATIVE_DESKTOP_RUNTIME.md) |
-| Errors and recovery | [Error handling](ERROR_HANDLING.md) |
-| Persistence | [Project format](PROJECT_FORMAT.md) |
-| Security | [Security model](SECURITY_MODEL.md) |
-| Accepted cross-cutting decisions | [Architecture decision records](adr/) |
-
-When these documents disagree, executable contracts and tests identify current
-behavior, `SOLVER_STATUS.md` identifies capability status, and the discrepancy
-must be corrected rather than resolved by assuming the broader claim.
-
-## Validation and release evidence
-
-- [Validation program](VALIDATION_PROGRAM.md): evidence levels and benchmark
-  policy.
-- [Validation records](validation/): checked-in inputs, outputs, and focused
-  qualification notes.
-- [PI release qualification](PI_RELEASE_QUALIFICATION.md): PI release gates.
-- [Release runtime qualification](RELEASE_RUNTIME_QUALIFICATION.md): source and
-  packaged-worker parity.
-- [Engineering governance](ENGINEERING_GOVERNANCE.md): review and release
-  requirements.
-
-An input fixture, screenshot, or passing packaging test is not by itself proof
-of arbitrary-board numerical validation.
-
-## Document maintenance
-
-- Keep implemented behavior, planned work, and architecture targets visibly
-  distinct.
-- Link to an owning source module, contract, fixture, or test for detailed
-  implementation claims.
-- Add an ADR for a changed process boundary, contract version, persistence
-  format, rendering engine, implementation language, or plugin interface.
-- Use only reviewed repository assets. Do not add screenshots copied from
-  external products or untraceable generated imagery.
-- Update `SUBSYSTEM_INDEX.md` when ownership changes.
-- Run `python scripts/check_architecture.py` and verify local Markdown links and
-  images after documentation changes.
+Optional external engines are separate installations. Their availability is
+shown in SPIKE before an analysis runs.

@@ -47,7 +47,7 @@ bounded behavioral models do not establish protocol or field qualification.
 
 The [10.3125 GBd reference checks](SERDES_REFERENCE_QUALIFICATION.md) exercise
 analytic loaded transfers and a matched NRZ eye. They do not establish KR/SFI
-compliance or implement the BASE-T PHY. The [all-interface delivery plan](SERDES_ACTUATOR_DELIVERY.md)
+compliance or implement the BASE-T PHY. The all-interface delivery plan
 separates those remaining requirements from actuator work.
 
 The new [actuator force-map reviewer](ACTUATOR_FORCE_MAP.md) checks supplied
@@ -73,12 +73,12 @@ explicitly report spatial field maps as unsupported. Bounded four-port
 NEXT/FEXT and eye execution evidence is in
 [the SI capability record](validation/SI_CAPABILITY_VOLUME_PEEC_20260928.md).
 
-The [2026-09-20 reliability increment](SI_FIELD_RELIABILITY_20260920.md)
+The 2026-09-20 reliability increment
 corrects finite-record PAM4 sampling and introduces controlled cross-board
 mesh refinement with fixed PML interfaces. These corrections do not promote
 the experimental workflow to protocol or general field qualification.
 
-The [local qualification repair](QUALIFICATION_REPAIR_20260920.md) documents
+The local qualification repair documents
 the CPython 3.11 native rebuild, prerequisite checks and corrected benchmark
 fixture. It does not qualify other Python binaries or unfinished physics.
 
@@ -90,7 +90,7 @@ The machine-readable PI promotion gate is
 and currently reports `blocked`: packaged/source runtime parity passes, but the
 native benchmark has skipped cases and none of the six required native PI and
 circuit workflows has reached a validated release state. See
-`docs/PI_RELEASE_QUALIFICATION.md` for the exact contract. External solvers are
+the implementation and tests for the exact contract. External solvers are
 comparison evidence and cannot independently promote a native SPIKE workflow.
 
 ## Operational
@@ -139,7 +139,7 @@ the fail-closed legacy behavior. Results remain approximate driving-point
 networks and are not calibrated SI S matrices; see
 [the volume PEEC record](validation/SI_CAPABILITY_VOLUME_PEEC_20260928.md).
 
-The [2026-09-24 correction record](PEEC_VOLUME_CORRECTION_20260924.md) documents
+The 2026-09-24 correction record documents
 the original real-board nonpassivity and a local finite-volume
 rectangular/annular implementation. Earlier routed Marble matrices passed the
 energy gate without projection, but an independent support audit found current
@@ -229,7 +229,7 @@ capacitance, MNA, failed-result/export and reviewed-port checks plus local rollo
   explicit reviewed package, and is not a general FEA or electrothermal path.
 - Release status: the integrated core remains experimental and cannot satisfy
   the native SPICE-compatible workflow gate until independently validated under
-  `docs/PI_RELEASE_QUALIFICATION.md`.
+  the native PI qualification tests.
 
 ### SPIKES owned circuit kernel and CLI
 
@@ -342,7 +342,7 @@ capacitance, MNA, failed-result/export and reviewed-port checks plus local rollo
   wall-clock pacing. The same implementation is reusable through the
   `spikes_dashboard` static library. This is not complete SPICE syntax, a
   deterministic hard-real-time scheduler, or physical-HIL qualification. See
-  `docs/SPIKES_CONSOLE_DASHBOARD.md`.
+  the separate circuit engine tests.
 - Linear analysis wave 3: versioned executable Python-reference contracts add
   uncorrelated resistor Johnson-Nyquist noise propagated through the exact AC
   MNA system, central-difference complex AC sensitivities for R/L/C values, and
@@ -350,7 +350,7 @@ capacitance, MNA, failed-result/export and reviewed-port checks plus local rollo
   and RC sensitivity/pole fixtures pass. This does not include semiconductor
   noise, nonlinear operating-point linearization, adjoint sensitivity,
   Volterra/distortion analysis, or pole-zero cancellation reduction; see
-  `docs/SPIKES_LANGUAGE_ANALYSIS_WAVE3.md`.
+  the separate circuit engine's tests.
 - Nonlinear language/analysis waves 4-6: a safe differentiable AST supports
   bounded memoryless multi-control B voltage/current expressions with analytic
   gradients and hierarchical scoping. A dense reference Newton engine executes
@@ -366,7 +366,7 @@ capacitance, MNA, failed-result/export and reviewed-port checks plus local rollo
   frequency-dependent one-source/one-tone third-order Volterra reference are
   executable. Device-internal BSIM correlated noise, arbitrary multi-tone
   Volterra grids, harmonic balance, and complete SPICE3 expression/deck
-  semantics remain absent. See `docs/SPIKES_LANGUAGE_ANALYSIS_WAVE6.md`.
+  semantics remain absent.
 - Hierarchy: bounded `.subckt`/`.ends` definitions and positional `X` instances
   support forward references, nested deterministic flattening, private local
   nodes, hierarchical probes, and hierarchical DC-source sweep paths. Recursive
@@ -421,7 +421,7 @@ capacitance, MNA, failed-result/export and reviewed-port checks plus local rollo
   path now provides a smaller charge-control form with an implicit diffusion
   state, junction capacitance, BE/BDF2 stamping, reverse-recovery current, and
   additive C/Python ABI construction. Neither path is vendor-qualified; see
-  `docs/DYNAMIC_DIODE_WAVE1.md` and
+  the diode model tests and
   `docs/validation/NATIVE_DYNAMIC_DIODE_DAE.md`.
 - Complex-device extension foundation: immutable metadata declares electrical,
   thermal, rotational, translational, magnetic, and acoustic power ports;
@@ -435,13 +435,13 @@ capacitance, MNA, failed-result/export and reviewed-port checks plus local rollo
   strict finite port/state schemas, timeout and I/O limits, a fresh working
   directory, and stable failure codes. This is not hostile-code isolation, a
   solver callback ABI, or Verilog-A/OSDI/HDL compilation; see
-  `docs/SPIKES_COMPILED_BLOCKS.md`.
+  the separate circuit engine tests.
 - OSDI 0.3 DC boundary: trusted digest-reviewed modules can register directly
   as first-class C++ MNA elements. On Windows, hostile-marked OSDI DC requests
   instead use a digest-bound zero-capability AppContainer worker; real-model,
   forbidden-file, and denied-network probes pass. Transient/reactive, noise,
   limiting, OSDI 0.4, non-Windows hostile isolation, and general compiled-block
-  sandboxing remain open; see `docs/SPIKES_HDL_FRONTEND.md`.
+  sandboxing remain open; see the separate circuit engine tests.
 - Signed I/V references: bounded tabulated and analytic polynomial evaluators
   preserve negative voltage/current, generated versus absorbed power, exact
   small-signal slope, and explicitly authorized negative differential
@@ -458,12 +458,12 @@ capacitance, MNA, failed-result/export and reviewed-port checks plus local rollo
   uses independently decodable CRC-protected chunks, a hard file-size limit,
   recoverable torn tails, and lossless raw/zlib/XOR-zlib/LZMA codecs. Compression
   and disk I/O are not permitted to imply hard-real-time qualification; see
-  `docs/SPIKES_STREAMING_RESULTS.md`.
+  the separate circuit engine tests.
 - Qualified local model-index foundation: exact-digest model records and KiCad
   `Library:Symbol` mappings require explicit redistribution approval,
   license-evidence digests, reviewed qualification, complete one-to-one pin
   binding, and immutable parameter overrides. This is a fail-closed format,
-  not a populated vendor library; see `docs/SPIKES_MODEL_LIBRARY.md`.
+  not a populated vendor library; see the separate circuit engine tests.
 - Limits: no production compact semiconductor library,
   complete deck-syntax AC/noise/pole-zero/sensitivity coverage, complete SPICE
   behavioral semantics, production arbitrary-multitone frequency-dependent
@@ -476,7 +476,7 @@ capacitance, MNA, failed-result/export and reviewed-port checks plus local rollo
   qualification yet
 - Competitive claim gate: whole-product ngspice parity/superiority is blocked.
   The ten fail-closed gates and current machine-readable status are documented
-  in `docs/SPIKES_COMPETITIVE_GATES.md` and
+  in the separate circuit engine tests and
   `docs/validation/spikes-ngspice-competitive-gate.json`.
 - Benchmarks: a bounded accuracy-first harness supplies analytical cases,
   warmups/repeats, hashes, explicit timing scope, and a no-shell external JSON
@@ -491,7 +491,7 @@ capacitance, MNA, failed-result/export and reviewed-port checks plus local rollo
   checkpoint/replay, continuous pacing, and deadline-safe trip behavior. The
   report includes cold/warm timings, native-library digest, and host binding;
   hard-real-time, HIL, and competitive claims remain false. See
-  `docs/SPIKES_QUALIFICATION.md` and
+  the separate circuit engine tests and
   `artifacts/spikes-qualification-report-0.3.0-alpha.3-2026-08-31.json`.
 - Performance claims: none. Comparisons with QucsStudio, ngspice, PSIM,
   SIMPLIS, PSpice, and other engines require equal-model/equal-tolerance

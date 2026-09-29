@@ -53,7 +53,7 @@ executable before writing the manifest:
 The source-versus-packaged comparison is strict: a rejected capability request
 or a digest mismatch fails the worker build and prevents the manifest from
 being issued as qualified release evidence. The standalone command and current
-recorded failure are documented in `docs/RELEASE_RUNTIME_QUALIFICATION.md`.
+recorded failure are covered by the runtime qualification tests.
 
 These are deployment-integrity checks. They do not validate numerical accuracy for an arbitrary PCB or elevate a solver result to validated status.
 

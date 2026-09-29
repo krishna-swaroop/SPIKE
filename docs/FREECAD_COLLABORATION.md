@@ -137,5 +137,5 @@ The example contains `two-boards.spike`, `two-boards-session.json`,
 `two-boards.FCStd` and feedback recording a 15 mm gap. It contains no circuit or
 thermal qualification data.
 
-See the [thermal companion plan](FREECAD_ASSEMBLY_THERMAL_EXTENSION_PLAN.md) for
+See the thermal companion plan for
 the remaining thermal preparation, execution and field-import milestones.

@@ -46,7 +46,7 @@ Huray et al., *Fundamentals of a 3-D "snowball" model for surface roughness powe
 losses* (2007), [DOI:10.1109/SPI.2007.4512227](https://doi.org/10.1109/SPI.2007.4512227).
 Helmreich et al., *A Physical Surface Roughness Model and Its Applications*
 (2017), [DOI:10.1109/TMTT.2017.2695192](https://doi.org/10.1109/TMTT.2017.2695192).
-**Candidate/design guidance**, recorded in [conductor plan](AC_CONDUCTOR_MODEL_PLAN.md).
+**Candidate/design guidance**, recorded in conductor plan.
 The current public adapter admits none/Hammerstad, not these two models.
 Hammerstad is an empirical estimate; its exact primary edition is a provenance
 gap in the audited record. RMS roughness is not a substitute for Huray parameters.
@@ -214,7 +214,7 @@ licensed normative requirements and applicable clauses are not reconstructed.
 | D3 | Driver and Seegmiller (1985), [DOI:10.2514/3.8890](https://doi.org/10.2514/3.8890); [NASA backward step data](https://tmbwg.github.io/turbmodels/backstep_val.html) | [CFD corpus](CFD_PUBLIC_REFERENCE_CORPUS.md): measured data admitted; matching SPIKE prediction not executed. Retain corrected Reynolds-number and normalization notes. |
 | D4 | Parker and Smith (2020), [heated plenum dataset](https://digitalcommons.usu.edu/all_datasets/126/), [DOI:10.26078/cad3-j806](https://doi.org/10.26078/cad3-j806) | Selected thermal-flow dataset, not imported or simulated in the recorded evidence. |
 | D5 | [FAN-02, Zenodo 17909944](https://zenodo.org/records/17909944) | Candidate only in CFD corpus; complete operating-point/measurement/license admission remains required. |
-| D6 | [Berkeley Lab Marble](https://github.com/BerkeleyLab/Marble), [CERN-linked White Rabbit hardware](https://gitlab.com/ohwr/project/wr-switch-hw/) | [Pinned board evaluation](CERN_MARBLE_EVALUATION_20260920.md): hardware-source/import fixtures, NOT measured references. Preserve per-revision CERN OHL notices; no automatic redistribution admission. |
+| D6 | [Berkeley Lab Marble](https://github.com/BerkeleyLab/Marble), [CERN-linked White Rabbit hardware](https://gitlab.com/ohwr/project/wr-switch-hw/) | Pinned board evaluation: hardware-source/import fixtures, NOT measured references. Preserve per-revision CERN OHL notices; no automatic redistribution admission. |
 
 ## Verification and provenance gaps
 

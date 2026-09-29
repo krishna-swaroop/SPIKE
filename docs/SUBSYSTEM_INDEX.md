@@ -38,10 +38,10 @@ inventory/reduction live in `si_network_workflow.py`, `si_passives.py` and
 | `app/src/boardParser.ts` | Current local KiCad parser | Compatibility path for UI/demo loading |
 | `app/src/projectPackage.ts` | SPIKE package serialization | See `docs/PROJECT_FORMAT.md` |
 | `app/src/spiceWorkspace.ts` | Persisted PI/SI circuit workspace contract | See `docs/SPICE_WORKSPACE.md` |
-| `src/spikes/` | Owned SPIKES DC/nonlinear-diode and fixed-step RCL transient reference kernels plus stable C ABI | See `docs/SOLVER_STATUS.md` and `docs/SPIKES_C_ABI.md` |
-| `python/spikes/` | Standalone hierarchical RCLVI CLI, native ABI bridge, sessions, virtual instruments, digital events, device extensions, and model-builder contracts | See `docs/SPIKES_CLI.md` |
-| `python/spikes/streaming*.py` | Bounded rolling samples and trigger-driven continuous event capture | See `docs/SPIKES_STREAMING_RESULTS.md` |
-| `python/spikes/waveform_store.py` | Lossless chunked waveform compression, hard byte limits, and torn-tail recovery | See `docs/SPIKES_STREAMING_RESULTS.md` |
+| `src/spikes/` | Owned SPIKES DC/nonlinear-diode and fixed-step RCL transient reference kernels plus stable C ABI | Separate circuit engine source |
+| `python/spikes/` | Standalone hierarchical RCLVI CLI, native ABI bridge, sessions, virtual instruments, digital events, device extensions, and model-builder contracts | Separate circuit engine source |
+| `python/spikes/streaming*.py` | Bounded rolling samples and trigger-driven continuous event capture | Separate circuit engine source |
+| `python/spikes/waveform_store.py` | Lossless chunked waveform compression, hard byte limits, and torn-tail recovery | Separate circuit engine source |
 | `standalone/spikes_project/studio/python/spikes_studio/` | Qt-free wxPython Studio engineering preview, explicit native/ngspice batch routing, data-only library store | See `standalone/spikes_project/studio/docs/QT_FREE_WORKBENCH_IMPLEMENTATION.md` and ADR 0021; not the separate C++ wxWidgets board client |
 | `app/src/appSettings.ts` | Persisted UI preferences | Storage failure must be nonfatal |
 | `app/src/ProjectManager.tsx` | Project/recent-project workflow | Presentation layer only |
@@ -56,7 +56,7 @@ inventory/reduction live in `si_network_workflow.py`, `si_passives.py` and
 | `app/src/BoardViewport.tsx` | Three.js 3D scene and interaction | Legacy oversized; split scene, picking, overlays, controls |
 | `app/src/sceneResourceCache.ts` | Shared geometry/texture lifetime and decoded-scene LRU | Active sources are pinned; occurrence materials are independent |
 | `app/src/modelSceneLoader.ts` | Bounded model preparation and load retry policy | Stops obsolete generation dispatch |
-| `app/src/viewportPerformance.ts` | Linear scene indexes and list-window helpers | See `LARGE_SCENE_PERFORMANCE.md` |
+| `app/src/viewportPerformance.ts` | Linear scene indexes and list-window helpers | Source and tests |
 | `app/src/LayoutViewport.tsx` | 2D vector layout and interaction | Keep coordinate transform tested |
 | `app/src/layerPalette.ts` | Layer color policy | Keys and rendered colors must agree |
 | `app/src/contourField.ts` | Smoothed/contour result fields | Presentation only; no inferred physics |

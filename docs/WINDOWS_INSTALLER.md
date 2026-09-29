@@ -21,7 +21,7 @@ This does not promote the physics or release qualification state.
 The standard preview installers are unsigned and include troubleshooting and
 error-code references. For the 0.3.0 candidate, user-requested self-signed
 copies with subject `CN=Yawar B, O=wayri` are in
-`artifacts/windows/signed-preview`; see `docs/RELEASE_0_3_0_VERIFICATION.md`.
+`artifacts/windows/signed-preview`.
 Windows does not trust that certificate, and the copies have no timestamp.
 Neither set is approved for production engineering reliance.
 
@@ -46,7 +46,7 @@ The 2026-08-26 r10 preview build (generated
   `spike/packaged-worker-manifest/v2`, with runtime digest
   `8db5618aaa8c1e99b6bbfc9ee71887d3ad170f800f9013b5e40a0cf71f0dbd09`.
 - A packaged-worker reopen of the two-design, two-STEP-shape, direct-GLB Wave 1
-  assembly fixture. See [Wave 1 packaged acceptance](WAVE_1_PACKAGED_ASSEMBLY_ACCEPTANCE.md).
+  assembly fixture. See Wave 1 packaged acceptance.
 - The r10 packaged worker generated, persisted, and source-verified the typed
   Arrow v4 four-row probe; its artifact SHA-256 is
   `4c34bf4fd9c8029b5403bcf26d884f2c7a6ef88c02002b06fe7edb901260c6ac`.

@@ -841,7 +841,7 @@ as validated. The ledger does not implement a solver.
 The intended native platform covers PI DC, AC/PDN, transient and circuit,
 SI, thermal, magnetics, EMI, and multiphysics. Most of those workloads remain
 planned. Current executable boundaries are maintained in
-[SOLVER_STATUS.md](SOLVER_STATUS.md), [VALIDATION_PROGRAM.md](VALIDATION_PROGRAM.md),
+[SOLVER_STATUS.md](SOLVER_STATUS.md)
 and [SOLVER_PLUGIN_ARCHITECTURE.md](SOLVER_PLUGIN_ARCHITECTURE.md).
 
 ## External solver adapters
@@ -911,7 +911,7 @@ comparison where lawful, measured fixtures where available, deterministic
 package checks, import round trips, cancellation and worker-crash recovery,
 large-design resource testing, and CLI/desktop result equivalence. Results
 must retain assumptions, error bounds, convergence history, and known failure
-modes. See [VALIDATION_PROGRAM.md](VALIDATION_PROGRAM.md),
+modes. See
 [TEST_FIXTURES.md](TEST_FIXTURES.md), and [ERROR_HANDLING.md](ERROR_HANDLING.md).
 
 ### Bounded multi-board planning boundary

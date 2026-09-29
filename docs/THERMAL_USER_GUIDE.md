@@ -137,7 +137,7 @@ it represents distinct physical cooling.
 open-source dual-FMC carrier. Its source README states CERN OHL v1.2 and a
 U.S. Government rights notice. SPIKE does **not** bundle this board for the
 thermal example. The pinned SHA-256 and checkout instructions are also in the
-[Marble provenance record](MARBLE_CLI_QUALIFICATION_PLAN.md). Keep its upstream
+Marble provenance record. Keep its upstream
 README and notices with any redistributed board source.
 
 From the SPIKE repository root, obtain the exact tagged source:

@@ -21,7 +21,7 @@ approximation for a requested full-wave field solve.
 This table is a development architecture, **not an advertisement that all rows
 are complete**. Public `spike.mom_surface` remains unavailable: a basis library
 does not solve Maxwell's equations. Other broad workflow limitations remain in
-`DEPLOYABLE_SOLVER_PROGRAM.md` and `ENCLOSURE_PCB_INCREMENT.md`.
+the solver and enclosure implementation notes.
 
 ## Implemented mesh increment
 

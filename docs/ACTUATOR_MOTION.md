@@ -76,7 +76,7 @@ Run `python scripts/qualify_actuator_motion.py` to execute all three original
 actuator-class examples against an independently derived forced oscillator.
 The report includes input requests, hashes, displacement and energy errors,
 absolute and relative criteria, and full motion traces; any failed criterion
-returns a nonzero exit code. See [verification record](SOLVER_CLOCK_MOTION_20260920.md).
+returns a nonzero exit code. See verification record.
 
 `tests/python/test_actuator_motion.py` compares constant-force motion with its
 closed form, demonstrates second-order convergence against the closed-form

@@ -8,7 +8,7 @@
     "tests/python",
     "benchmarks"
   ],
-  "files_scanned": 935,
+  "files_scanned": 869,
   "scope": "Recorded links and DOIs only; not proof of reading, adoption, accuracy or license permission. Includes non-paper links.",
   "excluded": [
     "private repositories",
@@ -68,24 +68,6 @@
         {
           "file": "tests/python/test_windows_signing_contract.py",
           "line": 52
-        }
-      ]
-    },
-    {
-      "url": "https://aces-society.org/search.php?no=1&type=2&vol=41",
-      "occurrences": [
-        {
-          "file": "docs/SERDES_ACTUATOR_DELIVERY.md",
-          "line": 44
-        }
-      ]
-    },
-    {
-      "url": "https://ansys.synopsys.com/en-in/simulation-topics/what-is-power-integrity",
-      "occurrences": [
-        {
-          "file": "docs/PI_REFERENCE_COVERAGE_20260924.md",
-          "line": 50
         }
       ]
     },
@@ -189,15 +171,6 @@
       ]
     },
     {
-      "url": "https://arxiv.org/abs/2310.12087",
-      "occurrences": [
-        {
-          "file": "docs/PEEC_VOLUME_CORRECTION_20260924.md",
-          "line": 212
-        }
-      ]
-    },
-    {
       "url": "https://arxiv.org/abs/2507.18491",
       "occurrences": [
         {
@@ -216,15 +189,6 @@
         {
           "file": "python/spike_core/mom_surface_basis.py",
           "line": 11
-        }
-      ]
-    },
-    {
-      "url": "https://blog.freecad.org/2025/09/16/getting-started-with-fem/",
-      "occurrences": [
-        {
-          "file": "docs/FREECAD_ASSEMBLY_THERMAL_EXTENSION_PLAN.md",
-          "line": 168
         }
       ]
     },
@@ -405,10 +369,6 @@
       "url": "https://doc.openfoam.com/2606/tools/processing/boundary-conditions/rtm/derived/thermal/alphatWallFunction/",
       "occurrences": [
         {
-          "file": "docs/SST_RUNTIME_INCREMENT.md",
-          "line": 20
-        },
-        {
           "file": "python/spike_core/openfoam_turbulence.py",
           "line": 8
         }
@@ -426,10 +386,6 @@
     {
       "url": "https://doc.openfoam.com/2606/tools/processing/models/turbulence/ras/linear-evm/rtm/kOmegaSST/",
       "occurrences": [
-        {
-          "file": "docs/SST_RUNTIME_INCREMENT.md",
-          "line": 10
-        },
         {
           "file": "python/spike_core/openfoam_turbulence.py",
           "line": 7
@@ -572,10 +528,6 @@
       "url": "https://doi.org/10.1007/s001900000116",
       "occurrences": [
         {
-          "file": "docs/PEEC_VOLUME_CORRECTION_20260924.md",
-          "line": 208
-        },
-        {
           "file": "src/peec/volume_inductance.cpp",
           "line": 16
         }
@@ -587,24 +539,6 @@
         {
           "file": "python/spike_core/peec_conforming_dc.py",
           "line": 12
-        }
-      ]
-    },
-    {
-      "url": "https://doi.org/10.1016/j.mejo.2025.106612",
-      "occurrences": [
-        {
-          "file": "docs/SERDES_ACTUATOR_DELIVERY.md",
-          "line": 57
-        }
-      ]
-    },
-    {
-      "url": "https://doi.org/10.1016/j.mejo.2025.106641",
-      "occurrences": [
-        {
-          "file": "docs/SERDES_ACTUATOR_DELIVERY.md",
-          "line": 51
         }
       ]
     },
@@ -627,15 +561,6 @@
       ]
     },
     {
-      "url": "https://doi.org/10.1109/SPI.2007.4512227",
-      "occurrences": [
-        {
-          "file": "docs/AC_CONDUCTOR_MODEL_PLAN.md",
-          "line": 37
-        }
-      ]
-    },
-    {
       "url": "https://doi.org/10.1109/TCPMT.2023.3284551",
       "occurrences": [
         {
@@ -654,21 +579,8 @@
       ]
     },
     {
-      "url": "https://doi.org/10.1109/TMTT.2017.2695192",
-      "occurrences": [
-        {
-          "file": "docs/AC_CONDUCTOR_MODEL_PLAN.md",
-          "line": 40
-        }
-      ]
-    },
-    {
       "url": "https://doi.org/10.1147/rd.165.0470",
       "occurrences": [
-        {
-          "file": "docs/PEEC_VOLUME_CORRECTION_20260924.md",
-          "line": 207
-        },
         {
           "file": "src/peec/annular_inductance.cpp",
           "line": 42
@@ -812,16 +724,8 @@
       "url": "https://github.com/BerkeleyLab/Marble",
       "occurrences": [
         {
-          "file": "docs/CERN_MARBLE_EVALUATION_20260920.md",
-          "line": 27
-        },
-        {
           "file": "docs/HARNESS_PI.md",
           "line": 71
-        },
-        {
-          "file": "docs/MARBLE_CLI_QUALIFICATION_PLAN.md",
-          "line": 33
         },
         {
           "file": "docs/PI_SI_WORKED_CASEBOOK.md",
@@ -836,10 +740,6 @@
     {
       "url": "https://github.com/BerkeleyLab/Marble.git",
       "occurrences": [
-        {
-          "file": "docs/MARBLE_CLI_QUALIFICATION_PLAN.md",
-          "line": 18
-        },
         {
           "file": "docs/THERMAL_USER_GUIDE.md",
           "line": 146
@@ -883,15 +783,6 @@
         {
           "file": "docs/THERMAL_FIELD_JOB_CONTRACT.md",
           "line": 92
-        }
-      ]
-    },
-    {
-      "url": "https://github.com/FreeCAD/FreeCAD-documentation/blob/main/wiki/Assembly_Workbench.md",
-      "occurrences": [
-        {
-          "file": "docs/FREECAD_ASSEMBLY_THERMAL_EXTENSION_PLAN.md",
-          "line": 167
         }
       ]
     },
@@ -1021,105 +912,6 @@
       ]
     },
     {
-      "url": "https://github.com/wavenumber-eng/kicad_monkey",
-      "occurrences": [
-        {
-          "file": "docs/KICAD_MONKEY_BENCHMARK_PLAN.md",
-          "line": 6
-        }
-      ]
-    },
-    {
-      "url": "https://github.com/wavenumber-eng/kicad_monkey/blob/bc6796c1b8ce55bfbcb8b1771f3ecbc70658d34d/LICENSE",
-      "occurrences": [
-        {
-          "file": "docs/KICAD_MONKEY_BENCHMARK_PLAN.md",
-          "line": 19
-        }
-      ]
-    },
-    {
-      "url": "https://github.com/wavenumber-eng/kicad_monkey/blob/bc6796c1b8ce55bfbcb8b1771f3ecbc70658d34d/scripts/synthetic_corpus/common.py",
-      "occurrences": [
-        {
-          "file": "docs/KICAD_MONKEY_BENCHMARK_PLAN.md",
-          "line": 86
-        }
-      ]
-    },
-    {
-      "url": "https://github.com/wavenumber-eng/kicad_monkey/blob/bc6796c1b8ce55bfbcb8b1771f3ecbc70658d34d/tests/L1_parsing/test_L1_018_corpus_sexpr_passthrough.py",
-      "occurrences": [
-        {
-          "file": "docs/KICAD_MONKEY_BENCHMARK_PLAN.md",
-          "line": 54
-        }
-      ]
-    },
-    {
-      "url": "https://github.com/wavenumber-eng/kicad_monkey/blob/bc6796c1b8ce55bfbcb8b1771f3ecbc70658d34d/tests/L1_parsing/test_L1_020_pcb_projection_corpus.py",
-      "occurrences": [
-        {
-          "file": "docs/KICAD_MONKEY_BENCHMARK_PLAN.md",
-          "line": 59
-        }
-      ]
-    },
-    {
-      "url": "https://github.com/wavenumber-eng/kicad_monkey/blob/bc6796c1b8ce55bfbcb8b1771f3ecbc70658d34d/tests/L1_parsing/test_L1_023_rust_corpus_performance_memory.py",
-      "occurrences": [
-        {
-          "file": "docs/KICAD_MONKEY_BENCHMARK_PLAN.md",
-          "line": 127
-        }
-      ]
-    },
-    {
-      "url": "https://github.com/wavenumber-eng/kicad_monkey/blob/bc6796c1b8ce55bfbcb8b1771f3ecbc70658d34d/tests/corpus/README.md",
-      "occurrences": [
-        {
-          "file": "docs/KICAD_MONKEY_BENCHMARK_PLAN.md",
-          "line": 24
-        }
-      ]
-    },
-    {
-      "url": "https://github.com/wavenumber-eng/kicad_monkey/blob/bc6796c1b8ce55bfbcb8b1771f3ecbc70658d34d/tests/corpus/kicad.archive.toml",
-      "occurrences": [
-        {
-          "file": "docs/KICAD_MONKEY_BENCHMARK_PLAN.md",
-          "line": 30
-        }
-      ]
-    },
-    {
-      "url": "https://github.com/wavenumber-eng/kicad_monkey/blob/bc6796c1b8ce55bfbcb8b1771f3ecbc70658d34d/tests/performance/sexpr_corpus_cases.toml",
-      "occurrences": [
-        {
-          "file": "docs/KICAD_MONKEY_BENCHMARK_PLAN.md",
-          "line": 37
-        }
-      ]
-    },
-    {
-      "url": "https://github.com/wavenumber-eng/kicad_monkey/blob/bc6796c1b8ce55bfbcb8b1771f3ecbc70658d34d/tests/support_scripts/performance_provenance.py",
-      "occurrences": [
-        {
-          "file": "docs/KICAD_MONKEY_BENCHMARK_PLAN.md",
-          "line": 110
-        }
-      ]
-    },
-    {
-      "url": "https://github.com/wavenumber-eng/kicad_monkey/tree/bc6796c1b8ce55bfbcb8b1771f3ecbc70658d34d",
-      "occurrences": [
-        {
-          "file": "docs/KICAD_MONKEY_BENCHMARK_PLAN.md",
-          "line": 14
-        }
-      ]
-    },
-    {
       "url": "https://github.com/wayri/SPIKE-Main/blob/pi-si-guided-casebook/docs/MARBLE_R293_SI_TUTORIAL.md",
       "occurrences": [
         {
@@ -1129,15 +921,6 @@
         {
           "file": "docs/CAPABILITY_TUTORIAL_ATLAS.md",
           "line": 38
-        }
-      ]
-    },
-    {
-      "url": "https://gitlab.com/ohwr/project/wr-switch-hw",
-      "occurrences": [
-        {
-          "file": "docs/CERN_MARBLE_EVALUATION_20260920.md",
-          "line": 11
         }
       ]
     },
@@ -1407,15 +1190,6 @@
       ]
     },
     {
-      "url": "https://resources.altium.com/p/power-integrity-analysis",
-      "occurrences": [
-        {
-          "file": "docs/PI_REFERENCE_COVERAGE_20260924.md",
-          "line": 53
-        }
-      ]
-    },
-    {
       "url": "https://scdn.rohde-schwarz.com/ur/pws/dl_downloads/dl_common_library/dl_manuals/dl_user_manual/ES-K1_Manual_en_08.pdf",
       "occurrences": [
         {
@@ -1448,10 +1222,6 @@
         {
           "file": "docs/GEOMETRY_DERIVED_SI_CHANNEL.md",
           "line": 217
-        },
-        {
-          "file": "docs/VALIDATION_PROGRAM.md",
-          "line": 28
         }
       ]
     },
@@ -1492,15 +1262,6 @@
       ]
     },
     {
-      "url": "https://training.plm.automation.siemens.com/ilt/iltdescription.cfm?pID=298990-US_____EDA__2510___1199",
-      "occurrences": [
-        {
-          "file": "docs/SI_EXPANSION_20260907.md",
-          "line": 86
-        }
-      ]
-    },
-    {
       "url": "https://tsapps.nist.gov/publication/get_pdf.cfm?pub_id=7607",
       "occurrences": [
         {
@@ -1530,10 +1291,6 @@
     {
       "url": "https://web.mit.edu/6.101/www/s2019/handouts/L02_4.pdf",
       "occurrences": [
-        {
-          "file": "docs/SI_NETWORK_GRAPH_INCREMENT_20260907.md",
-          "line": 32
-        },
         {
           "file": "python/spike_core/si_resonance.py",
           "line": 6
@@ -1572,33 +1329,6 @@
         {
           "file": "python/spike_core/emi.py",
           "line": 34
-        }
-      ]
-    },
-    {
-      "url": "https://white-rabbit-collaboration-website.web.cern.ch/wr-technology/",
-      "occurrences": [
-        {
-          "file": "docs/CERN_MARBLE_EVALUATION_20260920.md",
-          "line": 10
-        }
-      ]
-    },
-    {
-      "url": "https://www.asme.org/codes-standards/find-codes-standards/standard-for-verification-and-validation-in-computational-fluid-dynamics-and-heat-transfer/2009",
-      "occurrences": [
-        {
-          "file": "docs/VALIDATION_PROGRAM.md",
-          "line": 30
-        }
-      ]
-    },
-    {
-      "url": "https://www.ecadstar.com/en/blog/power-integrity-in-pcb-design/",
-      "occurrences": [
-        {
-          "file": "docs/PI_REFERENCE_COVERAGE_20260924.md",
-          "line": 51
         }
       ]
     },
@@ -1682,21 +1412,8 @@
       "url": "https://www.ieee802.org/3/ad_hoc/COM/public/index.html",
       "occurrences": [
         {
-          "file": "docs/SERDES_ACTUATOR_DELIVERY.md",
-          "line": 70
-        },
-        {
           "file": "docs/SERDES_REFERENCE_QUALIFICATION.md",
           "line": 68
-        }
-      ]
-    },
-    {
-      "url": "https://www.ieee802.org/3/an/",
-      "occurrences": [
-        {
-          "file": "docs/SERDES_ACTUATOR_DELIVERY.md",
-          "line": 72
         }
       ]
     },
@@ -1719,29 +1436,11 @@
       ]
     },
     {
-      "url": "https://www.ipc.org/TOC/IPC-2152.pdf",
-      "occurrences": [
-        {
-          "file": "docs/VALIDATION_PROGRAM.md",
-          "line": 26
-        }
-      ]
-    },
-    {
       "url": "https://www.ipc.org/TOC/IPC-2228_TOC.pdf",
       "occurrences": [
         {
           "file": "docs/RESEARCH_AND_CLEAN_ROOM_ENGINEERING.md",
           "line": 38
-        }
-      ]
-    },
-    {
-      "url": "https://www.ipc.org/ipc-design-standards",
-      "occurrences": [
-        {
-          "file": "docs/VALIDATION_PROGRAM.md",
-          "line": 27
         }
       ]
     },
@@ -1755,15 +1454,6 @@
         {
           "file": "docs/RESEARCH_AND_CLEAN_ROOM_ENGINEERING.md",
           "line": 39
-        }
-      ]
-    },
-    {
-      "url": "https://www.ipc.org/test-methods",
-      "occurrences": [
-        {
-          "file": "docs/VALIDATION_PROGRAM.md",
-          "line": 29
         }
       ]
     },
@@ -1786,29 +1476,11 @@
       ]
     },
     {
-      "url": "https://www.mdpi.com/2673-4117/7/6/261",
-      "occurrences": [
-        {
-          "file": "docs/PEEC_VOLUME_CORRECTION_20260924.md",
-          "line": 215
-        }
-      ]
-    },
-    {
       "url": "https://www.murata.com/en-global/support/faqs/capacitor/ceramiccapacitor/char/0017",
       "occurrences": [
         {
           "file": "docs/SI_WORKFLOW.md",
           "line": 257
-        }
-      ]
-    },
-    {
-      "url": "https://www.nature.com/articles/s41467-025-66232-7",
-      "occurrences": [
-        {
-          "file": "docs/SERDES_ACTUATOR_DELIVERY.md",
-          "line": 63
         }
       ]
     },
@@ -1876,33 +1548,6 @@
       ]
     },
     {
-      "url": "https://www.pcb-hero.com/blogs/lickys-column/dc-analysis-and-power-integrity-in-pcb-design",
-      "occurrences": [
-        {
-          "file": "docs/PI_REFERENCE_COVERAGE_20260924.md",
-          "line": 54
-        }
-      ]
-    },
-    {
-      "url": "https://www.powerelectronictips.com/power-power-integrity-analysis-high-speed-digital-faq/",
-      "occurrences": [
-        {
-          "file": "docs/PI_REFERENCE_COVERAGE_20260924.md",
-          "line": 56
-        }
-      ]
-    },
-    {
-      "url": "https://www.siemens.com/en-us/products/pcb/hyperlynx/signal-integrity/",
-      "occurrences": [
-        {
-          "file": "docs/SI_EXPANSION_20260907.md",
-          "line": 85
-        }
-      ]
-    },
-    {
       "url": "https://www.sparselizard.org/",
       "occurrences": [
         {
@@ -1926,42 +1571,6 @@
         {
           "file": "docs/SI_WORKFLOW.md",
           "line": 259
-        }
-      ]
-    },
-    {
-      "url": "https://www.wonderfulpcb.com/blog/power-integrity-simulation-analytics-pcb-design/",
-      "occurrences": [
-        {
-          "file": "docs/PI_REFERENCE_COVERAGE_20260924.md",
-          "line": 55
-        }
-      ]
-    },
-    {
-      "url": "https://www.youtube.com/watch?v=NOGw-M-DPN8&t=26s",
-      "occurrences": [
-        {
-          "file": "docs/PI_REFERENCE_COVERAGE_20260924.md",
-          "line": 57
-        }
-      ]
-    },
-    {
-      "url": "https://www.youtube.com/watch?v=ZJsKYZO8dyE&t=69s",
-      "occurrences": [
-        {
-          "file": "docs/PI_REFERENCE_COVERAGE_20260924.md",
-          "line": 57
-        }
-      ]
-    },
-    {
-      "url": "https://www.zuken.com/en/blog/mastering-power-integrity/",
-      "occurrences": [
-        {
-          "file": "docs/PI_REFERENCE_COVERAGE_20260924.md",
-          "line": 52
         }
       ]
     },

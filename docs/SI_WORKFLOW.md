@@ -71,7 +71,7 @@ before using that stage.
 PAM4 finite-record analysis excludes symbols whose delayed sample falls beyond
 the computed response. All phases use the same supported population and fewer
 than 64 symbols fails explicitly; increase the source length when needed.
-See [reliability notes](SI_FIELD_RELIABILITY_20260920.md). This does not change
+See reliability notes. This does not change
 the ideal-CDR, training-DFE or Gaussian-BER approximation limits.
 
 ## Study sequence

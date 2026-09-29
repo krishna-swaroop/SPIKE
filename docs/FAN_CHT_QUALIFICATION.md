@@ -123,7 +123,7 @@ refinement percentages and cross-board temperature rise.
 
 ## Remaining production work
 
-The subsequent [enclosure runtime increment](ENCLOSURE_RUNTIME_INCREMENT_20260907.md)
+The subsequent enclosure runtime increment
 adds actual time-zero auditing, an explicit no-dpdt constant-density policy,
 non-cuboidal execution, bounded density-law buoyancy and forced-flow SST.
 Its passed and failed cases have separate scopes; they do not supersede these

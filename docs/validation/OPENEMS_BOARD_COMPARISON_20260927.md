@@ -108,8 +108,7 @@ artifacts are under `build/validation/openems-20260927-convergence/`.
 Board admission JSON is under `build/validation/openems-board-readiness/`.
 The Marble setup attempt and authenticated case are under
 `build/validation/openems-marble-setup-20260927/`.
-The fixture provenance and prior SPIKE evidence are documented in
-`docs/CERN_MARBLE_EVALUATION_20260920.md` and
+Fixture provenance and prior SPIKE evidence are documented in
 `docs/validation/MARBLE_PEEC_MESH_AUDIT.md`.
 
 ## 2026-09-28 capability audit

@@ -32,7 +32,7 @@ over this workflow guidance. For executable capability limits, read
 
 *Evidence: SPIKE 0.2.12 local browser capture after source-importing Marble
 v1.4.4. The component bodies are procedural models; this does not demonstrate
-the native desktop worker or a completed solver result. See `MARBLE_CLI_QUALIFICATION_PLAN.md` and
+the native desktop worker or a completed solver result. See
 `THIRD_PARTY_NOTICES.md` for the pinned revision and provenance.*
 
 ## Inspect layout and select electrical objects

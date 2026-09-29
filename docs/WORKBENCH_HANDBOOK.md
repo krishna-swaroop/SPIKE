@@ -61,7 +61,7 @@ Double-click a symbol or open Properties to edit it. Assign source voltage, load
 
 **Example:** connect a supply through a series resistor to a load, assign the resistor's value and the source/load conditions, then inspect the generated analysis jobs. A successful topology handoff proves the requested path was assembled; inspect the numerical result separately.
 
-See [Topology model](TOPOLOGY_MODEL.md) and [Power Tree benchmark](POWER_TREE_BENCHMARK.md).
+See [Topology model](TOPOLOGY_MODEL.md) and Power Tree benchmark.
 
 ## SPICE model and circuit workbench
 
@@ -85,7 +85,7 @@ Save this as divider.cir. Run the standalone parser first, then the solver on a 
 .\spikes.cmd run divider.cir --help
 ```
 
-See [SPICE workspace](SPICE_WORKSPACE.md), [SPIKES CLI](SPIKES_CLI.md), and [Model library](SPIKES_MODEL_LIBRARY.md).
+See [SPICE workspace](SPICE_WORKSPACE.md), SPIKES CLI, and Model library.
 
 ## HF / SI: source-to-receiver
 
@@ -140,7 +140,7 @@ Preview the engineering report after selecting the relevant PI, SI or Thermal wo
 
 Accuracy and validation runs the installed benchmark corpus. Inspect the individual check and tolerance; a passing corpus does not validate every model or every physical regime. External Engine Center distinguishes detection, registration, readiness and qualification. Settings includes interface, visualization, resource and shortcut preferences.
 
-See [Solver Manager](SOLVER_MANAGER.md), [Validation program](VALIDATION_PROGRAM.md), and [Troubleshooting](../TROUBLESHOOTING.md).
+See [Solver Manager](SOLVER_MANAGER.md), Validation program, and [Troubleshooting](../TROUBLESHOOTING.md).
 
 ## CLI and repeatable automation
 
@@ -157,4 +157,4 @@ Use the integrated CLI category for the exact command and flag reference. Global
 
 Replace board/request paths with real files. A parser accepting an option does not guarantee a locally installed solver implements it. Check command exit status before consuming an output file; avoid mistaking an older result for a new successful run.
 
-See [CLI reference](CLI.md), [CLI workflow](CLI_WORKFLOW.md), and [SPIKES CLI](SPIKES_CLI.md).
+See [CLI reference](CLI.md), [CLI workflow](CLI_WORKFLOW.md), and SPIKES CLI.

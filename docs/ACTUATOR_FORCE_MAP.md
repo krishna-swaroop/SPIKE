@@ -65,4 +65,4 @@ motion coupling, and public measured validation. Electrostatic qualification als
 needs mechanical stability/pull-in and breakdown applicability limits. No input
 map, citation or passing review changes `production_qualified: false`.
 
-See [current research and delivery plan](SERDES_ACTUATOR_DELIVERY.md).
+See current research and delivery plan.

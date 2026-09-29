@@ -86,7 +86,7 @@ cycle slips, ambiguous edges and clipping invalidate that simple linear model.
 The method is independently derived from interpolated threshold locations and
 a two-state feedback recurrence. No external source code, prose, fixtures or
 implementation was examined or adapted. The recent papers in
-[the research roadmap](SERDES_ACTUATOR_DELIVERY.md) are candidates, not sources
+the research roadmap are candidates, not sources
 for this algorithm or validation evidence.
 
 ## Conditioning, bounds and limitations

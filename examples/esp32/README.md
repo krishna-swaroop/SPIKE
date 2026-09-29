@@ -223,7 +223,7 @@ not establish the actual ESP32 board's match, gain, efficiency or radiation
 performance. [`rf_surrogate_evidence.json`](evidence/rf_surrogate_evidence.json)
 records the solver and limitation codes.
 
-The 2026-09-29 rerun completed through the same SPIKE EMerge extension with
+An additional run completed through the same SPIKE EMerge extension with
 the same admitted radiation grids and S-parameter samples; its separate
 [`result`](evidence/rf_surrogate_rerun_result.json) and
 [`run evidence`](evidence/rf_surrogate_rerun_evidence.json) preserve this

@@ -99,7 +99,7 @@ Previously projected runs can now fail explicitly. The two-layer native
 regression exposes five negative-energy modes with no waveform output.
 Quantitative use requires consistent finite-volume geometry and current bases,
 mesh convergence, and independent analytical/measured correlation. See the
-[finite-volume correction record](PEEC_VOLUME_CORRECTION_20260924.md).
+finite-volume correction record.
 
 ## Result Contract
 
