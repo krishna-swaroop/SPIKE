@@ -1,7 +1,7 @@
 # Experimental Linux package
 
 An experimental Debian package for Ubuntu 24.04 on x86-64 is being tested.
-The current `v0.3.0` release provides source code; the package is not attached
+The Linux package is not attached
 to the release yet. The build contains the SPIKE desktop app and a frozen local
 Python worker.
 

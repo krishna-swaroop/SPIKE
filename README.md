@@ -4,12 +4,12 @@ SPIKE is an open-source desktop workbench for exploring a PCB's power, signal,
 thermal, and electromagnetic behavior. Import a KiCad board, inspect it in 2D
 or 3D, set up an analysis, and explore the results in the same workspace.
 
-Version 0.3.0 is available as source. SPIKE runs locally and includes a
+Version 0.3.0 is available as source and a Windows installer. SPIKE runs locally and includes a
 command-line interface. See the [setup guide](docs/DEVELOPER_GUIDE.md) to run
 it from a checkout.
 
 The [0.3.0 release](https://github.com/wayri/SPIKE-Main/releases/tag/v0.3.0)
-currently provides source code. An [experimental Linux build](docs/LINUX_EXPERIMENTAL.md)
+provides source code and an unsigned Windows installer. An [experimental Linux build](docs/LINUX_EXPERIMENTAL.md)
 is being tested.
 
 **Work in progress:** SPIKE is provided **AS IS**, without warranty or
