@@ -15,7 +15,8 @@ SPIKE is an open-source PCB analysis and simulation workbench for KiCad boards.
 Explore **power integrity (PI), signal integrity (SI), board thermal analysis,
 and RF antenna simulation** in one desktop app. Import a board, inspect its
 copper and components in 2D or 3D, set up a study, and probe the results in the
-board viewport. Optional **EMerge and openEMS** extensions add electromagnetic
+board viewport. Optional **[EMerge](https://github.com/FennisRobert/EMerge)** and
+**[openEMS](https://openems.de/)** extensions add electromagnetic
 simulation workflows.
 
 SPIKE runs locally and includes a command-line interface. Version 0.3.0 is a
@@ -54,13 +55,13 @@ before an analysis is run.*
 
 ![Solved relative ESP32 antenna radiation pattern](examples/esp32/evidence/rf_surrogate_pattern_3d.png)
 
-*An EMerge antenna solve displayed as a relative 3D pattern. SPIKE exported a
+*An [EMerge](https://github.com/FennisRobert/EMerge) antenna solve displayed as a relative 3D pattern. SPIKE exported a
 two-conductor model of the board; the [ESP32 example](examples/esp32/README.md)
 records its inputs, assumptions, and plots.*
 
 ![ESP32 board and EMerge radiation pattern in the SPIKE viewport](examples/esp32/evidence/emerge_pattern_in_spike_viewport.png)
 
-*The ESP32 board and its EMerge-powered radiation pattern together in SPIKE's
+*The ESP32 board and its [EMerge](https://github.com/FennisRobert/EMerge)-powered radiation pattern together in SPIKE's
 3D viewport at 2.45 GHz. This saved run uses a simplified two-conductor
 antenna model; the surface shows relative far-field shape, not absolute gain.*
 
