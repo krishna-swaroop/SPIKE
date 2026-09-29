@@ -94,6 +94,8 @@ type Props = {
 
 const readableState = (state: string) => state.replace(/_/g, " ");
 const available = (state: string) => ["available", "experimental", "reference_validated"].includes(state);
+const desktopEngineIds = new Set(["external.openems", "external.ngspice", "external.openfoam"]);
+const shownInDesktop = (id: string) => !id.startsWith("external.") || desktopEngineIds.has(id);
 type ReadinessTone = "ready" | "review" | "gated";
 type Readiness = { label: string; value: string; detail: string; tone: ReadinessTone };
 
@@ -162,17 +164,27 @@ export default function ExternalEngineCenter({
   const [workloadId, setWorkloadId] = useState("dc_pi");
   const [candidateDrafts, setCandidateDrafts] = useState<Record<string, string>>({});
   const [tuningDrafts, setTuningDrafts] = useState<Record<string, Record<string, string | number | boolean>>>({});
+  const visibleEngines = useMemo(() => engines.filter(engine => shownInDesktop(engine.id)), [engines]);
+  const visibleWorkloads = useMemo(() => manager.workloads
+    .map(workload => ({
+      ...workload,
+      recommended: workload.recommended && shownInDesktop(workload.recommended.id) ? workload.recommended : null,
+      candidates: workload.candidates.filter(candidate => shownInDesktop(candidate.id)),
+    }))
+    .filter(workload => workload.candidates.length > 0), [manager.workloads]);
   const selected = useMemo(
-    () => engines.find(engine => engine.id === selectedId) ?? engines[0],
-    [engines, selectedId],
+    () => visibleEngines.find(engine => engine.id === selectedId) ?? visibleEngines[0],
+    [visibleEngines, selectedId],
   );
   const selectedReady = Boolean(selected && available(selected.state));
   const openems = selected?.id === "external.openems";
   const registration = selected ? manager.registrations[selected.id] : undefined;
-  const workload = manager.workloads.find(item => item.id === workloadId) ?? manager.workloads[0];
-  const selectedCandidateId = (workload ? candidateDrafts[workload.id] || solverSelections[workload.id] : "") || workload?.recommended?.id || workload?.candidates[0]?.id || "";
+  const workload = visibleWorkloads.find(item => item.id === workloadId) ?? visibleWorkloads[0];
+  const requestedCandidateId = workload ? candidateDrafts[workload.id] || solverSelections[workload.id] : "";
+  const selectedCandidateId = workload?.candidates.some(candidate => candidate.id === requestedCandidateId)
+    ? requestedCandidateId : workload?.recommended?.id || workload?.candidates[0]?.id || "";
   const readiness = selected ? engineReadiness(selected) : [];
-  const workloadRows = manager.workloads.flatMap(item => item.candidates.map(candidate => ({ workload: item, candidate })));
+  const workloadRows = visibleWorkloads.flatMap(item => item.candidates.map(candidate => ({ workload: item, candidate })));
   const tuneValue = (target: string, key: string, fallback: string | number | boolean) => tuningDrafts[target]?.[key] ?? fallback;
   const setTuneValue = (target: string, key: string, value: string | number | boolean) => setTuningDrafts(current => ({ ...current, [target]: { ...(current[target] ?? {}), [key]: value } }));
   const saveTuning = (target: string) => {
@@ -196,7 +208,7 @@ export default function ExternalEngineCenter({
       </div>
 
       {section === "engines" ? <div className="engine-layout">
-        <nav className="engine-list" aria-label="External engines">{engines.map(engine => <button key={engine.id} className={selected?.id === engine.id ? "selected" : ""} onClick={() => setSelectedId(engine.id)}>
+        <nav className="engine-list" aria-label="External engines">{visibleEngines.map(engine => <button key={engine.id} className={selected?.id === engine.id ? "selected" : ""} onClick={() => setSelectedId(engine.id)}>
           <span className={`engine-dot ${available(engine.state) ? "ready" : "gated"}`} />
           <span><b>{engine.name}</b><small>{readableState(engine.state)}</small></span>
         </button>)}</nav>
@@ -239,7 +251,7 @@ export default function ExternalEngineCenter({
         <section className="manager-workloads">
           <div className="manager-policy"><Gauge size={17} /><span><b>Best available, never silent fallback</b><small>{readableState(manager.selection_policy)}. Approximate and experimental engines retain their validity labels.</small></span></div>
           <label className="engine-label" htmlFor="solver-workload">WORKLOAD</label>
-          <select id="solver-workload" value={workload?.id ?? ""} onChange={event => setWorkloadId(event.target.value)}>{manager.workloads.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select>
+          <select id="solver-workload" value={workload?.id ?? ""} onChange={event => setWorkloadId(event.target.value)}>{visibleWorkloads.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select>
           {workload && <div className="engine-registration"><label className="engine-label" htmlFor="solver-candidate">EXPLICIT SOLVER PLUGIN</label><div className="register-path"><select id="solver-candidate" value={selectedCandidateId} onChange={event => setCandidateDrafts(current => ({ ...current, [workload.id]: event.target.value }))}>{workload.candidates.map(candidate => <option key={candidate.id} value={candidate.id}>{candidate.name} · {solverReadinessLabel(candidate)}</option>)}</select><button disabled={busy || !selectedCandidateId} onClick={() => onSelectSolver(workload.id, selectedCandidateId)}><Save size={13} /> Select</button></div><small>{solverSelections[workload.id] ? `Project selection: ${solverSelections[workload.id]}.` : "No project selection is stored for this workload."} Selection never substitutes another solver and does not bypass route-specific geometry or validation gates.</small></div>}
           {workload && <div className={`manager-recommendation ${workload.recommended ? "ready" : "gated"}`}><header><span><b>{workload.recommended?.name ?? "No runnable solver"}</b><small>{readableState(workload.status)} / {workload.domain.toUpperCase()}</small></span><i>{workload.recommended ? readableState(workload.recommended.model_status) : "capability gap"}</i></header><p>{workload.recommended?.reason ?? `Required: ${workload.required.map(readableState).join(", ")}`}</p></div>}
           <label className="engine-label">SELECTED WORKLOAD CANDIDATES</label>
@@ -257,7 +269,7 @@ export default function ExternalEngineCenter({
         <section className="manager-tuning">
           <div className="engine-notice"><ShieldAlert size={14} /><span>{manager.installation.reason}</span></div>
           <label className="engine-label">ALLOWLISTED TUNING</label>
-          {manager.tuning_profiles.map(profile => <article className="tuning-profile" key={profile.target_id}><header><span><b>{readableState(profile.target_id)}</b><small>{readableState(profile.application_state ?? "unknown")}</small></span><button onClick={() => saveTuning(profile.target_id)} disabled={busy}><Save size={12} /> Save</button></header>{profile.note && <p>{profile.note}</p>}{profile.parameters.map(parameter => <label key={parameter.key}><span>{readableState(parameter.key)}<small>{parameter.minimum !== undefined ? `${parameter.minimum} - ${parameter.maximum}` : parameter.type}</small></span>{parameter.type === "enum" ? <select value={String(tuneValue(profile.target_id, parameter.key, parameter.value))} onChange={event => setTuneValue(profile.target_id, parameter.key, event.target.value)}>{parameter.values?.map(value => <option key={value}>{value}</option>)}</select> : parameter.type === "boolean" ? <input type="checkbox" checked={Boolean(tuneValue(profile.target_id, parameter.key, parameter.value))} onChange={event => setTuneValue(profile.target_id, parameter.key, event.target.checked)} /> : <input type="number" min={parameter.minimum} max={parameter.maximum} value={String(tuneValue(profile.target_id, parameter.key, parameter.value))} onChange={event => setTuneValue(profile.target_id, parameter.key, event.target.value)} />}</label>)}</article>)}
+          {manager.tuning_profiles.filter(profile => shownInDesktop(profile.target_id)).map(profile => <article className="tuning-profile" key={profile.target_id}><header><span><b>{readableState(profile.target_id)}</b><small>{readableState(profile.application_state ?? "unknown")}</small></span><button onClick={() => saveTuning(profile.target_id)} disabled={busy}><Save size={12} /> Save</button></header>{profile.note && <p>{profile.note}</p>}{profile.parameters.map(parameter => <label key={parameter.key}><span>{readableState(parameter.key)}<small>{parameter.minimum !== undefined ? `${parameter.minimum} - ${parameter.maximum}` : parameter.type}</small></span>{parameter.type === "enum" ? <select value={String(tuneValue(profile.target_id, parameter.key, parameter.value))} onChange={event => setTuneValue(profile.target_id, parameter.key, event.target.value)}>{parameter.values?.map(value => <option key={value}>{value}</option>)}</select> : parameter.type === "boolean" ? <input type="checkbox" checked={Boolean(tuneValue(profile.target_id, parameter.key, parameter.value))} onChange={event => setTuneValue(profile.target_id, parameter.key, event.target.checked)} /> : <input type="number" min={parameter.minimum} max={parameter.maximum} value={String(tuneValue(profile.target_id, parameter.key, parameter.value))} onChange={event => setTuneValue(profile.target_id, parameter.key, event.target.value)} />}</label>)}</article>)}
         </section>
       </div>}
 

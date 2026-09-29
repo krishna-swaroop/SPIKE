@@ -50,7 +50,6 @@ export default function AboutDialog({ onClose, onOpenGuide, onOpenValidation }: 
         <div className="about-grid" role="table" aria-label="Runtime information">
           <span>Interface</span><b>React + Three.js workspace · offline Tauri host</b>
           <span>Solver worker</span><b>Local Python / C++ analysis service (versioned JSON contracts)</b>
-          <span>Native engines</span><b>ngspice 46 · openEMS · OpenFOAM (optional, capability-gated)</b>
           <span>Validation state</span><b>Per-solver notices travel with every result; approximate and experimental modes stay labeled</b>
           <span>Error catalog</span><b>docs/ERROR_CODE_CATALOG.md ships with the installation</b>
         </div>

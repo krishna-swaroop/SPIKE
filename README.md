@@ -121,18 +121,6 @@ these checks do not repeat an external engine's calculation. The SDK's
 [field-data and mesh-field examples](extension_sdk/README.md) demonstrate
 handoff and display, not supported solver integrations.
 
-## Other optional integrations
-
-| Integration | Available boundary | Limitation |
-|---|---|---|
-| [ngspice](docs/SOLVER_STATUS.md) | Separate explicit-netlist DC/AC/transient circuit adapter and staged PEEC-to-circuit workflows. | One-way circuit handoff; no general PCB field/circuit co-simulation. |
-| [OpenFOAM](docs/THERMAL_WORKFLOW.md) | Local steady open-air natural/forced-convection air-domain cases and imported T/U/p fields where the runtime is configured. | No PCB solids, conjugate heat transfer, or detailed enclosure flow model. |
-| [FreeCAD workbench](integrations/freecad/README.md) | Separate ECAD/MCAD exchange and board/assembly inspection workflow. | Companion geometry integration with separate distribution terms; no solver coupling. |
-
-See the [external-engine matrix](docs/EXTERNAL_ENGINE_INTEROPERABILITY.md) for
-runtime setup and the status of other adapters. SPIKE does not download engines
-automatically.
-
 ## Reference board
 
 Documentation and current visual-import checks use the public Berkeley Lab
