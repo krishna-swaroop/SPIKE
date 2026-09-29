@@ -216,7 +216,7 @@ schema/default parity and asymmetric known-matrix Touchstone ordering.
 
 ## References
 
-### Physical clock correction (2026-09-20)
+### Physical clock correction
 
 Loaded NRZ sources now evaluate symbol boundaries at `delay_s + k/bit_rate_hz`
 on the FFT grid. They no longer round the unit interval to an integer number

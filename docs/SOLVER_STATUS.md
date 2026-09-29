@@ -59,39 +59,24 @@ integrates a supplied, admitted force map with mass, damping and a linear spring
 It stops at stroke boundaries and reports work/energy balance; geometry-to-field
 extraction and drive-circuit/back-EMF coupling are not implemented by this module.
 The loaded SI workflow now preserves exact physical NRZ symbol timing rather
-than rounding the requested rate to its FFT grid; see [clock correction](SI_WORKFLOW.md#physical-clock-correction-2026-09-20).
+than rounding the requested rate to its FFT grid; see [clock correction](SI_WORKFLOW.md#physical-clock-correction).
 
 The [source-to-receiver workflow](SI_WORKFLOW.md) connects RLGC/Touchstone or
 bounded board extraction to configurable endpoints, deterministic aggressors,
 graded passives, port edits, loaded transfer, waveform/eye/TDR and noise reports.
 IBIS support is inventory plus explicit DC-slope/ramp reduction, not nonlinear
 switching or AMI simulation. Results and exports retain these limitations.
-The 2026-09-28 SI increment returns matched per-port reflection/VSWR with
+The SI workflow returns matched per-port reflection/VSWR with
 finite/infinite/non-passive sample status, plots returned TDR reflection, and
 requires actual finite E/H vectors for field plots. Network-only SI results
 explicitly report spatial field maps as unsupported. Bounded four-port
 NEXT/FEXT and eye execution evidence is in
 [the SI capability record](validation/SI_CAPABILITY_VOLUME_PEEC_20260928.md).
 
-The 2026-09-20 reliability increment
-corrects finite-record PAM4 sampling and introduces controlled cross-board
+The reliability checks
+cover finite-record PAM4 sampling and controlled cross-board
 mesh refinement with fixed PML interfaces. These corrections do not promote
 the experimental workflow to protocol or general field qualification.
-
-The local qualification repair documents
-the CPython 3.11 native rebuild, prerequisite checks and corrected benchmark
-fixture. It does not qualify other Python binaries or unfinished physics.
-
-## PI Deployable Release Gate
-
-The machine-readable PI promotion gate is
-`build/pi-release-qualification.json`. Regenerate it with
-`python -m python.spike_core.cli --output build/pi-release-qualification-current.json pi-release-qualification --runtime-report build/release-runtime-qualification-current.json --benchmark-report build/native-benchmark-current.json`. The gate is fail-closed
-and currently reports `blocked`: packaged/source runtime parity passes, but the
-native benchmark has skipped cases and none of the six required native PI and
-circuit workflows has reached a validated release state. See
-the implementation and tests for the exact contract. External solvers are
-comparison evidence and cannot independently promote a native SPIKE workflow.
 
 ## Operational
 
@@ -131,16 +116,14 @@ adapters and validation. See [assembly workflow](MULTIBOARD_HARNESS_ASSEMBLIES.m
 
 ### Native PEEC RLCG (`spike.peec_2_5d`)
 
-The 2026-09-28 development runtime was rebuilt with the source finite-volume
-matrix bindings. On the two provisional local slices, the bounded common-volume
+The source finite-volume matrix bindings are available. On two provisional local slices, the bounded common-volume
 path passes the energy gate where the legacy line kernel fails. AC now retries
 that path by default after legacy nonpassivity; explicit `disabled` preserves
 the fail-closed legacy behavior. Results remain approximate driving-point
 networks and are not calibrated SI S matrices; see
 [the volume PEEC record](validation/SI_CAPABILITY_VOLUME_PEEC_20260928.md).
 
-The 2026-09-24 correction record documents
-the original real-board nonpassivity and a local finite-volume
+Local checks found real-board nonpassivity and tested a finite-volume
 rectangular/annular implementation. Earlier routed Marble matrices passed the
 energy gate without projection, but an independent support audit found current
 bases outside filled copper. The current opt-in runtime fails that Marble AC
@@ -872,7 +855,7 @@ The separate board admission and provisional HForsten slice runs are recorded
 in `docs/validation/OPENEMS_BOARD_COMPARISON_20260927.md`; that completed
 board-derived FDTD run uses assumed materials, ground plane, and port, so its
 S11 is integration evidence only.
-The 2026-09-28 two-excitation HForsten provisional S matrix, native DC mesh
+The two-excitation HForsten provisional S matrix, native DC mesh
 sweeps, PEEC nonpassivity diagnosis, and Marble openEMS timeout are recorded in
 `docs/validation/PROVISIONAL_PI_SI_OPENEMS_INTERNAL_20260928.md`. No matched
 cross-solver S-parameter accuracy benchmark or full-board PI/SI solve has
@@ -977,7 +960,7 @@ never embedded. The probe accepts ABI v1 and records the runtime as
 `discovery_only`; even a successful `verification_only` handshake cannot make
 PCB product physics eligible.
 
-The 2026-08-31 local integration audit built and probed
+A local integration check built and probed
 `spike-native-solver.exe` with MSVC. The private runtime capability document
 validated against `spike/native-capability/v1`, the runtime DLL retained its
 four-function C ABI, and the refreshed private Release corpus passed 308/308
