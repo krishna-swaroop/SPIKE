@@ -475,7 +475,7 @@ _CATALOG_ENTRIES = (
         retryable=True,
         user_action="Re-extract the PEEC network and review its explicit circuit endpoint mapping before rerunning co-simulation.",
     ),
-    _metadata("SPIKE-BE-SPICE-E-0054", "Owned SPICE bridge execution failed", "The structured workspace passed admission but the release-owned circuit engine bridge failed.", recoverable=True, retryable=True, user_action="Inspect the owned-engine status, workspace validation, and bounded execution diagnostics."),
+    _metadata("SPIKE-BE-SPICE-E-0054", "SPIKES backend execution failed", "The structured workspace passed admission but the SPIKES backend bridge failed.", recoverable=True, retryable=True, user_action="Inspect the SPIKES backend status, workspace validation, and bounded execution diagnostics."),
     _metadata(
         "SPIKE-BE-EXT-E-0001",
         "External engine launch failed",

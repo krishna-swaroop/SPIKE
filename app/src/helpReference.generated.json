@@ -672,9 +672,9 @@
     },
     {
       "code": "SPIKE-BE-SPICE-E-0054",
-      "title": "Owned SPICE bridge execution failed",
-      "message": "The structured workspace passed admission but the release-owned circuit engine bridge failed.",
-      "action": "Inspect the owned-engine status, workspace validation, and bounded execution diagnostics.",
+      "title": "SPIKES backend execution failed",
+      "message": "The structured workspace passed admission but the SPIKES backend bridge failed.",
+      "action": "Inspect the SPIKES backend status, workspace validation, and bounded execution diagnostics.",
       "recoverable": true,
       "retryable": true,
       "domain": "SPICE",
@@ -1156,121 +1156,6 @@
       "command": "spike tetra-mesh",
       "summary": "Generate first-order tetrahedra from typed solids using the admitted local OCC runtime",
       "usage": "usage: spike tetra-mesh [-h] --request REQUEST [--timeout-s TIMEOUT_S]\n                        [--memory-limit-mb MEMORY_LIMIT_MB]\n\noptions:\n  -h, --help            show this help message and exit\n  --request REQUEST\n  --timeout-s TIMEOUT_S\n  --memory-limit-mb MEMORY_LIMIT_MB\n"
-    },
-    {
-      "command": "spikes",
-      "summary": "Strict CLI for the experimental SPIKES linear RLC circuit kernel.",
-      "usage": "usage: spikes [-h] [--version]\n              {loop-gain,transient-fra,fra,library-inspect,check,compile,run,native-run,ac,transfer,fourier,temp-sweep,monte-carlo,corner-sweep,library,benchmark,capabilities,qualification}\n              ...\n\nStrict CLI for the experimental SPIKES linear RLC circuit kernel.\n\npositional arguments:\n  {loop-gain,transient-fra,fra,library-inspect,check,compile,run,native-run,ac,transfer,fourier,temp-sweep,monte-carlo,corner-sweep,library,benchmark,capabilities,qualification}\n    loop-gain           Linear voltage-injection return ratio for an\n                        explicitly chosen unilateral loop fixture.\n    transient-fra       Native sine-injection transfer measurement on a\n                        switching-capable deck.\n    fra                 Explicit linear frequency-response analysis (not\n                        switching loop gain).\n    library-inspect     Check a mixed-library manifest and payload hashes\n                        without executing code.\n    check               Parse and validate a supported SPICE netlist.\n    compile             Emit the normalized project and native request\n                        template.\n    run                 Run .op, a linear single-source .dc sweep, or a\n                        bounded .tran.\n    native-run          Run .op, .dc, or .tran through an explicitly selected\n                        owned SPIKES library.\n    ac                  Run a bounded linear complex AC sweep with an explicit\n                        source.\n    transfer            Run AC and reduce one output probe to a transfer\n                        function.\n    fourier             Reduce a completed uniform transient result over\n                        integral cycles.\n    temp-sweep          Run explicit linear R/L/C temperature-coefficient\n                        cases.\n    monte-carlo         Run deterministic seeded relative-value samples.\n    corner-sweep        Run every bounded low/high Cartesian relative-value\n                        corner.\n    library             Search, inspect, validate, or elaborate built-in\n                        archetypes.\n    benchmark           Run accuracy-gated analytical DC micro-benchmarks.\n    capabilities        Run representative parser probes; not a parity or\n                        numerical qualification claim.\n    qualification       Run native analytical, switching, interaction, and\n                        soft-real-time gates.\n\noptions:\n  -h, --help            show this help message and exit\n  --version             show program's version number and exit\n"
-    },
-    {
-      "command": "spikes loop-gain",
-      "summary": "Linear voltage-injection return ratio for an explicitly chosen unilateral loop fixture.",
-      "usage": "usage: spikes loop-gain [-h] --injection INJECTION [--assume-unilateral]\n                        [--start-hz START_HZ] [--stop-hz STOP_HZ]\n                        [--points POINTS] [-o OUTPUT]\n                        netlist\n\npositional arguments:\n  netlist\n\noptions:\n  -h, --help            show this help message and exit\n  --injection INJECTION\n  --assume-unilateral\n  --start-hz START_HZ\n  --stop-hz STOP_HZ\n  --points POINTS\n  -o OUTPUT, --output OUTPUT\n"
-    },
-    {
-      "command": "spikes transient-fra",
-      "summary": "Native sine-injection transfer measurement on a switching-capable deck.",
-      "usage": "usage: spikes transient-fra [-h] --library LIBRARY --source SOURCE\n                            --output-probe OUTPUT_PROBE --frequency-hz\n                            FREQUENCY_HZ [--amplitude AMPLITUDE]\n                            [--max-step-s MAX_STEP_S] [-o OUTPUT]\n                            netlist\n\npositional arguments:\n  netlist\n\noptions:\n  -h, --help            show this help message and exit\n  --library LIBRARY\n  --source SOURCE\n  --output-probe OUTPUT_PROBE\n  --frequency-hz FREQUENCY_HZ\n  --amplitude AMPLITUDE\n  --max-step-s MAX_STEP_S\n  -o OUTPUT, --output OUTPUT\n"
-    },
-    {
-      "command": "spikes fra",
-      "summary": "Explicit linear frequency-response analysis (not switching loop gain).",
-      "usage": "usage: spikes fra [-h] --source SOURCE --output-probe OUTPUT_PROBE\n                  [--start-hz START_HZ] [--stop-hz STOP_HZ] [--points POINTS]\n                  [-o OUTPUT]\n                  netlist\n\npositional arguments:\n  netlist\n\noptions:\n  -h, --help            show this help message and exit\n  --source SOURCE\n  --output-probe OUTPUT_PROBE\n  --start-hz START_HZ\n  --stop-hz STOP_HZ\n  --points POINTS\n  -o OUTPUT, --output OUTPUT\n"
-    },
-    {
-      "command": "spikes library-inspect",
-      "summary": "Check a mixed-library manifest and payload hashes without executing code.",
-      "usage": "usage: spikes library-inspect [-h] [-o OUTPUT] manifest\n\npositional arguments:\n  manifest\n\noptions:\n  -h, --help            show this help message and exit\n  -o OUTPUT, --output OUTPUT\n"
-    },
-    {
-      "command": "spikes check",
-      "summary": "Parse and validate a supported SPICE netlist.",
-      "usage": "usage: spikes check [-h] [--probe EXPR] [-o OUTPUT] netlist\n\npositional arguments:\n  netlist\n\noptions:\n  -h, --help            show this help message and exit\n  --probe EXPR          Add V(node), V(node,node), I(element), or P(element);\n                        repeatable.\n  -o OUTPUT, --output OUTPUT\n                        Write JSON to this file instead of stdout.\n"
-    },
-    {
-      "command": "spikes compile",
-      "summary": "Emit the normalized project and native request template.",
-      "usage": "usage: spikes compile [-h] [--probe EXPR] [-o OUTPUT] netlist\n\npositional arguments:\n  netlist\n\noptions:\n  -h, --help            show this help message and exit\n  --probe EXPR          Add V(node), V(node,node), I(element), or P(element);\n                        repeatable.\n  -o OUTPUT, --output OUTPUT\n                        Write JSON to this file instead of stdout.\n"
-    },
-    {
-      "command": "spikes run",
-      "summary": "Run .op, a linear single-source .dc sweep, or a bounded .tran.",
-      "usage": "usage: spikes run [-h] [--probe EXPR] [-o OUTPUT] netlist\n\npositional arguments:\n  netlist\n\noptions:\n  -h, --help            show this help message and exit\n  --probe EXPR          Add V(node), V(node,node), I(element), or P(element);\n                        repeatable.\n  -o OUTPUT, --output OUTPUT\n                        Write JSON to this file instead of stdout.\n"
-    },
-    {
-      "command": "spikes native-run",
-      "summary": "Run .op, .dc, or .tran through an explicitly selected owned SPIKES library.",
-      "usage": "usage: spikes native-run [-h] --library LIBRARY [--method {trap,be,bdf2}]\n                         [--probe EXPR] [-o OUTPUT]\n                         netlist\n\npositional arguments:\n  netlist\n\noptions:\n  -h, --help            show this help message and exit\n  --library LIBRARY\n  --method {trap,be,bdf2}\n                        Transient integration: event-aware hybrid trapezoidal\n                        (trap, default), backward Euler (be), or variable-step\n                        BDF2 (bdf2).\n  --probe EXPR\n  -o OUTPUT, --output OUTPUT\n"
-    },
-    {
-      "command": "spikes ac",
-      "summary": "Run a bounded linear complex AC sweep with an explicit source.",
-      "usage": "usage: spikes ac [-h] --source SOURCE --start-hz START_HZ --stop-hz STOP_HZ\n                 [--points POINTS] [--scale {linear,log}]\n                 [--magnitude MAGNITUDE] [--phase-deg PHASE_DEG]\n                 [--probe EXPR] [-o OUTPUT]\n                 netlist\n\npositional arguments:\n  netlist\n\noptions:\n  -h, --help            show this help message and exit\n  --source SOURCE       Independent voltage or current source ID.\n  --start-hz START_HZ\n  --stop-hz STOP_HZ\n  --points POINTS\n  --scale {linear,log}\n  --magnitude MAGNITUDE\n  --phase-deg PHASE_DEG\n  --probe EXPR          Add a complex V(...), I(...), or P(...) series;\n                        repeatable.\n  -o OUTPUT, --output OUTPUT\n"
-    },
-    {
-      "command": "spikes transfer",
-      "summary": "Run AC and reduce one output probe to a transfer function.",
-      "usage": "usage: spikes transfer [-h] --source SOURCE --start-hz START_HZ --stop-hz\n                       STOP_HZ [--points POINTS] [--scale {linear,log}]\n                       [--magnitude MAGNITUDE] [--phase-deg PHASE_DEG]\n                       --output-probe EXPR [-o OUTPUT]\n                       netlist\n\npositional arguments:\n  netlist\n\noptions:\n  -h, --help            show this help message and exit\n  --source SOURCE       Independent voltage or current source ID.\n  --start-hz START_HZ\n  --stop-hz STOP_HZ\n  --points POINTS\n  --scale {linear,log}\n  --magnitude MAGNITUDE\n  --phase-deg PHASE_DEG\n  --output-probe EXPR   Output V(...) or I(...) divided by the source phasor.\n  -o OUTPUT, --output OUTPUT\n"
-    },
-    {
-      "command": "spikes fourier",
-      "summary": "Reduce a completed uniform transient result over integral cycles.",
-      "usage": "usage: spikes fourier [-h] --probe EXPR --fundamental-hz FUNDAMENTAL_HZ\n                      [--harmonics HARMONICS] [-o OUTPUT]\n                      result\n\npositional arguments:\n  result                JSON output from `spikes run` transient analysis.\n\noptions:\n  -h, --help            show this help message and exit\n  --probe EXPR\n  --fundamental-hz FUNDAMENTAL_HZ\n  --harmonics HARMONICS\n  -o OUTPUT, --output OUTPUT\n"
-    },
-    {
-      "command": "spikes temp-sweep",
-      "summary": "Run explicit linear R/L/C temperature-coefficient cases.",
-      "usage": "usage: spikes temp-sweep [-h] --start-c START_C --stop-c STOP_C --step-c\n                         STEP_C [--reference-c REFERENCE_C] --tempco\n                         ELEMENT=TC1 [--tempco2 ELEMENT=TC2] [--probe EXPR]\n                         [-o OUTPUT]\n                         netlist\n\npositional arguments:\n  netlist\n\noptions:\n  -h, --help            show this help message and exit\n  --start-c START_C\n  --stop-c STOP_C\n  --step-c STEP_C\n  --reference-c REFERENCE_C\n  --tempco ELEMENT=TC1\n  --tempco2 ELEMENT=TC2\n  --probe EXPR\n  -o OUTPUT, --output OUTPUT\n"
-    },
-    {
-      "command": "spikes monte-carlo",
-      "summary": "Run deterministic seeded relative-value samples.",
-      "usage": "usage: spikes monte-carlo [-h] --vary ELEMENT=TOLERANCE --samples SAMPLES\n                          --seed SEED\n                          [--distribution {uniform,normal_3sigma_clipped}]\n                          [--probe EXPR] [-o OUTPUT]\n                          netlist\n\npositional arguments:\n  netlist\n\noptions:\n  -h, --help            show this help message and exit\n  --vary ELEMENT=TOLERANCE\n  --samples SAMPLES\n  --seed SEED\n  --distribution {uniform,normal_3sigma_clipped}\n  --probe EXPR\n  -o OUTPUT, --output OUTPUT\n"
-    },
-    {
-      "command": "spikes corner-sweep",
-      "summary": "Run every bounded low/high Cartesian relative-value corner.",
-      "usage": "usage: spikes corner-sweep [-h] --vary ELEMENT=TOLERANCE [--probe EXPR]\n                           [-o OUTPUT]\n                           netlist\n\npositional arguments:\n  netlist\n\noptions:\n  -h, --help            show this help message and exit\n  --vary ELEMENT=TOLERANCE\n  --probe EXPR\n  -o OUTPUT, --output OUTPUT\n"
-    },
-    {
-      "command": "spikes library",
-      "summary": "Search, inspect, validate, or elaborate built-in archetypes.",
-      "usage": "usage: spikes library [-h] {search,inspect,validate,elaborate} ...\n\npositional arguments:\n  {search,inspect,validate,elaborate}\n    search              Search archetype metadata.\n    inspect             Inspect one fully qualified archetype ID.\n    validate            Validate every runnable built-in elaboration.\n    elaborate           Elaborate one runnable archetype to native elements.\n\noptions:\n  -h, --help            show this help message and exit\n"
-    },
-    {
-      "command": "spikes library search",
-      "summary": "Search archetype metadata.",
-      "usage": "usage: spikes library search [-h] [--status {all,runnable,unavailable}]\n                             [-o OUTPUT]\n                             [query]\n\npositional arguments:\n  query\n\noptions:\n  -h, --help            show this help message and exit\n  --status {all,runnable,unavailable}\n  -o OUTPUT, --output OUTPUT\n"
-    },
-    {
-      "command": "spikes library inspect",
-      "summary": "Inspect one fully qualified archetype ID.",
-      "usage": "usage: spikes library inspect [-h] [-o OUTPUT] archetype_id\n\npositional arguments:\n  archetype_id\n\noptions:\n  -h, --help            show this help message and exit\n  -o OUTPUT, --output OUTPUT\n"
-    },
-    {
-      "command": "spikes library validate",
-      "summary": "Validate every runnable built-in elaboration.",
-      "usage": "usage: spikes library validate [-h] [-o OUTPUT]\n\noptions:\n  -h, --help            show this help message and exit\n  -o OUTPUT, --output OUTPUT\n"
-    },
-    {
-      "command": "spikes library elaborate",
-      "summary": "Elaborate one runnable archetype to native elements.",
-      "usage": "usage: spikes library elaborate [-h] --instance INSTANCE --pin PIN=NODE\n                                [--preset PRESET] [--param NAME=VALUE]\n                                [-o OUTPUT]\n                                archetype_id\n\npositional arguments:\n  archetype_id\n\noptions:\n  -h, --help            show this help message and exit\n  --instance INSTANCE\n  --pin PIN=NODE\n  --preset PRESET\n  --param NAME=VALUE\n  -o OUTPUT, --output OUTPUT\n"
-    },
-    {
-      "command": "spikes benchmark",
-      "summary": "Run accuracy-gated analytical DC micro-benchmarks.",
-      "usage": "usage: spikes benchmark [-h] [--warmups WARMUPS] [--repetitions REPETITIONS]\n                        [--timeout TIMEOUT] [--external-id EXTERNAL_ID]\n                        [-o OUTPUT] [--external-command ...]\n\noptions:\n  -h, --help            show this help message and exit\n  --warmups WARMUPS\n  --repetitions REPETITIONS\n  --timeout TIMEOUT\n  --external-id EXTERNAL_ID\n  -o OUTPUT, --output OUTPUT\n  --external-command ...\n                        External JSON wrapper argv; place this option last. No\n                        shell is used.\n"
-    },
-    {
-      "command": "spikes capabilities",
-      "summary": "Run representative parser probes; not a parity or numerical qualification claim.",
-      "usage": "usage: spikes capabilities [-h] [-o OUTPUT]\n\noptions:\n  -h, --help            show this help message and exit\n  -o OUTPUT, --output OUTPUT\n"
-    },
-    {
-      "command": "spikes qualification",
-      "summary": "Run native analytical, switching, interaction, and soft-real-time gates.",
-      "usage": "usage: spikes qualification [-h] --library LIBRARY [--repetitions REPETITIONS]\n                            [--wall-steps WALL_STEPS] [-o OUTPUT]\n\noptions:\n  -h, --help            show this help message and exit\n  --library LIBRARY\n  --repetitions REPETITIONS\n  --wall-steps WALL_STEPS\n  -o OUTPUT, --output OUTPUT\n"
     }
   ]
 }

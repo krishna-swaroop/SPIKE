@@ -13,7 +13,7 @@ assert.ok(appSource.includes('initialEngine={solverSelections.owned_circuit_work
 assert.ok(appSource.includes('workloadId === "owned_circuit_workspace" && selectedSolverId === "spike.owned_spice_workspace"'), "owned circuit selection must have an explicit workflow route");
 for (const fragment of [
   'type RunEngine = "native_mna" | "peec_mna" | "owned_spice" | "ngspice"',
-  'SPIKES owned engine (experimental)',
+  'SPIKES backend (experimental)',
   'method: "validate_owned_spice_workspace"',
   'method: "run_owned_spice_workspace"',
   'contract: "spike/owned-spice-workspace-request/v1"',

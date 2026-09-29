@@ -25,7 +25,6 @@ def parser_pages(parser, prefix, summary=""):
 
 def build():
     from python.spike_core.cli import build_parser
-    from python.spikes.cli import _parser
     from python.spike_core.errors import ERROR_CATALOG
 
     errors = []
@@ -34,8 +33,7 @@ def build():
                        "action": entry.user_action, "recoverable": entry.recoverable,
                        "retryable": entry.retryable, "domain": entry.code.domain.value,
                        "classification": entry.code.classification.value})
-    return {"errors": errors, "commands": [*parser_pages(build_parser(), "spike"),
-                                            *parser_pages(_parser(), "spikes")]}
+    return {"errors": errors, "commands": list(parser_pages(build_parser(), "spike"))}
 
 
 if __name__ == "__main__":

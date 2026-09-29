@@ -498,7 +498,9 @@ capacitance, MNA, failed-result/export and reviewed-port checks plus local rollo
   SIMPLIS, PSpice, and other engines require equal-model/equal-tolerance
   accuracy gates before timing results can be published.
 
-SPIKES Studio's engineering-preview run profile now selects the owned C++
+The following Studio behavior belongs to the separate SPIKES application, whose
+source is shared in this repository but whose interface is not included in the
+SPIKE desktop package. SPIKES Studio's engineering-preview run profile selects the owned C++
 backend or the process-isolated ngspice compatibility adapter explicitly.
 Legacy profiles remain native. The ngspice Studio route is self-contained and
 batch-only; it maps only complete real transient voltage vectors to plots, while
@@ -524,7 +526,7 @@ model qualification, full dialect parity, or a release-ready desktop workflow.
   service and `field-circuit-validate` / `field-circuit-run` CLI commands
 - Coupling: deterministic fixed-point updates between a native PEEC reduction
   provider and either the compiled linear-reference MNA workspace or the
-  release-owned C++ SPIKES circuit kernel. The selected circuit engine is
+  SPIKES C++ circuit backend. The selected circuit engine is
   explicit in the request and result provenance.
 - Owned-kernel boundary: `spike/owned-spice-workspace-request/v1` accepts only a
   reviewed structured workspace and bounded probes, composes the netlist

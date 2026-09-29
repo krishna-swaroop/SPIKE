@@ -19,6 +19,7 @@ for (const entry of reference.errors) {
   assert.ok(entry.title && entry.action && entry.message);
 }
 for (const command of reference.commands) assert.ok(command.usage.includes('usage:'));
+assert.ok(reference.commands.every(command => command.command === 'spike' || command.command.startsWith('spike ')), 'Bundled help must contain only SPIKE CLI pages');
 for (const name of ['SpiceWorkbench.tsx', 'SParameterWorkbench.tsx', 'SiWorkflowWorkbench.tsx', 'SiProtocolSuiteWorkbench.tsx', 'EmiWorkbench.tsx', 'ThermalAssemblyEditor.tsx', 'TopologyEditor.tsx', 'App.tsx']) assert.ok(controls.some(c => c.file === name), `Missing ${name}`);
 const hits = [{ title: 'Solver', text: 'restart the worker after a timeout' }, { title: 'Worker timeout', text: 'Preserve diagnostics' }];
 assert.equal(searchHelp(hits, 'worker timeout')[0].title, 'Worker timeout');
@@ -51,7 +52,8 @@ for (const file of fs.readdirSync(path.join(root, '../docs')).filter(f => f.ends
   const output = render(fs.readFileSync(path.join(root, '../docs', file), 'utf8'));
   assert.ok(output.length > 0, file);
 }
-for (const file of ['marble-workspace-3d.png', 'marble-layout-layers.png', 'marble-net-names.png', 'marble-report-preview.png', 'workspace-3d.png', 'layout-selection.png', 'report-preview.png', 'external-solver-center.png', 'solver-extension-manager.png', 'solver-manager-selection.png', 'studio-batch-probes.png', 'studio-vcd-timing.png']) {
+assert.ok(!fs.readdirSync(path.join(root, 'public/help')).some(file => file.startsWith('studio-')), 'Separate SPIKES Studio images must not ship in SPIKE Help');
+for (const file of ['marble-workspace-3d.png', 'marble-layout-layers.png', 'marble-net-names.png', 'marble-report-preview.png', 'workspace-3d.png', 'layout-selection.png', 'report-preview.png', 'external-solver-center.png', 'solver-extension-manager.png', 'solver-manager-selection.png']) {
   const bytes = fs.readFileSync(path.join(root, 'public/help', file));
   // Historical real captures can be JPEG-encoded despite a .png filename.
   // Preserve their original pixels; validate the image encoding, not the suffix.

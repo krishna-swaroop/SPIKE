@@ -24,8 +24,6 @@ work plan (2026-09-05)](STABILIZATION_RELEASE_PLAN_20260905.md).
 | Run SERDES and actuator reference checks | [SERDES reference](SERDES_REFERENCE_QUALIFICATION.md) | [Actuator map review](ACTUATOR_FORCE_MAP.md), [delivery and recent research](SERDES_ACTUATOR_DELIVERY.md) |
 | Configure PI | [PI path analysis](PI_PATH_ANALYSIS.md) | [Reference coverage and acceptance](PI_REFERENCE_COVERAGE_20260924.md), [DC solver](DC_SOLVER.md), [transient PI](TRANSIENT_PI.md), [PDN screening](PDN_SCREENING.md) |
 | Configure SI/network analysis | [Signal-integrity workbench](SIGNAL_INTEGRITY_NETWORK_WORKBENCH.md) | [Bounded geometry channels](GEOMETRY_DERIVED_SI_CHANNEL.md), [S-parameter integration](SIGNAL_INTEGRITY_NETWORK_INTEGRATION.md) |
-| Inspect the circuit language/analysis boundary | [SPIKES language and linear analysis wave 3](SPIKES_LANGUAGE_ANALYSIS_WAVE3.md) | [Solver status](SOLVER_STATUS.md) |
-| Inspect nonlinear behavioral analysis | [SPIKES nonlinear language and analysis wave 4](SPIKES_LANGUAGE_ANALYSIS_WAVE4.md) | [Solver status](SOLVER_STATUS.md) |
 | Learn board thermal from setup to saved plots | [Illustrated thermal user guide](THERMAL_USER_GUIDE.md) | [Thermal workflow](THERMAL_WORKFLOW.md), [solver status](SOLVER_STATUS.md) |
 | Configure transient or external thermal work | [Thermal workflow](THERMAL_WORKFLOW.md) | [Transient thermal and viewport](TRANSIENT_THERMAL_AND_VIEWPORT.md) |
 | Configure EMI work | [EMI workflow](EMI_WORKFLOW.md) | [Engine gates](SI_SPICE_EMI_RF_ENGINE_GATES.md) |
@@ -85,10 +83,6 @@ must be corrected rather than resolved by assuming the broader claim.
 - [PI release qualification](PI_RELEASE_QUALIFICATION.md): PI release gates.
 - [Release runtime qualification](RELEASE_RUNTIME_QUALIFICATION.md): source and
   packaged-worker parity.
-- [SPIKES native switching kernel](SPIKES_NATIVE_SWITCHING_KERNEL.md): owned
-  PULSE/PWL, breakpoint, and bidirectional-switch implementation boundary.
-- [SPIKES competitive gates](SPIKES_COMPETITIVE_GATES.md): fail-closed evidence
-  required before parity or superiority claims.
 - [Engineering governance](ENGINEERING_GOVERNANCE.md): review and release
   requirements.
 

@@ -194,10 +194,10 @@ image to enlarge it. These are the main workbench's existing browser captures;
 no private board or separate release-candidate screenshot was added.
 
 Open **Feature coverage and missing evidence** (`help:feature-coverage`) for
-links to instructions across 16 feature families. Its matrix distinguishes real
+links to instructions across 18 feature families. Its matrix distinguishes real
 captures, illustrative animations, written instructions, and missing runtime
 examples. Animated guides are explanatory drawings, not simulations. Historical
-Studio circuit/HDL recordings belong to the separate Studio application.
+SPIKE's circuit workspace has written setup guidance. SPIKES Studio is a separate application.
 
 | Feature family | Current evidence | Missing picture/result evidence |
 | --- | --- | --- |
@@ -208,13 +208,13 @@ Studio circuit/HDL recordings belong to the separate Studio application.
 | AC / transient PI | Written instructions / animation | Current sweeps and waveforms |
 | Terminals / power tree | Illustrative placement and wiring | Exact anchors and model handoff |
 | Mesh | Illustrative refinement | Real preview and convergence comparison |
-| Results / probes | Illustrative guide; separate Studio capture | PCB fields and formula results |
+| Results / probes | Illustrative guide | PCB fields and formula results |
 | Reports | Explicitly unsolved Marble report | Solved report/export/reopen sequence |
 | Projects / result packages | Written sequence | Native dialogs and restored state |
 | Signal integrity | Written sequence | SI, eye and protocol results |
 | EMI / thermal | Written sequence | Reproducible results |
 | Solvers / extensions | Gated external-engine capture | Installation, trust and adapter output |
-| Circuit / HDL Studio | Recorded signal/timing captures | Main-workbench solve evidence |
+| Circuit workspace | Written setup guidance | SPIKE circuit-run capture |
 | Settings / shortcuts | Written reference | Settings controls |
 | Local LLM / MCP | Written setup and allowlisted tool sequence | Live provider and desktop-bridge capture |
 | Diagnostics | Canonical catalog | Error-to-recovery pictures |

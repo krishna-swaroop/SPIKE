@@ -3421,7 +3421,7 @@ export default function App() {
       if (workloadId === "owned_circuit_workspace" && selectedSolverId === "spike.owned_spice_workspace") {
         setExternalEnginesOpen(false);
         setSpiceOpen(true);
-        setStatus("Owned SPICE selected. Configure and validate the structured circuit workspace before running; no simulation has been started.");
+        setStatus("SPIKES backend selected. Configure and validate the structured circuit workspace before running; no simulation has been started.");
         return;
       }
       setStatus(`${selectedSolverId} selected for ${workloadId}; no fallback will be substituted and execution remains application-gated`);

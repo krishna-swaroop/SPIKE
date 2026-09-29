@@ -2,10 +2,11 @@
 
 # Beta runtime quickstart
 
-The SPIKE desktop/CLI is version 0.3.0 (engineering preview). The separately
-versioned SPIKES circuit engine is 0.3.0-beta.1. Neither version promotes a
-capability or qualifies a physics workflow. Their process adapters intentionally
-report independent readiness states.
+The SPIKE desktop/CLI is version 0.3.0 (community preview). Its optional
+structured-circuit path uses the separately versioned SPIKES backend
+(0.3.0-beta.1). SPIKES Studio is a separate application and is not included
+in the SPIKE desktop package. The SPIKES backend and ngspice paths report
+independent availability states.
 
 ## Check this checkout
 

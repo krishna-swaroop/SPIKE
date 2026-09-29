@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-"""Strict structured-workspace bridge to SPIKE's release-owned SPICE engine.
+"""Strict structured-workspace bridge to the optional SPIKES backend.
 
 The bridge never accepts raw netlist text or a caller-selected executable/DLL.
 It composes a reviewed visual workspace, verifies the exact netlist digest
@@ -240,7 +240,7 @@ def validate_owned_spice_workspace_request(
     status = engine_status()
     if not status.get("available"):
         issues.append(_issue(
-            "SPIKE-BE-SPICE-E-0053", "The release-owned SPIKES circuit engine is unavailable.", "engine",
+            "SPIKE-BE-SPICE-E-0053", "The SPIKES backend is unavailable.", "engine",
         ))
     return {
         "contract": VALIDATION_CONTRACT,

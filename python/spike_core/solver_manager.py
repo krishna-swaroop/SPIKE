@@ -93,7 +93,7 @@ NATIVE_WORKSPACE_SOLVER: Dict[str, Any] = {
 
 
 def _owned_spice_workspace_solver() -> Dict[str, Any]:
-    """Describe the release-owned circuit bridge after probing its exact runtime.
+    """Describe the SPIKES backend bridge after probing its exact runtime.
 
     This deliberately remains a separate circuit workload.  The bridge accepts
     an explicit reviewed workspace, not board geometry, so it must never be
@@ -107,7 +107,7 @@ def _owned_spice_workspace_solver() -> Dict[str, Any]:
     runnable = available and transient
     return {
         "id": "spike.owned_spice_workspace",
-        "name": "SPIKES Owned Structured Circuit Workspace",
+        "name": "SPIKES Backend Structured Circuit Workspace",
         "version": str(status.get("abi_version") or "unavailable"),
         "provider": "SPIKE",
         "source": "native",
@@ -123,19 +123,19 @@ def _owned_spice_workspace_solver() -> Dict[str, Any]:
         ),
         "actions": ["validate", "run"] if runnable else ["detect"],
         "validation": (
-            "The release-owned engine passed its in-process availability probe; "
+            "The SPIKES backend passed its in-process availability probe; "
             "structured-workspace execution remains experimental."
-        ) if runnable else "The release-owned SPIKES circuit runtime probe is unavailable or lacks transient support.",
+        ) if runnable else "The SPIKES backend runtime probe is unavailable or lacks transient support.",
         "scope": (
             "Explicit reviewed circuit workspace only (operating point and transient). "
             "No raw netlist input, caller-selected library, AC/phasor solve, PCB geometry extraction, "
             "or closed-loop field/circuit co-simulation is advertised by this workload."
         ),
         "reason": (
-            "Runtime-probed release-owned engine for bounded, structured circuit execution; "
+            "Runtime-probed SPIKES backend for bounded, structured circuit execution; "
             "experimental and not product-qualified."
         ) if runnable else (
-            "The release-owned circuit runtime must pass its availability and transient-feature probe before this workload can run."
+            "The SPIKES backend runtime must pass its availability and transient-feature probe before this workload can run."
         ),
     }
 
