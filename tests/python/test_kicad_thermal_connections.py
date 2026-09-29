@@ -187,15 +187,6 @@ class KicadThermalConnectionRetentionTests(unittest.TestCase):
         self.assertEqual(sum(item["zone_connection_override"] == "solid" for item in ebrake.pads), 14)
         self.assertEqual(sum(item["thermal_spoke_angle_deg"] == 45.0 for item in ebrake.pads), 12)
 
-        modular = KicadParser(demo / "removed-board.kicad_pcb")
-        modular_filled = [zone for zone in modular.zones if zone.get("source_kind") == "filled_zone"]
-        self.assertEqual(len(modular_filled), 83)
-        self.assertEqual(Counter(zone["zone_connection_default"] for zone in modular_filled), {"solid": 80, "thermal": 3})
-        self.assertTrue(all(zone["source_fill_provenance_complete"] for zone in modular_filled))
-        self.assertTrue(all(not zone["thermal_topology_eligible"] for zone in modular_filled))
-        self.assertEqual(sum(item["thermal_spoke_angle_deg"] == 0.0 for item in modular.pads), 14)
-        self.assertTrue(all(item["zone_connection_override"] == "inherit" for item in modular.pads))
-
 
 if __name__ == "__main__":
     unittest.main()

@@ -2352,19 +2352,17 @@ export default function App() {
       return next;
     });
   };
-  const loadDemoBoard = async (demo: "ebrake1" | "removed-board" = "ebrake1") => {
+  const loadDemoBoard = async () => {
     try {
-      const modular = demo === "removed-board";
-      const sourceUrl = modular ? "/demo/removed-board.kicad_pcb" : "/demo/ebrake1.kicad_pcb";
-      const source = await fetch(sourceUrl).then(response => response.text());
-      const parsed = await parseDesignSourceOffThread(modular ? "removed-board.kicad_pcb" : "ebrake1.kicad_pcb", source);
+      const source = await fetch("/demo/ebrake1.kicad_pcb").then(response => response.text());
+      const parsed = await parseDesignSourceOffThread("ebrake1.kicad_pcb", source);
       resetPreparedVisualBundle();
       retainedProjectSnapshot.current = null;
       setDeferredBoardVisual(null);
-      configureBundledVisuals(parsed, demo);
+      configureBundledVisuals(parsed);
       const firstNet = preferredPowerNet(parsed);
-      setBoardFile(modular ? "removed-board.kicad_pcb" : "ebrake1.kicad_pcb");
-      setProjectName(modular ? "removed-board.spike" : "ebrake1.spike");
+      setBoardFile("ebrake1.kicad_pcb");
+      setProjectName("ebrake1.spike");
       setBoardSource(source);
       setBoardData(parsed);
       setActiveDesignId(null);
@@ -2389,9 +2387,9 @@ export default function App() {
       setEmiFieldResult(null);
       setPiSetup(current => ({ ...current, net: parsed.nets ? firstNet : current.net }));
       setPowerNets([firstNet, "GND"].filter(Boolean));
-      setStatus(`${modular ? "removed-board" : "E-brake"} demo loaded: ${parsed.tracks.length} tracks, ${parsed.vias.length} vias, ${parsed.components.length} components`);
+      setStatus(`E-brake demo loaded: ${parsed.tracks.length} tracks, ${parsed.vias.length} vias, ${parsed.components.length} components`);
     } catch {
-      setStatus(`Unable to load the bundled ${demo} demo board.`);
+      setStatus("Unable to load the bundled demo board.");
     }
   };
   useEffect(() => {
@@ -2519,12 +2517,12 @@ export default function App() {
   }, [sidePanelsPinned, bottomPinned, leftOpen, rightOpen, bottomOpen]);
   useEffect(() => {
     const demo = new URLSearchParams(window.location.search).get("demo");
-    if (demo === "ebrake1" || demo === "removed-board") {
-      void loadDemoBoard(demo);
+    if (demo === "ebrake1") {
+      void loadDemoBoard();
       return;
     }
     const developmentBuild = (import.meta as ImportMeta & { env?: { DEV?: boolean } }).env?.DEV;
-    if (developmentBuild && "__TAURI_INTERNALS__" in window) void loadDemoBoard("removed-board");
+    if (developmentBuild && "__TAURI_INTERNALS__" in window) void loadDemoBoard();
   }, []);
   useEffect(() => {
     const adaptWorkspace = () => {

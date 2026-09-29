@@ -72,17 +72,6 @@ class KicadParserStabilityTests(unittest.TestCase):
         self.assertTrue(all(zone["source_kind"] == "filled_zone" for zone in parser.zones))
         self.assertEqual(len({zone["id"] for zone in parser.zones}), 3)
 
-    def test_modular_12vout_zone_is_one_fill_per_copper_layer(self):
-        path = Path(__file__).resolve().parents[2] / "app" / "public" / "demo" / "removed-board.kicad_pcb"
-        parser = KicadParser(path)
-        zones = [zone for zone in parser.zones if zone["net_name"] == "/12Vout"]
-        self.assertEqual(len(zones), 6)
-        self.assertEqual(
-            {zone["layer"] for zone in zones},
-            {"F.Cu", "In1.Cu", "In2.Cu", "In3.Cu", "In4.Cu", "B.Cu"},
-        )
-        self.assertEqual(len({(zone["zone_uuid"], zone["layer"]) for zone in zones}), 6)
-
     def test_native_object_ids_survive_parse_import_and_v2_normalization(self):
         path = self.write("""(kicad_pcb
           (version 20260101)
@@ -218,18 +207,6 @@ class KicadParserStabilityTests(unittest.TestCase):
         )
         restored = DesignIRV2.from_v1(import_kicad_design(str(path)))
         self.assertEqual(restored.to_v1().pads[0]["custom_geometry"], geometry)
-
-    def test_bundled_modular_custom_pad_anchor_unions_are_all_admitted(self):
-        board = Path(__file__).parents[2] / "app" / "public" / "demo" / "removed-board.kicad_pcb"
-        parser = KicadParser(board)
-        custom = [pad for pad in parser.pads if pad.get("shape") == "custom"]
-        self.assertEqual(len(custom), 6)
-        self.assertEqual({pad["custom_geometry"]["status"] for pad in custom}, {"supported"})
-        normalized = DesignIRV2.from_v1(import_kicad_design(str(board)))
-        typed_custom = [pad for pad in normalized.pads if pad.shape == "custom"]
-        self.assertEqual(len(typed_custom), 6)
-        self.assertTrue(all(len(pad.custom_geometry["positive_filled_polygon"]) >= 4 for pad in typed_custom))
-
 
 if __name__ == "__main__":
     unittest.main()

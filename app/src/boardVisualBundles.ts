@@ -193,19 +193,7 @@ export async function materializeVisualBundle(
   }
 }
 
-export function configureBundledVisuals(board: ParsedBoard, demo: "ebrake1" | "removed-board") {
-  if (demo === "removed-board") {
-    const root = "/demo/models/removed-board";
-    board.boardModelUrl = `${root}/removed-board_board.glb`;
-    board.componentModelUrl = `${root}/removed-board_components.glb`;
-    board.layoutLayerUrls = Object.fromEntries(board.layerDefinitions.map(({ name }) => [
-      name,
-      `${root}/layout/removed-board-${name.replace(/\./g, "_")}.svg`,
-    ]));
-    board.layoutViewBox = [0, 0, 45.9994, 30.988];
-    board.modelManifestUrl = `${root}/scene.json`;
-    return;
-  }
+export function configureBundledVisuals(board: ParsedBoard) {
   board.fullModelUrl = "/demo/models/ebrake1_fused.glb";
   board.boardModelUrl = "/demo/models/ebrake1_board.glb";
   board.componentModelUrl = "/demo/models/ebrake1_components.glb";
@@ -225,16 +213,11 @@ export async function configureKnownVisuals(board: ParsedBoard, sourceFile: stri
   const name = sourceFile.replace(/\\/g, "/").split("/").pop()?.toLowerCase() ?? "";
   const hashes: Record<string, string> = {
     "ebrake1.kicad_pcb": "d0117300c730688ce2311c2908cec041c537689f59aa4527ffa6bdec68a2edca",
-    "removed-board.kicad_pcb": "37639b58aa75c11265ecf7867c2d358942b70c9e0011a10da99f524e767c2f07",
   };
   // A familiar filename is not evidence that the board still matches a demo.
   if (!source || !hashes[name] || await sha256(new TextEncoder().encode(source).buffer) !== hashes[name]) return false;
   if (name === "ebrake1.kicad_pcb") {
-    configureBundledVisuals(board, "ebrake1");
-    return true;
-  }
-  if (name === "removed-board.kicad_pcb") {
-    configureBundledVisuals(board, "removed-board");
+    configureBundledVisuals(board);
     return true;
   }
   return false;

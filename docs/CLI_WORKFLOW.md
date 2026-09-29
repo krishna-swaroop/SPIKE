@@ -1,76 +1,61 @@
 # SPIKE CLI Workflow
 
 The CLI uses the same DesignIR, AnalysisSpec, preflight, solver, and report
-contracts as the desktop application. Commands run locally and do not require a
-network connection.
+contracts as the desktop application. Commands run locally without a network
+connection. Run them from the SPIKE repository root.
 
-Run commands from the SPIKE repository root.
+Choose a board that you are authorized to analyze. Replace the placeholders
+below with reviewed net names, terminal locations, and operating conditions
+from that board before running an analysis.
 
-## 1. Import And Inspect
+## Import and inspect
 
 ```powershell
-python -m python.spike_core.cli --output modular-design.json --quiet import "<LOCAL_USER_HOME>\Documents\Github\TEST\removed-board\removed-board.kicad_pcb"
-python -m python.spike_core.cli inspect modular-design.json
-python -m python.spike_core.cli inspect modular-design.json --section stackup
-python -m python.spike_core.cli inspect modular-design.json --section nets
-python -m python.spike_core.cli validate modular-design.json
+python -m python.spike_core.cli --output design.json --quiet import "path/to/your-board.kicad_pcb"
+python -m python.spike_core.cli inspect design.json
+python -m python.spike_core.cli inspect design.json --section stackup
+python -m python.spike_core.cli inspect design.json --section nets
+python -m python.spike_core.cli validate design.json
 ```
 
-## 2. Prepare A DCIR Request
+## Prepare and run DCIR
 
-This creates a request without running the solver.
+`setup-dc` creates a request without running the solver. Coordinates are in
+millimetres. Select mesh and resource limits suitable for the study.
 
 ```powershell
-python -m python.spike_core.cli --output modular-12v-dcir-request.json --quiet setup-dc modular-design.json `
-  --net "/12Vout" `
-  --source "160.132,81.660,F.Cu,12" `
-  --load "165.025,78.200,F.Cu,3.333333333" `
-  --load "165.025,82.275,F.Cu,3.333333333" `
-  --load "165.025,86.350,F.Cu,3.333333334" `
+python -m python.spike_core.cli --output dc-request.json --quiet setup-dc design.json `
+  --net "<net-name>" `
+  --source "<x-mm>,<y-mm>,<layer>,<current-A>" `
+  --load "<x-mm>,<y-mm>,<layer>,<current-A>" `
   --mesh-size-mm 0.5 `
   --zone-cell-mm 0.5 `
   --max-conductors 50000 `
-  --via-model extracted `
-  --via-plating-mm 0.025 `
-  --max-drop-mv 50 `
-  --max-density 100
+  --via-model extracted
+
+python -m python.spike_core.cli preflight dc-request.json
+python -m python.spike_core.cli --output dc-mesh.json --quiet mesh-preview dc-request.json
+python -m python.spike_core.cli --output dc-result.json --quiet run dc-request.json
+python -m python.spike_core.cli report dc-result.json --report-format html --report-output dc-report.html
+python -m python.spike_core.cli report dc-result.json --report-format csv --report-output dc-fields.csv
 ```
 
-`--via-model extracted` uses each via's actual start/end layers, drill, and
-available plating data. `plated_cylinder` uses the specified plating thickness
-for every via while retaining the imported drill and layer span.
+`--via-model extracted` uses imported via spans, drills, and available plating
+data. Run only when preflight reports `can_solve: true`. Add `--include-cells`
+only when full cell geometry is needed inline; otherwise use `mesh-preview`.
+The result includes voltages, currents, copper loss, mesh data, warnings, and
+provenance. A completed run alone does not establish convergence or accuracy.
 
-## 3. Preflight And Preview
+## Prepare and run AC R/L extraction
 
-```powershell
-python -m python.spike_core.cli preflight modular-12v-dcir-request.json
-python -m python.spike_core.cli --output modular-12v-mesh.json --quiet mesh-preview modular-12v-dcir-request.json
-```
-
-`preflight` prints a compact readiness and mesh summary. Add
-`--include-cells` only when the full cell geometry is needed inline; normally
-write it with `mesh-preview`. Do not run a request when preflight reports
-`can_solve: false`.
-
-## 4. Run And Report
+The frequency range and mesh settings illustrate syntax; they are not a
+validated range for an arbitrary board.
 
 ```powershell
-python -m python.spike_core.cli --output modular-12v-dcir-result.json --quiet run modular-12v-dcir-request.json
-python -m python.spike_core.cli report modular-12v-dcir-result.json --report-format html --report-output modular-12v-dcir-report.html
-python -m python.spike_core.cli report modular-12v-dcir-result.json --report-format csv --report-output modular-12v-dcir-fields.csv
-```
-
-The JSON result contains absolute node voltage, source-relative voltage drop,
-branch current, current density, copper loss, probe values, warnings, solver
-mesh, and provenance.
-
-## 5. Prepare And Run AC R/L Extraction
-
-```powershell
-python -m python.spike_core.cli --output modular-vinf-ac-request.json --quiet setup-ac modular-design.json `
-  --net "/Vin_f" `
-  --source "118.995,66.835,F.Cu,J1" `
-  --load "121.3954,66.4972,F.Cu,F1" `
+python -m python.spike_core.cli --output ac-request.json --quiet setup-ac design.json `
+  --net "<net-name>" `
+  --source "<x-mm>,<y-mm>,<layer>,<label>" `
+  --load "<x-mm>,<y-mm>,<layer>,<label>" `
   --start-hz 1000 `
   --stop-hz 30000000 `
   --points 9 `
@@ -78,27 +63,24 @@ python -m python.spike_core.cli --output modular-vinf-ac-request.json --quiet se
   --zone-cell-mm 2 `
   --memory-limit-gb 2 `
   --via-model extracted `
-  --via-plating-mm 0.025 `
   --skin-effect
 
-python -m python.spike_core.cli preflight modular-vinf-ac-request.json
-python -m python.spike_core.cli --output modular-vinf-ac-result.json --quiet run modular-vinf-ac-request.json
-python -m python.spike_core.cli report modular-vinf-ac-result.json --report-format html --report-output modular-vinf-ac-report.html
+python -m python.spike_core.cli preflight ac-request.json
+python -m python.spike_core.cli --output ac-result.json --quiet run ac-request.json
+python -m python.spike_core.cli report ac-result.json --report-format html --report-output ac-report.html
 ```
 
-The current AC solver returns series resistance, partial inductance,
+The AC result reports series resistance, partial inductance,
 single-reference approximate capacitance and dielectric conductance, complex
-impedance versus frequency, branch current at the final frequency, warnings,
-mesh provenance, and RAM-derived branch-admission provenance. It does not yet
-solve arbitrary-geometry/multiconductor capacitance, proximity effect, via and
-antipad capacitance, or validated multiport PDN impedance.
+impedance versus frequency, warnings, and provenance. It does not establish
+validated multiport PDN impedance or arbitrary-geometry capacitance.
 
-## Other Commands
+## Other commands
 
 ```powershell
 python -m python.spike_core.cli solvers
 python -m python.spike_core.cli benchmark
-python -m python.spike_core.cli extract-net modular-design.json --net "/12Vout"
+python -m python.spike_core.cli extract-net design.json --net "<net-name>"
 python -m python.spike_core.cli compare baseline.json candidate.json --tolerance-percent 2
 python -m python.spike_core.cli run batch-manifest.json --continue-on-error
 ```

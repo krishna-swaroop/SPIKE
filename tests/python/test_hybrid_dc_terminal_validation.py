@@ -246,31 +246,5 @@ class HybridDCTerminalValidationTests(unittest.TestCase):
         self.assertAlmostEqual(path["loop_drop_v"], path["source_differential_v"] - path["load_differential_v"], places=12)
         self.assertAlmostEqual(evidence["source_current_balance_a"], 0, places=8)
 
-    def test_repo_pinned_removed-board_source_to_three_loads(self) -> None:
-        board = ROOT / "app" / "public" / "demo" / "removed-board.kicad_pcb"
-        design = import_kicad_design(str(board))
-        pads = {pad["component_pad"]: pad for pad in design.pads if pad.get("component_pad")}
-        request = json.loads((ROOT / "docs" / "validation" / "removed-board-12vout-dcir-request.json").read_text())
-        spec_data = request["spec"]
-        spec_data["mesh"]["zone_cell_mm"] = 1.0
-        spec_data["options"] = {"require_exact_terminal_geometry": True}
-        spec_data["sources"][0]["geometry_anchor"] = {"id": pads["R19.3"]["id"], "type": "pad"}
-        for load, name in zip(spec_data["loads"], ("J14.2", "J20.2", "J15.2")):
-            load["geometry_anchor"] = {"id": pads[name]["id"], "type": "pad"}
-        result = solve_hybrid_dc(design, AnalysisSpec(**spec_data))
-        self.assertEqual(result.status, "completed", [(issue.code, issue.message) for issue in result.issues])
-        evidence = result.networks["source_to_load"]
-        self.assertEqual(evidence["status"], "validated")
-        self.assertEqual(len(evidence["paths"]), 3)
-        self.assertEqual(len(evidence["terminal_voltages"]), 4)
-        self.assertAlmostEqual(sum(path["load_current_a"] for path in evidence["paths"]), 10, places=8)
-        self.assertLess(abs(evidence["source_current_balance_a"]), 1e-7)
-        self.assertLess(result.summary["max_scaled_linear_residual"], 1e-10)
-        for path in evidence["paths"]:
-            self.assertGreater(path["supply_drop_v"], 0)
-            self.assertLess(path["supply_drop_v"], 0.02)
-            self.assertAlmostEqual(path["source_voltage_v"] - path["load_voltage_v"], path["supply_drop_v"], places=12)
-
-
 if __name__ == "__main__":
     unittest.main()

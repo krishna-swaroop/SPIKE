@@ -167,9 +167,8 @@ An isolated spectral-energy prototype passes small mixed-geometry tests but is
 not integrated: finite-domain quadrature has no certified error bound and
 Marble-scale work remains unmeasured.
 See [the refinement repair record](validation/PEEC_REFINEMENT_REPAIR.md).
-removed-board
-AC/DC convergence remain blocked; transient now rejects negative-energy modes
-instead of projecting the matrix. Do not infer readiness from preflight alone.
+Transient rejects negative-energy modes instead of projecting the matrix. Do
+not infer readiness from preflight alone.
 The [PEEC safety policy](PEEC_SAFETY_POLICY.md) records native admission,
 capacitance, MNA, failed-result/export and reviewed-port checks plus local rollout.
 

@@ -159,48 +159,6 @@ class HybridMeshContainmentTests(unittest.TestCase):
         self.assertEqual(len(cache.point_results), 3)
         self.assertEqual(len(cache.segment_results), 3)
 
-    def test_checked_in_filled_polygon_cache_preserves_exact_fragments(self):
-        fixture = Path(__file__).parents[2] / "docs/validation/removed-board-design.json"
-        raw = json.loads(fixture.read_text(encoding="utf-8"))
-        zone = max(
-            (
-                item for item in raw["zones"]
-                if item.get("net_name") == "/12Vout" and item.get("layer") == "F.Cu"
-            ),
-            key=lambda item: len(item["points"]),
-        )
-        polygon = _normalize_filled_zone_polygon([
-            (float(point[0]), float(point[1])) for point in zone["points"]
-        ])
-        triangles = _triangulate_polygon(polygon)
-        min_x, max_x = min(x for x, _ in polygon), max(x for x, _ in polygon)
-        min_y, max_y = min(y for _, y in polygon), max(y for _, y in polygon)
-        cell = 0.5
-        columns = ceil((max_x - min_x) / cell)
-        rows = ceil((max_y - min_y) / cell)
-        bounds = [
-            (
-                min_x + column * cell,
-                min_y + row * cell,
-                min(min_x + (column + 1) * cell, max_x),
-                min(min_y + (row + 1) * cell, max_y),
-            )
-            for row in range(rows)
-            for column in range(columns)
-        ]
-        baseline = [
-            _clip_polygon_to_rect_fragments(polygon, triangles, *item, 1e-4)
-            for item in bounds
-        ]
-        cache = _PolygonContainmentCache(polygon, 1e-4)
-        cached = [
-            _clip_polygon_to_rect_fragments(polygon, triangles, *item, 1e-4, cache)
-            for item in bounds
-        ]
-
-        self.assertEqual(cached, baseline)
-        self.assertGreater(sum(bool(item) for item in cached), 0)
-
     def test_triangle_bounds_halo_preserves_near_cell_boundary_fragment(self):
         tolerance = 1e-4
         polygon = [
@@ -360,49 +318,6 @@ class HybridMeshContainmentTests(unittest.TestCase):
         self.assertTrue(all(len(cell["vertices_mm"]) == 8 for cell in barrels))
         audit = audit_dc_conductor_volume_ownership(design, preview["cells"])
         self.assertEqual(audit["by_source_kind"]["pad_barrel"], len(barrels))
-
-    def test_modular_12vout_zone_normalizes_only_a_numerical_jog(self):
-        board = (
-            Path(__file__).resolve().parents[2]
-            / "app"
-            / "public"
-            / "demo"
-            / "removed-board.kicad_pcb"
-        )
-        parser = KicadParser(board)
-        zone = next(
-            item for item in parser.zones
-            if item["net_name"] == "/12Vout" and item["layer"] == "F.Cu"
-        )
-        raw = _clean_polygon(
-            [(float(point[0]), float(point[1])) for point in zone["points"]],
-            tolerance=1e-9,
-        )
-        normalized = _normalize_filled_zone_polygon(raw)
-
-        # The KiCad fill contains a 1 nm zero-length arc jog. It is not a
-        # copper feature and must not discard the otherwise valid filled area.
-        self.assertFalse(_polygon_is_simple(raw, 1e-6))
-        self.assertTrue(_polygon_is_simple(normalized, 1e-6))
-        self.assertLess(len(normalized), len(raw))
-        self.assertLess(abs(_polygon_area(normalized) - _polygon_area(raw)), 1e-8)
-
-        mesh = build_hybrid_mesh(
-            DesignIR(
-                layers=[{"name": "F.Cu"}],
-                nets=[{"id": 1, "name": "/12Vout"}],
-                zones=[zone],
-            ),
-            AnalysisSpec(
-                mode="dc",
-                net_names=["/12Vout"],
-                mesh={"zone_cell_mm": 1.0, "containment_tolerance_mm": 1e-6},
-            ),
-        )
-        cells = [cell for cell in mesh.cells if cell["source_id"] == zone["id"]]
-        self.assertGreater(len(cells), 0)
-        self.assertTrue(all(_cell_is_inside_polygon(cell, normalized) for cell in cells))
-        self.assertNotIn("SPIKE-BE-MESH-W-0002", {issue.code for issue in mesh.issues})
 
     def test_genuine_self_crossing_zone_remains_rejected(self):
         mesh = build_hybrid_mesh(

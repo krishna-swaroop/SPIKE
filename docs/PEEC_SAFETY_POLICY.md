@@ -4,7 +4,7 @@
 
 These are executable regression requirements, not claims that the legacy
 line-filament model has become a qualified volume extractor. The physical
-Marble/MODULAR defect remains tracked in
+Marble defect remains tracked in
 [the volume correction record](PEEC_VOLUME_CORRECTION_20260924.md).
 
 ## Invariants learned from the failure

@@ -104,7 +104,7 @@ def _board_design(source: Path, package_name: str) -> dict[str, Any]:
 def build(output: Path) -> Path:
     output.mkdir(parents=True, exist_ok=True)
     project_path = output / "wave1-assembly-acceptance.spike"
-    board_a_path = ROOT / "app" / "public" / "demo" / "removed-board.kicad_pcb"
+    board_a_path = ROOT / "examples" / "esp32" / "source" / "iot-esp-eth-ind.kicad_pcb"
     board_b_path = ROOT / "app" / "public" / "demo" / "ebrake1.kicad_pcb"
     board_a = _board_design(board_a_path, board_a_path.name)
     board_b = _board_design(board_b_path, board_b_path.name)
@@ -126,12 +126,12 @@ def build(output: Path) -> Path:
         ],
         "harnesses": [{
             "id": "power-harness", "name": "Power harness",
-            "endpoint_a": "controller-board:J1", "endpoint_b": "load-board:J2",
+            "endpoint_a": "controller-board:J41", "endpoint_b": "load-board:J2",
             "length_mm": 140.0, "pin_map": {"1": "1", "2": "2"},
         }],
         "connector_mappings": [{
             "id": "power-connector-map", "name": "Power connector map", "kind": "connector-pin-map",
-            "data": {"endpoint_a": "controller-board:J1", "endpoint_b": "load-board:J2", "pins": {"1": "1", "2": "2"}},
+            "data": {"endpoint_a": "controller-board:J41", "endpoint_b": "load-board:J2", "pins": {"1": "1", "2": "2"}},
         }],
         "rigid_flex_links": [{
             "id": "fixture-flex-link", "name": "Acceptance flex link", "kind": "rigid-flex-link",

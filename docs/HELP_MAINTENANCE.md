@@ -23,7 +23,7 @@ Dynamic options, controls generated outside these JSX primitives, and every runt
 
 ## Screenshot provenance
 
-The original workspace/layout/report screenshots are historical removed-board captures retained as archival assets. Current user-facing PCB examples use Marble v1.4.4 captures from the running SPIKE interface and retain their source and capture scope in the captions.
+Historical workspace/layout/report screenshots are retained as archival assets. Current user-facing PCB examples use Marble v1.4.4 captures from the running SPIKE interface and retain their source and capture scope in the captions.
 
 `app/public/help/marble-v1.4.4-top.png` is an unchanged upstream board-documentation render from BerkeleyLab/Marble tag `v1.4.4`, commit `a426777d92c0f22a546d4740b419a3937e0c1f90`. Its SHA-256 is `51d0c4d72879262f079f5c13222306967246509a71ed5484be4a276e1ab23568`. The upstream README records copyright 2019-2023 The Regents of the University of California through Lawrence Berkeley National Laboratory, CERN OHL v1.2 for the documentation, and the U.S. Government rights notice. Preserve that README and the notice in `THIRD_PARTY_NOTICES.md` when redistributing the image. It identifies the source board; it is not a SPIKE screenshot or analysis result.
 

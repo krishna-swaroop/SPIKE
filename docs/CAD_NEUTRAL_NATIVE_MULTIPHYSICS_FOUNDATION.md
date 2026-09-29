@@ -419,9 +419,8 @@ outline fallback. The focused four-test fixture suite proves typed parser to
 DesignIR v2 to schema round-trip, omission/default behavior, invalid-setting
 rejection, and a bundled-fixture census: `ebrake1` has 26 source-filled zones
 (all `solid`), six thermal footprint overrides, 14 solid pad overrides, and 12
-45-degree pad angles; `removed-board` has 83 source-filled zones (80 `solid`,
-three `thermal`), 14 zero-degree pad angles, and inherited pad overrides. This
-is retention evidence only. Effective pad-zone topology resolution,
+45-degree pad angles. This is retention evidence only. Effective pad-zone
+topology resolution,
 spoke-topology regeneration, thermal/solver readiness, and field convergence
 remain pending.
 
@@ -455,7 +454,7 @@ snapshot. The public flat polygon path does not state hole/negative-space or
 electrical-joining roles, so SPIKE does not invent them. Consequently
 `thermal_topology_eligible` remains false and this metadata does not change the
 generic mesh attachment. The bundled census retains all 26 ebrake components
-in 24 groups and all 83 MODULAR components in 54 groups; this is provenance,
+in 24 groups; this is provenance,
 not spoke, refill, mesh, solver, field, or physics evidence.
 
 `spike/thermal-relief-boundary-contact-evidence/v1` (error
@@ -488,7 +487,7 @@ This independently proves that controlled source geometry is spoke-shaped; it
 does not prove which filler generated it. The public KiCad manual also permits
 custom thermal templates and variable resolved spoke counts, so this profile is
 not generalized into a KiCad refill claim. ebrake has no thermal candidate and
-MODULAR has two thermal-but-disjoint candidates; both return `no_candidates`.
+returns `no_candidates`.
 General KiCad topology extraction, refill/regeneration, mesh consumption,
 native overlay, field convergence, solver readiness, and physics remain false.
 

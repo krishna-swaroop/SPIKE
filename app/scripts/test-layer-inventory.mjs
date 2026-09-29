@@ -27,7 +27,6 @@ for (const count of [2, 10, 32]) {
   );
 }
 
-const compilerOptions = { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 };
 const layerVisibility = { 'F.Cu': false, 'In1.Cu': false, 'In2.Cu': true, 'B.Cu': false };
 const stack = Object.keys(layerVisibility);
 assert.equal(copperLayerSelectionModule.visibleLayoutCopperLayer('F.Cu', stack, layerVisibility), 'In2.Cu',
@@ -36,14 +35,6 @@ assert.equal(copperLayerSelectionModule.visibleLayoutCopperLayer('All', stack, l
 assert.equal(copperLayerSelectionModule.visibleLayoutCopperLayer('Overview', stack, layerVisibility), 'Overview');
 assert.equal(copperLayerSelectionModule.visibleLayoutCopperLayer('In2.Cu', stack, { ...layerVisibility, 'In2.Cu': false }), 'In2.Cu',
   'hiding every copper layer must not silently re-enable one');
-const numericRangeSource = readFileSync(new URL("../src/numericRange.ts", import.meta.url), "utf8");
-const numericRangeModule = ts.transpileModule(numericRangeSource, { compilerOptions }).outputText;
-const numericRangeUrl = `data:text/javascript;base64,${Buffer.from(numericRangeModule).toString("base64")}`;
-const parserSource = readFileSync(new URL("../src/boardParser.ts", import.meta.url), "utf8");
-const parserModule = ts.transpileModule(parserSource, { compilerOptions }).outputText
-  .replace('from "./numericRange";', `from "${numericRangeUrl}";`);
-const parser = await import(`data:text/javascript;base64,${Buffer.from(parserModule).toString("base64")}`);
-
 const stackup = [
   { name: "F.SilkS", type: "Top Silk Screen" },
   { name: "F.Paste", type: "Top Solder Paste" },
@@ -97,21 +88,7 @@ assert.equal(fallback.physicalCount, 0);
 assert.equal(fallback.copperCount, 6, "boards without stackup metadata must still report their copper-layer count");
 assert.equal(fallback.entries.length, definitions.length + 1, "boards without stackup metadata retain every drawable layer and the board body");
 
-const modularSource = readFileSync(new URL("../public/demo/removed-board.kicad_pcb", import.meta.url), "utf8");
-const modularBoard = parser.parseKicadBoard(modularSource);
-const modularInventory = inventoryModule.buildLayerManagerInventory(modularBoard.layerDefinitions, modularBoard.stackup);
-assert.equal(modularBoard.stackup.length, 17, "the committed large-board fixture must retain all physical stack rows");
-assert.equal(modularInventory.physicalCount, modularBoard.stackup.length, "Layer Manager count must match the canonical parser stackup");
-assert.deepEqual(
-  Object.fromEntries(["Copper", "Dielectric", "Board finish"].map(group => [
-    group,
-    modularInventory.entries.filter(entry => entry.physical && entry.group === group).length,
-  ])),
-  { Copper: 6, Dielectric: 5, "Board finish": 6 },
-  "the real 17-layer fixture must not drop dielectric rows or misclassify physical finishes",
-);
-
-console.log("Layer inventory regression passed: wildcard copper spans resolve to the 2-, 10-, and 32-layer physical stacks; 17 physical = 6 copper + 5 dielectric + 6 board finish.");
+console.log("Layer inventory regression passed: wildcard copper spans resolve to the 2-, 10-, and 32-layer physical stacks.");
 
 const arbitraryCopper = ["TOP", "SIGNAL1", "BOTTOM"];
 assert.deepEqual(copperLayerSelectionModule.resolveBoardCopperLayers(arbitraryCopper, ["TOP", "BOTTOM"]), ["TOP", "BOTTOM"]);

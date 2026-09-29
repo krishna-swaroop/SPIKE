@@ -23,8 +23,6 @@ Surface subdivision has a hard 100,000-item output budget including fallback poi
 
 Vertical via/barrel faces have zero projected area in a 2D layout. Via-stress display matches returned barrel samples to their board via and colors its annular footprint, using the peak returned sample for that via. This is a display projection rather than a solved annular variation. Unmatched or untriangulatable scalar records use bounded, flat fallback glyphs; they do not imply a solved volume or plot height.
 
-The 2026-09-24 viewport correction was checked against a recorded `/12Vout` result with 9,614 scalar faces and 3,040 via-barrel faces across 76 vias. The 2D geometry check matched all barrel faces to annuli; an oblique 3D visual check showed continuous hollow via shapes without detached blocks. The frontend production build, result workbench, result performance, viewport and layer-selection tests, TypeScript check, and architecture check passed. These display checks do not establish mesh convergence or validate the numerical current-density values. Numerical code still requires knowledgeable human review before release.
-
 ## Reported analytics
 
 The Results viewer and engineering report share `app/src/resultAnalytics.ts`. It reports:

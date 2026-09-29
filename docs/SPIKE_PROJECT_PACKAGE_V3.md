@@ -257,8 +257,8 @@ settings that lack typed retention fail closed with invalid/`unknown` state and
 diagnostics. Zone records retain whether their copper is `source_filled` and
 the source-filled identity, rather than inferring a fill from an outline.
 Package retention and schema round-trip are covered by the focused four-test
-KiCad thermal-connection fixture suite, including the `ebrake1` and
-`removed-board` source-filled-zone/override census. This package fact does
+KiCad thermal-connection fixture suite, including the `ebrake1`
+source-filled-zone/override census. This package fact does
 not regenerate thermal spokes or make thermal/solver/field-convergence claims.
 The registered `spike/zone-pad-connection-evidence/v1` sidecar supplies bounded,
 digest-bound source-filled pad-zone observations: literal pad-layer, pad,

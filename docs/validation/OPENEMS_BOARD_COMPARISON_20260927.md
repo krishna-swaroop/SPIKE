@@ -57,9 +57,8 @@ passivity qualification. Its raw response is in
 | Haasoscope Trigger v1.1, `3V3` | 0 entries | `can_prepare=false`, `can_run=false`; missing physical stackup | 6 pad contour |
 | Haasoscope MAX10 ADC v9.0, `+3V3` | 0 entries | `can_prepare=false`, `can_run=false`; missing physical stackup | 11: 1 pad contour, 10 via padstack |
 | Public KiCad microwave demo, `GND` | 0 entries | `can_prepare=false`, `can_run=false`; no physical stackup and no selected `GND` conductor geometry | 0 |
-| removed-board, `/12Vout` | 17 entries | `can_prepare=true`, `can_run=false`; full setup/solve blocked by unsupported selected geometry | 96: 17 pad contour, 3 padstack, 76 via padstack |
 
-All seven boards above imported into SPIKE; the failure is openEMS model
+All six boards above imported into SPIKE; the failure is openEMS model
 admission. The adapter now ignores KiCad mask/paste names when checking copper
 mapping, accepts tuple-form via spans for port contacts, and does not add a
 redundant layer-mapping error when stackup is absent. Marble's full input
@@ -88,8 +87,7 @@ dielectric properties. These gaps require verified source material data.
 There is no matched board quantity to compare. SPIKE's available Marble
 PEEC/RT0 studies concern DC resistance and approximate quasistatic RLCG;
 the current Marble AC route is blocked by a copper-basis geometry defect.
-The pinned removed-board DC `/12Vout` refinement study also remains below
-its signoff threshold. These results cannot serve as S-parameter reference
+These results cannot serve as S-parameter reference
 data for an unrun openEMS port sweep. Equating a DC voltage drop or PEEC
 partial inductance with an FDTD S11 value would be physically invalid.
 
@@ -111,9 +109,8 @@ Board admission JSON is under `build/validation/openems-board-readiness/`.
 The Marble setup attempt and authenticated case are under
 `build/validation/openems-marble-setup-20260927/`.
 The fixture provenance and prior SPIKE evidence are documented in
-`docs/CERN_MARBLE_EVALUATION_20260920.md`,
-`docs/validation/MARBLE_PEEC_MESH_AUDIT.md`, and
-`docs/validation/removed-board_ANALYSIS.md`.
+`docs/CERN_MARBLE_EVALUATION_20260920.md` and
+`docs/validation/MARBLE_PEEC_MESH_AUDIT.md`.
 
 ## 2026-09-28 capability audit
 
@@ -122,8 +119,8 @@ pad. The shared host/worker pad lowerer now accepts it only when the drill is
 zero and the pad is a surface-mount rectangle. It still rejects a nonzero
 drill, a through-hole pad kind, and unsupported pad contours. Retesting the
 same imported nets reduced false geometry blockers: Marble 101 to 78,
-White Rabbit 1,648 to 1,080, HForsten 2 to 0, Haasoscope MAX10 ADC 77 to 11,
-and removed-board 98 to 96. These counts are admission findings, not solves.
+White Rabbit 1,648 to 1,080, HForsten 2 to 0, and Haasoscope MAX10 ADC 77 to
+11. These counts are admission findings, not solves.
 
 The final adapter version is 1.2.2. Its exact current driver-source hash
 matches all three newly prepared simple-patch cases in
@@ -179,7 +176,7 @@ passed. The JSON record is
 does not contain the new curved pads or a via, so it verifies adapter
 execution without validating their field accuracy.
 
-The seven imported boards were probed again with adapter 1.3.0 at 1 mm mesh
+The six listed imported boards were probed again with adapter 1.3.0 at 1 mm mesh
 and no inferred ports or materials. The openEMS Python test suite passed 54
 tests; the architecture check and desktop extension-result script also passed.
 
@@ -191,7 +188,6 @@ tests; the architecture check and desktop extension-result script also passed.
 | Haasoscope Trigger `3V3` | 0 | 6 drilled pads | Missing physical stackup and ports |
 | Haasoscope MAX10 ADC `+3V3` | 0 | 1 drilled pad, 10 vias | Missing physical stackup and ports |
 | Public microwave demo `GND` | 0 | 0 | Missing stackup and no selected `GND` geometry |
-| removed-board `/12Vout` | 17 | 9 drilled pads, 76 vias | No explicit reviewed ports; `can_prepare=true`, `can_run=false` |
 
 These figures are admission evidence in
 `build/validation/openems-board-readiness/`, not openEMS results for the

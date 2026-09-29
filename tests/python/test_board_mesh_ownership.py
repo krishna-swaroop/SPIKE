@@ -158,7 +158,6 @@ class BoardMeshOwnershipTests(unittest.TestCase):
     def test_bundled_boards_have_resource_admitted_selected_net_accounting(self) -> None:
         root = Path(__file__).resolve().parents[2] / "app" / "public" / "demo"
         cases = (
-            ("removed-board.kicad_pcb", "/12Vout"),
             ("ebrake1.kicad_pcb", "3Vin"),
         )
         for filename, net in cases:

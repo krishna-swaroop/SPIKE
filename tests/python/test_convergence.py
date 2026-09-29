@@ -330,37 +330,5 @@ class MeshConvergenceTests(unittest.TestCase):
         self.assertEqual(len(report["levels"]), 1)
         self.assertFalse(report["can_sign_off"])
 
-    def test_pinned_board_recorded_levels_remain_failed(self):
-        from python.spike_core.contracts import AnalysisResult
-
-        root = Path(__file__).resolve().parents[2]
-        board = root / "app/public/demo/removed-board.kicad_pcb"
-        evidence = json.loads((root / "docs/validation/removed-board-pinned-dc-convergence.json").read_text())
-        self.assertEqual(hashlib.sha256(board.read_bytes()).hexdigest(), evidence["board_sha256"])
-        levels = iter(evidence["levels"])
-
-        def replay(_design, _spec):
-            level = next(levels)
-            return AnalysisResult(
-                status=level["status"], model_status=level["model_status"], mode="dc",
-                summary={
-                    **level["metrics"],
-                    "node_count": level["node_count"],
-                    "edge_count": level["edge_count"],
-                    "total_load_current_a": 10.0,
-                },
-            )
-
-        report = run_mesh_convergence(
-            self.design, self.spec, replay,
-            levels=(2, 1, 0.5, 0.25), stop_when_converged=False,
-        )
-        self.assertEqual(report["comparison_history"], evidence["comparison_history"])
-        self.assertEqual(report["status"], "failed_to_converge")
-        self.assertFalse(report["can_sign_off"])
-        load_drop = next(item for item in report["comparisons"] if item["metric"] == "max_load_voltage_drop_v")
-        self.assertEqual(load_drop["status"], "failed")
-
-
 if __name__ == "__main__":
     unittest.main()

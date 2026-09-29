@@ -2,8 +2,7 @@
 # Copyright (c) 2026 SigHarmonic
 """Bounded profiler for repeated hybrid-zone containment work.
 
-The default fixture is one unchanged filled polygon from the checked-in
-removed-board DesignIR.  It compares the production rasterization path with
+The selected fixture supplies one filled polygon. This compares the production rasterization path with
 a per-polygon containment cache prototype and fails unless every emitted
 fragment remains exactly equal and in the same order.
 """
@@ -400,9 +399,9 @@ def main() -> int:
     parser.add_argument(
         "--input",
         type=Path,
-        default=ROOT / "docs/validation/removed-board-design.json",
+        required=True,
     )
-    parser.add_argument("--net", default="/12Vout")
+    parser.add_argument("--net", required=True)
     parser.add_argument("--zone-cell-mm", type=float, default=0.25)
     parser.add_argument("--max-zone-cells", type=int, default=20_000)
     parser.add_argument("--max-grid-cells", type=int, default=20_000)
