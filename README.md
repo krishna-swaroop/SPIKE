@@ -1,3 +1,5 @@
+<img src="app/public/spike-icon.png" alt="SPIKE icon" width="96" height="96">
+
 # SPIKE — PCB Simulation for KiCad
 
 [![Latest release: v0.3.0](https://img.shields.io/badge/latest_release-v0.3.0-blue)](https://github.com/wayri/SPIKE-Main/releases/tag/v0.3.0)
