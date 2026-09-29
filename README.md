@@ -1,23 +1,28 @@
-# SPIKE
+# SPIKE — PCB Simulation for KiCad
 
-SPIKE is an open-source desktop workbench for exploring a PCB's power, signal,
-thermal, and electromagnetic behavior. Import a KiCad board, inspect it in 2D
-or 3D, set up an analysis, and explore the results in the same workspace.
+SPIKE is an open-source PCB analysis and simulation workbench for KiCad boards.
+Explore **power integrity (PI), signal integrity (SI), board thermal analysis,
+and RF antenna simulation** in one desktop app. Import a board, inspect its
+copper and components in 2D or 3D, set up a study, and probe the results in the
+board viewport. Optional **EMerge and openEMS** extensions add electromagnetic
+simulation workflows.
 
-Version 0.3.0 is available as source and a Windows installer. SPIKE runs locally and includes a
-command-line interface. See the [setup guide](docs/DEVELOPER_GUIDE.md) to run
-it from a checkout.
+SPIKE runs locally and includes a command-line interface. Version 0.3.0 is a
+community preview, available as source and an unsigned Windows x64 installer.
 
-The [0.3.0 release](https://github.com/wayri/SPIKE-Main/releases/tag/v0.3.0)
-provides source code and an unsigned Windows installer. An [experimental Linux build](docs/LINUX_EXPERIMENTAL.md)
-is being tested.
+[Download SPIKE for Windows](https://github.com/wayri/SPIKE-Main/releases/tag/v0.3.0)
+· [Try the ESP32 example](examples/esp32/README.md)
+· [User guides](docs/README.md)
+· [Build from source](docs/DEVELOPER_GUIDE.md)
+
+An [experimental Linux build](docs/LINUX_EXPERIMENTAL.md) is being tested.
 
 **Work in progress:** SPIKE is provided **AS IS**, without warranty or
 guarantee, as set out in the [Apache License 2.0](LICENSE). Check inputs,
 assumptions, and results before relying on them. Current limits are summarized
 below and described in [Solver Status](docs/SOLVER_STATUS.md).
 
-## See it in action
+## ESP32 PCB and antenna simulation examples
 
 ![ESP32 board imported into SPIKE's 3D viewport](examples/esp32/evidence/viewport_3d.png)
 
@@ -40,7 +45,12 @@ For more examples, see the [thermal walkthrough](docs/THERMAL_USER_GUIDE.md),
 [SI walkthrough](docs/SI_USER_GUIDE.md), and
 [simulation studies guide](docs/SIMULATION_STUDIES.md).
 
-## What SPIKE can do
+## PCB analysis capabilities
+
+Use SPIKE to investigate DC voltage drop and power distribution, inspect
+S-parameters and NEXT/FEXT crosstalk, compare board cooling conditions, and view
+2D antenna cuts and 3D radiation patterns. Each workflow has its own model
+requirements and limits, summarized below.
 
 | Area | Available workflow | Current limit |
 |---|---|---|
@@ -68,7 +78,7 @@ normalized copy. See [Importer Architecture](docs/IMPORTER_ARCHITECTURE.md),
 [task sequences](docs/USER_TASK_SEQUENCES.md), and
 [Solver Status](docs/SOLVER_STATUS.md) for details.
 
-## Bundled extensions
+## Extensions: EMerge, openEMS, and board workflows
 
 These are the seven packages under [`extensions/`](extensions/). Their Python
 entry points run in separate processes. A bundled package supplies an adapter
