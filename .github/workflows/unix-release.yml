@@ -1,0 +1,50 @@
+name: Linux and macOS packages
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            name: linux-x86_64
+          - os: macos-15
+            name: macos-arm64
+          - os: macos-15-intel
+            name: macos-x86_64
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 75
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+      CARGO_PROFILE_RELEASE_STRIP: symbols
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build libeigen3-dev libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf flatpak xvfb dbus-x11
+          flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+          flatpak install --user --noninteractive -y flathub org.gnome.Platform//48 org.gnome.Sdk//48
+      - name: macOS dependencies
+        if: runner.os == 'macOS'
+        run: brew install ninja eigen libomp llvm
+      - name: Build and verify worker and desktop
+        shell: bash
+        run: bash scripts/build_unix_release.sh
+      - name: Package and verify installed CLI
+        run: python scripts/package_unix_release.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SPIKE-${{ matrix.name }}
+          path: dist-release/*
+          if-no-files-found: error

@@ -7,24 +7,34 @@ if not getattr(sys, "frozen", False):
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 
-if __name__ == "__main__":
-    if len(sys.argv) > 1 and sys.argv[1] == "--mcp":
+def main(argv: list[str] | None = None) -> int:
+    """Dispatch a frozen worker mode while retaining service mode by default."""
+
+    arguments = list(sys.argv[1:] if argv is None else argv)
+    if arguments and arguments[0] == "--cli":
+        from python.spike_cli import main as cli_main
+        return cli_main(arguments[1:])
+    if arguments and arguments[0] == "--mcp":
         from python.spike_core.mcp_server import serve
         serve()
-    elif len(sys.argv) > 1 and sys.argv[1] == "--local-chat":
+        return 0
+    if arguments and arguments[0] == "--local-chat":
         from python.spike_core.local_llm import main
-        raise SystemExit(main(sys.argv[2:]))
-    elif len(sys.argv) > 1 and sys.argv[1] == "--extension-host":
+        return main(arguments[1:])
+    if arguments and arguments[0] == "--extension-host":
         # The trusted extension registry launches a fresh frozen worker as its
         # Python host. A frozen sys.executable is not a general Python CLI.
         import runpy
-        from pathlib import Path
-        if len(sys.argv) < 3:
+        if len(arguments) < 2:
             raise SystemExit("Extension host requires an entrypoint.")
-        script = Path(sys.argv[2]).resolve()
+        script = Path(arguments[1]).resolve()
         if not script.is_file(): raise SystemExit("Extension entrypoint does not exist.")
-        sys.argv = [str(script), *sys.argv[3:]]
+        sys.argv = [str(script), *arguments[2:]]
         runpy.run_path(str(script), run_name="__main__")
-    else:
-        from python.spike_core.service import main
-        raise SystemExit(main())
+        return 0
+    from python.spike_core.service import main as service_main
+    return service_main()
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
