@@ -1,5 +1,10 @@
 name: Linux and macOS packages
 on:
+  workflow_call:
+    inputs:
+      platform:
+        type: string
+        default: all
   workflow_dispatch:
     inputs:
       platform:
@@ -37,6 +42,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: app/src-tauri -> target
       - name: Linux dependencies
         if: runner.os == 'Linux'
         run: |
@@ -52,8 +62,18 @@ jobs:
         run: bash scripts/build_unix_release.sh
       - name: Package and verify installed CLI
         run: python scripts/package_unix_release.py
+      - name: Linux desktop startup
+        if: runner.os == 'Linux'
+        run: python scripts/smoke_desktop_package.py xvfb-run -a dbus-run-session -- flatpak run org.spike.integrity
+      - name: macOS desktop startup
+        if: runner.os == 'macOS'
+        run: |
+          hdiutil attach dist-release/*.dmg -nobrowse -mountpoint "$RUNNER_TEMP/spike-dmg"
+          python scripts/smoke_desktop_package.py "$RUNNER_TEMP/spike-dmg/SPIKE.app/Contents/MacOS/spike-desktop"
+          hdiutil detach "$RUNNER_TEMP/spike-dmg"
       - uses: actions/upload-artifact@v4
         with:
           name: SPIKE-${{ matrix.os }}
           path: dist-release/*
           if-no-files-found: error
+          retention-days: 14

@@ -25,10 +25,10 @@ cd app
 npm ci
 npm run build
 cd ..
-python scripts/prepare_unix_bundle.py
+python scripts/prepare_release_resources.py
 cd app
 if [[ "$(uname)" == Darwin ]]; then
-  npm run tauri build -- --bundles app --config ../build/tauri-unix.json
+  npm run tauri build -- --bundles app
 else
-  npm run tauri build -- --bundles deb --config ../build/tauri-unix.json
+  npm run tauri build -- --bundles deb
 fi

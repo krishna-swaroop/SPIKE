@@ -4,12 +4,13 @@ import json
 from pathlib import Path
 import shutil
 import subprocess
+import sys
 
 root = Path(__file__).resolve().parents[1]
 tracked = set(subprocess.check_output(['git', 'ls-files'], cwd=root, text=True).splitlines())
 config_path = root / 'app/src-tauri/tauri.conf.json'
 config = json.loads(config_path.read_text())
-stage = root / 'build/unix-resources'
+stage = root / 'build/release-resources'
 stage.mkdir(parents=True, exist_ok=True)
 for src, dst in config['bundle']['resources'].items():
     source = (config_path.parent / src).resolve()
@@ -26,8 +27,12 @@ for src, dst in config['bundle']['resources'].items():
         target = stage / dst / file.relative_to(source) if source.is_dir() else stage / dst
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(file, target)
-config['bundle']['resources'] = {'../../build/unix-resources/': './'}
-config['bundle']['macOS'] = {'minimumSystemVersion': '14.0', 'signingIdentity': '-'}
+config['bundle']['resources'] = {'../../build/release-resources/': './'}
+if sys.platform == 'win32':
+    (stage / 'spike.cmd').write_text(
+        '@echo off\nset "SPIKE_HOME=%~dp0"\nset "SPIKE_WORKSPACE=%~dp0"\n'
+        '"%~dp0bundled\\spike-worker\\spike-worker.exe" --cli %*\nexit /b %errorlevel%\n')
+if sys.platform == 'darwin':
+    config['bundle']['macOS'] = {'minimumSystemVersion': '15.0', 'signingIdentity': '-'}
 # Supply a complete configuration so original resource mappings cannot be merged back.
 config_path.write_text(json.dumps(config, indent=2) + '\n')
-(root / 'build/tauri-unix.json').write_text('{}\n')
