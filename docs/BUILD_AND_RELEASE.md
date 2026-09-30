@@ -48,7 +48,8 @@ An existing tag must point to that commit.
 - Windows silent installation and its installed CLI launcher.
 - Flatpak installation and its installed CLI launcher.
 - macOS app signing and CLI launcher.
-- Desktop startup on each platform.
+- Desktop startup, reinstall, and removal on each platform.
+- Linux CLI and desktop startup with network access disabled.
 - A complete set of four packages with matching SHA-256 checksums.
 
 Source checks also run on pull requests and code changes to `main`, covering

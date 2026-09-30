@@ -141,6 +141,13 @@ if ($installedEntries.Count -ne 1) {
 $installRoot = [System.IO.Path]::GetFullPath($installedEntries[0].InstallLocation.Trim('"'))
 Write-Output "Checking installed package at $installRoot"
 
+# Reinstall the same candidate to exercise the installer update path.
+$reinstall = Start-Process -FilePath $installers[0].FullName `
+    -ArgumentList @("/S", "/CurrentUser", "/NS") -WindowStyle Hidden -Wait -PassThru
+if ($reinstall.ExitCode -ne 0) {
+    throw "NSIS reinstall failed with exit code $($reinstall.ExitCode)."
+}
+
 $installedLauncher = Join-Path $installRoot "spike.cmd"
 if (-not (Test-Path -LiteralPath $installedLauncher -PathType Leaf)) {
     throw "The installed SPIKE CLI launcher is missing: $installedLauncher"
@@ -166,6 +173,21 @@ finally {
         Stop-Process -Id $desktop.Id -Force
         $desktop.WaitForExit()
     }
+}
+
+$uninstaller = Join-Path $installRoot "uninstall.exe"
+$uninstall = Start-Process -FilePath $uninstaller -ArgumentList @("/S", "/CurrentUser") `
+    -WindowStyle Hidden -Wait -PassThru
+if ($uninstall.ExitCode -ne 0) {
+    throw "NSIS uninstall failed with exit code $($uninstall.ExitCode)."
+}
+# NSIS runs its uninstaller from a temporary copy, so wait for its child cleanup.
+$uninstallDeadline = [DateTime]::UtcNow.AddSeconds(30)
+while ((Test-Path -LiteralPath $installedLauncher) -and [DateTime]::UtcNow -lt $uninstallDeadline) {
+    Start-Sleep -Seconds 1
+}
+if (Test-Path -LiteralPath $installedLauncher) {
+    throw "The CLI launcher remains after uninstall."
 }
 
 $output = Join-Path $root "dist-release"
