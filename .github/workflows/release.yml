@@ -15,7 +15,7 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: release-${{ github.ref }}
+  group: spike-release
   cancel-in-progress: false
 jobs:
   preflight:
