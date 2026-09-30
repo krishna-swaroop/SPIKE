@@ -12,7 +12,10 @@ cmake_args=(-DCMAKE_BUILD_TYPE=Release -DBUILD_PYTHON_BINDINGS=ON -DSPIKE_PORTAB
 if [[ "$(uname)" == Darwin ]]; then
   export CC="$(brew --prefix llvm)/bin/clang"
   export CXX="$(brew --prefix llvm)/bin/clang++"
-  cmake_args+=("-DOpenMP_ROOT=$(brew --prefix libomp)" "-DCMAKE_PREFIX_PATH=$(brew --prefix eigen);$(brew --prefix libomp)")
+  git clone --depth 1 --branch 3.4.0 https://gitlab.com/libeigen/eigen.git build/eigen-source
+  cmake -S build/eigen-source -B build/eigen-config -DBUILD_TESTING=OFF -DCMAKE_INSTALL_PREFIX="$PWD/build/eigen"
+  cmake --install build/eigen-config
+  cmake_args+=("-DOpenMP_ROOT=$(brew --prefix libomp)" "-DCMAKE_PREFIX_PATH=$PWD/build/eigen;$(brew --prefix libomp)")
 fi
 cmake -S . -B build-spikes-hybrid -G Ninja "${cmake_args[@]}"
 cmake --build build-spikes-hybrid --target spike_peec_native spikes_c_api --parallel 2

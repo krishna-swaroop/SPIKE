@@ -1,6 +1,12 @@
 name: Linux and macOS packages
 on:
   workflow_dispatch:
+    inputs:
+      platform:
+        description: Platforms to build
+        type: choice
+        default: all
+        options: [all, linux, macos]
 permissions:
   contents: read
 jobs:
@@ -8,13 +14,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - os: ubuntu-24.04
-            name: linux-x86_64
-          - os: macos-15
-            name: macos-arm64
-          - os: macos-15-intel
-            name: macos-x86_64
+        os: ${{ fromJSON(inputs.platform == 'macos' && '["macos-15","macos-15-intel"]' || inputs.platform == 'linux' && '["ubuntu-24.04"]' || '["ubuntu-24.04","macos-15","macos-15-intel"]') }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 75
     env:
@@ -37,7 +37,7 @@ jobs:
           flatpak install --user --noninteractive -y flathub org.gnome.Platform//48 org.gnome.Sdk//48
       - name: macOS dependencies
         if: runner.os == 'macOS'
-        run: brew install ninja eigen libomp llvm
+        run: brew install ninja libomp llvm
       - name: Build and verify worker and desktop
         shell: bash
         run: bash scripts/build_unix_release.sh
@@ -45,6 +45,6 @@ jobs:
         run: python scripts/package_unix_release.py
       - uses: actions/upload-artifact@v4
         with:
-          name: SPIKE-${{ matrix.name }}
+          name: SPIKE-${{ matrix.os }}
           path: dist-release/*
           if-no-files-found: error
