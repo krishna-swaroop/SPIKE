@@ -30,6 +30,10 @@ jobs:
       - uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           toolchain: stable
+          cache: false
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: app/src-tauri -> target
       - name: Build, install, and verify Windows package
         shell: powershell
         run: ./scripts/build_windows_ci.ps1
