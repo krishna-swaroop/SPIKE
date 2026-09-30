@@ -2,6 +2,11 @@ name: Packaged desktop smoke checks
 on:
   workflow_dispatch:
     inputs:
+      platform:
+        description: Platforms to check
+        type: choice
+        default: all
+        options: [all, linux, macos]
       linux_run:
         description: Linux package workflow run ID
         required: true
@@ -16,7 +21,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-24.04, macos-15, macos-15-intel]
+        os: ${{ fromJSON(inputs.platform == 'linux' && '["ubuntu-24.04"]' || inputs.platform == 'macos' && '["macos-15","macos-15-intel"]' || '["ubuntu-24.04","macos-15","macos-15-intel"]') }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
     env:
@@ -31,7 +36,8 @@ jobs:
         env:
           PACKAGE_RUN: ${{ inputs.linux_run }}
         run: |
-          gh run download "$PACKAGE_RUN" --name SPIKE-linux-x86_64 --dir packages
+          artifact=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$PACKAGE_RUN/artifacts" --jq '.artifacts[] | select(.name | test("linux|ubuntu")) | .name')
+          gh run download "$PACKAGE_RUN" --name "$artifact" --dir packages
           sudo apt-get update
           sudo apt-get install -y flatpak xvfb dbus-x11
           flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
