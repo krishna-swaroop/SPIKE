@@ -1,5 +1,8 @@
 # SPIKE Command-Line Interface
 
+Packaged Linux and macOS launch commands are in the
+[platform installation guide](PLATFORM_PACKAGES.md#command-line).
+
 The SPIKE CLI is the headless interface to the same normalized design model,
 solver registry, validation rules, and result contracts used by the desktop
 application. It runs locally and does not require network access or the GUI.

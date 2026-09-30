@@ -1,5 +1,8 @@
 # Linux Desktop Build
 
+For the experimental Flatpak download and CLI launcher, see
+[Linux and macOS packages](PLATFORM_PACKAGES.md).
+
 SPIKE's application shell and Python worker are platform-neutral. The packaged UI does not require Node.js or npm; those tools are build-time dependencies only.
 
 ## Ubuntu/Debian prerequisites

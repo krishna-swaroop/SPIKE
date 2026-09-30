@@ -23,7 +23,7 @@ for configured local model services and extensions.
 ## macOS: DMG
 
 Choose `macos-arm64` for Apple Silicon or `macos-x86_64` for an Intel Mac.
-Open the DMG and drag SPIKE into Applications. macOS 14 or newer is required.
+Open the DMG and drag SPIKE into Applications. The packages are tested on macOS 15; earlier versions have not been tested.
 
 These experimental builds are ad-hoc signed, without Apple notarization.
 macOS may block the first launch. If you trust the downloaded file, use
