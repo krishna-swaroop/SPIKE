@@ -6,7 +6,7 @@ not needed.
 
 ## Linux: Flatpak
 
-Download the `.flatpak` file from the [latest release](https://github.com/wayri/SPIKE/releases/latest).
+Download the `.flatpak` file from the [0.3.0 release](https://github.com/wayri/SPIKE/releases/tag/v0.3.0).
 With Flatpak installed, run:
 
 ```sh
