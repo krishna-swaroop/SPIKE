@@ -23,8 +23,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
+        if: runner.os == 'Linux'
         with:
           python-version: '3.12'
+      - uses: astral-sh/setup-uv@v6
+        if: runner.os == 'macOS'
+      - name: Standalone Python for macOS
+        if: runner.os == 'macOS'
+        run: |
+          uv python install 3.12
+          uv venv --seed --managed-python --python 3.12 .build-venv
+          echo "$PWD/.build-venv/bin" >> "$GITHUB_PATH"
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
