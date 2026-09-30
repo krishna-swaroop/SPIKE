@@ -123,14 +123,23 @@ if ($installers.Count -ne 1) {
     throw "Expected exactly one NSIS installer in $bundleRoot; found $($installers.Count)."
 }
 
-$installRoot = Join-Path $root "build\windows-installed"
-Remove-OwnedDirectory $installRoot
-New-Item -ItemType Directory -Path $installRoot -Force | Out-Null
+# NSIS MultiUser resets /D during initialization. Test its supported per-user
+# install mode and discover the actual location recorded by the installer.
 $installerProcess = Start-Process -FilePath $installers[0].FullName `
-    -ArgumentList @("/S", "/D=$installRoot") -WindowStyle Hidden -Wait -PassThru
+    -ArgumentList @("/S", "/CurrentUser", "/NS") -WindowStyle Hidden -Wait -PassThru
 if ($installerProcess.ExitCode -ne 0) {
     throw "Silent NSIS installation failed with exit code $($installerProcess.ExitCode)."
 }
+$installedEntries = @(Get-ChildItem -LiteralPath "HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall" |
+    Get-ItemProperty | Where-Object {
+        $_.PSObject.Properties["DisplayName"] -and $_.DisplayName -eq "SPIKE" -and
+        $_.PSObject.Properties["DisplayVersion"] -and $_.DisplayVersion -eq $version
+    })
+if ($installedEntries.Count -ne 1) {
+    throw "Expected one registered SPIKE $version installation; found $($installedEntries.Count)."
+}
+$installRoot = [System.IO.Path]::GetFullPath($installedEntries[0].InstallLocation.Trim('"'))
+Write-Output "Checking installed package at $installRoot"
 
 $installedLauncher = Join-Path $installRoot "spike.cmd"
 if (-not (Test-Path -LiteralPath $installedLauncher -PathType Leaf)) {
