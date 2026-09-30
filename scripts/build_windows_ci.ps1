@@ -82,8 +82,8 @@ if ($LASTEXITCODE -ne 0 -or $actualEigenCommit -ne $eigenCommit) {
 }
 Invoke-Checked "cmake" @(
     "-S", $eigenSource, "-B", $eigenBuild, "-G", "Ninja",
-    "-DBUILD_TESTING=OFF", "-DEIGEN_BUILD_TESTING=OFF",
-    "-DEIGEN_BUILD_BLAS=OFF", "-DEIGEN_BUILD_LAPACK=OFF",
+    "-DBUILD_TESTING=OFF", "-DEIGEN_BUILD_DOC=OFF",
+    "-DCMAKE_Fortran_COMPILER=NOTFOUND",
     "-DCMAKE_INSTALL_PREFIX=$eigenInstall"
 ) $root
 Invoke-Checked "cmake" @("--install", $eigenBuild) $root
