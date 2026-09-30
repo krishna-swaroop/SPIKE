@@ -2,7 +2,8 @@
 
 GitHub Actions builds the Windows x64 installer, Linux x86-64 Flatpak, and macOS
 DMGs for Apple Silicon and Intel. Each platform builds on a runner with the
-matching operating system and architecture.
+matching operating system and architecture. Linux builds use the GNOME 50
+Flatpak runtime.
 
 ## Build all packages
 

@@ -15,7 +15,7 @@ flatpak install --user ./SPIKE_0.3.0_linux-x86_64_EXPERIMENTAL.flatpak
 flatpak run org.spike.integrity
 ```
 
-The package is for x86-64 Linux and uses the GNOME 48 runtime. Flatpak downloads
+The package is for x86-64 Linux and uses the GNOME Flatpak runtime. Flatpak downloads
 the runtime on first installation. SPIKE can then run locally without a network
 connection. The app can read and write your home directory and uses the network
 for configured local model services and extensions.

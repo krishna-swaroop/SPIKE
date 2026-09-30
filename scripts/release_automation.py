@@ -133,9 +133,11 @@ def publish(root: Path = ROOT) -> None:
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('command', choices=['check', 'publish'])
+    parser.add_argument('command', choices=['check', 'verify', 'publish'])
     args = parser.parse_args()
     if args.command == 'check':
         print(json.dumps(check(), indent=2))
+    elif args.command == 'verify':
+        print(json.dumps([file.name for file in packages(ROOT / 'dist-release', version(ROOT))], indent=2))
     else:
         publish()

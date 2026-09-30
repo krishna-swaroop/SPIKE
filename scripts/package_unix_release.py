@@ -45,7 +45,7 @@ else:
     run('dpkg-deb', '-x', deb, unpacked)
     resources = next(unpacked.rglob('bundled/spike-worker/spike-worker')).parents[2]
     bundle = ROOT / 'build/flatpak-app'
-    run('flatpak', 'build-init', bundle, 'org.spike.integrity', 'org.gnome.Sdk', 'org.gnome.Platform', '48')
+    run('flatpak', 'build-init', bundle, 'org.spike.integrity', 'org.gnome.Sdk', 'org.gnome.Platform', '50')
     files = bundle / 'files'
     shutil.copytree(resources, files / 'lib/spike')
     (files / 'bin').mkdir(exist_ok=True)

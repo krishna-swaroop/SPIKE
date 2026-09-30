@@ -46,8 +46,23 @@ jobs:
   unix:
     needs: preflight
     uses: ./.github/workflows/unix-release.yml
-  publish:
+  verify:
     needs: [preflight, windows, unix]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: SPIKE-*
+          path: dist-release
+          merge-multiple: true
+      - name: Verify complete package set and checksums
+        run: python scripts/release_automation.py verify
+  publish:
+    needs: [preflight, verify]
     if: github.event_name == 'push' || inputs.publish
     runs-on: ubuntu-24.04
     permissions:

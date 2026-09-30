@@ -53,7 +53,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y ninja-build libeigen3-dev libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf flatpak xvfb dbus-x11
           flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
-          flatpak install --user --noninteractive -y flathub org.gnome.Platform//48 org.gnome.Sdk//48
+          flatpak install --user --noninteractive -y flathub org.gnome.Platform//50 org.gnome.Sdk//50
       - name: macOS dependencies
         if: runner.os == 'macOS'
         run: brew install ninja libomp llvm
@@ -68,7 +68,8 @@ jobs:
       - name: Linux reinstall and uninstall
         if: runner.os == 'Linux'
         run: |
-          flatpak install --user --noninteractive --assumeyes --reinstall dist-release/*.flatpak
+          flatpak uninstall --user --noninteractive --assumeyes org.spike.integrity
+          flatpak install --user --noninteractive --assumeyes dist-release/*.flatpak
           python scripts/verify_packaged_cli.py -- flatpak run --unshare=network --command=spike org.spike.integrity
           flatpak uninstall --user --noninteractive --assumeyes org.spike.integrity
           if flatpak info --user org.spike.integrity; then exit 1; fi
