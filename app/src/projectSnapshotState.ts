@@ -44,6 +44,10 @@ export function withoutSavedResults(snapshot: Record<string, any>): Record<strin
     copy.thermal.scenario.field_result = null;
   }
   copy.results = {};
+  const coupledStudies = copy.assembly_ir?.extensions?.["spike.multiboard-studies"];
+  if (coupledStudies && typeof coupledStudies === "object") for (const study of Object.values(coupledStudies)) {
+    if (study && typeof study === "object") delete (study as Record<string, unknown>).result;
+  }
   return copy;
 }
 

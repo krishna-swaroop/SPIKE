@@ -1,0 +1,154 @@
+{
+  "contract": "spike/v1",
+  "design_id": "board-a",
+  "units": "mm",
+  "stackup": [
+    {
+      "name": "F.Cu",
+      "type": "copper"
+    },
+    {
+      "name": "D1",
+      "type": "core",
+      "thickness": 0.2,
+      "epsilon_r": 3.2
+    },
+    {
+      "name": "In1.Cu",
+      "type": "copper"
+    },
+    {
+      "name": "D2",
+      "type": "core",
+      "thickness": 0.5,
+      "epsilon_r": 4.1
+    },
+    {
+      "name": "In2.Cu",
+      "type": "copper"
+    },
+    {
+      "name": "D3",
+      "type": "core",
+      "thickness": 0.3,
+      "epsilon_r": 3.8
+    },
+    {
+      "name": "B.Cu",
+      "type": "copper"
+    }
+  ],
+  "tracks": [
+    {
+      "id": "T1",
+      "net_name": "RF",
+      "layer": "F.Cu",
+      "start": [
+        0,
+        0
+      ],
+      "end": [
+        10,
+        0
+      ],
+      "width": 0.4
+    }
+  ],
+  "pads": [
+    {
+      "id": "P1",
+      "net_name": "RF",
+      "layer": "F.Cu",
+      "shape": "rect",
+      "at": [
+        0,
+        0
+      ],
+      "size": [
+        1,
+        1
+      ],
+      "rotation": 0
+    },
+    {
+      "id": "G1",
+      "net_name": "GND",
+      "layer": "In1.Cu",
+      "shape": "rect",
+      "at": [
+        0,
+        0
+      ],
+      "size": [
+        1,
+        1
+      ],
+      "rotation": 0
+    },
+    {
+      "id": "P2",
+      "net_name": "RF",
+      "layer": "F.Cu",
+      "shape": "rect",
+      "at": [
+        10,
+        0
+      ],
+      "size": [
+        1,
+        1
+      ],
+      "rotation": 0
+    },
+    {
+      "id": "G2",
+      "net_name": "GND",
+      "layer": "In1.Cu",
+      "shape": "rect",
+      "at": [
+        10,
+        0
+      ],
+      "size": [
+        1,
+        1
+      ],
+      "rotation": 0
+    }
+  ],
+  "vias": [],
+  "zones": [
+    {
+      "id": "Z1",
+      "net_name": "GND",
+      "layer": "In1.Cu",
+      "source_kind": "filled_zone",
+      "points": [
+        [
+          -2,
+          -2
+        ],
+        [
+          12,
+          -2
+        ],
+        [
+          12,
+          2
+        ],
+        [
+          -2,
+          2
+        ]
+      ]
+    }
+  ],
+  "metadata": {
+    "board_bounds_mm": [
+      -2,
+      -2,
+      12,
+      2
+    ]
+  }
+}

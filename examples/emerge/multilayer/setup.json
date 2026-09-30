@@ -1,0 +1,13 @@
+{
+  "signal_net": "RF",
+  "return_net": "GND",
+  "signal_pad_id": "P1",
+  "return_pad_id": "G1",
+  "receive_signal_pad_id": "P2",
+  "receive_return_pad_id": "G2",
+  "frequency_start_hz": 1000000000.0,
+  "frequency_stop_hz": 2000000000.0,
+  "frequency_points": 2,
+  "mesh_resolution_mm": 0.7,
+  "geometry_backend": "emcad"
+}

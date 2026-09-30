@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, Mapping
 
-from .design_ir_v2_schema import content_digest
+from .spider_v2_schema import content_digest
 from .reference_plane_antipad_geometry import CONTRACT as GEOMETRY_CONTRACT
 from .reference_plane_antipad_mesh import (
     CONTRACT as MESH_CONTRACT,

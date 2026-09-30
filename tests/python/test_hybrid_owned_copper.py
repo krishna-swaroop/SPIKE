@@ -8,14 +8,14 @@ import numpy as np
 from scipy.sparse import coo_matrix
 from scipy.sparse.linalg import spsolve
 
-from python.spike_core.contracts import AnalysisSpec, DesignIR
+from python.spike_core.contracts import AnalysisSpec, SpiDeR
 from python.spike_core.hybrid_mesh import _Builder, _point_in_polygon
 from python.spike_core.hybrid_owned_copper import area, difference, hull
 from python.spike_core.hybrid_dc_solver import solve_hybrid_dc
 
 
 def builder(pad, target=.25, zone=True):
-    design = DesignIR(layers=[{"name":"F.Cu"}], nets=[{"id":1,"name":"VCC"}],
+    design = SpiDeR(layers=[{"name":"F.Cu"}], nets=[{"id":1,"name":"VCC"}],
         stackup=[{"name":"F.Cu","type":"copper","thickness":.035}],
         pads=[dict(id="pad",net_name="VCC",layers=["F.Cu"],at=[0,0],pad_kind="smd",
                    zone_connection_override="inherit",zone_connection_declared=False,thermal_settings_valid=True,**pad)],

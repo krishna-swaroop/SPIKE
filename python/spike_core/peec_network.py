@@ -1,7 +1,7 @@
 """PEEC conductor-network assembly and shared-reference PDN extraction.
 
 This module owns the linear network mechanics used by the native PEEC adapter.
-It deliberately contains no native-runtime construction or DesignIR orchestration.
+It deliberately contains no native-runtime construction or SpiDeR orchestration.
 """
 
 from __future__ import annotations

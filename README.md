@@ -1,10 +1,10 @@
 <img src="app/public/spike-icon.png" alt="SPIKE icon" width="96" height="96">
 
-# SPIKE — PCB Simulation for KiCad
+# SPIKE â€” PCB Simulation for KiCad
 
-[![Latest release: v0.3.0](https://img.shields.io/badge/latest_release-v0.3.0-blue)](https://github.com/wayri/SPIKE/releases/tag/v0.3.0)
-[![Community preview](https://img.shields.io/badge/status-community_preview-orange)](https://github.com/wayri/SPIKE/releases/tag/v0.3.0)
-[![Windows x64 download](https://img.shields.io/badge/download-Windows_x64-0078D4)](https://github.com/wayri/SPIKE/releases/download/v0.3.0/SPIKE_0.3.0_x64-setup.exe)
+[![Latest release: v0.3.1](https://img.shields.io/badge/latest_release-v0.3.1-blue)](https://github.com/wayri/SPIKE/releases/tag/v0.3.1)
+[![Community preview](https://img.shields.io/badge/status-community_preview-orange)](https://github.com/wayri/SPIKE/releases/tag/v0.3.1)
+[![Windows x64 download](https://img.shields.io/badge/download-Windows_x64-0078D4)](https://github.com/wayri/SPIKE/releases/download/v0.3.1/SPIKE_0.3.1_x64-setup.exe)
 [![Linux Flatpak (experimental)](https://img.shields.io/badge/download-Linux_Flatpak-orange)](docs/PLATFORM_PACKAGES.md#linux-flatpak)
 [![macOS DMG (experimental)](https://img.shields.io/badge/download-macOS_DMG-orange)](docs/PLATFORM_PACKAGES.md#macos-dmg)
 [![License: Apache 2.0](https://img.shields.io/badge/license-Apache_2.0-blue)](LICENSE)
@@ -23,16 +23,16 @@ board viewport. Optional **[EMerge](https://github.com/FennisRobert/EMerge)** an
 **[openEMS](https://openems.de/)** extensions add electromagnetic
 simulation workflows.
 
-SPIKE runs locally and includes a command-line interface. Version 0.3.0 is a
+SPIKE runs locally and includes a command-line interface. Version 0.3.1 is a
 community preview with a Windows x64 installer, an experimental Linux Flatpak,
 and experimental macOS DMGs for Apple Silicon and Intel. Each platform includes
 the local analysis worker; Linux and macOS packages also include CLI launchers.
 
-[Download SPIKE](https://github.com/wayri/SPIKE/releases/tag/v0.3.0)
-· [Five-minute ESP32 walkthrough](docs/ESP32_QUICKSTART.md)
-· [User guides](docs/README.md)
-· [Build from source](docs/DEVELOPER_GUIDE.md)
-· [Automated builds](docs/BUILD_AND_RELEASE.md)
+[Download SPIKE](https://github.com/wayri/SPIKE/releases/tag/v0.3.1)
+Â· [Five-minute ESP32 walkthrough](docs/ESP32_QUICKSTART.md)
+Â· [User guides](docs/README.md)
+Â· [Build from source](docs/DEVELOPER_GUIDE.md)
+Â· [Automated builds](docs/BUILD_AND_RELEASE.md)
 
 See [Linux and macOS installation and CLI commands](docs/PLATFORM_PACKAGES.md).
 
@@ -49,6 +49,14 @@ them. This summarizes the warranty and liability provisions in the
 
 Current limits are summarized below and described in
 [Solver Status](docs/SOLVER_STATUS.md).
+
+## New in 0.3.1
+
+- View EM fields on the board, link plots to probes, and inspect EMerge results in 3D.
+- Prepare whole-board volume meshes with fine sizing around selected nets and traces and a coarser background. Review material interfaces, coverage and cell quality before choosing a solver.
+- Set up coupled assembly circuit, thermal and EM studies using the supported reduced models.
+
+The [focused meshing guide](docs/PCB_FOCUSED_VOLUME_MESHING.md) includes a complete example. This path accepts a normalized planar board model; automatic KiCad conversion and bent rigid-flex volume meshes are not yet supported.
 
 ## ESP32 PCB and antenna simulation examples
 
@@ -85,7 +93,7 @@ requirements and limits, summarized below.
 
 | Area | Available workflow | Current limit |
 |---|---|---|
-| Board and project | Import KiCad PCB data into `DesignIR` compatible formats with ordered stackup, copper, tracks, vias, pads, filled zones, components, rigid-flex regions, and import diagnostics. Inspect 2D layers and the assembled 3D scene; select nets and objects, place probes, and save versioned `.spike` projects with multiple study cases. | Some KiCad features or 3D models may be omitted or substituted; review the import report for the specific board. |
+| Board and project | Import KiCad PCB data into SPIKE projects with ordered stackup, copper, tracks, vias, pads, filled zones, components, rigid-flex regions, and import diagnostics. Inspect 2D layers and the assembled 3D scene; select nets and objects, place probes, and save versioned `.spike` projects with multiple study cases. | Some KiCad features or 3D models may be omitted or substituted; review the import report for the specific board. |
 | Power integrity and circuits | Set sources, loads, returns, mesh and limits; run supported DC voltage-drop, harness, PEEC, PDN, power-tree, and circuit workflows. Converter models can include voltage, efficiency, and loss settings. | DC and PEEC paths use simplified conductor and return models. Converter behavior and pin mapping must be supplied; a footprint alone does not provide them. |
 | Signal integrity | Analyze loaded RLGC or Touchstone channels with explicit ports and terminations; inspect S-parameters, reflection/VSWR, TDR/TDT, waveforms, eyes, and NEXT/FEXT. | Port-network results do not contain spatial E/H fields. Nonlinear IBIS-AMI models and protocol checks are not implemented in this workflow. |
 | Thermal | Solve object-node, 2D board-plate, and layered steady/transient board models with explicit powers, heat paths and boundaries. Compare still-air, sealed-box, and forced-air presets; inspect layer maps, temperature history, case/junction estimates and board-aligned result overlays. | Cooling presets use specified heat-transfer coefficients instead of solving airflow. Board grids omit detailed package geometry and conjugate heat transfer. |
@@ -121,6 +129,7 @@ describe installation, permissions, and session trust for other local packages.
 |---|---|---|
 | [OpenEMS Suite](extensions/openems_suite/README.md) | Preflight, prepare, and run explicit-port high-frequency PI and SI interconnect sweeps; import S-parameters and supported near-to-far-field outputs. | Requires separately installed openEMS/CSXCAD. Exactly one excited port per run; no DC PI or thermal coupling. Unsupported PCB topology blocks a solve. |
 | [EMerge Suite](extensions/emerge_suite/README.md) | Build a selected-net two-layer PCB model for one/two-port S-parameters, 2D far-field cuts, and sampled 3D radiation patterns, including a simple dielectric cover. The pattern samples come from EMerge's field solve. | Requires a compatible separate EMerge Python runtime. The SPIKE adapter limits the model to selected copper, aligned pad ports, rectangular bounds, one dielectric and surface PEC; additional copper layers, components, many cutouts and complex surroundings are omitted. The display normalizes the pattern to a relative peak. |
+| [Optycal Suite](extensions/optycal_suite/README.md) | Use a solved complex EMerge antenna pattern to study scattering from a placed STEP structure and review fields and reports. | Requires a separate Optycal runtime. Structures are treated as PEC; the source must be in the supported far-field regime. It does not model arbitrary dielectric structures or feedback into the antenna solve. |
 | [ODB++ Import](docs/ODB_AND_HARNESS_EXTENSIONS.md) | Import a job archive/folder, choose a board step, inspect import quality, and open the normalized board in SPIKE. | Experimental; unsupported symbols, compositing, and panel step repeats are reported. Keep the original ODB++ export because a `.spike` snapshot is not the source archive. |
 | [Harness Engineering](docs/ODB_AND_HARNESS_EXTENSIONS.md) | Import JSON/CSV/TSV connections, edit wire nets and lengths, validate connectivity, compile an electrical fragment, bind an assembly, and export JSON. | Reads the listed connection-list formats; it does not import other harness database formats. |
 | [MCAD Collaboration](docs/MCAD_EXPORT.md) | Preview a mechanical assembly and export named STEP, FreeCAD, BREP, and metadata artifacts. | Requires installed FreeCAD. Geometry exchange only; inspect listed omissions before export. |
@@ -182,6 +191,8 @@ see [third-party notices](THIRD_PARTY_NOTICES.md).
 - [ngspice](https://ngspice.sourceforge.io/) and its contributors for the optional circuit engine.
 - [openEMS](https://openems.de/) and [CSXCAD](https://github.com/thliebig/CSXCAD) contributors for the optional electromagnetic solver and geometry tools.
 - Robert Fennis and the [EMerge](https://github.com/FennisRobert/EMerge) contributors for the optional electromagnetic solver used in the ESP32 antenna example.
+- Robert Fennis and the [Optycal](https://github.com/FennisRobert/Optycal) contributors for optional physical-optics studies.
+- The [Gmsh](https://gmsh.info/) contributors for optional conforming volume meshing.
 - The [OpenFOAM](https://www.openfoam.com/) community for the optional airflow solver.
 - The [FreeCAD](https://www.freecad.org/) community for the optional mechanical CAD integration.
 - Berkeley Lab and the Regents of the University of California for the Marble reference board, and uysan for the open `iot-esp-eth` ESP32 board used in the worked example.

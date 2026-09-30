@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import ts from "typescript";
 
-const source = readFileSync(new URL("../src/SiWorkflowPlots.tsx", import.meta.url), "utf8");
+const source = readFileSync(new URL("../src/SiWorkflowPlots.tsx", import.meta.url), "utf8").replace(/\r\n/g, "\n");
 const helperMatch = source.match(/export function nearestPointIndex[\s\S]*?\n}\n/);
 assert.ok(helperMatch, "nearest-point helper remains available for cursor selection");
 const output = ts.transpileModule(helperMatch[0], {
@@ -39,7 +39,7 @@ assert.match(source, /aria-label={`Close expanded \$\{title\}`}/);
 assert.match(source, /className="si-parameter-options"/, "trace menu uses an in-panel list instead of an unbounded native popup");
 assert.match(source, /setSelected\(key\)/, "choosing an S-parameter changes the plotted trace");
 assert.match(source, /parameterPicker\.current\?\.removeAttribute\("open"\)/, "selection and Escape dismiss the trace menu");
-const css = readFileSync(new URL("../src/siWorkflow.css", import.meta.url), "utf8");
+const css = readFileSync(new URL("../src/siWorkflow.css", import.meta.url), "utf8").replace(/\r\n/g, "\n");
 assert.match(css, /\.si-parameter-options\s*\{[^}]*max-height:[^;]+;[^}]*overflow-y: auto/s, "trace menu height is bounded and scrollable");
 
 console.log("SI workflow plot cursor and expanded-window assertions passed");

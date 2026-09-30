@@ -16,7 +16,7 @@ artifact hashes, resource ceilings, and adapter provenance. They do not make
 an unqualified engine eligible for an analysis.
 
 ```text
-DesignIR + AnalysisSpec
+SpiDeR + AnalysisSpec
   -> geometry/material/terminal normalization
   -> capability and validity selection
   -> solver plugin request
@@ -66,14 +66,14 @@ Production packaging must additionally verify a signed bundle manifest before
 registering a process plugin.
 
 Engine-specific mesh files, restart databases, and logs remain artifacts of the
-plugin job. They do not become fields in DesignIR. Result provenance records the
+plugin job. They do not become fields in SpiDeR. Result provenance records the
 plugin ID/version, formulation, geometry contract, assumptions, convergence,
 and engine version.
 
 External engines use the same process isolation and job-directory rules. An
 adapter translates `spike/solver-geometry/v1` into an engine-native case and
 must write an object map from each exported conductor, dielectric, terminal,
-port, thermal region, and boundary back to its DesignIR ID. Imported results
+port, thermal region, and boundary back to its SpiDeR ID. Imported results
 without complete coordinate, unit, and object-map metadata may be retained as
 artifacts, but cannot be overlaid or used for automated validation.
 

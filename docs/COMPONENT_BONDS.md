@@ -22,7 +22,7 @@ are reported as warnings rather than silently treated as conductors.
 
 ## Solver Contract
 
-`DesignIR.component_bonds` contains `spike/component-bonds/v1` records with:
+`SpiDeR.component_bonds` contains `spike/component-bonds/v1` records with:
 
 - stable component and pad identifiers;
 - net name, coordinate, and all connected copper layers;

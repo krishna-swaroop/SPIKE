@@ -1,4 +1,4 @@
-"""DesignIR adapter for topology-correct quasi-static PEEC RL extraction."""
+"""SpiDeR adapter for topology-correct quasi-static PEEC RL extraction."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Sequence, Tuple
 
 import numpy as np
 
-from .contracts import AnalysisResult, AnalysisSpec, DesignIR, ValidationIssue
+from .contracts import AnalysisResult, AnalysisSpec, SpiDeR, ValidationIssue
 from .hybrid_mesh import TOPOLOGY_ONLY_BRANCH_KINDS, HybridMesh, build_hybrid_mesh, nearest_mesh_node
 from .loop_parasitics import extract_loop_parasitics
 from .peec_matrices import TopologyResistanceSolver, connected_component as _connected_component, embed_physical_inductance
@@ -143,7 +143,7 @@ def _local_shunt_matrices(
     return capacitance, loss_coefficient
 
 
-def solve_peec_2_5d(design: DesignIR, spec: AnalysisSpec) -> AnalysisResult:
+def solve_peec_2_5d(design: SpiDeR, spec: AnalysisSpec) -> AnalysisResult:
     if native is None:
         return AnalysisResult(
             analysis_id=spec.analysis_id,

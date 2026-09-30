@@ -1,6 +1,6 @@
 # Solver Plugin Result Contract
 
-SPIKE solver plugins consume `DesignIR` plus `AnalysisSpec` and return an
+SPIKE solver plugins consume `SpiDeR` plus `AnalysisSpec` and return an
 `AnalysisResult`. External plugins use `solver-plugin.json` and exchange JSON
 through the isolated process adapter. The UI does not import solver-specific
 libraries.
@@ -52,7 +52,7 @@ Visualization data belongs in `AnalysisResult.fields.visualization`:
 }
 ```
 
-All coordinates use the DesignIR millimeter coordinate reference. Scalar
+All coordinates use the SpiDeR millimeter coordinate reference. Scalar
 `value` uses the field name's SI-derived unit. Vector direction and magnitude
 must come from the solver, not from the UI.
 

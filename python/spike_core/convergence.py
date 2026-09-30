@@ -6,10 +6,10 @@ from dataclasses import replace
 from math import isfinite
 from typing import Any, Callable, Dict, Iterable, List
 
-from .contracts import AnalysisResult, AnalysisSpec, DesignIR, ValidationIssue
+from .contracts import AnalysisResult, AnalysisSpec, SpiDeR, ValidationIssue
 
 
-SolverRunner = Callable[[DesignIR, AnalysisSpec], AnalysisResult]
+SolverRunner = Callable[[SpiDeR, AnalysisSpec], AnalysisResult]
 
 DC_METRICS = {
     "max_load_voltage_drop_v": 0.03,
@@ -137,7 +137,7 @@ def _refinement_comparison(previous: Dict[str, Any], current: Dict[str, Any]) ->
 
 
 def run_mesh_convergence(
-    design: DesignIR,
+    design: SpiDeR,
     spec: AnalysisSpec,
     runner: SolverRunner,
     levels: Iterable[float] = (2.0, 1.0, 0.5),

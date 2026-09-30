@@ -21,7 +21,7 @@ from shapely.geometry import Polygon
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from python.spike_core.contracts import AnalysisSpec, DesignIR  # noqa: E402
+from python.spike_core.contracts import AnalysisSpec, SpiDeR  # noqa: E402
 from python.spike_core.hybrid_mesh import (  # noqa: E402
     TOPOLOGY_ONLY_BRANCH_KINDS, _normalize_filled_zone_polygon,
     build_hybrid_mesh, nearest_mesh_node,
@@ -72,7 +72,7 @@ def triangular_face_oracle() -> dict:
             "analytical_resistance_ohm": expected}
 
 
-def audit(design: DesignIR, size_mm: float) -> dict:
+def audit(design: SpiDeR, size_mm: float) -> dict:
     spec = AnalysisSpec(mode="ac", net_names=[NET], mesh={
         "target_size_mm": size_mm, "zone_cell_mm": size_mm,
         "max_zone_cells": 1000, "max_conductors": 2000, "memory_budget_mb": 512,
@@ -157,7 +157,7 @@ def run(board: Path) -> dict:
     copper = {field: [item for item in getattr(imported, field)
                       if str(item.get("net_name", item.get("net", ""))) == NET]
               for field in ("tracks", "vias", "pads", "zones")}
-    design = DesignIR(layers=imported.layers, stackup=imported.stackup,
+    design = SpiDeR(layers=imported.layers, stackup=imported.stackup,
                       nets=[item for item in imported.nets if item.get("name") == NET],
                       **copper)
     return {"contract": "spike/peec-conforming-basis-diagnostic/v1",

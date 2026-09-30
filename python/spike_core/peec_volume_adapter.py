@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright (c) 2026 SigHarmonic
-"""Typed DesignIR copper bases for the bounded native finite-volume PEEC path."""
+"""Typed SpiDeR copper bases for the bounded native finite-volume PEEC path."""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ from typing import Any, Sequence
 
 import numpy as np
 
-from .contracts import DesignIR
+from .contracts import SpiDeR
 from .hybrid_mesh import MeshBranch
 from .peec_magnetic_geometry import describe_magnetic_cross_section
 from .peec_volume_resistance import assemble_overlap_resistance
@@ -27,7 +27,7 @@ class VolumeMatrices:
 
 
 def retry_nonpassive_legacy(
-    native: Any, design: DesignIR, branches: Sequence[MeshBranch],
+    native: Any, design: SpiDeR, branches: Sequence[MeshBranch],
     total_branches: int, physical_indices: Sequence[int],
 ) -> tuple[VolumeMatrices | None, np.ndarray | None, dict | None, str | None]:
     """Try one bounded volume matrix after legacy energy rejection, without repair."""
@@ -42,7 +42,7 @@ def retry_nonpassive_legacy(
         return None, None, None, str(error)
 
 
-def _add_basis(assembler: Any, native: Any, design: DesignIR, branch: MeshBranch) -> None:
+def _add_basis(assembler: Any, native: Any, design: SpiDeR, branch: MeshBranch) -> None:
     section = describe_magnetic_cross_section(design, branch)
     start = tuple(float(value) for value in branch.start_mm)
     end = tuple(float(value) for value in branch.end_mm)
@@ -73,7 +73,7 @@ def _add_basis(assembler: Any, native: Any, design: DesignIR, branch: MeshBranch
 
 
 def extract_volume_matrices(
-    native: Any, design: DesignIR, branches: Sequence[MeshBranch],
+    native: Any, design: SpiDeR, branches: Sequence[MeshBranch],
     options: Any | None = None,
 ) -> VolumeMatrices:
     """Assemble L and R from identical ordered volume bases, failing closed."""

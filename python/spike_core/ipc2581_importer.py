@@ -14,7 +14,7 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import Any, Dict, Iterable, Mapping
 
-from .contracts import DesignIR, ValidationIssue
+from .contracts import SpiDeR, ValidationIssue
 from .ipc2581_contour import normalize_contours
 from .ipc2581_drill import normalize_physical_drills
 from .ipc2581_padstack import normalize_pad_via_geometry
@@ -167,7 +167,7 @@ def _arc_midpoint(
     return (center[0] + start_radius * math.cos(mid_angle), center[1] + start_radius * math.sin(mid_angle))
 
 
-def import_ipc2581_design(path: str) -> DesignIR:
+def import_ipc2581_design(path: str) -> SpiDeR:
     """Import auditable IPC-2581 topology without accepting unsafe XML."""
 
     source = Path(path)
@@ -719,7 +719,7 @@ def import_ipc2581_design(path: str) -> DesignIR:
             suggestion="Provide conductor thickness and dielectric material data before AC, SI, or EMI analysis.",
         ))
 
-    return DesignIR(
+    return SpiDeR(
         design_id=f"ipc2581-{digest[:24]}",
         name=_value(root_attributes, "name", "job", default=source.stem),
         source_format="ipc-2581",

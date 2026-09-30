@@ -15,8 +15,8 @@ from pathlib import Path, PurePosixPath
 from typing import Any, Callable, Dict, Iterable, Mapping, MutableMapping, Optional
 
 from . import __version__
-from .contracts import DesignIR, ValidationIssue
-from .design_ir_v2 import AssemblyIRV1, DesignIRV2, canonical_uuid, content_digest
+from .contracts import SpiDeR, ValidationIssue
+from .spider_v2 import AssemblyIRV1, SpiDeRV2, canonical_uuid, content_digest
 from .assembly_package_shapes import AssemblyPackageShapeError, canonicalize_assembly_package_shapes, validate_package_shape_artifacts
 from .model_index import ModelIndexError, canonicalize_model_index, validate_model_artifacts
 from .assembly_designs import AssemblyDesignError, canonicalize_assembly_designs
@@ -218,13 +218,13 @@ def _validate_profile_content(
             raise ProjectPackageError("A result_bundle package requires a canonical design identity.")
 
 
-def _minimal_v2_design(legacy: Mapping[str, Any]) -> DesignIRV2:
+def _minimal_v2_design(legacy: Mapping[str, Any]) -> SpiDeRV2:
     raw_design = legacy.get("design") if isinstance(legacy.get("design"), Mapping) else {}
     source_text = str(raw_design.get("source_board", ""))
     source_bytes = source_text.encode("utf-8")
     digest = _sha256(source_bytes) if source_bytes else content_digest(legacy)
     design_name = str(raw_design.get("name") or raw_design.get("source_file") or legacy.get("project", {}).get("name") or "Migrated design")
-    v1_fields = set(DesignIR.__dataclass_fields__)
+    v1_fields = set(SpiDeR.__dataclass_fields__)
     if raw_design.get("contract") == "spike/v1":
         candidate = {key: value for key, value in raw_design.items() if key in v1_fields}
         coerced_issues = []
@@ -236,9 +236,9 @@ def _minimal_v2_design(legacy: Mapping[str, Any]) -> DesignIRV2:
             elif isinstance(issue, ValidationIssue):
                 coerced_issues.append(issue)
         candidate["issues"] = coerced_issues
-        legacy_design = DesignIR(**candidate)
+        legacy_design = SpiDeR(**candidate)
     else:
-        legacy_design = DesignIR(
+        legacy_design = SpiDeR(
             design_id=str(raw_design.get("design_id", "")),
             name=Path(design_name).stem,
             source_format=str(raw_design.get("source_format") or raw_design.get("source_file", "unknown")).split(".")[-1],
@@ -254,7 +254,7 @@ def _minimal_v2_design(legacy: Mapping[str, Any]) -> DesignIRV2:
             metadata={"migration_source_format": str(legacy.get("format", "unknown"))},
         )
     legacy_design.metadata["source_sha256"] = digest
-    return DesignIRV2.from_v1(legacy_design, source_digest=digest)
+    return SpiDeRV2.from_v1(legacy_design, source_digest=digest)
 
 
 def migrate_legacy_payload(raw: Mapping[str, Any]) -> Dict[str, Any]:
@@ -322,7 +322,7 @@ def build_package_members(
         raise ProjectPackageError("A v3 project payload requires project metadata.")
     design_ir = payload.get("design_ir")
     if not isinstance(design_ir, Mapping) or design_ir.get("contract") != "spike/design-ir/v2":
-        raise ProjectPackageError("A v3 project payload requires DesignIR v2.")
+        raise ProjectPackageError("A v3 project payload requires SpiDeR v2.")
     try:
         model_index = canonicalize_model_index(payload.get("models", {}))
     except ModelIndexError as exc:
@@ -735,7 +735,7 @@ def read_spike_package(
                 audit.append(event)
             payload["audit"] = audit
             if payload["design_ir"].get("contract") != "spike/design-ir/v2":
-                raise ProjectPackageError("Package design/design-ir.json is not DesignIR v2.")
+                raise ProjectPackageError("Package design/design-ir.json is not SpiDeR v2.")
             _validate_profile_content(profile, payload, declared)
             return PackageReadResult(
                 manifest=manifest,

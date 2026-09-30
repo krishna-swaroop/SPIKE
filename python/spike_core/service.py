@@ -30,8 +30,8 @@ from .environment_profiles import (
     materialize_environment_profile as materialize_environment_profile_data,
     validate_environment_profile as validate_environment_profile_data,
 )
-from .contracts import AnalysisSpec, DesignIR, ValidationIssue
-from .design_ir_v2 import DesignIRV2
+from .contracts import AnalysisSpec, SpiDeR, ValidationIssue
+from .spider_v2 import SpiDeRV2
 from .converter_study import converter_capabilities, run_converter_study, validate_converter_study
 from .errors import error_envelope
 from .convergence import run_mesh_convergence
@@ -112,6 +112,7 @@ from .service_project import importer_catalog
 from .service_project_handlers import handle_project_request
 from .service_extension_packages import handle_extension_package_request
 from .service_simulation_handlers import handle_simulation_request
+from .service_meshing import handle_meshing_request
 from .kicad_importer import import_kicad_design as _design_from_kicad
 from .external_pi_result_validation import validate_external_pi_multiport
 from . import __version__
@@ -141,7 +142,7 @@ _error_response = error_response
 _export_step = export_step
 
 
-def validate_design(design: DesignIR) -> Dict[str, Any]:
+def validate_design(design: SpiDeR) -> Dict[str, Any]:
     issues = [item if isinstance(item, ValidationIssue) else ValidationIssue(**item) for item in design.issues]
     if (not design.source_path or not Path(design.source_path).exists()) and not design.metadata.get("source_embedded"):
         issues.append(ValidationIssue(
@@ -342,7 +343,7 @@ def handle(request: Dict[str, Any]) -> Dict[str, Any]:
             return {"ok": False, "error": str(exc), "type": type(exc).__name__}
     if method == "run_si_uniform_channel":
         try:
-            design = DesignIRV2.from_dict(params["design"])
+            design = SpiDeRV2.from_dict(params["design"])
             channel_request = params.get("request") or {}
             if not isinstance(channel_request, dict):
                 raise SiChannelError("SI channel request must be an object.")
@@ -357,7 +358,7 @@ def handle(request: Dict[str, Any]) -> Dict[str, Any]:
             )
     if method == "run_si_protocol_test_suite":
         try:
-            design = DesignIRV2.from_dict(params["design"])
+            design = SpiDeRV2.from_dict(params["design"])
             suite_request = params.get("request") or {}
             if not isinstance(suite_request, dict):
                 raise SiProtocolTestRunnerError("SI protocol test-suite request must be an object.")
@@ -412,6 +413,9 @@ def handle(request: Dict[str, Any]) -> Dict[str, Any]:
             "contract": "spike/importer-catalog/v1",
             "importers": importer_catalog(),
         }}
+    meshing_response = handle_meshing_request(method, params, request_id=request.get("id"))
+    if meshing_response is not None:
+        return meshing_response
     assembly_response = handle_assembly_request(
         method,
         params,
@@ -432,25 +436,25 @@ def handle(request: Dict[str, Any]) -> Dict[str, Any]:
         return scope_error
     if method in {"emi_preflight", "emi_screen"}:
         try:
-            design = DesignIR(**params["design"])
+            design = SpiDeR(**params["design"])
             operation = validate_emi_setup if method == "emi_preflight" else screen_emi_setup
             result = operation(design, params.get("setup") or {}, _solver_registry.catalog())
             return {"ok": True, "result": attach_scope_provenance(result, assembly_scope)}
         except (KeyError, TypeError, ValueError) as exc:
             return {"ok": False, "error": str(exc), "type": type(exc).__name__}
     if method == "validate_design":
-        design = DesignIR(**params["design"])
+        design = SpiDeR(**params["design"])
         return {"ok": True, "result": validate_design(design)}
     if method == "preview_mesh":
-        design = DesignIR(**params["design"])
+        design = SpiDeR(**params["design"])
         spec = AnalysisSpec(**params.get("spec", {}))
         return {"ok": True, "result": build_mesh_preview(design, spec)}
     if method == "preflight_analysis":
-        design = DesignIR(**params["design"])
+        design = SpiDeR(**params["design"])
         spec = AnalysisSpec(**params.get("spec", {}))
         return {"ok": True, "result": preflight_analysis(design, spec, _solver_registry.catalog())}
     if method == "run_preflighted_analysis":
-        design = DesignIR(**params["design"])
+        design = SpiDeR(**params["design"])
         spec = AnalysisSpec(**params.get("spec", {}))
         preflight = preflight_analysis(design, spec, _solver_registry.catalog())
         compact_preflight = {
@@ -468,7 +472,7 @@ def handle(request: Dict[str, Any]) -> Dict[str, Any]:
             "analysis_result": result,
         }}
     if method == "mesh_convergence":
-        design = DesignIR(**params["design"])
+        design = SpiDeR(**params["design"])
         spec = AnalysisSpec(**params.get("spec", {}))
         options = params.get("options", {})
         return {"ok": True, "result": run_mesh_convergence(
@@ -541,7 +545,7 @@ def handle(request: Dict[str, Any]) -> Dict[str, Any]:
                     baseline=params.get("baseline"),
                     parent=params.get("parent"),
                 )
-                candidate_v2 = DesignIRV2.from_dict(params["candidate"])
+                candidate_v2 = SpiDeRV2.from_dict(params["candidate"])
                 result = prepare_native_jobs(normalized, candidate_v2.to_v1())
             else:
                 result = map_layout_results(
@@ -587,7 +591,7 @@ def handle(request: Dict[str, Any]) -> Dict[str, Any]:
         )}
     if method in {"validate_spice_workspace", "compose_spice_workspace"}:
         try:
-            design = DesignIR(**params["design"])
+            design = SpiDeR(**params["design"])
             workspace = params.get("workspace") or {}
             operation = validate_spice_workspace if method == "validate_spice_workspace" else compose_spice_workspace
             return {"ok": True, "result": operation(workspace, design)}
@@ -602,7 +606,7 @@ def handle(request: Dict[str, Any]) -> Dict[str, Any]:
             return {"ok": False, "error": str(exc), "type": type(exc).__name__}
     if method in {"compile_spice_workspace_native_mna", "run_spice_workspace_native_mna"}:
         try:
-            design = DesignIR(**params["design"])
+            design = SpiDeR(**params["design"])
             operation = (
                 compile_spice_workspace_to_native_mna
                 if method == "compile_spice_workspace_native_mna"
@@ -618,7 +622,7 @@ def handle(request: Dict[str, Any]) -> Dict[str, Any]:
             return {"ok": False, "error": str(exc), "type": type(exc).__name__}
     if method in {"validate_owned_spice_workspace", "run_owned_spice_workspace"}:
         try:
-            design = DesignIR(**params["design"])
+            design = SpiDeR(**params["design"])
             circuit_request = params.get("request") or {}
             operation = (
                 validate_owned_spice_workspace_request
@@ -636,7 +640,7 @@ def handle(request: Dict[str, Any]) -> Dict[str, Any]:
         return {"ok": True, "result": validate_field_circuit_request(params.get("request") or {})}
     if method == "run_field_circuit_cosimulation":
         try:
-            design = DesignIR(**params["design"])
+            design = SpiDeR(**params["design"])
             field_spec = AnalysisSpec(**params["field_analysis_spec"])
             provider = NativePeecFieldReductionProvider(design, field_spec)
             result = run_iterative_field_circuit_cosimulation(
@@ -658,7 +662,7 @@ def handle(request: Dict[str, Any]) -> Dict[str, Any]:
             if method == "converter_capabilities":
                 result = converter_capabilities()
             else:
-                design = DesignIR(**params["design"])
+                design = SpiDeR(**params["design"])
                 study = params.get("study") or {}
                 if method == "validate_converter_study":
                     result = validate_converter_study(study, design)
@@ -674,7 +678,7 @@ def handle(request: Dict[str, Any]) -> Dict[str, Any]:
             return {"ok": False, "error": str(exc), "type": type(exc).__name__}
     if method in {"validate_topology_circuit", "bridge_topology_to_analysis_spec"}:
         try:
-            design = DesignIR(**params["design"])
+            design = SpiDeR(**params["design"])
             topology = params.get("topology") or {}
             if method == "validate_topology_circuit":
                 result = validate_topology_circuit(topology, design)
@@ -691,14 +695,14 @@ def handle(request: Dict[str, Any]) -> Dict[str, Any]:
         try:
             return {"ok": True, "result": validate_pi_path(
                 params.get("path") or {},
-                DesignIR(**params["design"]),
+                SpiDeR(**params["design"]),
                 str(params.get("mode", "dc")),
             )}
         except (KeyError, TypeError, ValueError) as exc:
             return {"ok": False, "error": str(exc), "type": type(exc).__name__}
     if method in {"compile_pi_path_native_mna", "run_pi_path_native_mna"}:
         try:
-            design = DesignIR(**params["design"])
+            design = SpiDeR(**params["design"])
             spec = AnalysisSpec(**params["spec"])
             operation = (
                 compile_pi_path_to_native_mna
@@ -726,7 +730,7 @@ def handle(request: Dict[str, Any]) -> Dict[str, Any]:
                 )
             else:
                 result = run_staged_hybrid_cosimulation(
-                    DesignIR(**params["design"]),
+                    SpiDeR(**params["design"]),
                     params["extraction_result"],
                     params["workspace"],
                     params.get("mappings", []),
@@ -738,7 +742,7 @@ def handle(request: Dict[str, Any]) -> Dict[str, Any]:
     if method == "prepare_sparselizard_case":
         try:
             return {"ok": True, "result": prepare_sparselizard_case(
-                DesignIR(**params["design"]),
+                SpiDeR(**params["design"]),
                 AnalysisSpec(**params["spec"]),
                 params["output_dir"],
                 solver_geometry=params.get("solver_geometry"),
@@ -757,11 +761,11 @@ def handle(request: Dict[str, Any]) -> Dict[str, Any]:
         except (KeyError, TypeError, ValueError, RuntimeError, OSError) as exc:
             return {"ok": False, "error": str(exc), "type": type(exc).__name__}
     if method == "extract_net_geometry":
-        design = DesignIR(**params["design"])
+        design = SpiDeR(**params["design"])
         return {"ok": True, "result": extract_net_geometry(design, params.get("net_name", ""))}
     if method == "extract_power_path":
         try:
-            design = DesignIR(**params["design"])
+            design = SpiDeR(**params["design"])
             return {"ok": True, "result": extract_power_path(
                 design,
                 params.get("source"),

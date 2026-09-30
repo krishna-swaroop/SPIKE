@@ -1,6 +1,6 @@
 # SPIKE CLI Workflow
 
-The CLI uses the same DesignIR, AnalysisSpec, preflight, solver, and report
+The CLI uses the same SpiDeR, AnalysisSpec, preflight, solver, and report
 contracts as the desktop application. Commands run locally without a network
 connection. Run them from the SPIKE repository root.
 

@@ -11,8 +11,8 @@ import json
 import math
 from typing import Any, Callable, Dict, Mapping
 
-from .design_ir_v2 import DesignIRV2
-from .design_ir_v2_schema import content_digest
+from .spider_v2 import SpiDeRV2
+from .spider_v2_schema import content_digest
 from .thermal_relief_boundary_contact import (
     validate_thermal_relief_boundary_contact_evidence,
 )
@@ -55,21 +55,21 @@ def _canonical_bytes(value: Any) -> bytes:
         ) from error
 
 
-def _design(value: DesignIRV2 | Mapping[str, Any]) -> tuple[DesignIRV2, Dict[str, Any]]:
-    if isinstance(value, DesignIRV2):
+def _design(value: SpiDeRV2 | Mapping[str, Any]) -> tuple[SpiDeRV2, Dict[str, Any]]:
+    if isinstance(value, SpiDeRV2):
         design, payload = value, value.to_dict()
     elif isinstance(value, Mapping):
         payload = dict(value)
         try:
-            design = DesignIRV2.from_dict(payload)
+            design = SpiDeRV2.from_dict(payload)
         except (TypeError, ValueError) as error:
             raise ThermalReliefObservedTopologyError(
-                f"{ERROR_CODE}: source geometry is not valid DesignIR v2"
+                f"{ERROR_CODE}: source geometry is not valid SpiDeR v2"
             ) from error
     else:
-        _fail("source geometry must be DesignIR v2 or a mapping")
+        _fail("source geometry must be SpiDeR v2 or a mapping")
     if payload.get("contract") != "spike/design-ir/v2" or not design.design_id:
-        _fail("observed topology requires identified DesignIR v2")
+        _fail("observed topology requires identified SpiDeR v2")
     return design, payload
 
 
@@ -102,7 +102,7 @@ def _effective_dimensions(pad, component, zones) -> tuple[float, float, float]:
 
 
 def build_thermal_relief_observed_topology(
-    source_geometry: DesignIRV2 | Mapping[str, Any],
+    source_geometry: SpiDeRV2 | Mapping[str, Any],
     connection_evidence: Mapping[str, Any],
     boundary_contact_evidence: Mapping[str, Any],
     cancel_check: Callable[[], Any] | None = None,
@@ -377,7 +377,7 @@ def build_thermal_relief_observed_topology(
 
 
 def validate_thermal_relief_observed_topology(
-    report: Mapping[str, Any], *, source_geometry: DesignIRV2 | Mapping[str, Any],
+    report: Mapping[str, Any], *, source_geometry: SpiDeRV2 | Mapping[str, Any],
     connection_evidence: Mapping[str, Any],
     boundary_contact_evidence: Mapping[str, Any],
 ) -> Dict[str, Any]:

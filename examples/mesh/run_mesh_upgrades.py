@@ -18,7 +18,7 @@ sys.path.insert(0, str(ROOT))
 from python.spike_core.tetra_mesh_refinement import refine_tetra_mesh, _det
 from python.spike_core.tetra_mesh_optimization import optimize_tetra_mesh
 from python.spike_core.mom_surface_basis import build_surface_basis, divergence
-from python.spike_core.contracts import DesignIR, AnalysisSpec
+from python.spike_core.contracts import SpiDeR, AnalysisSpec
 from python.spike_core.hybrid_mesh import build_hybrid_mesh
 
 
@@ -79,7 +79,7 @@ def main():
     defect = max(abs(divergence(surface, i, e.plus_face)*surface.areas_m2[e.plus_face]
                      + divergence(surface, i, e.minus_face)*surface.areas_m2[e.minus_face])
                  for i, e in enumerate(surface.edges))
-    design = DesignIR(tracks=[{"id": "trace", "net_name": "SIG", "layer": "F.Cu",
+    design = SpiDeR(tracks=[{"id": "trace", "net_name": "SIG", "layer": "F.Cu",
         "start": [0, 0], "end": [10, 0], "width": .2}])
     spec = AnalysisSpec(net_names=["SIG"], mesh={"target_size_mm": 1., "feature_aware": False,
         "local_controls": {"contract": "spike/local-track-mesh-controls/v1",

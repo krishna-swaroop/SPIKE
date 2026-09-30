@@ -6,7 +6,7 @@ import re
 from pathlib import Path
 from typing import Any, Callable, Dict, Mapping, Optional, Type
 
-from .design_ir_v2 import DesignIRV2
+from .spider_v2 import SpiDeRV2
 from .geometry_arrow import (
     GEOMETRY_ARROW_CONTRACTS, GEOMETRY_ARROW_MEMBER_NAME, GeometryArrowError,
     build_geometry_arrow, canonical_design_digest, canonical_geometry_rows,
@@ -28,9 +28,9 @@ def validate_geometry_index(
     if not isinstance(tables, list) or len(tables) > 256:
         raise error_type("The geometry index tables must be a bounded array.")
     try:
-        design = DesignIRV2.from_dict(design_ir)
+        design = SpiDeRV2.from_dict(design_ir)
     except (TypeError, ValueError) as exc:
-        raise error_type(f"The geometry index DesignIR binding is invalid: {exc}") from exc
+        raise error_type(f"The geometry index SpiDeR binding is invalid: {exc}") from exc
     expected_design_digest = canonical_design_digest(design)
     normalized: list[Dict[str, Any]] = []
     paths: set[str] = set()
@@ -54,11 +54,11 @@ def validate_geometry_index(
             if schema not in GEOMETRY_ARROW_CONTRACTS:
                 raise error_type(f"Geometry table {path} has an unsupported schema.")
             if schema != geometry_arrow_contract(design):
-                raise error_type(f"Geometry table {path} schema does not match its DesignIR path semantics.")
+                raise error_type(f"Geometry table {path} schema does not match its SpiDeR path semantics.")
             if str(raw.get("design_id", "")) != design.design_id:
                 raise error_type(f"Geometry table {path} is bound to another design identity.")
             if str(raw.get("design_ir_sha256", "")) != expected_design_digest:
-                raise error_type(f"Geometry table {path} is bound to another DesignIR digest.")
+                raise error_type(f"Geometry table {path} is bound to another SpiDeR digest.")
             rows = raw.get("rows")
             if not isinstance(rows, int) or isinstance(rows, bool) or rows < 0 or rows > 10_000_000:
                 raise error_type(f"Geometry table {path} has an invalid row count.")
@@ -85,7 +85,7 @@ def build_geometry_members(
         if geometry_tables is not None:
             raise error_type("Generated and caller-supplied geometry tables cannot be combined.")
         try:
-            typed_design = DesignIRV2.from_dict(design_ir)
+            typed_design = SpiDeRV2.from_dict(design_ir)
             geometry_tables = {GEOMETRY_ARROW_MEMBER_NAME: build_geometry_arrow(typed_design)}
         except (TypeError, ValueError, GeometryArrowError) as exc:
             raise error_type(f"Canonical Arrow geometry generation failed: {exc}") from exc

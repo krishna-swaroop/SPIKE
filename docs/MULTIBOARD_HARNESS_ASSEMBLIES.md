@@ -6,11 +6,26 @@ panel. It owns cable harness rows, stacked board connector mates, connector
 mappings, rigid/flex links, and their pin maps. Choose **Save boards and links**
 to commit the draft to the `.spike` package; normal **Save project** then retains
 the assembly graph with the analysis and workspace state.
-Save the active board as a `.spike` project first. **Import board / external
-assembly** adds a KiCad `.kicad_pcb`, IPC-2581 `.ipc2581`, or `.spikeassembly`
-file to that project. Save pending structure edits before importing. Existing
-boards, enclosure parts and the active electrical design are retained. Import
-checks the opened manifest before committing an atomic package replacement.
+Save the active board as a `.spike` project first. **Import boards / external
+assemblies** accepts one or more KiCad `.kicad_pcb`, IPC-2581 `.ipc2581`, or
+`.spikeassembly` files in one selection. Save pending structure edits before
+importing. Existing boards, enclosure parts and the active electrical design
+are retained. The complete selection is validated and committed as one package
+replacement; an invalid later source leaves the original package intact.
+Native boards receive separated starter placements; explicit placements in a
+`.spikeassembly` are retained.
+
+The **Connector graph** discovers J, P and CN connector references from each
+retained board, displays board nodes and connector ports, and draws existing
+direct mates and virtual harnesses. Select two ports or use the endpoint lists,
+review suggested physical pin pairs, then add a direct mate or preview a cable.
+Automatic suggestions require a net to occur on exactly two free pins across
+different boards. Shared grounds and multi-drop nets need explicit review.
+Missing connectors can be added with board-local XYZ exit points and pin tables.
+For a virtual cable, review slack, allowance, AWG, clearance, waypoints and
+keepouts, then **Preview virtual harness route**. Add the proposal to the draft
+and save links to see the approximate route in the 3D assembly viewport. The
+detailed tables remain under **Review and edit all link records**.
 
 Each board occurrence has its own ID and XYZ/rotation placement. Multiple
 occurrences can reference one retained electrical design. The existing limits
@@ -42,8 +57,11 @@ The `plan_multiboard_analysis` worker accepts PI, SI, thermal, and EMI domains.
 `independent_board_batch` retains selected occurrence identities and requires
 caller-controlled single-board dispatch. PI/SI use `coupled_harness_network`
 and thermal/EMI use `coupled_assembly` to request a coupled plan. Both coupled
-modes return a blocked plan until a qualified adapter consumes the corresponding
-assembly physics. Plans retain direct connector mates separately from harnesses.
+modes return a blocked graph-only plan until a qualified adapter consumes the
+corresponding assembly physics. The separate **Coupled multi-board analysis**
+panel executes explicit reduced circuit, RC thermal, and magnetic-loop models;
+see [coupled workflow](MULTIBOARD_COUPLED_ANALYSIS.md). These interacting models
+remain experimental/approximate. Plans retain direct connector mates separately from harnesses.
 Thermal plans retain contacts and parts; EMI plans retain
 electrical bonds and parts. Their presence in a plan is not a solved effect.
 
@@ -151,7 +169,7 @@ positions and harness lengths. Geometry files retain their own format units
 Occurrence IDs must be unique. Reusing an asset deduplicates model storage,
 while occurrence identities stay distinct. Groups carry placement but no model.
 
-Board assets can also be canonical DesignIR v2 `.json` files. Part assets are
+Board assets can also be canonical SpiDeR v2 `.json` files. Part assets are
 STEP/STP or self-contained glTF/GLB. Optional `connector_mappings` and `harnesses`
 use the AssemblyIR fields, with source occurrence IDs in `data.board_id` and
 `board::connector` endpoints. The importer remaps these IDs into the destination.

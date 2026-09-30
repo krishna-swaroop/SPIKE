@@ -6,7 +6,7 @@ from collections import Counter
 from math import hypot, isfinite
 from typing import Any, Dict, Iterable, Mapping, Sequence
 
-from .contracts import DesignIR
+from .contracts import SpiDeR
 from .hybrid_mesh import (
     _net,
     _normalize_filled_zone_polygon,
@@ -86,7 +86,7 @@ def _track_contains(
     return True
 
 
-def _via_spans(design: DesignIR, via: Mapping[str, Any]) -> set[str]:
+def _via_spans(design: SpiDeR, via: Mapping[str, Any]) -> set[str]:
     copper_layers = copper_stack_profile(design)[0]
     raw_layers = [str(value) for value in via.get("layers", ("F.Cu", "B.Cu"))]
     if len(raw_layers) < 2:
@@ -101,7 +101,7 @@ def _via_spans(design: DesignIR, via: Mapping[str, Any]) -> set[str]:
     return {f"{left}->{right}" for left, right in zip(layers, layers[1:])}
 
 
-def _pad_spans(design: DesignIR, pad: Mapping[str, Any]) -> set[str]:
+def _pad_spans(design: SpiDeR, pad: Mapping[str, Any]) -> set[str]:
     copper_layers = copper_stack_profile(design)[0]
     layers = _pad_layers(dict(pad), copper_layers)
     ordered = [layer for layer in copper_layers if layer in layers]
@@ -308,7 +308,7 @@ def _pad_barrel_contains(
 
 
 def audit_dc_conductor_volume_ownership(
-    design: DesignIR,
+    design: SpiDeR,
     volumes: Sequence[Dict[str, Any]],
     tolerance_mm: float = 1e-6,
 ) -> Dict[str, Any]:

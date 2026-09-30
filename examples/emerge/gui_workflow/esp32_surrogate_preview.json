@@ -1,0 +1,649 @@
+{
+  "case": {
+    "contract": "spike/emerge-board-case/v1",
+    "bounds_mm": [
+      50.8,
+      113.284,
+      80.264,
+      177.8
+    ],
+    "dielectric_thickness_mm": 1.5162,
+    "epsilon_r": 4.540694764082664,
+    "copper_layers": [
+      {
+        "name": "F.Cu",
+        "z_mm": -0.0
+      },
+      {
+        "name": "B.Cu",
+        "z_mm": -1.5162
+      }
+    ],
+    "dielectric_layers": [
+      {
+        "name": "equivalent dielectric",
+        "thickness_mm": 1.5162,
+        "epsilon_r": 4.540694764082664,
+        "loss_tangent": 0.02,
+        "z_top_mm": -0.0,
+        "z_bottom_mm": -1.5162
+      }
+    ],
+    "geometry_backend": "emerge",
+    "loss_tangent_omitted": 0.02,
+    "include_dielectric_loss": false,
+    "reference_impedance_ohm": 50.0,
+    "parallel": false,
+    "n_workers": 2,
+    "sparse_solver": "auto",
+    "field_excited_port": 1,
+    "air_margin_mm": null,
+    "radiation_theta_step_deg": 15,
+    "radiation_phi_step_deg": 15,
+    "radiation_cut_phi_deg": 0.0,
+    "nearfield_enabled": false,
+    "nearfield_z_mm": 1.0,
+    "nearfield_grid_points": 11,
+    "polygons": [
+      {
+        "id": "069028c7-f3c4-48ac-901f-6e90d6b4143a",
+        "net": "/cpu/ANT",
+        "layer": "F.Cu",
+        "xs_mm": [
+          68.961,
+          68.961,
+          68.58,
+          68.58
+        ],
+        "ys_mm": [
+          127.0,
+          126.111,
+          126.111,
+          127.0
+        ]
+      },
+      {
+        "id": "93f46f25-8476-4774-b295-875744ff68ef",
+        "net": "/cpu/ANT",
+        "layer": "F.Cu",
+        "xs_mm": [
+          68.961,
+          68.961,
+          68.58,
+          68.58
+        ],
+        "ys_mm": [
+          126.111,
+          125.222,
+          125.222,
+          126.111
+        ]
+      },
+      {
+        "id": "c4b13dc7-49e2-4743-ab3f-474e67139947",
+        "net": "/cpu/ANT",
+        "layer": "F.Cu",
+        "xs_mm": [
+          68.8086,
+          68.84251219033494,
+          68.87472388184152,
+          68.90361984580326,
+          68.92775111792812,
+          68.94590765546833,
+          68.95717901381651,
+          68.961,
+          68.961,
+          68.95717901381651,
+          68.94590765546833,
+          68.92775111792812,
+          68.90361984580326,
+          68.87472388184152,
+          68.84251219033494,
+          68.8086,
+          68.7324,
+          68.69848780966505,
+          68.66627611815848,
+          68.63738015419673,
+          68.61324888207187,
+          68.59509234453166,
+          68.58382098618348,
+          68.58,
+          68.58,
+          68.58382098618348,
+          68.59509234453166,
+          68.61324888207187,
+          68.63738015419673,
+          68.66627611815848,
+          68.69848780966505,
+          68.7324
+        ],
+        "ys_mm": [
+          125.79350000000001,
+          125.7973209861835,
+          125.80859234453168,
+          125.82674888207188,
+          125.85088015419673,
+          125.87977611815849,
+          125.91198780966506,
+          125.94590000000001,
+          126.2761,
+          126.31001219033494,
+          126.34222388184152,
+          126.37111984580328,
+          126.39525111792813,
+          126.41340765546833,
+          126.42467901381652,
+          126.4285,
+          126.4285,
+          126.42467901381652,
+          126.41340765546833,
+          126.39525111792813,
+          126.37111984580328,
+          126.34222388184152,
+          126.31001219033494,
+          126.2761,
+          125.94590000000001,
+          125.91198780966506,
+          125.87977611815849,
+          125.85088015419673,
+          125.82674888207188,
+          125.80859234453168,
+          125.7973209861835,
+          125.79350000000001
+        ]
+      },
+      {
+        "id": "b5ad6d18-4cc2-4549-b974-4a0148c79d01",
+        "net": "/cpu/ANT",
+        "layer": "F.Cu",
+        "xs_mm": [
+          68.8086,
+          68.84251219033494,
+          68.87472388184152,
+          68.90361984580326,
+          68.92775111792812,
+          68.94590765546833,
+          68.95717901381651,
+          68.961,
+          68.961,
+          68.95717901381651,
+          68.94590765546833,
+          68.92775111792812,
+          68.90361984580326,
+          68.87472388184152,
+          68.84251219033494,
+          68.8086,
+          68.7324,
+          68.69848780966505,
+          68.66627611815848,
+          68.63738015419673,
+          68.61324888207187,
+          68.59509234453166,
+          68.58382098618348,
+          68.58,
+          68.58,
+          68.58382098618348,
+          68.59509234453166,
+          68.61324888207187,
+          68.63738015419673,
+          68.66627611815848,
+          68.69848780966505,
+          68.7324
+        ],
+        "ys_mm": [
+          124.9045,
+          124.90832098618348,
+          124.91959234453167,
+          124.93774888207187,
+          124.96188015419672,
+          124.99077611815848,
+          125.02298780966505,
+          125.0569,
+          125.38709999999999,
+          125.42101219033493,
+          125.45322388184151,
+          125.48211984580327,
+          125.50625111792812,
+          125.52440765546832,
+          125.5356790138165,
+          125.53949999999999,
+          125.53949999999999,
+          125.5356790138165,
+          125.52440765546832,
+          125.50625111792812,
+          125.48211984580327,
+          125.45322388184151,
+          125.42101219033493,
+          125.38709999999999,
+          125.0569,
+          125.02298780966505,
+          124.99077611815848,
+          124.96188015419672,
+          124.93774888207187,
+          124.91959234453167,
+          124.90832098618348,
+          124.9045
+        ]
+      },
+      {
+        "id": "299e43a8-0dd7-48c2-8cc5-cb307c641030",
+        "net": "/cpu/ANT",
+        "layer": "F.Cu",
+        "xs_mm": [
+          68.8086,
+          68.84251219033494,
+          68.87472388184152,
+          68.90361984580326,
+          68.92775111792812,
+          68.94590765546833,
+          68.95717901381651,
+          68.961,
+          68.961,
+          68.95717901381651,
+          68.94590765546833,
+          68.92775111792812,
+          68.90361984580326,
+          68.87472388184152,
+          68.84251219033494,
+          68.8086,
+          68.7324,
+          68.69848780966505,
+          68.66627611815848,
+          68.63738015419673,
+          68.61324888207187,
+          68.59509234453166,
+          68.58382098618348,
+          68.58,
+          68.58,
+          68.58382098618348,
+          68.59509234453166,
+          68.61324888207187,
+          68.63738015419673,
+          68.66627611815848,
+          68.69848780966505,
+          68.7324
+        ],
+        "ys_mm": [
+          126.6825,
+          126.68632098618349,
+          126.69759234453167,
+          126.71574888207188,
+          126.73988015419673,
+          126.76877611815848,
+          126.80098780966506,
+          126.8349,
+          127.1651,
+          127.19901219033494,
+          127.23122388184152,
+          127.26011984580327,
+          127.28425111792812,
+          127.30240765546833,
+          127.31367901381651,
+          127.3175,
+          127.3175,
+          127.31367901381651,
+          127.30240765546833,
+          127.28425111792812,
+          127.26011984580327,
+          127.23122388184152,
+          127.19901219033494,
+          127.1651,
+          126.8349,
+          126.80098780966506,
+          126.76877611815848,
+          126.73988015419673,
+          126.71574888207188,
+          126.69759234453167,
+          126.68632098618349,
+          126.6825
+        ]
+      },
+      {
+        "id": "surrogate-bcu-return-at-feed",
+        "net": "GND",
+        "layer": "B.Cu",
+        "xs_mm": [
+          68.5205,
+          69.0205,
+          69.0205,
+          68.5205
+        ],
+        "ys_mm": [
+          124.972,
+          124.972,
+          125.472,
+          125.472
+        ]
+      },
+      {
+        "id": "817c03f8-f9e8-4029-897c-528a2659f8a0",
+        "net": "/cpu/ANT",
+        "layer": "F.Cu",
+        "xs_mm": [
+          68.9356,
+          68.6054,
+          68.326,
+          69.3166
+        ],
+        "ys_mm": [
+          124.9934,
+          124.9934,
+          122.936,
+          122.936
+        ]
+      },
+      {
+        "id": "b3e2ed36-ac4c-4dfe-8147-1d61b463a2a2",
+        "net": "/cpu/ANT",
+        "layer": "F.Cu",
+        "xs_mm": [
+          78.4352,
+          78.4352,
+          75.438,
+          75.438,
+          71.5264,
+          71.5264,
+          69.3166,
+          68.326,
+          68.326,
+          70.5358,
+          70.5358,
+          52.6288,
+          52.6288,
+          77.4446
+        ],
+        "ys_mm": [
+          114.935,
+          122.9614,
+          122.9614,
+          116.9416,
+          116.9416,
+          120.7262,
+          122.936,
+          122.936,
+          122.5042,
+          120.2944,
+          115.443,
+          115.443,
+          113.9444,
+          113.9444
+        ]
+      },
+      {
+        "id": "surrogate-bcu-reference-plane",
+        "net": "GND",
+        "layer": "B.Cu",
+        "xs_mm": [
+          51.308,
+          79.756,
+          79.756,
+          51.308
+        ],
+        "ys_mm": [
+          122.930417,
+          122.930417,
+          177.286417,
+          177.286417
+        ]
+      }
+    ],
+    "ports": [
+      {
+        "signal_pad_id": "b5ad6d18-4cc2-4549-b974-4a0148c79d01",
+        "return_pad_id": "surrogate-bcu-return-at-feed",
+        "x_mm": 68.7705,
+        "y_mm": 125.222,
+        "width_mm": 0.3810000000000002,
+        "height_mm": 1.5162,
+        "z_bottom_mm": -1.5162,
+        "signal_layer": "F.Cu",
+        "return_layer": "B.Cu",
+        "reference_impedance_ohm": 50.0
+      }
+    ],
+    "frequency_start_hz": 2300000000.0,
+    "frequency_stop_hz": 2600000000.0,
+    "frequency_points": 3,
+    "mesh_resolution_mm": 1.5,
+    "planar_cell_estimate": 845,
+    "layered_cell_estimate": 845,
+    "shorting_vias": [
+      {
+        "id": "9959768f-ffca-4046-a521-ffad7c2dfe13",
+        "x_mm": 78.232,
+        "y_mm": 123.317,
+        "radius_mm": 0.3175,
+        "drill_mm": 0.3048
+      }
+    ],
+    "attributed_graphic_polygon_ids": [
+      "817c03f8-f9e8-4029-897c-528a2659f8a0",
+      "b3e2ed36-ac4c-4dfe-8147-1d61b463a2a2"
+    ],
+    "idealized_reference_plane_ids": [
+      "surrogate-bcu-reference-plane"
+    ],
+    "fragment_copper": false,
+    "modeled_nets": [
+      "/cpu/ANT",
+      "GND"
+    ],
+    "geometry_status": "approximate_rectangular_surface_pec"
+  },
+  "script_sha256": "2691aa74afbbc5764342ab8789ffb8f16436e53fbd930e684e7689a725895528",
+  "case_sha256": "c5bec70fa58b24858065920ab03b045b6d4ab09551f6c465e4af0eff2ca9ac74",
+  "capabilities": [
+    {
+      "id": "pcb_multilayer",
+      "name": "Multilayer PCB surfaces",
+      "status": "implemented_unvalidated",
+      "scope": "2-16 copper layers; selected nets, rectangular rigid board; no multilayer vias",
+      "source": "https://www.emerge-software.com/features"
+    },
+    {
+      "id": "dielectric_materials",
+      "name": "Per-layer dielectric materials and loss",
+      "status": "implemented_unvalidated",
+      "scope": "Explicit constant relative permittivity; optional imported loss tangent",
+      "source": "https://www.emerge-software.com/features"
+    },
+    {
+      "id": "lumped_ports",
+      "name": "Lumped ports",
+      "status": "implemented_unvalidated",
+      "scope": "One or two aligned pad pairs on adjacent layers, explicit reference impedance",
+      "source": "https://www.emerge-software.com/features"
+    },
+    {
+      "id": "absorbing_boundary",
+      "name": "Absorbing air boundary",
+      "status": "implemented_unvalidated",
+      "scope": "Finite air region with optional explicit margin; requires convergence review",
+      "source": "https://www.emerge-software.com/features"
+    },
+    {
+      "id": "mesh_controls",
+      "name": "Manual copper and port mesh sizing",
+      "status": "implemented_unvalidated",
+      "scope": "Bounded requested copper resolution and port face refinement",
+      "source": "https://www.emerge-software.com/features"
+    },
+    {
+      "id": "frequency_sweep",
+      "name": "Solved S-parameter frequency sweep",
+      "status": "implemented_unvalidated",
+      "scope": "2-64 direct solved samples; no vector-fit interpolation",
+      "source": "https://www.emerge-software.com/features"
+    },
+    {
+      "id": "parallel_sweep",
+      "name": "Parallel frequency sweep",
+      "status": "implemented_unvalidated",
+      "scope": "Optional 1-8 runtime workers; availability depends on selected runtime API",
+      "source": "https://www.emerge-software.com/features"
+    },
+    {
+      "id": "farfield",
+      "name": "Far-field cuts and 3D patterns",
+      "status": "implemented_unvalidated",
+      "scope": "Configurable bounded angular sampling; relative normalization only",
+      "source": "https://www.emerge-software.com/features"
+    },
+    {
+      "id": "nearfield",
+      "name": "Electric and magnetic field plane",
+      "status": "implemented_unvalidated",
+      "scope": "Optional XY grid with complex E/H samples and explicit invalid-point mask",
+      "source": "https://www.emerge-software.com/features"
+    },
+    {
+      "id": "touchstone",
+      "name": "Touchstone and CSV export",
+      "status": "implemented_unvalidated",
+      "scope": "Exports returned complex network data at its stated reference impedance",
+      "source": "https://www.emerge-software.com/features"
+    },
+    {
+      "id": "emcad",
+      "name": "EMCAD copper geometry",
+      "status": "implemented_unvalidated",
+      "scope": "Optional same-net, same-layer union; holes rejected",
+      "source": "https://www.emerge-software.com/features"
+    },
+    {
+      "id": "dielectric_surroundings",
+      "name": "Dielectric surroundings",
+      "status": "implemented_unvalidated",
+      "scope": "Up to eight explicit non-overlapping boxes",
+      "source": "https://www.emerge-software.com/features"
+    },
+    {
+      "id": "script",
+      "name": "Readable Python model",
+      "status": "implemented_unvalidated",
+      "scope": "GUI preview/export matches the generated script used by the contained runner",
+      "source": "https://www.emerge-software.com/features"
+    },
+    {
+      "id": "analysis",
+      "name": "SPIKE analysis, probes and reports",
+      "status": "implemented_unvalidated",
+      "scope": "Sampled network and angular/field review with model status and provenance",
+      "source": "https://www.emerge-software.com/features"
+    },
+    {
+      "id": "general_cad",
+      "name": "General CAD primitives, booleans and transforms",
+      "status": "adapter_pending",
+      "scope": "Requires neutral volume/face selection and an EMerge CAD adapter",
+      "source": "https://www.emerge-software.com/features"
+    },
+    {
+      "id": "pml",
+      "name": "Perfectly matched layers",
+      "status": "adapter_pending",
+      "scope": "Requires explicit volume assignments and thickness validation",
+      "source": "https://www.emerge-software.com/features"
+    },
+    {
+      "id": "wave_ports",
+      "name": "Waveguide, coaxial and modal wave ports",
+      "status": "adapter_pending",
+      "scope": "Requires face geometry and mode selection contracts",
+      "source": "https://www.emerge-software.com/features"
+    },
+    {
+      "id": "periodic_floquet",
+      "name": "Periodic and Floquet ports",
+      "status": "adapter_pending",
+      "scope": "Requires paired-face periodic-cell contract",
+      "source": "https://www.emerge-software.com/features"
+    },
+    {
+      "id": "pmc",
+      "name": "PMC and symmetry planes",
+      "status": "adapter_pending",
+      "scope": "Requires boundary face selection and symmetry validation",
+      "source": "https://www.emerge-software.com/features"
+    },
+    {
+      "id": "surface_impedance",
+      "name": "Surface impedance and thin metal",
+      "status": "adapter_pending",
+      "scope": "Requires conductor/material model and boundary contracts",
+      "source": "https://www.emerge-software.com/features"
+    },
+    {
+      "id": "lumped_elements",
+      "name": "Lumped elements",
+      "status": "adapter_pending",
+      "scope": "Requires circuit-to-face mapping",
+      "source": "https://www.emerge-software.com/features"
+    },
+    {
+      "id": "adaptive_mesh",
+      "name": "Adaptive mesh refinement",
+      "status": "adapter_pending",
+      "scope": "Requires error/convergence admission and bounded refinement lifecycle",
+      "source": "https://www.emerge-software.com/features"
+    },
+    {
+      "id": "optimization",
+      "name": "Optimization and geometry parameter sweeps",
+      "status": "adapter_pending",
+      "scope": "Requires geometry parameter ownership and result comparison contracts",
+      "source": "https://www.emerge-software.com/features"
+    },
+    {
+      "id": "tensor_materials",
+      "name": "Dispersive and tensor materials",
+      "status": "adapter_pending",
+      "scope": "Requires material tensor, frequency and coordinate validity contracts",
+      "source": "https://www.emerge-software.com/features"
+    },
+    {
+      "id": "material_library",
+      "name": "Upstream material library",
+      "status": "adapter_pending",
+      "scope": "Requires provenance and verification of individual library properties",
+      "source": "https://www.emerge-software.com/features"
+    },
+    {
+      "id": "vector_fitting",
+      "name": "Vector fitting",
+      "status": "adapter_pending",
+      "scope": "Requires separately identified fitted network and error/passivity evidence",
+      "source": "https://www.emerge-software.com/features"
+    },
+    {
+      "id": "eigenmode",
+      "name": "Eigenmode studies",
+      "status": "adapter_pending",
+      "scope": "Requires eigenmode excitation, units and mode-shape result contracts",
+      "source": "https://www.emerge-software.com/features"
+    },
+    {
+      "id": "rcs",
+      "name": "Scattered-field and radar cross section",
+      "status": "adapter_pending",
+      "scope": "Requires incident-wave setup and absolute scattering result contract",
+      "source": "https://www.emerge-software.com/features"
+    },
+    {
+      "id": "thermal",
+      "name": "Heat conduction and one-way coupling",
+      "status": "adapter_pending",
+      "scope": "Requires thermal boundaries and transferred-loss validity contracts",
+      "source": "https://www.emerge-software.com/features"
+    },
+    {
+      "id": "gpu_direct",
+      "name": "Alternate CPU/GPU direct solvers",
+      "status": "adapter_pending",
+      "scope": "Requires runtime discovery and explicit supported solver selection",
+      "source": "https://www.emerge-software.com/features"
+    }
+  ],
+  "solved": false,
+  "model_status": "unvalidated"
+}

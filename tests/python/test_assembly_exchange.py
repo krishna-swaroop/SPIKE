@@ -8,14 +8,14 @@ from pathlib import Path
 
 from python.spike_core.assembly_exchange import import_exchange, read_exchange
 from python.spike_core.assembly_frames import IDENTITY, resolve_world
-from python.spike_core.contracts import DesignIR
-from python.spike_core.design_ir_v2 import AssemblyIRV1, DesignIRV2
+from python.spike_core.contracts import SpiDeR
+from python.spike_core.spider_v2 import AssemblyIRV1, SpiDeRV2
 from python.spike_core.project_package import read_project, write_spike_package
 from python.spike_core.service_project_handlers import handle_project_request
 
 
 def design():
-    return DesignIRV2.from_v1(DesignIR(design_id="board", name="Board", source_format="neutral", layers=[{"id": 0, "name": "F.Cu"}], metadata={"source_sha256": "a" * 64})).to_dict()
+    return SpiDeRV2.from_v1(SpiDeR(design_id="board", name="Board", source_format="neutral", layers=[{"id": 0, "name": "F.Cu"}], metadata={"source_sha256": "a" * 64})).to_dict()
 
 
 def bundle(path, *, bad_parent=False):

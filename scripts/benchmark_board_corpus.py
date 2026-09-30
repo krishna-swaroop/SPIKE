@@ -40,7 +40,7 @@ def inspect_import(payload: dict, expected: dict) -> dict:
     design = payload.get('design', {})
     report = payload.get('report', {})
     if design.get('contract') != 'spike/design-ir/v2':
-        raise ValueError('missing typed DesignIR v2')
+        raise ValueError('missing typed SpiDeR v2')
     counts = {key: len(design.get(key, [])) for key in COLLECTIONS}
     mismatches = {key: {'expected': value, 'actual': counts[key]}
                   for key, value in expected.items() if counts[key] != value}

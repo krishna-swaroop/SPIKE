@@ -16,7 +16,7 @@ import math
 import re
 from typing import Any, Dict, Iterable, List
 
-from .contracts import AnalysisSpec, DesignIR
+from .contracts import AnalysisSpec, SpiDeR
 from .native_circuit_result import native_mna_to_analysis_result
 from .native_mna import REQUEST_CONTRACT, run_native_mna, validate_native_mna_request
 from .pi_path import validate_pi_path
@@ -238,7 +238,7 @@ def _append_transition(
 
 
 def compile_pi_path_to_native_mna(
-    design: DesignIR,
+    design: SpiDeR,
     spec: AnalysisSpec,
     extraction_result: Dict[str, Any],
     segment_mappings: Iterable[Dict[str, Any]],
@@ -406,7 +406,7 @@ def compile_pi_path_to_native_mna(
 
 
 def run_pi_path_native_mna(
-    design: DesignIR,
+    design: SpiDeR,
     spec: AnalysisSpec,
     extraction_result: Dict[str, Any],
     segment_mappings: Iterable[Dict[str, Any]],

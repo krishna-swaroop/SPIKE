@@ -14,7 +14,7 @@ import json
 from math import isfinite
 from typing import Any, Callable, Mapping
 
-from .design_ir_v2 import DesignIRV2
+from .spider_v2 import SpiDeRV2
 from .si_channel import REQUEST_CONTRACT as CHANNEL_REQUEST_CONTRACT
 from .si_channel import SiChannelError, analyze_uniform_design_channel
 from .si_protocol_suites import ANALYSES, canonical_si_protocol_suite, suite_digest
@@ -250,7 +250,7 @@ def _lane_test(analysis_id: str, result: Mapping[str, Any], channel_request: Map
 
 
 def run_si_protocol_test_suite(
-    design: DesignIRV2,
+    design: SpiDeRV2,
     request: Mapping[str, Any],
     *,
     cancel_check: Callable[[], bool] | None = None,

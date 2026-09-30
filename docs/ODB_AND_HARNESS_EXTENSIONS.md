@@ -2,7 +2,7 @@
 
 Status: engineering preview. These extensions are not a claim of native-file
 support for every ECAD vendor, or production qualification against their exports.
-They use SPIKE's normal DesignIR, import-report and isolated extension process
+They use SPIKE's normal SpiDeR, import-report and isolated extension process
 contracts. No proprietary CAD SDK or third-party JavaScript is loaded in the UI.
 
 ## Using the desktop
@@ -18,7 +18,7 @@ The imported board opens in the regular viewport. Copper holes are displayed as
 holes. Circular arcs are tessellated for display only; the exact records are
 passed to the PI dialog and other solver workflows. The extension result shows
 the import-quality report. A `.spike` save retains the normalized source,
-canonical DesignIR, vendor metadata, model asset bytes and harness document.
+canonical SpiDeR, vendor metadata, model asset bytes and harness document.
 The normalized snapshot is not the original compressed ODB archive: retain the
 original export separately. Its digest and original path remain provenance.
 
@@ -37,7 +37,7 @@ Worker `load_design` and `import_design_v2` accept `path`, `format_hint`, and an
 `options` object containing `step`. `import_design_v2` with `include_snapshot`
 returns a display snapshot as well as the typed design and quality report.
 The desktop also sends `snapshot_only: true`. That response retains canonical
-DesignIR and returns each large ODB collection once so real jobs fit the bounded
+SpiDeR and returns each large ODB collection once so real jobs fit the bounded
 JSON-lines transport. Consumers must honor
 `canonical_design.metadata.transport_projection`: canonical zones replace an
 omitted duplicate `design.zones`, and canonical metadata is authoritative for

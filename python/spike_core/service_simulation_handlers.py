@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any, Dict
 
 from .assembly_analysis_scope import attach_scope_provenance, write_case_scope
-from .contracts import AnalysisResult, AnalysisSpec, DesignIR, ValidationIssue
+from .contracts import AnalysisResult, AnalysisSpec, SpiDeR, ValidationIssue
 from .component_thermal import run_component_thermal
 from .board_thermal import run_board_thermal
 from .external_engines import prepare_openems_case, run_openems_case
@@ -39,7 +39,7 @@ def handle_simulation_request(
 ) -> Dict[str, Any] | None:
     """Handle model and simulation requests, or return ``None``."""
     if method == "model_manifest":
-        design = DesignIR(**params["design"])
+        design = SpiDeR(**params["design"])
         return {"ok": True, "result": build_model_manifest(design.components)}
     if method == "model_library":
         additional_roots = [params["root"]] if params.get("root") else []
@@ -88,7 +88,7 @@ def handle_simulation_request(
                     "issues": [{"code": "BOARD_THERMAL_SOURCE_IMPORT_FAILED", "severity": "error", "message": str(exc)}],
                     "provenance": {"solver_id": "spike.layered_board_thermal", "production_qualified": False}}}
         else:
-            design = DesignIR(**params["design"])
+            design = SpiDeR(**params["design"])
         return {"ok": True, "result": attach_scope_provenance(run_board_thermal(design, params["request"]), assembly_scope)}
     if method == "plan_thermal_field_job":
         # Solver descriptors come from the worker-owned catalog.  A client may
@@ -166,7 +166,7 @@ def handle_simulation_request(
         return {"ok": True, "result": attach_scope_provenance(result, assembly_scope)}
     if method == "prepare_openems_case":
         result = prepare_openems_case(
-            DesignIR(**params["design"]),
+            SpiDeR(**params["design"]),
             AnalysisSpec(**params.get("spec", {})),
             params.get("output_dir") or None,
             params.get("options") or {},
@@ -184,7 +184,7 @@ def handle_simulation_request(
     if method == "run_analysis":
         spec = AnalysisSpec(**params.get("spec", {}))
         if params.get("design"):
-            result = solver_registry.run(DesignIR(**params["design"]), spec).to_dict()
+            result = solver_registry.run(SpiDeR(**params["design"]), spec).to_dict()
             return {"ok": True, "result": attach_scope_provenance(result, assembly_scope)}
         result = AnalysisResult(
             analysis_id=spec.analysis_id or str(uuid.uuid4()),
@@ -195,7 +195,7 @@ def handle_simulation_request(
                 code="DESIGN_CONTEXT_REQUIRED",
                 severity="error",
                 message="Solver plugins require a normalized design context.",
-                suggestion="Load a design or provide a valid DesignIR with the analysis request.",
+                suggestion="Load a design or provide a valid SpiDeR with the analysis request.",
             )],
             provenance={"worker": "python.spike_core.service", "contract": "spike/v1"},
         )

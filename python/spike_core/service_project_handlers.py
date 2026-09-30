@@ -13,8 +13,8 @@ from .project_package import (
     ProjectPackageError, manifest_signature_payload, read_project, read_visual_model_artifacts,
     write_spike_package,
 )
-from .design_ir_v2 import AssemblyIRV1, DesignIRV2
-from .design_ir_v2_schema import CoordinateFrame, ModelReference, canonical_uuid, content_digest
+from .spider_v2 import AssemblyIRV1, SpiDeRV2
+from .spider_v2_schema import CoordinateFrame, ModelReference, canonical_uuid, content_digest
 from .assembly_frames import validate_rigid_transform
 from .assembly_package_shapes import (
     ASSEMBLY_PACKAGE_SHAPES_V1, PACKAGE_SHAPE_KERNEL_V1, model_transform_sha256,
@@ -611,7 +611,7 @@ def handle_project_request(
             if method == "import_design_v2":
                 result = import_design(path, str(params.get("format_hint", "")), with_report=True, options=params.get("options"))
                 if params.get("include_snapshot"):
-                    legacy_design = DesignIRV2.from_dict(result["design"]).to_v1().to_dict()
+                    legacy_design = SpiDeRV2.from_dict(result["design"]).to_v1().to_dict()
                     if params.get("snapshot_only"):
                         # Keep canonical v2 authoritative for persistence, but
                         # avoid serializing large ODB provenance/geometry three

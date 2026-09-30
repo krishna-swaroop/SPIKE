@@ -8,7 +8,7 @@ import json
 from dataclasses import asdict
 from typing import Any
 
-from .contracts import AnalysisSpec, DesignIR
+from .contracts import AnalysisSpec, SpiDeR
 from .hybrid_mesh import build_hybrid_mesh
 from .meshing import MeshingEngine, MeshingOptions
 from .solver_geometry import build_solver_geometry
@@ -30,7 +30,7 @@ def build_extension_mesh_exchange(
         spec_data = {}
     if not isinstance(spec_data, dict):
         raise ValueError("Extension mesh_spec must be an AnalysisSpec object.")
-    design = DesignIR(**design_data)
+    design = SpiDeR(**design_data)
     spec = AnalysisSpec(**spec_data)
     if not isinstance(spec.mesh, dict):
         raise ValueError("Extension mesh_spec.mesh must be an object.")

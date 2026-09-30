@@ -83,10 +83,10 @@ def assembly_from_context(context):
             path.write_text(project["source_board"], encoding="utf-8")
             design = import_kicad_design(str(path)).to_dict()
     if design.get("contract") == "spike/design-ir/v2":
-        from .design_ir_v2 import DesignIRV2
-        design = DesignIRV2.from_dict(design).to_v1().to_dict()
+        from .spider_v2 import SpiDeRV2
+        design = SpiDeRV2.from_dict(design).to_v1().to_dict()
     if design and design.get("contract") != "spike/v1":
-        raise ValueError("Mechanical projection requires DesignIR v1/v2 or an explicit assembly.")
+        raise ValueError("Mechanical projection requires SpiDeR v1/v2 or an explicit assembly.")
     ident = design.get("design_id") or hashlib.sha256(json.dumps(design, sort_keys=True).encode()).hexdigest()[:24]
     assembly = {"contract": CONTRACT, "id": "mcad:" + ident, "name": context.get("project", {}).get("name") or design.get("name") or "SPIKE assembly",
                 "units": "mm", "objects": [], "materials": [], "diagnostics": [],

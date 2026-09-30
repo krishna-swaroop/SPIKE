@@ -1,6 +1,6 @@
 # Rigid-flex design support
 
-SPIKE's normalized `DesignIR` identifies board construction independently of
+SPIKE's normalized `SpiDeR` identifies board construction independently of
 the EDA source:
 
 - `technology`: `rigid`, `flex`, or `rigid-flex`;

@@ -35,9 +35,9 @@ and [SECURITY_MODEL.md](SECURITY_MODEL.md).
 
 | Profile | Intended use | Minimum content |
 |---|---|---|
-| `portable_project` | Reopen an editable local SPIKE project | project metadata and DesignIR v2; source artifacts are recommended |
-| `design_exchange` | Exchange canonical design semantics without result caches | project metadata and DesignIR v2 |
-| `result_bundle` | Deliver auditable results and reports tied to a design identity | project metadata, DesignIR v2, result metadata, audit data |
+| `portable_project` | Reopen an editable local SPIKE project | project metadata and SpiDeR v2; source artifacts are recommended |
+| `design_exchange` | Exchange canonical design semantics without result caches | project metadata and SpiDeR v2 |
+| `result_bundle` | Deliver auditable results and reports tied to a design identity | project metadata, SpiDeR v2, result metadata, audit data |
 
 Profiles communicate intent. They do not bypass validation, integrity checks,
 or solver validity requirements. The writer and reader enforce profile
@@ -48,7 +48,7 @@ semantics in addition to the manifest enum:
 - `design_exchange` rejects populated result/report indexes and generated
   result/report artifacts instead of silently discarding them.
 - `result_bundle` requires populated result metadata, at least one audit event,
-  and a canonical DesignIR design identity.
+  and a canonical SpiDeR design identity.
 
 ## Member layout
 
@@ -97,7 +97,7 @@ project/project.json
 sources/<sha256><source extension>
 design/design-ir.json
 design/assembly-ir.json                 optional
-design/assembly-designs.json            optional retained DesignIR set (1-20)
+design/assembly-designs.json            optional retained SpiDeR set (1-20)
 design/assembly-package-shapes.json     optional exact-shape ownership index
 geometry/index.json
 geometry/<table>.arrow                  optional Apache Arrow IPC tables
@@ -121,15 +121,15 @@ empty. `design/assembly-ir.json` is present only when an assembly is supplied.
 has a digest-matching exact topology artifact and retained STEP owner.
 
 `design/assembly-designs.json` uses `spike/assembly-designs/v1`. It retains up
-to 20 complete canonical DesignIR v2 records, identifies the exact active
+to 20 complete canonical SpiDeR v2 records, identifies the exact active
 `design/design-ir.json` record, rejects duplicate or mismatched identities, and
 requires every AssemblyIR board-instance `design_id` to resolve. Packages that
 omit it remain backward-compatible single-design packages. A verified-manifest
 structure transaction may replace board, harness, connector-mapping, and
 rigid/flex-link arrays while preserving every retained design and all other
-assembly records; new cross-design references fail until their DesignIR is
+assembly records; new cross-design references fail until their SpiDeR is
 retained. Desktop open/save/undo state retains this set explicitly, and the
-structure editor offers only retained DesignIR identities for board assignment.
+structure editor offers only retained SpiDeR identities for board assignment.
 
 `workspace/state.json` uses `spike/workspace-state/v1`. It is optional because
 design-exchange and result-bundle profiles do not require an application
@@ -139,7 +139,7 @@ has been established.
 `sources/` stores immutable original inputs. Source names are
 content-addressed from SHA-256 and retain safe filename suffixes. `design/`
 holds editable canonical semantics. Geometry, results, and generated reports
-are regenerable outputs and must not replace source provenance or DesignIR
+are regenerable outputs and must not replace source provenance or SpiDeR
 authority. `extensions/` stores namespaced vendor data or migrated unknown
 fields; readers must preserve it where practical.
 
@@ -246,7 +246,7 @@ process a 16 GiB project. Solver and mesh resource limits remain independent.
 canonical UUIDs and preserves source-native IDs and source digests for stable
 probes, terminals, cross-selection, revision comparison, and re-import audit.
 
-DesignIR v2 also canonically retains KiCad thermal-connection declarations:
+SpiDeR v2 also canonically retains KiCad thermal-connection declarations:
 zone defaults and fill/thermal settings; component/footprint overrides; and
 pad overrides, optional pad spoke angle, and reserved per-layer override map.
 An omitted zone default is `thermal`; omitted footprint/pad overrides are
@@ -272,7 +272,7 @@ thermal-spoke regeneration or a topology, native-overlay, field, physics, or
 solver claim: `topology_state` is `not_regenerated` and those qualification
 flags remain false.
 
-The packaged DesignIR v2 zone projection also preserves bounded source-filled
+The packaged SpiDeR v2 zone projection also preserves bounded source-filled
 component membership per original zone and canonical copper layer. Admitted
 records retain a source ordinal, exact source-path digest, group identity and
 member count, and an order-independent group snapshot digest. Incomplete,
@@ -283,7 +283,7 @@ or thermal spokes. `thermal_topology_eligible` is fixed false until a separate
 qualified topology extractor can consume an unambiguous source representation.
 
 The registered `spike/thermal-relief-boundary-contact-evidence/v1` sidecar can
-bind the packaged DesignIR v2 digest and its validated IN-0229 evidence digest.
+bind the packaged SpiDeR v2 digest and its validated IN-0229 evidence digest.
 For every effective thermal candidate it records bounded partial/full/absent or
 unsupported source-filled contact intervals on a polygonal pad boundary. This
 does not alter package geometry or mesh attachments and cannot assert a spoke,
@@ -304,14 +304,14 @@ provenance, and it is not consumed by a mesh or solver.
 The package can carry optional Apache Arrow IPC files under `geometry/`.
 Arrow tables are a transport/cache facility; a design does not become invalid
 because it has no Arrow table. Canonical desktop saves now generate one
-deterministic Arrow IPC file, `geometry/copper_geometry.arrow`, from DesignIR v2
+deterministic Arrow IPC file, `geometry/copper_geometry.arrow`, from SpiDeR v2
 tracks, arcs, zones, pads, and vias. Rows are sorted by kind and canonical ID,
 use explicit nullable field types and millimetre coordinates, and carry schema
-metadata binding the table to `design_id`, canonical DesignIR SHA-256, and frame.
-Typed manufacturing-drill records are retained in canonical DesignIR and package
+metadata binding the table to `design_id`, canonical SpiDeR SHA-256, and frame.
+Typed manufacturing-drill records are retained in canonical SpiDeR and package
 round-trips as provenance; they are not copper-geometry Arrow rows and do not
 create copper, barrels, or mesh voids.
-The uncompressed Arrow file is decoded and exactly compared to DesignIR before
+The uncompressed Arrow file is decoded and exactly compared to SpiDeR before
 write. Canonical reads first require an exact byte match with SPIKE's
 deterministic uncompressed projection before decoding, preventing alternate
 compressed IPC layouts from expanding before semantic validation. This
@@ -366,7 +366,7 @@ does not establish topology, mesh, solver, or physics semantics.
 
 `geometry/index.json` uses the registered `spike/geometry-index/v1` contract.
 Generated records include path, encoding, member SHA-256, row count, design ID,
-and DesignIR digest. Pathless designs retain the byte-compatible
+and SpiDeR digest. Pathless designs retain the byte-compatible
 `spike/copper-geometry-arrow/v1` projection; typed-path designs remain
 byte-compatible with `spike/copper-geometry-arrow/v2`, whose additional nullable
 columns preserve parent path, step index/count, end-cap, and join semantics.
@@ -383,7 +383,7 @@ Rev C Full SHA-256 `6c10fea08943ca7261505bd531a8724bc1dffe8f9fec9e53a2f22d52bc83
 with residual zero. Retained contour contract v2 preserves optional profile
 `Xform` and bounded `xOffset`/`yOffset`/`rotation`/`mirror`/`faceUp`/`scale` raw
 and normalized facts without applying or composing them. Its 98 occurrences are
-32 declared-layer matches and 66 mismatches, all source-only. DesignIR v2 now
+32 declared-layer matches and 66 mismatches, all source-only. SpiDeR v2 now
 retains them in a closed typed envelope with
 `semantic_state: unapplied_normative_semantics_missing` and
 `projection: forbidden`. Normative composition and TOP-to-BOTTOM semantics
@@ -400,8 +400,8 @@ Write and reopen reject duplicate, missing, orphan, unsafe, unsupported, or stal
 claims. A targeted reader requires the opened manifest identity, enforces a
 byte budget against both the manifest record and actual ZIP entry before
 retention, bounds the package manifest before retention, reads only the
-DesignIR/index/requested table, verifies its digest, then byte-matches,
-decodes, and compares it to canonical DesignIR. Canonical Arrow comparison is
+SpiDeR/index/requested table, verifies its digest, then byte-matches,
+decodes, and compares it to canonical SpiDeR. Canonical Arrow comparison is
 an exact byte match without `read_all` or `to_pylist`; callers cap Arrow IPC at
 256 MiB and decoded rows at 10,000,000, with preflight rejection before decode
 when the declared row count exceeds that limit. Targeted source, model, STEP,
@@ -439,7 +439,7 @@ parts, but retained multi-board coupling, harnesses, connector mappings,
 assembly rigid-flex links, or electrical bonds block execution. Thermal also
 blocks retained assembly parts/material/contact semantics, and openEMS blocks
 field-affecting MCAD parts, because those current adapters consume only the
-active DesignIR. This desktop gate prevents an implicit coupled claim; it is
+active SpiDeR. This desktop gate prevents an implicit coupled claim; it is
 not yet a worker/CLI-wide scope contract or result-provenance binding.
 
 Source artifacts should be copied to `sources/` when portability is required.
@@ -604,7 +604,7 @@ components, and 100,000 nets, with workload memory charged per board instance.
 The plan is derived execution metadata and is not persisted as authoritative
 design geometry. Admitted independent SI jobs may execute sequentially through
 `spike/multiboard-si-independent-batch-request/v1`; each job consumes the exact
-retained DesignIR v2 for one board and excludes harness/cross-board coupling.
+retained SpiDeR v2 for one board and excludes harness/cross-board coupling.
 Aggregate board, lane, frequency, and numeric-output limits apply in addition
 to each child job's limits. Explicit harness-conductor R/L and optional
 reference-bound C/G values may compile through
@@ -644,7 +644,7 @@ fallback and fits the active design instead. The schema is
 
 Legacy `spike-project-package/v1` and `spike-project-package/v2` JSON files
 are read and migrated in memory. Migration validates the legacy revision,
-derives or preserves a project ID, converts compatible design data to DesignIR
+derives or preserves a project ID, converts compatible design data to SpiDeR
 v2, preserves the full legacy payload under `extensions.legacy`, records
 migration provenance, and emits v3 only on a later explicit save.
 When the desktop opens a migrated `.spike` project, it offers **Upgrade now**
@@ -666,7 +666,7 @@ approved by the host; archive content cannot choose an arbitrary output path.
 
 Conformance coverage must include all profiles, v1/v2 migration and unknown
 extension preservation, unsafe/malformed archives, hash failures, limits,
-DesignIR/AssemblyIR contract identity, source digest preservation, and clean
+SpiDeR/AssemblyIR contract identity, source digest preservation, and clean
 reopen on Windows and Linux.
 
 Current focused tests cover all three profile semantics, basic write/read,

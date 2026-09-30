@@ -6,7 +6,7 @@ from dataclasses import replace
 from math import hypot
 from typing import Any, Dict, Iterable, List, Sequence
 
-from .contracts import AnalysisSpec, DesignIR
+from .contracts import AnalysisSpec, SpiDeR
 from .geometry import extract_net_geometry
 from .mesh_ownership import audit_dc_conductor_volume_ownership
 from .meshing import VOLUME_3D, build_mesh
@@ -158,7 +158,7 @@ def _terminal_face(
     }
 
 
-def build_dc_fem_geometry(design: DesignIR, spec: AnalysisSpec) -> Dict[str, Any]:
+def build_dc_fem_geometry(design: SpiDeR, spec: AnalysisSpec) -> Dict[str, Any]:
     """Build the bounded conductor-volume contract required by external DC FEM.
 
     This is deliberately stricter than the renderer preview.  It rejects
@@ -241,7 +241,7 @@ def build_dc_fem_geometry(design: DesignIR, spec: AnalysisSpec) -> Dict[str, Any
     }
 
 
-def build_solver_geometry(design: DesignIR, spec: AnalysisSpec) -> Dict[str, Any]:
+def build_solver_geometry(design: SpiDeR, spec: AnalysisSpec) -> Dict[str, Any]:
     selected_nets = [
         extract_net_geometry(design, net_name)
         for net_name in spec.net_names

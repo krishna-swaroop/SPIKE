@@ -2,7 +2,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from python.spike_core.contracts import AnalysisResult, DesignIR
+from python.spike_core.contracts import AnalysisResult, SpiDeR
 from python.spike_core.converter_study import (
     CONVERTER_STUDY_RESULT_CONTRACT,
     converter_capabilities,
@@ -16,7 +16,7 @@ from python.spike_core.service import handle
 
 
 def design():
-    return DesignIR(
+    return SpiDeR(
         design_id="converter-board",
         name="Converter fixture",
         components=[

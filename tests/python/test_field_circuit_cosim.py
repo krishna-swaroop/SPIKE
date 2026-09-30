@@ -2,7 +2,7 @@ import threading
 import unittest
 from unittest.mock import patch
 
-from python.spike_core.contracts import DesignIR
+from python.spike_core.contracts import SpiDeR
 from python.spike_core.field_circuit_cosim import (
     FIELD_RESULT_CONTRACT,
     REQUEST_CONTRACT,

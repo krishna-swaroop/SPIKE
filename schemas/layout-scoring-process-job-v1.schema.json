@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://spike.local/schemas/layout-scoring-process-job-v1.schema.json",
   "title": "SPIKE Layout Scoring Process Job v1",
-  "description": "Strict fixed-process envelope for preparing or scoring one autorouter, autoplacer, or joint DesignIR candidate. The process does not route, place, mesh, or solve physics.",
+  "description": "Strict fixed-process envelope for preparing or scoring one autorouter, autoplacer, or joint SpiDeR candidate. The process does not route, place, mesh, or solve physics.",
   "oneOf": [
     {
       "type": "object",

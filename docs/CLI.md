@@ -138,8 +138,8 @@ spike --output board.designir.json import board.kicad_pcb
 spike --output vcc.geometry.json extract-net board.kicad_pcb --net VCC
 ```
 
-Inputs can be native KiCad boards, normalized `DesignIR` JSON, an analysis
-request containing DesignIR, or a SPIKE project package containing embedded
+Inputs can be native KiCad boards, normalized `SpiDeR` JSON, an analysis
+request containing SpiDeR, or a SPIKE project package containing embedded
 KiCad source.
 
 ## DC analysis
@@ -275,7 +275,7 @@ spike --output emi-preflight.json emi-preflight board.kicad_pcb emi-setup.json
 spike --output emi-screening.json emi-screen board.kicad_pcb emi-setup.json
 ```
 
-The design argument may be a KiCad board, DesignIR JSON, or SPIKE project. The
+The design argument may be a KiCad board, SpiDeR JSON, or SPIKE project. The
 setup must use `spike/emi-setup/v1`. Screening is labeled `screening_only`; it
 does not calculate radiation or establish compliance. See `EMI_WORKFLOW.md`.
 

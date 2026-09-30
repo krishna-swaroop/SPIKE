@@ -8,7 +8,7 @@ import json
 import math
 from typing import Any
 
-from .contracts import AnalysisResult, DesignIR
+from .contracts import AnalysisResult, SpiDeR
 
 
 MAX_VISUAL_SAMPLES = 250_000
@@ -49,13 +49,13 @@ def _number(value: Any, label: str) -> None:
 
 
 def design_binding(design: Any) -> dict[str, str]:
-    if isinstance(design, DesignIR):
+    if isinstance(design, SpiDeR):
         design = design.to_dict()
     if not isinstance(design, dict) or design.get("contract") != "spike/v1":
-        raise ValueError("Analysis extensions require a spike/v1 DesignIR in context.design.")
+        raise ValueError("Analysis extensions require a spike/v1 SpiDeR in context.design.")
     identifier = design.get("design_id")
     if not isinstance(identifier, str) or not identifier.strip():
-        raise ValueError("Analysis extension DesignIR requires a nonempty design_id.")
+        raise ValueError("Analysis extension SpiDeR requires a nonempty design_id.")
     _finite_tree(design)
     canonical = json.dumps(design, sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False)
     return {"design_id": identifier, "digest_sha256": hashlib.sha256(canonical.encode("utf-8")).hexdigest()}
@@ -76,7 +76,7 @@ def admit_analysis_result(raw: Any, binding: dict[str, str], *, extension_id: st
         raise ValueError("Extension analysis_result requires an explicit supported model_status.")
     provenance = raw.get("provenance")
     if not isinstance(provenance, dict) or provenance.get("design_id") != binding["design_id"] or provenance.get("design_digest_sha256") != binding["digest_sha256"]:
-        raise ValueError("Extension analysis_result provenance does not match the input DesignIR binding.")
+        raise ValueError("Extension analysis_result provenance does not match the input SpiDeR binding.")
     if not isinstance(provenance.get("solver"), str) or not provenance["solver"].strip():
         raise ValueError("Extension analysis_result requires provenance.solver.")
     if expected_mesh_digest is not None and provenance.get("input_mesh_sha256") != expected_mesh_digest:

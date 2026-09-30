@@ -7,9 +7,16 @@ JSON schemas in `schemas/` document the compatible wire envelope.
 
 ## Contract family
 
+Coupled assembly studies add `spike/multiboard-circuit-request/v1`,
+`spike/multiboard-thermal-request/v1`, and `spike/multiboard-em-request/v1`
+with corresponding result contracts. These use explicit reduced properties and
+retained occurrence identities. `spike/multiboard-study-file/v1` stores a domain,
+physical assembly digest, setup and nullable results for direct loading.
+See [coupled assembly contracts](MULTIBOARD_COUPLED_ANALYSIS.md) and ADR 0027.
+
 ```mermaid
 flowchart LR
-    Design["DesignIR"] --> Spec["AnalysisSpec references design objects"]
+    Design["SpiDeR"] --> Spec["AnalysisSpec references design objects"]
     Design --> Solver["Solver plugin"]
     Spec --> Solver
     Solver --> Result["AnalysisResult"]
@@ -18,14 +25,17 @@ flowchart LR
 
 All three currently use `contract: spike/v1`.
 
+`DesignIR` naming remains a compatibility surface at the KiCad-Prism boundary;
+SPIKE internals consume `SpiDeR` (SPIKE Design Reference).
+
 Workflow-specific envelopes use separate contracts where their lifecycle is not
 a normal solver request/result. The EMI family uses `spike/emi-setup/v1`,
 `spike/emi-preflight/v1`, and `spike/emi-workflow/v1`; see
 `docs/EMI_WORKFLOW.md` and `schemas/emi-setup-v1.schema.json`.
 
-## DesignIR
+## SpiDeR
 
-`DesignIR` describes normalized source geometry and metadata. Coordinates and
+`SpiDeR` describes normalized source geometry and metadata. Coordinates and
 linear dimensions use millimetres unless an entity contract explicitly states
 otherwise. Electrical values use SI units. It includes:
 
@@ -67,6 +77,15 @@ Clients may hide a dataset, but they may not create a dataset the solver did
 not return. Reports and visualizations preserve the exact model status.
 
 ## Compatibility
+
+The internal meshing worker uses `spike/internal-mesh-request/v1` and returns
+`spike/internal-mesh-result/v1`. Generation/adaptation/optimization candidates
+contain solver-neutral tetra meshes, complete labeled boundary triangles,
+quality and provenance digests; `production_qualified` remains false. Unknown
+controls are rejected. See [the request schema](../schemas/internal-mesh-request-v1.schema.json)
+and [the engine integration guide](INTERNAL_MESH_ENGINE.md) for limits and field
+transfer semantics. This is additive and does not change `spike/mesh/v3` preview
+or `spike/solver-mesh/v1` interchange semantics.
 
 Compatible `spike/v1` changes may add optional fields or new issue codes.
 Breaking changes include unit changes, renamed required fields, changed identity

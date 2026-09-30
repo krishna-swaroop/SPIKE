@@ -5,16 +5,16 @@ import copy
 import unittest
 
 from python.spike_core import LAYOUT_EVALUATION_CONTRACT
-from python.spike_core.contracts import DesignIR
-from python.spike_core.design_ir_v2 import DesignIRV2
+from python.spike_core.contracts import SpiDeR
+from python.spike_core.spider_v2 import SpiDeRV2
 from python.spike_core.spikes_layout_adapter import design_ir_artifact_identity
 from python.spike_core.service import handle
 
 
 class LayoutServiceTests(unittest.TestCase):
     def setUp(self) -> None:
-        self.candidate = DesignIRV2.from_v1(
-            DesignIR(design_id="board-1"), source_digest="c" * 64,
+        self.candidate = SpiDeRV2.from_v1(
+            SpiDeR(design_id="board-1"), source_digest="c" * 64,
         ).to_dict()
         candidate_identity = design_ir_artifact_identity(self.candidate)
         self.request = {

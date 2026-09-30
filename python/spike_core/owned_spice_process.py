@@ -13,7 +13,7 @@ import sys
 import uuid
 from typing import Any, Dict
 
-from .contracts import DesignIR
+from .contracts import SpiDeR
 from .owned_spice_workspace import run_owned_spice_workspace
 from .spikes_runtime import engine_status
 
@@ -180,7 +180,7 @@ def execute_job(request_path: Path, result_path: Path) -> Dict[str, Any]:
             )
         raw_limits["maximum_result_bytes"] = requested_limit
     result = run_owned_spice_workspace(
-        circuit_request, DesignIR(**job["design"]),
+        circuit_request, SpiDeR(**job["design"]),
     )
     envelope = {
         "contract": PROCESS_RESULT_CONTRACT,

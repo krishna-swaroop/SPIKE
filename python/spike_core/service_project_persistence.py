@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from .design_ir_v2 import DesignIRV2
+from .spider_v2 import SpiDeRV2
 from .project_package import ProjectPackageError, _sha256
 from .project_state_artifacts import externalize_result_state, hydrate_result_state, read_verified_artifacts
 from .project_visual_artifacts import prepare_visual_artifacts, read_saved_visual_stage
@@ -22,7 +22,7 @@ def project_for_desktop(payload: dict, projected: dict) -> dict:
         source_format = str((canonical.get("source") or {}).get("source_format", ""))
         if source_format not in {"kicad", "kicad_pcb"}:
             snapshot = {"contract": "spike/design-snapshot/v1",
-                        "design": DesignIRV2.from_dict(canonical).to_v1().to_dict(),
+                        "design": SpiDeRV2.from_dict(canonical).to_v1().to_dict(),
                         "canonical_design": canonical, "report": canonical.get("metadata", {}).get("import_report", {})}
             design.update(source_board=json.dumps(snapshot), source_format="spike-normalized",
                           source_file="saved-design.spike-design.json")
@@ -38,6 +38,11 @@ def without_saved_results(payload: dict) -> dict:
 
     def clear_desktop(snapshot: dict) -> None:
         snapshot.pop("results", None)
+        studies = ((snapshot.get("assembly_ir") or {}).get("extensions") or {}).get("spike.multiboard-studies", {})
+        if isinstance(studies, dict):
+            for study in studies.values():
+                if isinstance(study, dict):
+                    study.pop("result", None)
         analysis = snapshot.get("analysis")
         if isinstance(analysis, dict):
             for key in ("latest_result", "active_result", "pdn_review"):
@@ -59,6 +64,11 @@ def without_saved_results(payload: dict) -> dict:
     if isinstance(analyses, dict):
         clear_desktop({"analysis": analyses})
     clean["results"] = {}
+    studies = ((clean.get("assembly_ir") or {}).get("extensions") or {}).get("spike.multiboard-studies", {})
+    if isinstance(studies, dict):
+        for study in studies.values():
+            if isinstance(study, dict):
+                study.pop("result", None)
     extensions = clean.get("extensions")
     if isinstance(extensions, dict) and isinstance(extensions.get("legacy"), dict):
         clear_desktop(extensions["legacy"])

@@ -1,0 +1,8 @@
+{
+  "coarse_triangles": 2046,
+  "fine_triangles": 8060,
+  "normalized_l2_total_difference": 0.004654231203076419,
+  "normalized_l2_scattered_difference": 0.01622839283362746,
+  "max_total_absolute_difference_over_bare_peak": 0.00881057741299674,
+  "qualification": "one refinement comparison only; not physical validation"
+}

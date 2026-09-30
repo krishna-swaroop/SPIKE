@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 """Public process-boundary adapter for the private SPIKES native runtime.
 
-Milestone 0 intentionally does not translate PCB DesignIR geometry into a
+Milestone 0 intentionally does not translate PCB SpiDeR geometry into a
 qualified physics model and does not launch a solver.  The bridge prepares the
 versioned envelope only after a separate, integrity-bound physics-model
 artifact exists, and maps bounded public result fields back to AnalysisResult.
@@ -18,7 +18,7 @@ import tempfile
 from pathlib import Path
 from typing import Any, Dict, Iterable
 
-from .contracts import AnalysisResult, AnalysisSpec, DesignIR, ValidationIssue
+from .contracts import AnalysisResult, AnalysisSpec, SpiDeR, ValidationIssue
 
 
 ADAPTER_ID = "spike.spikes-native-process/v0.1"
@@ -234,7 +234,7 @@ def _artifact_reference(value: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def prepare_job_envelope(
-    design: DesignIR,
+    design: SpiDeR,
     spec: AnalysisSpec,
     model_artifact: Dict[str, Any],
     *,
@@ -244,10 +244,10 @@ def prepare_job_envelope(
 
     ``model_artifact`` must refer to an independently normalized
     ``spike/physics-model/v1`` document.  This adapter never claims that a PCB
-    DesignIR is itself an executable finite-element model.
+    SpiDeR is itself an executable finite-element model.
     """
-    if not isinstance(design, DesignIR) or not isinstance(spec, AnalysisSpec):
-        raise SpikesNativeAdapterError("DesignIR and AnalysisSpec instances are required")
+    if not isinstance(design, SpiDeR) or not isinstance(spec, AnalysisSpec):
+        raise SpikesNativeAdapterError("SpiDeR and AnalysisSpec instances are required")
     if not isinstance(request_id, str) or re.fullmatch(r"[a-z][a-z0-9._-]{1,127}", request_id) is None:
         raise SpikesNativeAdapterError("request_id is outside the public bound")
     options = spec.options if isinstance(spec.options, dict) else {}

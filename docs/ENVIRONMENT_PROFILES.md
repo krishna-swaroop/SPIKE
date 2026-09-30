@@ -59,7 +59,7 @@ flowchart LR
 ```
 
 Every numerical value uses SI units. PCB geometry remains governed by the
-DesignIR geometry contract and is not duplicated in the environment profile.
+SpiDeR geometry contract and is not duplicated in the environment profile.
 
 ### Thermal operating point
 

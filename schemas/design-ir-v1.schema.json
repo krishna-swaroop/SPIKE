@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://spike.local/schemas/design-ir-v1.schema.json",
-  "title": "SPIKE DesignIR v1",
+  "title": "SPIKE SpiDeR v1",
   "type": "object",
   "required": [
     "contract",

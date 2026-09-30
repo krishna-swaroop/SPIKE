@@ -43,7 +43,7 @@ def check_board(path: Path) -> dict:
         first = request("read_project_package", {"path": str(original)})
         request("write_project_package", {"path": str(duplicate), "base_package_path": str(original), "snapshot": snapshot, "generate_geometry_tables": False})
         second = request("read_project_package", {"path": str(duplicate)})
-        assert first["canonical"]["design_ir"] == second["canonical"]["design_ir"], "DesignIR drift on Save As"
+        assert first["canonical"]["design_ir"] == second["canonical"]["design_ir"], "SpiDeR drift on Save As"
         assert second["project"]["design"]["source_board"] == snapshot["design"]["source_board"], "embedded source drift"
         design = second["canonical"]["design_ir"]
         return {"file": path.name, "sha256": hashlib.sha256(data).hexdigest(), "bytes": len(data),

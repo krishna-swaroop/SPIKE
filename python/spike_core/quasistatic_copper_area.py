@@ -8,7 +8,7 @@ from math import cos, hypot, pi, sin
 from typing import Any, Dict, List, Sequence, Tuple
 import numpy as np
 
-from .contracts import AnalysisSpec, DesignIR
+from .contracts import AnalysisSpec, SpiDeR
 from .hybrid_mesh import (
     TOPOLOGY_ONLY_BRANCH_KINDS, _pad_boundary_polygon, _pad_has_drill,
     _normalize_filled_zone_polygon, _polygon_is_simple, _pad_local_to_world, _pad_size,
@@ -88,7 +88,7 @@ def _source_polygon(kind: str, item: Dict[str, Any]) -> list:
     return polygon
 
 
-def _complete_dielectric_path(design: DesignIR, layer: str, reference: str) -> bool:
+def _complete_dielectric_path(design: SpiDeR, layer: str, reference: str) -> bool:
     names = [str(item.get("name", "")) for item in design.stackup]
     low, high = sorted((names.index(layer), names.index(reference)))
     for item in design.stackup[low + 1:high]:
@@ -162,7 +162,7 @@ def _partition_area(polygons: Sequence[list], source_count: int,
 
 
 def estimate_branch_capacitance(
-    design: DesignIR,
+    design: SpiDeR,
     spec: AnalysisSpec,
     branches: Sequence[Any],
 ) -> Tuple[np.ndarray, np.ndarray, Dict[str, Any]]:

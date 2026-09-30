@@ -6,7 +6,7 @@ import json
 import math
 from typing import Any, Dict, Mapping, Sequence
 
-from .design_ir_v2_schema import content_digest
+from .spider_v2_schema import content_digest
 from .reference_plane_antipad_geometry import CONTRACT as GEOMETRY_CONTRACT
 from .via_transition_mesh import (
     MAX_SERIALIZED_BYTES, MAX_TRIANGLES, MAX_VERTICES, _audit, _triangle_distance_2d,

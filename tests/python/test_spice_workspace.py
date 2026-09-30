@@ -1,6 +1,6 @@
 import unittest
 
-from python.spike_core.contracts import DesignIR
+from python.spike_core.contracts import SpiDeR
 from python.spike_core.service import handle
 from python.spike_core.spice_workspace import (
     SPICE_WORKSPACE_CONTRACT,
@@ -9,8 +9,8 @@ from python.spike_core.spice_workspace import (
 )
 
 
-def fixture_design() -> DesignIR:
-    return DesignIR(
+def fixture_design() -> SpiDeR:
+    return SpiDeR(
         design_id="spice-board",
         name="SPICE assistant fixture",
         components=[

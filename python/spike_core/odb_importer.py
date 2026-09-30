@@ -1,4 +1,4 @@
-"""ODB++Design adapter. Geometry and connectivity share the native DesignIR path.
+"""ODB++Design adapter. Geometry and connectivity share the native SpiDeR path.
 
 The parser keeps vendor attributes and source records, and never guesses a
 padstack, missing dielectric, negative plane or 3D assignment from a filename.
@@ -12,7 +12,7 @@ from pathlib import Path
 import re
 import zlib
 
-from .contracts import DesignIR, ValidationIssue
+from .contracts import SpiDeR, ValidationIssue
 from .importers import ImportPolicy
 from .odb_features import Attributes, number, parse_features, records, tokens, units
 from .source_package import SourcePackage, safe_member_name, source_identity
@@ -171,10 +171,10 @@ def parse_components(text, layer, fallback, packages):
     return output
 
 
-def import_odb_design(path: str, *, step: str = "", policy: ImportPolicy | None = None) -> DesignIR:
+def import_odb_design(path: str, *, step: str = "", policy: ImportPolicy | None = None) -> SpiDeR:
     policy = policy or ImportPolicy()
     digest, size = source_identity(Path(path), policy)
-    design = DesignIR(design_id=f"odb-{digest[:24]}", source_format="odb++", source_path=str(Path(path).resolve()))
+    design = SpiDeR(design_id=f"odb-{digest[:24]}", source_format="odb++", source_path=str(Path(path).resolve()))
     retained = []
     issue_counts = {}
     issue_severity_counts = {}

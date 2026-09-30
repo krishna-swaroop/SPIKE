@@ -8,9 +8,9 @@ import tempfile
 import unittest
 
 from python.spike_core.assembly_frames import IDENTITY, resolve_world
-from python.spike_core.contracts import DesignIR
-from python.spike_core.design_ir_v2 import AssemblyIRV1, AssemblyPart, BoardInstance, DesignIRV2
-from python.spike_core.design_ir_v2_schema import CoordinateFrame
+from python.spike_core.contracts import SpiDeR
+from python.spike_core.spider_v2 import AssemblyIRV1, AssemblyPart, BoardInstance, SpiDeRV2
+from python.spike_core.spider_v2_schema import CoordinateFrame
 from python.spike_core.mcad_session_contract import FEEDBACK, HEADER, digest, loads, validate
 from python.spike_core.mcad_tessellation import _freecad_path, McadTessellationError
 from python.spike_core.mcad_importer import import_mcad_artifact
@@ -23,7 +23,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 def fixture(path):
     ring = {"role": "outer", "start_mm": [0, 0], "segments": [{"kind": "line", "end_mm": p} for p in [[10,0],[10,10],[0,10],[0,0]]]}
-    design = DesignIRV2.from_v1(DesignIR(design_id="board", name="Board", source_format="neutral",
+    design = SpiDeRV2.from_v1(SpiDeR(design_id="board", name="Board", source_format="neutral",
         layers=[{"id": 0, "name": "F.Cu"}], stackup=[{"name": "Core", "type": "dielectric", "thickness_mm": 1.6}],
         metadata={"source_sha256": "a"*64, "board_outline_rings": [ring]})).to_dict()
     t = list(IDENTITY); t[3] = 20

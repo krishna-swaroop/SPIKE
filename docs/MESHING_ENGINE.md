@@ -1,9 +1,23 @@
 # SPIKE Meshing Engine
 
+The [internal tetra engine](INTERNAL_MESH_ENGINE.md) adds a separate, experimental
+path for convex point-cloud generation, dynamic indicator/manual refinement,
+scalar refinement transfer and automatic interior quality optimization. It uses
+the solver-neutral tetra mesh contract and requires no external mesher. Its
+bounded geometry evidence does not qualify general PCB/CAD meshing or promote
+the existing DC/PEEC preview representations described below.
+
+The [whole-board focused volume workflow](PCB_FOCUSED_VOLUME_MESHING.md) is a
+separate CAD-neutral path for planar stacks, polygon copper, cutouts and plated
+via spans. It retains all geometry while applying net/source/manual refinement
+boxes and a coarser background. Conforming generation uses the external admitted
+Gmsh OCC development runtime, not the internal convex generator. Mesh evidence
+does not automatically qualify the electrical previews or a field solve.
+
 ## Contract
 
 `spike/mesh/v3` is the renderer- and solver-plugin-neutral mesh contract.
-It is generated from `DesignIR` and `AnalysisSpec.mesh` by
+It is generated from `SpiDeR` and `AnalysisSpec.mesh` by
 `python.spike_core.meshing.MeshingEngine`.
 
 Supported preview dimensions:

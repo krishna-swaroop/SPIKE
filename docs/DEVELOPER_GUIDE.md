@@ -108,7 +108,7 @@ When debugging a hang, record:
 
 ## Adding an importer
 
-1. Define a source adapter that parses one format and returns `DesignIR`.
+1. Define a source adapter that parses one format and returns `SpiDeR`.
 2. Register an `ImporterDescriptor` in a composition module.
 3. Add frontend source dispatch only if browser-side parsing is required.
 4. Add fixtures for units, coordinates, layers, stackup, arcs/polygons, vias,
@@ -124,7 +124,7 @@ add native adapters only for information that interchange standards lose.
 
 1. Implement the SDK contract in `solver_sdk` or a built-in plugin module.
 2. Declare modes, geometry, formulation, frequency, and validation capability.
-3. Consume only `DesignIR` and `AnalysisSpec`.
+3. Consume only `SpiDeR` and `AnalysisSpec`.
 4. Return `AnalysisResult` with provenance, assumptions, model status,
    convergence, and issues.
 5. Add analytical and real-board fixtures with tolerances.

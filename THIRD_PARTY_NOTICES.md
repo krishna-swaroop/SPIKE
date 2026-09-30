@@ -16,8 +16,11 @@ the license for the version you install or redistribute.
 | Tauri, React, Three.js, Lucide, and Plotly.js | Desktop interface, 3D view, icons, and plots | Versions are recorded in `app/package-lock.json` and `app/src-tauri/Cargo.lock`. Plotly.js is MIT-licensed; consult each package's included license. |
 | NumPy, SciPy, PyVista, wxPython, nanobind, Matplotlib, mplcursors, ReportLab, Apache Arrow/PyArrow, jsonschema, and Eigen | Python worker, native kernels, visualization, and reports | Versions are recorded in the Python requirements and native build files. Consult each installed package's license. |
 | Shapely and GEOS | Geometry handling | Shapely is BSD 3-Clause; its bundled GEOS library is identified under LGPL-2.1 in the Windows wheel metadata. |
+| [Gmsh](https://gmsh.info/) | Optional, separately installed 4.15.2 OCC development process for normalized PCB volume meshes | Runtime terms are in the [upstream manual](https://gmsh.info/doc/texinfo/gmsh.html#Copying-conditions). SPIKE adds original typed compiler/sizing code, not Gmsh source. The runtime is installed separately and is not included in SPIKE packages. |
 | FreeCAD SPIKE Workbench | Optional geometry exchange | The workbench under `integrations/freecad/SPIKEWorkbench/` has its own MIT license. FreeCAD is a separate project. |
 | Robert Fennis's [EMerge](https://github.com/FennisRobert/EMerge) | Optional antenna and EM solver used through `extensions/emerge_suite/` | Separately installed; [EMerge's license](https://github.com/FennisRobert/EMerge/blob/main/LICENSE) identifies GPL-2.0-or-later Gmsh-derived components and a CC0 materials database. SPIKE does not include the EMerge runtime. |
+| Robert Fennis's [EMCAD](https://pypi.org/project/emcad/) | Optional public polygon union API for EMerge selected copper, isolated in its runtime interpreter | Separately installed, MIT; SPIKE bundles no upstream code or data. |
+| Robert Fennis's [Optycal](https://github.com/FennisRobert/Optycal) | Optional separately installed physical-optics engine through `extensions/optycal_suite/` | Optycal 0.2.0 is MIT-licensed and beta. SPIKE bundles no upstream runtime or example code. |
 | [ngspice](https://ngspice.sourceforge.io/), [openEMS/CSXCAD](https://openems.de/), and [OpenFOAM](https://www.openfoam.com/) | Optional circuit, EM, and airflow engines | Separately installed; each project supplies its own license. SPIKE does not include these runtimes. |
 | sparseLizard | Optional native adapter | `integrations/sparselizard-native/LICENSE` identifies the adapter as GPL-2.0-or-later; the upstream runtime has its own GPL notices. |
 
@@ -27,3 +30,7 @@ the license for the version you install or redistribute.
 - **Marble reference board:** Berkeley Lab's Marble v1.4.4 board and documentation are credited to the Regents of the University of California through Lawrence Berkeley National Laboratory. The upstream documentation states CERN OHL v1.2 and a U.S. Government rights notice. The board-documentation image and front-copper SVG in `app/public/help/` come from the pinned source recorded in [Help maintenance](docs/HELP_MAINTENANCE.md). SPIKE interface captures showing Marble are labeled as captures; the report preview says analysis was not run.
 
 If a source or credit is missing, please [open an issue](https://github.com/wayri/SPIKE-Main/issues). Preserve the original license and attribution when reusing third-party material.
+
+## Optional Optycal runtime
+
+[Optycal](https://github.com/FennisRobert/Optycal) is installed separately. The SPIKE adapter is Apache-2.0; the upstream runtime retains its own license and is not included in SPIKE packages. See the [adapter guide](extensions/optycal_suite/README.md) and the license supplied with the installed runtime.

@@ -20,7 +20,7 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Dict, Iterable, List
 
-from python.spike_core.contracts import AnalysisSpec, DesignIR
+from python.spike_core.contracts import AnalysisSpec, SpiDeR
 from .openems_adapter_source import OPENEMS_DRIVER
 from .openems_geometry_admission import screen_geometry
 from .pcb_entity_ports import validate_entity_port_binding
@@ -347,7 +347,7 @@ def _number(value: Any, default: float = float("nan")) -> float:
         return default
 
 
-def _validate_openems_case(design: DesignIR, spec: AnalysisSpec, options: Dict[str, Any] | None = None) -> Dict[str, Any]:
+def _validate_openems_case(design: SpiDeR, spec: AnalysisSpec, options: Dict[str, Any] | None = None) -> Dict[str, Any]:
     errors: List[Dict[str, str]] = validate_entity_port_binding(design, spec)
     warnings: List[Dict[str, str]] = []
     options = options or {}
@@ -403,7 +403,7 @@ def _validate_openems_case(design: DesignIR, spec: AnalysisSpec, options: Dict[s
         for layer in layers:
             name = str(layer or "")
             # KiCad pads also list mask and paste, which are not conductors.
-            # Via spans may arrive as tuples after DesignIR normalization.
+            # Via spans may arrive as tuples after SpiDeR normalization.
             if name.endswith(".Cu") and name != "*.Cu" and name not in copper_names:
                 unmapped_layers.add(name)
     if design.stackup and unmapped_layers:
@@ -512,7 +512,7 @@ def _validate_openems_case(design: DesignIR, spec: AnalysisSpec, options: Dict[s
     }
 
 
-def _object_map(design: DesignIR) -> Dict[str, Any]:
+def _object_map(design: SpiDeR) -> Dict[str, Any]:
     entities = []
     for kind, values in (
         ("track", design.tracks), ("zone", design.zones), ("via", design.vias),
@@ -568,7 +568,7 @@ def _job_root(output_dir: str | Path | None) -> Path:
 
 
 def prepare_openems_case(
-    design: DesignIR,
+    design: SpiDeR,
     spec: AnalysisSpec,
     output_dir: str | Path | None = None,
     options: Dict[str, Any] | None = None,
@@ -635,7 +635,7 @@ def prepare_openems_case(
     }
 
 
-def _case_inputs(job: Dict[str, Any], geometry: Dict[str, Any]) -> tuple[DesignIR, AnalysisSpec]:
+def _case_inputs(job: Dict[str, Any], geometry: Dict[str, Any]) -> tuple[SpiDeR, AnalysisSpec]:
     if geometry.get("contract") != "spike/solver-geometry/v1":
         raise ValueError("The prepared case has an unsupported geometry contract.")
     analysis = job.get("analysis")
@@ -647,7 +647,7 @@ def _case_inputs(job: Dict[str, Any], geometry: Dict[str, Any]) -> tuple[DesignI
         spec = AnalysisSpec(**analysis)
     except TypeError as exc:
         raise ValueError(f"The prepared analysis definition is invalid: {exc}") from exc
-    design = DesignIR(
+    design = SpiDeR(
         design_id=str(geometry.get("design_id", "")),
         units=str(geometry.get("units", "")),
         layers=list(assembly.get("layers", [])),
@@ -726,15 +726,15 @@ def run_openems_case(
     timeout_seconds: int = 3600,
 ) -> Dict[str, Any]:
     root, job, validation, spec, geometry = _validated_job(case_dir)
-    engine = _openems_descriptor()
-    if engine.state not in RUNNABLE_OPENEMS_STATES:
-        return {"status": "solver_unavailable", "message": engine.reason, "engine": engine.to_dict(), "case_dir": str(root)}
     if not validation.get("can_prepare", False):
         return {"status": "blocked", "message": "The prepared openEMS inputs no longer pass preflight.", "validation": validation, "case_dir": str(root)}
     if setup_only and validation.get("run_blockers"):
         return {"status": "blocked", "message": "The selected geometry has unsupported openEMS translations; a complete CSXCAD setup cannot be generated.", "validation": validation, "case_dir": str(root)}
     if not setup_only and not validation.get("can_run", False):
         return {"status": "blocked", "message": "The openEMS preflight does not permit a solver run.", "validation": validation, "case_dir": str(root)}
+    engine = _openems_descriptor()
+    if engine.state not in RUNNABLE_OPENEMS_STATES:
+        return {"status": "solver_unavailable", "message": engine.reason, "engine": engine.to_dict(), "case_dir": str(root)}
     python_executable = _openems_python()
     arguments = ["--job", str(root)]
     if setup_only:

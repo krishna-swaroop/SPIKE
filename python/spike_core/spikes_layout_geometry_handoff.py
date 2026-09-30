@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-"""Canonical supported-subset DesignIR handoff for the private SPIKES compiler.
+"""Canonical supported-subset SpiDeR handoff for the private SPIKES compiler.
 
 This module only translates normalized planar layout records.  It deliberately
 does not perform Boolean operations, mesh generation, terminal construction,
@@ -14,7 +14,7 @@ import json
 import math
 from typing import Any, Dict, Iterable, Mapping, Sequence
 
-from .design_ir_v2 import DesignIRV2
+from .spider_v2 import SpiDeRV2
 from .spikes_layout_adapter import (
     design_ir_artifact_identity,
     preflight_layout_candidate,
@@ -46,13 +46,13 @@ def _fail(code: str, message: str) -> None:
     raise SpikesLayoutAdapterError(code, message)
 
 
-def _coerce(value: Any) -> DesignIRV2:
-    if isinstance(value, DesignIRV2):
+def _coerce(value: Any) -> SpiDeRV2:
+    if isinstance(value, SpiDeRV2):
         return value
     if not isinstance(value, Mapping) or value.get("contract") != "spike/design-ir/v2":
-        _fail("SPIKE-LAYOUT-HANDOFF-0001", "candidate must be complete DesignIR v2")
+        _fail("SPIKE-LAYOUT-HANDOFF-0001", "candidate must be complete SpiDeR v2")
     try:
-        return DesignIRV2.from_dict(value)
+        return SpiDeRV2.from_dict(value)
     except (TypeError, ValueError) as exc:
         _fail("SPIKE-LAYOUT-HANDOFF-0001", f"candidate is invalid: {exc}")
     raise AssertionError("unreachable")
@@ -102,7 +102,7 @@ def _id_list(values: Sequence[Any], label: str) -> list[str]:
     return result
 
 
-def _frame(design: DesignIRV2) -> Dict[str, Any]:
+def _frame(design: SpiDeRV2) -> Dict[str, Any]:
     frame = design.frame
     if frame.units != "mm" or frame.handedness != "right" or frame.parent_frame_id:
         _fail(
@@ -146,7 +146,7 @@ def _optional_positive(value: Any, label: str, *, zero: bool = False) -> float |
     return None if value is None else _positive(value, label, zero=zero)
 
 
-def _materials(design: DesignIRV2) -> list[Dict[str, Any]]:
+def _materials(design: SpiDeRV2) -> list[Dict[str, Any]]:
     result: list[Dict[str, Any]] = []
     for item in sorted(design.materials, key=lambda value: value.id.encode("utf-8")):
         record: Dict[str, Any] = {
@@ -173,7 +173,7 @@ def _materials(design: DesignIRV2) -> list[Dict[str, Any]]:
     return result
 
 
-def _layers(design: DesignIRV2, materials: Mapping[str, Dict[str, Any]]) -> list[Dict[str, Any]]:
+def _layers(design: SpiDeRV2, materials: Mapping[str, Dict[str, Any]]) -> list[Dict[str, Any]]:
     result: list[Dict[str, Any]] = []
     for item in sorted(design.layers, key=lambda value: (value.order, value.id.encode("utf-8"))):
         kind_text = item.layer_type.lower()
@@ -230,7 +230,7 @@ def _rings(values: Iterable[Sequence[Any]], label: str) -> list[list[list[float]
     return result
 
 
-def _supported_sources(design: DesignIRV2) -> Dict[str, list[Dict[str, Any]]]:
+def _supported_sources(design: SpiDeRV2) -> Dict[str, list[Dict[str, Any]]]:
     tracks = []
     for item in sorted(design.tracks, key=lambda value: value.id.encode("utf-8")):
         if item.path is not None:
@@ -338,7 +338,7 @@ def build_designir_layout_handoff(
     request_document: Any, candidate: Any, *, baseline: Any | None = None,
     parent: Any | None = None,
 ) -> Dict[str, Any]:
-    """Compile a preflighted DesignIR v2 autorouter candidate to the public handoff."""
+    """Compile a preflighted SpiDeR v2 autorouter candidate to the public handoff."""
     request = validate_layout_request(request_document)
     design = _coerce(candidate)
     preflight = preflight_layout_candidate(

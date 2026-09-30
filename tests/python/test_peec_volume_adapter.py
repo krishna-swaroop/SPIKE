@@ -9,7 +9,7 @@ from unittest.mock import patch
 
 import numpy as np
 
-from python.spike_core.contracts import AnalysisSpec, DesignIR
+from python.spike_core.contracts import AnalysisSpec, SpiDeR
 from python.spike_core.hybrid_mesh import MeshBranch, build_hybrid_mesh, nearest_mesh_node
 from python.spike_core.peec_plugin import _connected_component
 from python.spike_core.peec_volume_adapter import (
@@ -45,7 +45,7 @@ class VolumeAdapterTests(unittest.TestCase):
         with patch('python.spike_core.peec_volume_adapter.extract_volume_matrices',
                    return_value=volume) as extract:
             returned, admitted, quality, error = retry_nonpassive_legacy(
-                object(), DesignIR(), [_track("a"), _track("b")], 2, [0, 1])
+                object(), SpiDeR(), [_track("a"), _track("b")], 2, [0, 1])
         extract.assert_called_once()
         self.assertIs(returned, volume)
         self.assertIsNone(error)
@@ -62,7 +62,7 @@ class VolumeAdapterTests(unittest.TestCase):
 
     def test_unavailable_backend_fails_closed(self):
         with self.assertRaisesRegex(ValueError, "unavailable"):
-            extract_volume_matrices(object(), DesignIR(), [_track("a")])
+            extract_volume_matrices(object(), SpiDeR(), [_track("a")])
 
     def test_overlay_replaces_physical_dc_and_preserves_skin_increment(self):
         overlay = VolumeResistanceOverlay(_NativeResistance(), [0, 1],
@@ -81,7 +81,7 @@ class VolumeAdapterTests(unittest.TestCase):
     def test_duplicate_and_reversed_volume_bases_have_nonnegative_energy(self):
         branches = [_track("a"), _track("b"),
                     _track("c", (1.0, 0.0), (0.0, 0.0))]
-        matrices = extract_volume_matrices(native, DesignIR(), branches)
+        matrices = extract_volume_matrices(native, SpiDeR(), branches)
         signs = np.array([1.0, 1.0, -1.0])
         np.testing.assert_allclose(matrices.inductance_h,
             matrices.inductance_h[0, 0] * np.outer(signs, signs),
@@ -98,7 +98,7 @@ class VolumeAdapterTests(unittest.TestCase):
     @unittest.skipUnless(native is not None and hasattr(native, "VolumeMatrixAssembler"),
                          "native volume PEEC extension required")
     def test_opted_in_transient_uses_real_volume_backend(self):
-        design = DesignIR(
+        design = SpiDeR(
             name="short copper transient", layers=[{"name": "F.Cu"}],
             nets=[{"id": 1, "name": "VCC"}],
             tracks=[{"id": "trace", "start": [0.0, 0.0], "end": [2.0, 0.0],

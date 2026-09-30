@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any, Dict
 
 from .assembly_package_shapes import canonicalize_assembly_package_shapes
-from .design_ir_v2 import AssemblyIRV1
+from .spider_v2 import AssemblyIRV1
 from .project_package import ProjectPackageError, read_project, write_spike_package
 
 

@@ -7,8 +7,8 @@ from pathlib import Path
 
 from jsonschema import Draft202012Validator
 
-from python.spike_core.contracts import DesignIR
-from python.spike_core.design_ir_v2 import DesignIRV2
+from python.spike_core.contracts import SpiDeR
+from python.spike_core.spider_v2 import SpiDeRV2
 from python.spike_core.reference_plane_antipad_geometry import (
     ReferencePlaneAntipadGeometryError,
     build_reference_plane_antipad_geometry,
@@ -27,7 +27,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 class ViaTransitionGeometryTests(unittest.TestCase):
     def design(self, via_type: str = "through", layers: tuple[str, str] = ("F.Cu", "B.Cu"),
-               *, plating: float | None = 0.025, profiles: list[dict] | None = None) -> DesignIRV2:
+               *, plating: float | None = 0.025, profiles: list[dict] | None = None) -> SpiDeRV2:
         names = ["F.Cu", "In1.Cu", "In2.Cu", "B.Cu"]
         via = {"id": "V1", "net_name": "SIG", "at": [2.0, 3.0], "diameter": 0.6,
                "drill": 0.3, "layers": list(layers), "type": via_type}
@@ -35,7 +35,7 @@ class ViaTransitionGeometryTests(unittest.TestCase):
             via["plating_mm"] = plating
         if profiles is not None:
             via["land_profiles"] = profiles
-        legacy = DesignIR(
+        legacy = SpiDeR(
             design_id="via-board", name="via-board", source_format="fixture",
             layers=[{"id": index, "name": name, "type": "copper", "thickness_mm": 0.035}
                     for index, name in enumerate(names)],
@@ -45,16 +45,16 @@ class ViaTransitionGeometryTests(unittest.TestCase):
                    for name in names],
             metadata={"source_sha256": "a" * 64},
         )
-        return DesignIRV2.from_v1(legacy)
+        return SpiDeRV2.from_v1(legacy)
 
     @staticmethod
-    def ids(design: DesignIRV2, layer_name: str = "In1.Cu") -> tuple[str, str, str]:
+    def ids(design: SpiDeRV2, layer_name: str = "In1.Cu") -> tuple[str, str, str]:
         layer = next(item.id for item in design.layers if item.name == layer_name)
         net = next(item.id for item in design.nets if item.name == "GND")
         zone = next(item.id for item in design.zones if item.net_id == net and layer in item.layer_ids)
         return layer, net, zone
 
-    def build(self, design: DesignIRV2) -> dict:
+    def build(self, design: SpiDeRV2) -> dict:
         layer_id = design.vias[0].start_layer_id
         layer_name = next(item.name for item in design.layers if item.id == layer_id)
         _, net_id, zone_id = self.ids(design, layer_name)

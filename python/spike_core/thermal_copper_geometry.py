@@ -15,7 +15,7 @@ from typing import Any
 import numpy as np
 from scipy.ndimage import gaussian_filter
 
-from .contracts import DesignIR
+from .contracts import SpiDeR
 from .hybrid_mesh import (_normalize_filled_zone_polygon, _pad_boundary_polygon,
                           _pad_layers, _polygon_area, _polygon_is_simple)
 
@@ -135,7 +135,7 @@ def _layers(raw: Any, available: Sequence[str], label: str) -> list[str]:
 
 
 def rasterize_copper(
-    design: DesignIR,
+    design: SpiDeR,
     bounds: tuple[float, float, float, float],
     shape: tuple[int, int],
     spacing_mm: tuple[float, float],
@@ -156,7 +156,7 @@ def rasterize_copper(
     boundaries. The grid is a rectangle; board cutouts are not inferred.
     """
     if design.units != "mm":
-        raise ValueError("Copper geometry requires DesignIR millimetres")
+        raise ValueError("Copper geometry requires SpiDeR millimetres")
     if len(bounds) != 4 or len(shape) != 2 or len(spacing_mm) != 2:
         raise ValueError("Invalid copper raster grid")
     box = tuple(_number(v, "board bound") for v in bounds)

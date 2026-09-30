@@ -1,4 +1,4 @@
-"""Deterministic, bounded flattening of DesignIR zone line/arc boundaries."""
+"""Deterministic, bounded flattening of SpiDeR zone line/arc boundaries."""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ from dataclasses import dataclass
 import math
 from typing import Any, Sequence
 
-from .design_ir_v2_schema import content_digest
+from .spider_v2_schema import content_digest
 
 
 GRID_MM = 0.000001

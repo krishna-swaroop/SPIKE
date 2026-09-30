@@ -12,7 +12,7 @@ import math
 import re
 from typing import Any, Dict, Iterable, List
 
-from .contracts import DesignIR
+from .contracts import SpiDeR
 from .spice_netlist_safety import FORBIDDEN_DIRECTIVES, validate_netlist
 
 
@@ -103,7 +103,7 @@ def _validate_value_expression(value: Any, path: str, issues: List[Dict[str, str
     return text
 
 
-def _component_references(design: DesignIR) -> set[str]:
+def _component_references(design: SpiDeR) -> set[str]:
     return {
         str(component.get("reference") or component.get("ref") or "").strip()
         for component in design.components
@@ -111,7 +111,7 @@ def _component_references(design: DesignIR) -> set[str]:
     }
 
 
-def _pad_index(design: DesignIR) -> Dict[str, Dict[str, Any]]:
+def _pad_index(design: SpiDeR) -> Dict[str, Dict[str, Any]]:
     return {
         str(pad.get("id", "")): pad
         for pad in design.pads
@@ -119,7 +119,7 @@ def _pad_index(design: DesignIR) -> Dict[str, Dict[str, Any]]:
     }
 
 
-def validate_spice_workspace(workspace: Dict[str, Any], design: DesignIR) -> Dict[str, Any]:
+def validate_spice_workspace(workspace: Dict[str, Any], design: SpiDeR) -> Dict[str, Any]:
     issues: List[Dict[str, str]] = []
     warnings: List[Dict[str, str]] = []
     if not isinstance(workspace, dict) or workspace.get("contract") != SPICE_WORKSPACE_CONTRACT:
@@ -364,7 +364,7 @@ def _analysis_directive(analysis: Dict[str, Any]) -> str:
     return f".tran {float(analysis['time_step_s']):.12g} {float(analysis['stop_time_s']):.12g}"
 
 
-def compose_spice_workspace(workspace: Dict[str, Any], design: DesignIR) -> Dict[str, Any]:
+def compose_spice_workspace(workspace: Dict[str, Any], design: SpiDeR) -> Dict[str, Any]:
     validation = validate_spice_workspace(workspace, design)
     if not validation["can_run"]:
         return {

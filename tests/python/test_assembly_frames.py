@@ -2,8 +2,8 @@ import math
 import unittest
 
 from python.spike_core.assembly_frames import reparent_part_preserving_world, resolve_world, validate_rigid_transform
-from python.spike_core.design_ir_v2 import AssemblyIRV1
-from python.spike_core.design_ir_v2_schema import CoordinateFrame
+from python.spike_core.spider_v2 import AssemblyIRV1
+from python.spike_core.spider_v2_schema import CoordinateFrame
 
 
 def transform(x, y, z, degrees=0):

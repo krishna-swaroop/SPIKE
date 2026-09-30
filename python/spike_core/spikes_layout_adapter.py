@@ -9,8 +9,8 @@ import json
 import math
 from typing import Any, Dict, Mapping
 
-from .contracts import AnalysisSpec, DesignIR
-from .design_ir_v2 import DesignIRV2
+from .contracts import AnalysisSpec, SpiDeR
+from .spider_v2 import SpiDeRV2
 from .spikes_native_adapter import prepare_job_envelope
 from .spikes_layout_contract import (
     HARD_ACCEPTED_VALIDATION_STATES as _HARD_ACCEPTED_VALIDATION_STATES,
@@ -137,17 +137,17 @@ def validate_layout_request(document: Any) -> Dict[str, Any]:
     return normalized
 
 
-def _coerce_design_ir_v2(value: Any, label: str) -> DesignIRV2:
-    if isinstance(value, DesignIRV2):
+def _coerce_design_ir_v2(value: Any, label: str) -> SpiDeRV2:
+    if isinstance(value, SpiDeRV2):
         return value
     if not isinstance(value, Mapping):
-        _fail("SPIKE-LAYOUT-PREFLIGHT-0001", f"{label} must be a complete DesignIR v2 object")
+        _fail("SPIKE-LAYOUT-PREFLIGHT-0001", f"{label} must be a complete SpiDeR v2 object")
     if value.get("contract") != "spike/design-ir/v2":
         _fail("SPIKE-LAYOUT-PREFLIGHT-0001", f"{label} has an unsupported contract")
     try:
-        return DesignIRV2.from_dict(value)
+        return SpiDeRV2.from_dict(value)
     except (TypeError, ValueError) as exc:
-        _fail("SPIKE-LAYOUT-PREFLIGHT-0001", f"{label} is not a valid complete DesignIR v2 object: {exc}")
+        _fail("SPIKE-LAYOUT-PREFLIGHT-0001", f"{label} is not a valid complete SpiDeR v2 object: {exc}")
     raise AssertionError("unreachable")
 
 
@@ -174,7 +174,7 @@ def design_ir_artifact_identity(candidate: Any) -> Dict[str, Any]:
     }
 
 
-def _entity_index(design: DesignIRV2) -> tuple[Dict[str, str], Dict[str, Dict[str, Any]]]:
+def _entity_index(design: SpiDeRV2) -> tuple[Dict[str, str], Dict[str, Dict[str, Any]]]:
     serialized = design.to_dict()
     kinds: Dict[str, str] = {}
     records: Dict[str, Dict[str, Any]] = {}
@@ -266,22 +266,22 @@ def _validate_design_references(records: Mapping[str, Mapping[str, Any]], kinds:
             _require_reference(item, "region_id", {"regions"}, kinds)
 
 
-def _validate_artifact_identity(design: DesignIRV2, artifact: Mapping[str, Any], label: str) -> Dict[str, Any]:
+def _validate_artifact_identity(design: SpiDeRV2, artifact: Mapping[str, Any], label: str) -> Dict[str, Any]:
     identity = design_ir_artifact_identity(design)
     if artifact["sha256"] != identity["sha256"]:
         _fail(
             "SPIKE-LAYOUT-PREFLIGHT-0004",
-            f"{label} SHA-256 does not bind the supplied canonical DesignIR v2",
+            f"{label} SHA-256 does not bind the supplied canonical SpiDeR v2",
         )
     if artifact["bytes"] != identity["bytes"]:
         _fail(
             "SPIKE-LAYOUT-PREFLIGHT-0004",
-            f"{label} byte count does not bind the supplied canonical DesignIR v2",
+            f"{label} byte count does not bind the supplied canonical SpiDeR v2",
         )
     return identity
 
 
-def _validate_lineage_identity(candidate: DesignIRV2, reference: DesignIRV2, label: str) -> None:
+def _validate_lineage_identity(candidate: SpiDeRV2, reference: SpiDeRV2, label: str) -> None:
     if candidate.design_id != reference.design_id:
         _fail("SPIKE-LAYOUT-PREFLIGHT-0005", f"{label} and candidate design_id values do not correlate")
     if candidate.source != reference.source:
@@ -305,7 +305,7 @@ def _validate_lineage_identity(candidate: DesignIRV2, reference: DesignIRV2, lab
             )
 
 
-def _actual_entity_changes(candidate: DesignIRV2, reference: DesignIRV2) -> tuple[set[str], Dict[str, str]]:
+def _actual_entity_changes(candidate: SpiDeRV2, reference: SpiDeRV2) -> tuple[set[str], Dict[str, str]]:
     candidate_kinds, candidate_records = _entity_index(candidate)
     reference_kinds, reference_records = _entity_index(reference)
     all_ids = set(candidate_records) | set(reference_records)
@@ -325,11 +325,11 @@ def preflight_layout_candidate(
     baseline: Any | None = None,
     parent: Any | None = None,
 ) -> Dict[str, Any]:
-    """Semantically bind a layout request to complete DesignIR v2 candidates.
+    """Semantically bind a layout request to complete SpiDeR v2 candidates.
 
     ``baseline`` represents the fixed comparison design. ``parent`` represents
     the immediately preceding candidate. When either lineage artifact is
-    declared, its complete DesignIR must be supplied so digests, canonical
+    declared, its complete SpiDeR must be supplied so digests, canonical
     identities, and the exact entity change set can be verified fail-closed.
     The exact change set intentionally covers canonical entities only; ordinary
     metadata and issue-list differences do not masquerade as layout mutations.
@@ -373,12 +373,12 @@ def preflight_layout_candidate(
             bindings.append({"entity_id": entity_id, "kind": kind})
         scope_bindings[requirement["id"]] = bindings
 
-    baseline_design: DesignIRV2 | None = None
-    parent_design: DesignIRV2 | None = None
+    baseline_design: SpiDeRV2 | None = None
+    parent_design: SpiDeRV2 | None = None
     lineage: Dict[str, str] = {}
     if "baseline" in request:
         if baseline is None:
-            _fail("SPIKE-LAYOUT-PREFLIGHT-0005", "declared baseline DesignIR v2 was not supplied")
+            _fail("SPIKE-LAYOUT-PREFLIGHT-0005", "declared baseline SpiDeR v2 was not supplied")
         baseline_design = _coerce_design_ir_v2(baseline, "baseline")
         baseline_identity = _validate_artifact_identity(baseline_design, request["baseline"], "baseline")
         _validate_lineage_identity(design, baseline_design, "baseline")
@@ -387,7 +387,7 @@ def preflight_layout_candidate(
         _fail("SPIKE-LAYOUT-PREFLIGHT-0005", "a baseline was supplied but is not declared by the request")
     if "parent_candidate_sha256" in request:
         if parent is None:
-            _fail("SPIKE-LAYOUT-PREFLIGHT-0005", "declared parent DesignIR v2 was not supplied")
+            _fail("SPIKE-LAYOUT-PREFLIGHT-0005", "declared parent SpiDeR v2 was not supplied")
         parent_design = _coerce_design_ir_v2(parent, "parent")
         parent_identity = design_ir_artifact_identity(parent_design)
         if parent_identity["sha256"] != request["parent_candidate_sha256"]:
@@ -453,11 +453,11 @@ def _derived_request_id(request: Mapping[str, Any], evaluation_id: str) -> str:
     return f"layout.{digest[:32]}"
 
 
-def prepare_native_jobs(document: Any, design: DesignIR) -> list[Dict[str, Any]]:
+def prepare_native_jobs(document: Any, design: SpiDeR) -> list[Dict[str, Any]]:
     """Derive deterministic, correlation-bound ``solver-job/v1`` envelopes."""
     request = validate_layout_request(document)
-    if not isinstance(design, DesignIR):
-        _fail("SPIKE-LAYOUT-CONTRACT-0001", "design must be a DesignIR instance")
+    if not isinstance(design, SpiDeR):
+        _fail("SPIKE-LAYOUT-CONTRACT-0001", "design must be a SpiDeR instance")
     jobs: list[Dict[str, Any]] = []
     for evaluation in request["physics_evaluations"]:
         request_id = _derived_request_id(request, evaluation["id"])

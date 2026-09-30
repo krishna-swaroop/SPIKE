@@ -2,7 +2,7 @@
 """Dedicated fail-closed process boundary for layout preparation and scoring.
 
 This process does not route, place, mesh, or solve physics.  It validates one
-complete DesignIR candidate, negotiates evidence-backed metric capabilities,
+complete SpiDeR candidate, negotiates evidence-backed metric capabilities,
 derives immutable native jobs, or maps correlated results to a dimensionless
 lower-is-better score.
 """
@@ -19,7 +19,7 @@ import sys
 import uuid
 from typing import Any, Dict, Mapping
 
-from .design_ir_v2 import DesignIRV2
+from .spider_v2 import SpiDeRV2
 from .layout_metric_registry import validate_requirements_for_launch
 from .spikes_layout_adapter import (
     map_layout_results,
@@ -181,7 +181,7 @@ def _prepare(job: Mapping[str, Any]) -> Dict[str, Any]:
         baseline=job.get("baseline"),
         parent=job.get("parent"),
     )
-    candidate = DesignIRV2.from_dict(job["candidate"])
+    candidate = SpiDeRV2.from_dict(job["candidate"])
     negotiation_document = json.loads(json.dumps(
         asdict(negotiation), allow_nan=False, ensure_ascii=False,
         sort_keys=True, separators=(",", ":"),

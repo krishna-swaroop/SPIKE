@@ -1,0 +1,138 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "spike/multiboard-em-request/v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract",
+    "assembly",
+    "loops",
+    "mutual_inductances",
+    "frequency_hz",
+    "connector_models"
+  ],
+  "properties": {
+    "contract": {
+      "const": "spike/multiboard-em-request/v1"
+    },
+    "assembly": {
+      "type": "object"
+    },
+    "frequency_hz": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 4096,
+      "items": {
+        "type": "number",
+        "exclusiveMinimum": 0
+      }
+    },
+    "loops": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 128,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "loop_id",
+          "board_id",
+          "resistance_ohm",
+          "self_inductance_h",
+          "voltage_real_v",
+          "voltage_imag_v"
+        ],
+        "properties": {
+          "loop_id": {
+            "$ref": "#/$defs/id"
+          },
+          "board_id": {
+            "$ref": "#/$defs/id"
+          },
+          "resistance_ohm": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "self_inductance_h": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "voltage_real_v": {
+            "type": "number"
+          },
+          "voltage_imag_v": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "mutual_inductances": {
+      "type": "array",
+      "maxItems": 8128,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "loop_a",
+          "loop_b",
+          "mutual_inductance_h"
+        ],
+        "properties": {
+          "loop_a": {
+            "$ref": "#/$defs/id"
+          },
+          "loop_b": {
+            "$ref": "#/$defs/id"
+          },
+          "mutual_inductance_h": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "connector_models": {
+      "type": "array",
+      "maxItems": 4096,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "loop_id",
+          "board_id",
+          "connector_id",
+          "pin",
+          "resistance_ohm",
+          "inductance_h"
+        ],
+        "properties": {
+          "loop_id": {
+            "$ref": "#/$defs/id"
+          },
+          "board_id": {
+            "$ref": "#/$defs/id"
+          },
+          "connector_id": {
+            "$ref": "#/$defs/id"
+          },
+          "pin": {
+            "$ref": "#/$defs/id"
+          },
+          "resistance_ohm": {
+            "type": "number",
+            "minimum": 0
+          },
+          "inductance_h": {
+            "type": "number",
+            "minimum": 0
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

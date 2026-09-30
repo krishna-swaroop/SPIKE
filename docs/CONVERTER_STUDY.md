@@ -77,7 +77,7 @@ The implemented coupling is one-way and staged:
 
 ```mermaid
 flowchart LR
-  A["DesignIR geometry"] --> B["Reviewed PEEC RLCG"]
+  A["SpiDeR geometry"] --> B["Reviewed PEEC RLCG"]
   C["Visual device models and PWM controls"] --> D["ngspice transient"]
   B --> D
   D --> E["Efficiency, ripple, inrush, stress, and loss"]

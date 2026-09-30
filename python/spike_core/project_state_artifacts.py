@@ -107,7 +107,7 @@ def externalize_result_state(payload: dict[str, Any]) -> tuple[dict[str, Any], d
 
     # Traverse immutable input before copying: a dense result is serialized
     # directly into its artifact, never duplicated as a full Python object tree.
-    result = {name: walk(value) if name in {"analyses", "results", "extensions"} else copy.deepcopy(value)
+    result = {name: walk(value) if name in {"analyses", "results", "extensions", "assembly_ir"} else copy.deepcopy(value)
               for name, value in payload.items()}
     return result, artifacts
 

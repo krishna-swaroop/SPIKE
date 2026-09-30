@@ -33,8 +33,8 @@ def _number(value):
     return float(value)
 
 
-def _loop(value):
-    _require(isinstance(value, list) and 3 <= len(value) <= 2048, 'Invalid polygon vertex count.')
+def _loop(value, max_points=2048):
+    _require(isinstance(value, list) and 3 <= len(value) <= max_points, 'Invalid polygon vertex count.')
     for point in value:
         _require(isinstance(point, list) and len(point) == 2, 'Invalid planar point.')
         for coordinate in point:
@@ -44,10 +44,15 @@ def _loop(value):
 
 def validate_request(request):
     """Validate all geometry before calling the native kernel."""
-    _keys(request, ('contract', 'solids', 'mesh'))
-    _require(request['contract'] == 'spike/gmsh-occ-mesh/v1', 'Unsupported contract.')
+    _require(isinstance(request, dict), 'Request must be an object.')
+    focused = request.get('contract') == 'spike/gmsh-occ-mesh/v2'
+    _keys(request, ('contract', 'solids', 'mesh', 'object_metadata', 'focus') if focused
+          else ('contract', 'solids', 'mesh'))
+    _require(request['contract'] in ('spike/gmsh-occ-mesh/v1', 'spike/gmsh-occ-mesh/v2'),
+             'Unsupported contract.')
+    solid_limit, point_limit = (10000, 131072) if focused else (64, 2048)
     solids = request['solids']
-    _require(isinstance(solids, list) and 1 <= len(solids) <= 64, 'Invalid solid budget.')
+    _require(isinstance(solids, list) and 1 <= len(solids) <= solid_limit, 'Invalid solid budget.')
     names, total_points = set(), 0
     for solid in solids:
         _keys(solid, ('id', 'material_id', 'priority', 'shape'))
@@ -62,7 +67,7 @@ def validate_request(request):
             _keys(shape, ('kind', 'outer_mm', 'holes_mm', 'z_min_mm', 'z_max_mm'))
             _require(isinstance(shape['holes_mm'], list) and len(shape['holes_mm']) <= 128, 'Invalid holes.')
             for loop in [shape['outer_mm'], *shape['holes_mm']]:
-                _loop(loop)
+                _loop(loop, point_limit)
                 total_points += len(loop)
             try:
                 from shapely.geometry import Polygon
@@ -81,12 +86,55 @@ def validate_request(request):
         else:
             raise OccMeshingError('Unsupported shape; only polygon prisms and analytic tubes are accepted.')
         _require(_number(shape['z_max_mm'])-_number(shape['z_min_mm']) >= 1e-6, 'Invalid solid thickness.')
-    _require(total_points <= 2048, 'Total polygon vertex budget exceeded.')
+    _require(total_points <= point_limit, 'Total polygon vertex budget exceeded.')
     options = request['mesh']
     _keys(options, ('min_size_mm', 'max_size_mm', 'max_cells', 'max_vertices'))
     _require(1e-6 <= _number(options['min_size_mm']) <= _number(options['max_size_mm']), 'Invalid mesh size.')
     for key in ('max_cells', 'max_vertices'):
         _require(type(options[key]) is int and 4 <= options[key] <= 100000, 'Invalid output budget.')
+    if focused:
+        metadata = request['object_metadata']
+        _require(isinstance(metadata, dict) and set(metadata) == names,
+                 'Object metadata must cover every source solid exactly.')
+        for value in metadata.values():
+            _require(isinstance(value, dict) and 'kind' in value and
+                     set(value) <= {'kind', 'net', 'layer'} and
+                     all(isinstance(item, str) and 0 < len(item) <= 256 for item in value.values()),
+                     'Invalid source metadata.')
+        from .pcb_focus_sizing import plan_focus_regions
+        plan = plan_focus_regions(solids, metadata, request['focus'], include_solids=False)
+        _require(options['max_size_mm'] == request['focus']['coarse_size_mm'],
+                 'Global maximum size must match the coarse background target.')
+        _require(options['min_size_mm'] <= min(region['target_size_mm'] for region in plan['regions']),
+                 'Global minimum size would clamp the focus target.')
+        for region in plan['regions']:
+            thickness = (options['max_size_mm']-region['target_size_mm'])/region['growth_rate']
+            _require(math.isfinite(thickness) and thickness <= 1e6,
+                     'Focus transition thickness exceeds the bounded CAD coordinate range.')
+
+
+def _focus_fields(gmsh, plan, coarse_size):
+    """Create fixed numeric fields only; no caller expressions or scripts."""
+    fields = gmsh.model.mesh.field
+    tags = []
+    for region in plan['regions']:
+        tag = fields.add('Box')
+        tags.append(tag)
+        low, high = region['bounds_mm']
+        halo = region['halo_mm']
+        values = {'VIn': region['target_size_mm'], 'VOut': coarse_size,
+                  'Thickness': (coarse_size-region['target_size_mm'])/region['growth_rate']}
+        for axis, name in enumerate(('X', 'Y', 'Z')):
+            values[name+'Min'], values[name+'Max'] = low[axis]-halo, high[axis]+halo
+        for name, value in values.items():
+            fields.setNumber(tag, name, value)
+    minimum = fields.add('Min')
+    fields.setNumbers(minimum, 'FieldsList', tags)
+    fields.setAsBackgroundMesh(minimum)
+    # Small copper edges do not force their fine size across whole adjacent
+    # board volumes. Geometric edge/curve constraints still remain mandatory.
+    gmsh.option.setNumber('Mesh.MeshSizeExtendFromBoundary', 0)
+    gmsh.option.setNumber('Mesh.MeshSizeFromPoints', 0)
 
 
 def _solid(occ, shape):
@@ -120,6 +168,12 @@ def _det(points, indices):
 def build_occ_mesh(gmsh, request):
     """Generate tetrahedra with exact Boolean ancestry and shared interfaces."""
     validate_request(request)
+    focused = request['contract'] == 'spike/gmsh-occ-mesh/v2'
+    focus_plan = None
+    if focused:
+        from .pcb_focus_sizing import plan_focus_regions
+        focus_plan = plan_focus_regions(request['solids'], request['object_metadata'], request['focus'],
+                                        include_solids=False)
     gmsh.clear()
     gmsh.model.add('spike_typed_pcb')
     for key, value in {'General.NumThreads': 1, 'General.Terminal': 0,
@@ -155,6 +209,8 @@ def build_occ_mesh(gmsh, request):
         _require(math.isfinite(original_volume) and original_volume > 0 and
                  abs(recovered-original_volume) <= max(1e-12, 1e-7*original_volume),
                  'Boolean fragmentation did not conserve source solid volume.')
+    if focus_plan is not None:
+        _focus_fields(gmsh, focus_plan, request['mesh']['max_size_mm'])
     gmsh.model.mesh.generate(3)
     tags, coordinates, _ = gmsh.model.mesh.getNodes()
     _require(4 <= len(tags) <= request['mesh']['max_vertices'], 'Vertex output budget exceeded.')
@@ -192,6 +248,10 @@ def build_occ_mesh(gmsh, request):
                 for face in ([b,c,d], [a,d,c], [a,b,d], [a,c,b]):
                     faces.setdefault(tuple(sorted(face)), []).append((cell_index, face, tag))
     _require(bool(cells), 'No tetrahedra generated.')
+    _require(all(math.isfinite(value) and value > 0 for value in volumes.values()),
+             'A CAD fragment is unmeshed or has no representable positive tetrahedron volume.')
+    mesh_covered = {source for cell in cells for source in cell['source_object_ids']}
+    _require(mesh_covered == covered, 'Source coverage was lost during tetrahedral meshing.')
     surface_tags = {}
     for _, surface in gmsh.model.getEntities(2):
         types, _, node_lists = gmsh.model.mesh.getElements(2, surface)
@@ -214,7 +274,9 @@ def build_occ_mesh(gmsh, request):
             (boundary if len(adjacent) == 1 else interfaces).append(record)
     _require(set(surface_tags) <= set(faces), 'Orphan geometric surface triangle.')
     mesh = {'contract': 'spike/solver-mesh/v1', 'units': 'mm', 'coordinate_system': 'right_handed_xyz',
-            'vertices': points, 'cells': cells, 'object_map': {s['id']: {'kind': s['shape']['kind']} for s in solids},
+            'vertices': points, 'cells': cells, 'object_map': (
+                {key: dict(value) for key, value in request['object_metadata'].items()} if focused
+                else {s['id']: {'kind': s['shape']['kind']} for s in solids}),
             'counts': {'vertices': len(points), 'cells': len(cells)}}
     # Reuse the independent neutral-mesh admission (including opposite-side
     # face owners and finite positive per-cell volume/quality), not just Gmsh's
@@ -222,7 +284,8 @@ def build_occ_mesh(gmsh, request):
     from .tetra_mesh_refinement import _validate
     _validate(mesh, [{'vertices': face['vertices'], 'label': 'surface_' + str(face['cad_surface_tag'])}
                      for face in boundary], request['mesh']['max_cells'], request['mesh']['max_vertices'])
-    return {'contract': 'spike/gmsh-occ-mesh-result/v1', 'status': 'completed', 'mesh': mesh,
+    result = {'contract': 'spike/gmsh-occ-mesh-result/v2' if focused else 'spike/gmsh-occ-mesh-result/v1',
+            'status': 'completed', 'mesh': mesh,
             'boundary_triangles': [face['vertices'] for face in boundary], 'boundary_faces': boundary,
             'interface_faces': interfaces, 'fragment_ownership': {str(k): v for k,v in ownership.items()},
             'metrics': {'cad_volume_mm3': sum(v['cad_volume_mm3'] for v in ownership.values()),
@@ -232,3 +295,10 @@ def build_occ_mesh(gmsh, request):
                         'fragment_mesh_volumes_mm3': {str(k): v for k,v in volumes.items()}},
             'production_qualified': False,
             'scope': 'planar_polygon_prisms_and_analytic_tubes_first_order_tetrahedra'}
+    if focus_plan is not None:
+        from .pcb_focus_sizing import assess_focus_mesh
+        result['focus_plan'] = focus_plan
+        result['focus_assessment'] = assess_focus_mesh(mesh, focus_plan['regions'], request['focus']['coarse_size_mm'],
+                                                       include_mesh=False)
+        result['whole_model_retained'] = mesh_covered == {s['id'] for s in solids}
+    return result

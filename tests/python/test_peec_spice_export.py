@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import patch
 
-from python.spike_core.contracts import AnalysisResult, DesignIR
+from python.spike_core.contracts import AnalysisResult, SpiDeR
 from python.spike_core.peec_spice_export import (
     import_peec_rlcg,
     list_peec_spice_networks,
@@ -64,7 +64,7 @@ def workspace():
 
 
 def design():
-    return DesignIR(
+    return SpiDeR(
         design_id="hybrid-board",
         components=[{"id": "v1", "reference": "V1"}],
         pads=[

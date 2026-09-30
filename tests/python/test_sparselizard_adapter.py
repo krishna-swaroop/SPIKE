@@ -11,7 +11,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from python.spike_core.cli import EXIT_OK, main
-from python.spike_core.contracts import AnalysisSpec, DesignIR
+from python.spike_core.contracts import AnalysisSpec, SpiDeR
 from python.spike_core.service import handle
 from python.spike_core.sparselizard_adapter import (
     SparseLizardAdapterError,
@@ -37,8 +37,8 @@ def result_fixtures() -> dict[str, dict]:
     return {fixture["id"]: fixture for fixture in payload["fixtures"]}
 
 
-def fixture_design() -> DesignIR:
-    return DesignIR(
+def fixture_design() -> SpiDeR:
+    return SpiDeR(
         design_id="sparselizard-fixture",
         name="sparseLizard PI fixture",
         layers=[{"name": "F.Cu"}, {"name": "B.Cu"}],
@@ -77,8 +77,8 @@ def fixture_spec() -> AnalysisSpec:
     )
 
 
-def dc_fixture() -> tuple[DesignIR, AnalysisSpec]:
-    design = DesignIR(
+def dc_fixture() -> tuple[SpiDeR, AnalysisSpec]:
+    design = SpiDeR(
         design_id="dc-fem-fixture",
         name="DC FEM copper bar",
         layers=[{"name": "F.Cu", "type": "copper"}],

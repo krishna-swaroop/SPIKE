@@ -6,8 +6,8 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from python.spike_core.contracts import DesignIR
-from python.spike_core.design_ir_v2 import DesignIRV2
+from python.spike_core.contracts import SpiDeR
+from python.spike_core.spider_v2 import SpiDeRV2
 from python.spike_core.mcad_tessellation import StepTessellationResult
 from python.spike_core.project_package import read_project, read_visual_model_artifacts, write_spike_package
 from python.spike_core.service_project_handlers import handle_project_request
@@ -28,7 +28,7 @@ class McadTessellationProjectTests(unittest.TestCase):
             source_path = root / "case.step"
             source = b"ISO-10303-21;\nHEADER;ENDSEC;DATA;ENDSEC;END-ISO-10303-21;\n"
             source_path.write_bytes(source)
-            design = DesignIRV2.from_v1(DesignIR(
+            design = SpiDeRV2.from_v1(SpiDeR(
                 design_id="step-visual", name="STEP visual", source_format="neutral",
                 layers=[{"id": 0, "name": "F.Cu"}], metadata={"source_sha256": "4" * 64},
             ))

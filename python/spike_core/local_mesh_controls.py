@@ -26,7 +26,7 @@ class LocalTrackControls:
     """Refinement-only interval controls addressed by persistent source track ID.
 
     Fractions are measured along the source start->end direction. A change is
-    replayed when rebuilding the mesh; it never changes the supplied DesignIR.
+    replayed when rebuilding the mesh; it never changes the supplied SpiDeR.
     Other primitive types reject rather than silently ignoring a requested edit.
     """
     def __init__(self, raw, tracks, selected_nets, node_tolerance):

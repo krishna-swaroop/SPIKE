@@ -18,7 +18,7 @@ from typing import Any, Dict
 from python.spikes.contracts import ProbeDescriptor
 from python.spikes.netlist import parse_netlist
 
-from .contracts import DesignIR
+from .contracts import SpiDeR
 from .spice_workspace import compose_spice_workspace
 from .spikes_runtime import engine_status, owned_library_path, run_netlist
 
@@ -146,7 +146,7 @@ def _limits(request: Dict[str, Any]) -> tuple[Dict[str, int], list[Dict[str, str
 
 
 def validate_owned_spice_workspace_request(
-    request: Dict[str, Any], design: DesignIR,
+    request: Dict[str, Any], design: SpiDeR,
 ) -> Dict[str, Any]:
     issues: list[Dict[str, str]] = []
     if not isinstance(request, dict):
@@ -256,7 +256,7 @@ def validate_owned_spice_workspace_request(
     }
 
 
-def run_owned_spice_workspace(request: Dict[str, Any], design: DesignIR) -> Dict[str, Any]:
+def run_owned_spice_workspace(request: Dict[str, Any], design: SpiDeR) -> Dict[str, Any]:
     validation = validate_owned_spice_workspace_request(request, design)
     if not validation["valid"]:
         return {

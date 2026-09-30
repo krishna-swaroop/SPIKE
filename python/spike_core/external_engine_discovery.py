@@ -80,7 +80,7 @@ def _sparselizard() -> Dict[str, Any]:
         state = "runtime_verified_adapter_pending"
         reason = (
             "The native Windows sparseLizard runtime passed its DC FEM integrity fixture. "
-            "DesignIR case translation and strict result import are implemented, but this runtime does not yet expose "
+            "SpiDeR case translation and strict result import are implemented, but this runtime does not yet expose "
             "the fixed PCB run protocol; PETSc/MUMPS registration and PCB validation fixtures remain gated."
         )
     else:

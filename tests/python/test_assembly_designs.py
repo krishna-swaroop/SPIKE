@@ -7,14 +7,14 @@ import unittest
 from pathlib import Path
 
 from python.spike_core.assembly_designs import AssemblyDesignError, canonicalize_assembly_designs
-from python.spike_core.contracts import DesignIR
-from python.spike_core.design_ir_v2 import AssemblyIRV1, DesignIRV2
+from python.spike_core.contracts import SpiDeR
+from python.spike_core.spider_v2 import AssemblyIRV1, SpiDeRV2
 from python.spike_core.project_package import ProjectPackageError, read_project, write_spike_package
 from python.spike_core.service_project_handlers import handle_project_request
 
 
 def _design(identity: str, digest: str) -> dict:
-    return DesignIRV2.from_v1(DesignIR(
+    return SpiDeRV2.from_v1(SpiDeR(
         design_id=identity, name=identity, source_format="neutral",
         layers=[{"id": 0, "name": "F.Cu"}], metadata={"source_sha256": digest},
     )).to_dict()
@@ -69,7 +69,7 @@ class AssemblyDesignTests(unittest.TestCase):
 
     def test_thirty_32_layer_one_meter_designs_are_retained_for_thirty_boards(self):
         designs = [
-            DesignIRV2.from_v1(DesignIR(
+            SpiDeRV2.from_v1(SpiDeR(
                 design_id=f"board-design-{index}", name=f"Board design {index}", source_format="neutral",
                 layers=[{"id": layer, "name": "F.Cu" if layer == 0 else f"In{layer}.Cu"} for layer in range(32)],
                 metadata={"source_sha256": f"{index + 1:064x}", "board_size_mm": [1_000, 1_000]},
@@ -102,7 +102,7 @@ class AssemblyDesignTests(unittest.TestCase):
 
     def test_retained_designs_reject_over_limit_layers_or_envelope(self):
         active = _design("active", "a" * 64)
-        oversized_layers = DesignIRV2.from_v1(DesignIR(
+        oversized_layers = SpiDeRV2.from_v1(SpiDeR(
             design_id="over-layers", name="Over layers", source_format="neutral",
             layers=[{"id": layer, "name": f"In{layer}.Cu"} for layer in range(33)],
             metadata={"source_sha256": "b" * 64},

@@ -9,8 +9,8 @@ from pathlib import Path
 
 from jsonschema import Draft202012Validator, ValidationError
 
-from python.spike_core.design_ir_v2 import DesignIRV2
-from python.spike_core.design_ir_v2_schema import content_digest
+from python.spike_core.spider_v2 import SpiDeRV2
+from python.spike_core.spider_v2_schema import content_digest
 from python.spike_core.kicad_importer import import_kicad_design
 from python.spike_core.zone_pad_connection_evidence import (
     MAX_SERIALIZED_BYTES,
@@ -31,7 +31,7 @@ class ZonePadConnectionEvidenceTests(unittest.TestCase):
         Draft202012Validator.check_schema(cls.schema)
         cls.schema_validator = Draft202012Validator(cls.schema)
 
-    def design(self) -> DesignIRV2:
+    def design(self) -> SpiDeRV2:
         directory = tempfile.TemporaryDirectory()
         self.addCleanup(directory.cleanup)
         path = Path(directory.name) / "zone-pad-evidence.kicad_pcb"
@@ -50,7 +50,7 @@ class ZonePadConnectionEvidenceTests(unittest.TestCase):
             (pad "1" smd rect (at 0 0) (size 1 1) (layers "F.Cu")
               (net 1 "VCC") (uuid "pad-a")))
         )""", encoding="utf-8")
-        return DesignIRV2.from_v1(import_kicad_design(str(path)))
+        return SpiDeRV2.from_v1(import_kicad_design(str(path)))
 
     def test_digest_bound_source_filled_connection_evidence_is_schema_valid(self) -> None:
         design = self.design()
@@ -110,16 +110,16 @@ class ZonePadConnectionEvidenceTests(unittest.TestCase):
             "source_fill_component_sha256": "", "source_fill_representation": "none",
             "source_fill_provenance_complete": False,
         })
-        cases.append(DesignIRV2.from_dict(outline))
+        cases.append(SpiDeRV2.from_dict(outline))
 
         unknown_policy = design.to_dict()
         unknown_policy["zones"][0]["zone_connection_default"] = "unknown"
         unknown_policy["zones"][0]["thermal_settings_valid"] = False
-        cases.append(DesignIRV2.from_dict(unknown_policy))
+        cases.append(SpiDeRV2.from_dict(unknown_policy))
 
         unknown_pad = design.to_dict()
         unknown_pad["pads"][0]["pad_kind"] = "unknown"
-        cases.append(DesignIRV2.from_dict(unknown_pad))
+        cases.append(SpiDeRV2.from_dict(unknown_pad))
 
         for index, candidate in enumerate(cases):
             with self.subTest(case=index), self.assertRaises(ValueError):

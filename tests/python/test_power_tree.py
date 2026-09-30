@@ -4,13 +4,13 @@ from __future__ import annotations
 
 import unittest
 
-from python.spike_core.contracts import DesignIR
+from python.spike_core.contracts import SpiDeR
 from python.spike_core.power_tree import POWER_PATH_CONTRACT, extract_power_path
 from python.spike_core.service import handle
 
 
-def power_path_fixture() -> DesignIR:
-    return DesignIR(
+def power_path_fixture() -> SpiDeR:
+    return SpiDeR(
         name="Power tree fixture",
         components=[
             {"id": "f1", "reference": "F1", "value": "5 A fuse"},

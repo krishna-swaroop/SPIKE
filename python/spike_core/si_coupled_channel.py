@@ -19,7 +19,7 @@ from scipy.linalg import expm
 from scipy.sparse import lil_matrix
 from scipy.sparse.linalg import spsolve
 
-from .design_ir_v2 import DesignIRV2
+from .spider_v2 import SpiDeRV2
 from .sparameters import NetworkData, analyze_network, single_ended_to_mixed_mode
 from .si_channel import (
     MAX_EYE_BITS,
@@ -45,7 +45,7 @@ MAX_VERTICAL_CELLS = 96
 MAX_HORIZONTAL_CELLS = 1024
 
 
-def _path_for_net(design: DesignIRV2, net: Any, path_id: str, *, path_mode: str) -> list[Any]:
+def _path_for_net(design: SpiDeRV2, net: Any, path_id: str, *, path_mode: str) -> list[Any]:
     tracks = [track for track in design.tracks if track.net_id == net.id]
     if path_id:
         tracks = [track for track in tracks if track.path is not None and track.path.path_id == path_id]
@@ -304,7 +304,7 @@ def _cross_section_capacitance(
 
 
 def extract_coupled_path_rlgc(
-    design: DesignIRV2, request: Mapping[str, Any],
+    design: SpiDeRV2, request: Mapping[str, Any],
     *, cancel_check: Callable[[], bool] | None = None,
 ) -> dict[str, Any]:
     _validate_channel_request(request)
@@ -525,7 +525,7 @@ def multiconductor_rlgc_network(
         reference_impedance_ohm=np.repeat(float(reference_impedance_ohm), 4),
         parameter_kind="S",
         data_format="RI",
-        source=f"DesignIR:{extraction['geometry']['design_id']}:{extraction['geometry_digest']}",
+        source=f"SpiDeR:{extraction['geometry']['design_id']}:{extraction['geometry_digest']}",
         warnings=["Bounded coupled geometry output is experimental and not protocol-compliance evidence."],
     )
 
@@ -649,7 +649,7 @@ def _differential_report(
 
 
 def analyze_coupled_design_channel(
-    design: DesignIRV2, request: Mapping[str, Any],
+    design: SpiDeRV2, request: Mapping[str, Any],
     *, cancel_check: Callable[[], bool] | None = None,
 ) -> dict[str, Any]:
     _validate_channel_request(request)

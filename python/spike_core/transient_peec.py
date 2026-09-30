@@ -18,7 +18,7 @@ import warnings
 import numpy as np
 from scipy.linalg import LinAlgWarning, lu_factor, lu_solve
 
-from .contracts import AnalysisResult, AnalysisSpec, DesignIR, ValidationIssue
+from .contracts import AnalysisResult, AnalysisSpec, SpiDeR, ValidationIssue
 from .hybrid_mesh import HybridMesh, build_hybrid_mesh, nearest_mesh_node
 from .numerics import assess_symmetric_positive_semidefinite
 from .peec_plugin import _dense, _dielectric_epsilon, _make_native_solver, native, native_available
@@ -391,7 +391,7 @@ def _state_issue(solution: np.ndarray, step: int, time_s: float) -> ValidationIs
     return None
 
 
-def _stackup_profile(design: DesignIR) -> Tuple[Dict[str, float], List[Tuple[float, float, float]]]:
+def _stackup_profile(design: SpiDeR) -> Tuple[Dict[str, float], List[Tuple[float, float, float]]]:
     copper_centers: Dict[str, float] = {}
     dielectrics: List[Tuple[float, float, float]] = []
     z_top = 0.0
@@ -435,7 +435,7 @@ def _dielectric_between(
 
 
 def _extract_stackup_capacitance(
-    design: DesignIR,
+    design: SpiDeR,
     spec: AnalysisSpec,
     settings: TransientSettings,
     physical_branches: List[Any],
@@ -626,7 +626,7 @@ def _failed(
     )
 
 
-def solve_peec_rl_transient(design: DesignIR, spec: AnalysisSpec) -> AnalysisResult:
+def solve_peec_rl_transient(design: SpiDeR, spec: AnalysisSpec) -> AnalysisResult:
     solve_started = perf_counter()
     if spec.mode != "transient":
         return _failed(spec, [ValidationIssue("PEEC_TRANSIENT_MODE_UNSUPPORTED", "error", "The PEEC RL transient plugin only accepts transient analyses.")], "unsupported")

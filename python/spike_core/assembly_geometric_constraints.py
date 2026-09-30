@@ -6,8 +6,8 @@ import math
 from typing import Any, Dict, Iterable, Mapping
 
 from .assembly_frames import IDENTITY, enforce_placement_policy, inverse_affine, multiply, resolve_world, validate_rigid_transform
-from .design_ir_v2 import AssemblyIRV1
-from .design_ir_v2_schema import CoordinateFrame
+from .spider_v2 import AssemblyIRV1
+from .spider_v2_schema import CoordinateFrame
 
 
 class AssemblyGeometricConstraintError(ValueError):

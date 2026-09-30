@@ -9,12 +9,12 @@ from pathlib import Path
 from jsonschema import Draft202012Validator
 
 from python.spike_core.board_thermal import run_board_thermal
-from python.spike_core.contracts import DesignIR
+from python.spike_core.contracts import SpiDeR
 from python.spike_core.service_simulation_handlers import handle_simulation_request
 
 
 def design():
-    return DesignIR(design_id="thermal-board", name="Fixture", source_format="test",
+    return SpiDeR(design_id="thermal-board", name="Fixture", source_format="test",
                     components=[{"reference": "U1", "at": [5, 5]}],
                     metadata={"board_bounds_mm": [0, 0, 10, 10]})
 

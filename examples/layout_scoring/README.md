@@ -10,7 +10,7 @@ python examples/layout_scoring/run_examples.py
 
 The runner exercises capability discovery, prepare and score operations for
 autorouter, autoplacer, and joint consumers. It also proves that a tampered
-DesignIR digest and a path-traversal control are rejected.
+SpiDeR digest and a path-traversal control are rejected.
 
 The score example uses a correlated verification-only native result with a
 4 W loss, a 5 W normalization, and weight 2, producing the expected

@@ -346,7 +346,7 @@ export default function SParameterWorkbench({ assemblyDesigns, canonicalDesign, 
     {!workflowView && <>
     {!desktop && <p className="si-note">Geometry and protocol execution requires the SPIKE desktop app. Browser preview supports configuration and network inspection.</p>}
     <div className="sparam-commandbar"><b>{initialFocus === "crosstalk" ? "NEXT / FEXT · select an aggressor and separate victim net" : initialFocus === "pam4" ? "PAM4 channel and eye" : initialFocus === "eye" ? "NRZ channel and eye" : initialFocus === "impedance" ? "Channel impedance and TDR" : suite ? `${suite.name} preset · geometry channel` : "Geometry-derived channel"} · experimental, not signoff/compliance qualified</b></div>
-    {!activeDesign ? <div className="sparam-error"><AlertTriangle size={16} /> Blocked: this project has no canonical active DesignIR v2 record. Save or reopen a canonical project design before running geometry-derived SI.</div> : <>
+    {!activeDesign ? <div className="sparam-error"><AlertTriangle size={16} /> Blocked: this project has no canonical active SpiDeR v2 record. Save or reopen a canonical project design before running geometry-derived SI.</div> : <>
       <div className="sparam-body">
         <aside>
           <h3>Canonical geometry</h3>

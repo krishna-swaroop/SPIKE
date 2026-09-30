@@ -3,7 +3,7 @@ import json
 from pathlib import Path
 
 
-from python.spike_core.contracts import DesignIR
+from python.spike_core.contracts import SpiDeR
 from python.spike_core.emi import (
     EMI_PREFLIGHT_CONTRACT,
     EMI_SETUP_CONTRACT,
@@ -16,7 +16,7 @@ from python.spike_core.solver_plugins import default_solver_registry
 
 class EmiWorkflowTests(unittest.TestCase):
     def setUp(self):
-        self.design = DesignIR(
+        self.design = SpiDeR(
             name="EMI fixture",
             source_format="fixture",
             layers=[{"name": "F.Cu"}, {"name": "B.Cu"}],

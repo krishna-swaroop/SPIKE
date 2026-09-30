@@ -5,7 +5,7 @@ from __future__ import annotations
 import math
 from typing import Any, Callable, Dict, Mapping
 
-from .design_ir_v2_schema import content_digest
+from .spider_v2_schema import content_digest
 from .generalized_reference_plane_native_handoff import (
     build_generalized_reference_plane_native_handoff,
 )

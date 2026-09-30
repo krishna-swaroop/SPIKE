@@ -6,7 +6,7 @@ This document defines the target architecture for SPIKE as a CAD-neutral,
 local-first electronics simulation platform. It records the implemented
 foundation, not a claim that every planned solver is complete or validated.
 
-The current implementation includes typed `DesignIR v2`, `AssemblyIR v1`, a
+The current implementation includes typed `SpiDeR v2`, `AssemblyIR v1`, a
 secure `.spike` v3 package reader/writer, a published model-index contract,
 bounded STEP/STP/glTF/GLB attachment with artifact-integrity checks,
 native-solver request/result contracts, and a machine-readable capability
@@ -20,7 +20,7 @@ change; the current capability states are recorded in
 flowchart LR
     CAD["KiCad / Altium / Allegro / Xpedition / Neutral files"] --> ISOLATE["Isolated importer adapter"]
     ISOLATE --> REPORT["ImportReport and source object map"]
-    REPORT --> IR["DesignIR v2"]
+    REPORT --> IR["SpiDeR v2"]
     IR --> PACKAGE["Open .spike v3 package"]
     IR --> MESH["Native SPIKE mesh request"]
     MESH --> NATIVE["Native solver contracts"]
@@ -38,7 +38,7 @@ implementations to evolve independently.
 
 ## Canonical data model
 
-`DesignIR v2` is the new typed canonical model for a board. It establishes
+`SpiDeR v2` is the new typed canonical model for a board. It establishes
 canonical entity identifiers alongside source-native identities, immutable
 source provenance, and explicit coordinate frames. Its unit system is
 millimetres in a right-handed board-local frame. All transformation to an
@@ -47,7 +47,7 @@ homogeneous matrices mapping a local frame into its declared parent frame.
 
 ```mermaid
 classDiagram
-    class DesignIRV2 {
+    class SpiDeRV2 {
       +design_id
       +name
       +source provenance
@@ -65,13 +65,13 @@ classDiagram
     class BoardInstance { +design_id +transform }
     class Harness { +endpoints +length_mm +gauge +pin_map }
 
-    DesignIRV2 "1" --> "*" Layer
-    DesignIRV2 "1" --> "*" Material
-    DesignIRV2 "1" --> "*" Net
-    DesignIRV2 "1" --> "*" CopperGeometry
-    DesignIRV2 "1" --> "*" Component
-    DesignIRV2 "1" --> "*" Bond
-    DesignIRV2 "1" --> "*" Region
+    SpiDeRV2 "1" --> "*" Layer
+    SpiDeRV2 "1" --> "*" Material
+    SpiDeRV2 "1" --> "*" Net
+    SpiDeRV2 "1" --> "*" CopperGeometry
+    SpiDeRV2 "1" --> "*" Component
+    SpiDeRV2 "1" --> "*" Bond
+    SpiDeRV2 "1" --> "*" Region
     AssemblyIRV1 "1" --> "1..20" BoardInstance
     AssemblyIRV1 "1" --> "*" Harness
 ```
@@ -109,7 +109,7 @@ visualization, PI DC, PI AC, thermal, and full-wave pre-mesh admission.
 
 ```mermaid
 flowchart LR
-    A["AssemblyIR v1"] --> R["Resolve board DesignIRs"]
+    A["AssemblyIR v1"] --> R["Resolve board SpiDeRs"]
     R --> C["Count layers, conductor entities, components, parts, harness pins"]
     C --> E["Workload memory estimate"]
     M["Detected RAM and CPU"] --> P["User resource policy"]
@@ -178,7 +178,7 @@ physics solve.
 
 Multi-design assembly retention is now explicit rather than implied by bare
 board IDs. The optional `spike/assembly-designs/v1` member keeps 1-20 complete
-DesignIR v2 records and binds every AssemblyIR board instance to one retained
+SpiDeR v2 records and binds every AssemblyIR board instance to one retained
 identity. A manifest-bound structure transaction and desktop editor update
 board transforms/design references, harness endpoints/lengths/pin maps,
 connector mappings, and rigid/flex link definitions while preserving retained
@@ -278,7 +278,7 @@ write. Stable part/frame/model identities and retained model bytes are unchanged
 Analysis launched from a retained assembly uses
 `spike/assembly-analysis-scope/v1`. The only admitted semantic mode is an
 explicit, unambiguous `active_board_only` selection bound to the canonical
-DesignIR identity and, when available, the verified project-manifest digest.
+SpiDeR identity and, when available, the verified project-manifest digest.
 Worker and CLI boundaries reject coupled scope before dispatch, record IDs and
 counts for every excluded assembly entity, and attach the normalized scope to
 result provenance. Prepared OpenFOAM and openEMS cases persist the scope digest
@@ -299,7 +299,7 @@ as authoritative design data.
 ```mermaid
 flowchart TB
     SOURCE["sources/: immutable original inputs"]
-    DESIGN["design/: DesignIR v2 and optional AssemblyIR v1"]
+    DESIGN["design/: SpiDeR v2 and optional AssemblyIR v1"]
     GEOM["geometry/: optional Arrow IPC tables"]
     MODELS["models/: index and model artifacts"]
     ANALYSIS["analyses/: analysis definitions"]
@@ -334,7 +334,7 @@ flowchart LR
     B --> P["Format-specific parser process"]
     P --> V["Typed normalization and validation"]
     V --> Q["ImportReport: coverage, inference, errors, maps"]
-    V --> D["DesignIR v2"]
+    V --> D["SpiDeR v2"]
     P -. "no direct solver access" .-> S["Native solver runtime"]
     D --> S
 ```
@@ -354,7 +354,7 @@ layer/net/component/pin references, zero offsets, regular-land consistency,
 drill-to-land clearance, and per-layer occurrence completeness fail closed;
 geometry diagnostics are resource-bounded. Straight multi-step polylines now
 retain ordered parent-path, step-count, round end-cap, and round-join semantics
-in typed DesignIR and Arrow v4. Arrow v4 also preserves exact boundary rings
+in typed SpiDeR and Arrow v4. Arrow v4 also preserves exact boundary rings
 and exact heterogeneous per-layer land profiles; pathless Arrow v1, typed-path
 Arrow v2, and exact-ring Arrow v3 remain compatible. Curved or non-round paths
 still fail closed. The official unchanged Rev C Testcase 10 Full probe
@@ -372,7 +372,7 @@ accepts and preserves optional profile `Xform` plus bounded `xOffset`,
 `yOffset`, `rotation`, `mirror`, `faceUp`, and `scale` raw and normalized facts,
 but never applies or composes them. Its 98 source-only occurrences partition
 into 32 declared-layer matches and 66 mismatches. Normative composition and
-TOP-to-BOTTOM semantics remain unproven. DesignIR v2 now gives those exact
+TOP-to-BOTTOM semantics remain unproven. SpiDeR v2 now gives those exact
 facts a bounded typed envelope whose literal state is
 `unapplied_normative_semantics_missing` and whose projection is `forbidden`;
 it still creates no Pad, Via, connectivity, Arrow, mesh, solver, or physics
@@ -397,7 +397,7 @@ persistence, but it is not a STEP topology/tessellation kernel and it does not
 make an imported part solver-ready. See [SECURITY_MODEL.md](SECURITY_MODEL.md)
 and [IMPORTER_ARCHITECTURE.md](IMPORTER_ARCHITECTURE.md).
 
-KiCad thermal-connection retention is a separate typed DesignIR v2 import
+KiCad thermal-connection retention is a separate typed SpiDeR v2 import
 boundary. Copper zones retain their declared/default connection mode,
 declaration state, clearance, thermal gap, spoke width, fill mode, and the
 `thermal_settings_valid` gate. Footprints/components and pads retain a declared
@@ -416,7 +416,7 @@ diagnostic; they do not silently become copper semantics.
 The retained zone record distinguishes source-filled copper evidence
 (`filled_copper_state: source_filled` and its source-filled identity) from an
 outline fallback. The focused four-test fixture suite proves typed parser to
-DesignIR v2 to schema round-trip, omission/default behavior, invalid-setting
+SpiDeR v2 to schema round-trip, omission/default behavior, invalid-setting
 rejection, and a bundled-fixture census: `ebrake1` has 26 source-filled zones
 (all `solid`), six thermal footprint overrides, 14 solid pad overrides, and 12
 45-degree pad angles. This is retention evidence only. Effective pad-zone
@@ -426,7 +426,7 @@ remain pending.
 
 `spike/zone-pad-connection-evidence/v1` (error
 `SPIKE-BE-MESH-E-0018`) is the subsequent bounded, digest-bound source-filled
-pad-zone observation contract. It binds the exact DesignIR v2 identity and
+pad-zone observation contract. It binds the exact SpiDeR v2 identity and
 source-filled copper geometry digest; records the candidate pad/component/zone,
 net and layer, literal precedence (`pad_layer_override`, `pad_override`,
 `footprint_override`, then `zone_default`), resolved mode, and the required
@@ -442,7 +442,7 @@ Focused production, schema, and containment tests cover these boundaries.
 parametric refill, native geometric-overlay verification, field convergence,
 physics readiness, and solver readiness are all false.
 
-Before thermal-spoke topology can be extracted, DesignIR v2 now retains the
+Before thermal-spoke topology can be extracted, SpiDeR v2 now retains the
 complete admitted membership of each source zone/layer `filled_polygon` group.
 Each component carries its source ordinal and exact source-path digest; the
 group carries its identity, member count, and an order-independent snapshot
@@ -458,7 +458,7 @@ in 24 groups; this is provenance,
 not spoke, refill, mesh, solver, field, or physics evidence.
 
 `spike/thermal-relief-boundary-contact-evidence/v1` (error
-`SPIKE-BE-MESH-E-0019`) then revalidates both DesignIR v2 and the IN-0229
+`SPIKE-BE-MESH-E-0019`) then revalidates both SpiDeR v2 and the IN-0229
 connection report and observes where retained source-filled copper covers an
 admitted polygonal pad boundary. Records distinguish partial, full, absent, and
 unsupported boundary contact and retain exact bounded intervals. The contract
@@ -547,7 +547,7 @@ this slice. Research and clean-room boundaries are recorded in
 The additive `spike/pcb-reference-plane-antipad-geometry/v1` contract begins
 removing that local-patch limitation without changing v1 transition bytes. It
 captures the entire source-owned polygon for the currently admitted convex,
-hole-free, straight-edged zone subset; binds DesignIR and transition digests;
+hole-free, straight-edged zone subset; binds SpiDeR and transition digests;
 and represents exact polygon area minus the explicit circular antipad. Its
 regenerating validator rejects source changes or readiness promotion.
 
@@ -570,7 +570,7 @@ constrained triangulation, native loop admission, mesh quality, and every
 physics-readiness flag remain false.
 
 The additive `spike/pcb-reference-plane-antipad-geometry/v3` contract admits
-the exact DesignIR line/circular-arc source representation without changing
+the exact SpiDeR line/circular-arc source representation without changing
 v1 or v2. It flattens each directed arc by direct indexed equal-angle samples
 on the fixed 1 nm grid. A 0.001 mm maximum sagitta and 0.25 mm maximum segment
 length are hard limits; the grid-snap displacement is included in the
@@ -677,7 +677,7 @@ not the future native exact-grid complete-board overlay and therefore retains
 `native_geometric_overlay_verified: false`, `field_convergence_performed:
 false`, `solver_ready: false`, and `physics_ready: false`.
 
-The admitted custom-pad subset is retained through KiCad import and DesignIR
+The admitted custom-pad subset is retained through KiCad import and SpiDeR
 v2 as one local, finite, simple positive polygon with explicit back-side
 reflection. It includes zero-width filled `gr_poly`, filled `gr_circle`,
 supported multi-primitive unions with a rectangular base anchor, and one
@@ -695,7 +695,7 @@ disjoint, ambiguous, mixed-stroked, line/arc/curve-stroked, or topology-changing
 customs without fallback copper. A centered plated circle or true capsule/oval
 drill is also admitted when it is offset-free, strictly inside the rectangular
 anchor, has a plating-plus-tolerance envelope inside the resolved polygon, and
-forms a bounded star-visible annular mesh. Pad-level DesignIR drill fields stay
+forms a bounded star-visible annular mesh. Pad-level SpiDeR drill fields stay
 authoritative; every surface cell and plated barrel must pass outer-polygon and
 analytic-void ownership. No bundled board contains this drilled-custom case, so
 the evidence is synthetic/derivative only. Offset, unplated, and nonstandard
@@ -751,7 +751,7 @@ circumscribed-polygon measures, require conservative monotonic volume,
 nonincreasing surface error, decreasing radial excess, retained outer-boundary
 clearance, and deterministic regeneration. This is not field convergence.
 
-Canonical desktop saves generate the registered DesignIR-bound Arrow copper
+Canonical desktop saves generate the registered SpiDeR-bound Arrow copper
 projection. Its targeted reader bounds the manifest and actual ZIP member
 before retention and requires the exact deterministic uncompressed byte stream
 before decoding. The canonical-byte-before-decode ordering fix and removal of
@@ -823,7 +823,7 @@ resource estimates, acceleration backends, and validation evidence.
 flowchart LR
     SPEC["AnalysisSpec and terminals"] --> PRE["Preflight and resource estimate"]
     PRE --> REQUEST["NativeSolveRequest"]
-    IR["DesignIR v2 / AssemblyIR v1"] --> REQUEST
+    IR["SpiDeR v2 / AssemblyIR v1"] --> REQUEST
     REQUEST --> ENGINE["Native solver implementation"]
     ENGINE --> RESULT["NativeSolveResult"]
     RESULT --> PROV["Provenance, warnings, validity, convergence"]
@@ -899,7 +899,7 @@ physics claims.
 
 | Gate | Required evidence | Current state |
 |---|---|---|
-| Data foundation | DesignIR v2, typed AssemblyIR v1 round-trip, v3 package, migration, importer reports, KiCad hardening | Partial; typed assembly and multi-design retention, deterministic DesignIR-bound Arrow copper tables with targeted verified reads, bounded MCAD attachment/model integrity, numeric and gizmo placement, world-preserving reparenting, manifest-bound STEP tessellation, exact STEP package-shape extraction/selector previews, descriptor-backed single snapping, topology-addressed contact/bond definitions, board/harness/connector/flex editing, verified-package glTF/GLB controls, resource admission, and worker/CLI active-board exclusion provenance pass. Packaged visual/reparent/extraction/snap/editor acceptance, complete topology endpoints/solver regions, coupled execution, graph/collision/contact solving, and qualified solvers remain. |
+| Data foundation | SpiDeR v2, typed AssemblyIR v1 round-trip, v3 package, migration, importer reports, KiCad hardening | Partial; typed assembly and multi-design retention, deterministic SpiDeR-bound Arrow copper tables with targeted verified reads, bounded MCAD attachment/model integrity, numeric and gizmo placement, world-preserving reparenting, manifest-bound STEP tessellation, exact STEP package-shape extraction/selector previews, descriptor-backed single snapping, topology-addressed contact/bond definitions, board/harness/connector/flex editing, verified-package glTF/GLB controls, resource admission, and worker/CLI active-board exclusion provenance pass. Packaged visual/reparent/extraction/snap/editor acceptance, complete topology endpoints/solver regions, coupled execution, graph/collision/contact solving, and qualified solvers remain. |
 | Validated PI | Native DC and AC/RLCG, transient, PDN workflow, CLI/UI agreement, benchmark and measured correlation | Not complete |
 | Circuit and thermal | Native SPICE-compatible path, solid thermal, CHT, electrothermal evidence | Not complete |
 | Multi-board | Mixed-source assembly import, harness/connector modelling, resource tests | Not complete |
@@ -920,7 +920,7 @@ The retained-project scale contract currently admits up to 30 board instances,
 32 copper layers per board, a 1,000 mm by 1,000 mm declared or derived board
 envelope, 20,000 components per board, and 100,000 nets per board. These are
 data and resource-admission ceilings, not throughput or numerical-accuracy
-claims. Repeated instances of the same retained DesignIR are charged separately
+claims. Repeated instances of the same retained SpiDeR are charged separately
 for component, net, area, and workload memory estimates.
 
 `spike/multiboard-analysis-request/v1` produces a deterministic
@@ -931,7 +931,7 @@ with SHA-256. The desktop may draw and highlight this graph without treating a
 line as an electrical model. Independent jobs are admitted for caller-controlled
 reuse of the existing single-board execution paths and state explicitly that
 harness coupling is excluded. A bounded sequential SI batch runner consumes
-exact retained DesignIR v2 records with aggregate lane/frequency/output budgets.
+exact retained SpiDeR v2 records with aggregate lane/frequency/output budgets.
 An additional compiler accepts only explicit per-conductor harness R/L and
 optional reference-bound C/G values and emits an inspectable circuit fragment;
 it does not infer values from AWG/material names and does not bind board ports.

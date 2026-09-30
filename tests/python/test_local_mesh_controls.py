@@ -6,7 +6,7 @@ import math
 import unittest
 
 from python.spike_core.local_mesh_controls import LocalTrackControls
-from python.spike_core.contracts import DesignIR, AnalysisSpec
+from python.spike_core.contracts import SpiDeR, AnalysisSpec
 from python.spike_core.hybrid_mesh import build_hybrid_mesh
 
 
@@ -28,7 +28,7 @@ def control(raw, selected=(), tolerance=0.001, tracks=TRACKS):
 
 class LocalMeshControlsTests(unittest.TestCase):
     def test_real_hybrid_builder_preserves_length_resistance_and_inputs(self):
-        design = DesignIR(tracks=[{"id": "t1", "net_name": "PWR", "layer": "F.Cu",
+        design = SpiDeR(tracks=[{"id": "t1", "net_name": "PWR", "layer": "F.Cu",
             "start": [0, 0], "end": [10, 0], "width": .2}])
         spec = AnalysisSpec(net_names=["PWR"], mesh={"target_size_mm": 1., "feature_aware": False})
         baseline = build_hybrid_mesh(design, spec)
@@ -49,7 +49,7 @@ class LocalMeshControlsTests(unittest.TestCase):
                 self.assertLessEqual(branch.length_mm, .2 + 1e-12)
 
     def test_real_builder_unknown_source_rejects(self):
-        design = DesignIR(tracks=[{"id": "t1", "net_name": "PWR", "layer": "F.Cu",
+        design = SpiDeR(tracks=[{"id": "t1", "net_name": "PWR", "layer": "F.Cu",
             "start": [0, 0], "end": [10, 0], "width": .2}])
         spec = AnalysisSpec(net_names=["PWR"], mesh={"local_controls": request([rule(track="missing")])})
         with self.assertRaises(ValueError):

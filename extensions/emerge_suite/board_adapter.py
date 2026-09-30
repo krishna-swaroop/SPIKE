@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-"""Admit a bounded two-layer DesignIR board for EMerge's planar PCB API.
+"""Admit a bounded multilayer SpiDeR board for EMerge's planar PCB API.
 
 Only explicit imported copper and stackup data are used. Rejected source
 features would otherwise disappear from the FEM model without a warning.
@@ -10,6 +10,7 @@ from __future__ import annotations
 import math
 
 from extensions.openems_suite.openems_adapter_source import pad_polygon
+from extensions.emerge_suite.stackup import compile_stackup
 
 
 MAX_POLYGONS = 4096
@@ -121,7 +122,7 @@ def _layers(item: dict) -> list[str]:
 
 
 def _port(pads: dict[str, dict], signal_id: str, return_id: str,
-          signal_net: str, return_net: str, thickness_mm: float) -> dict:
+          signal_net: str, return_net: str, copper_layers: list[dict]) -> dict:
     signal = pads.get(signal_id)
     ground = pads.get(return_id)
     if signal is None or ground is None:
@@ -129,8 +130,15 @@ def _port(pads: dict[str, dict], signal_id: str, return_id: str,
     if _net(signal) != signal_net or _net(ground) != return_net:
         raise ValueError("Selected port pads do not match the signal/return nets.")
     signal_layers, ground_layers = _layers(signal), _layers(ground)
-    if signal_layers != ["F.Cu"] or ground_layers != ["B.Cu"]:
-        raise ValueError("This EMerge setup needs a top signal pad and aligned bottom return pad.")
+    depths = {layer["name"]: layer["z_mm"] for layer in copper_layers}
+    if len(signal_layers) != 1 or len(ground_layers) != 1:
+        raise ValueError("Port pads need a single explicit copper layer each.")
+    signal_z, return_z = depths[signal_layers[0]], depths[ground_layers[0]]
+    if signal_z <= return_z:
+        raise ValueError("A vertical port needs its signal pad above its return pad.")
+    names = [layer["name"] for layer in copper_layers]
+    if names.index(ground_layers[0]) != names.index(signal_layers[0]) + 1:
+        raise ValueError("Port pads must use adjacent copper layers to avoid crossing intermediate conductors.")
     sx, sy = _point(signal.get("at"), "signal pad center")
     gx, gy = _point(ground.get("at"), "return pad center")
     if math.hypot(sx-gx, sy-gy) > 0.05:
@@ -142,30 +150,52 @@ def _port(pads: dict[str, dict], signal_id: str, return_id: str,
         raise ValueError("Port pads need at least 0.05 mm shared X width.")
     return {"signal_pad_id": signal_id, "return_pad_id": return_id,
             "x_mm": sx, "y_mm": sy, "width_mm": width,
-            "height_mm": thickness_mm, "reference_impedance_ohm": 50.0}
+            "height_mm": signal_z-return_z, "z_bottom_mm": return_z,
+            "signal_layer": signal_layers[0], "return_layer": ground_layers[0],
+            "reference_impedance_ohm": 50.0}
 
 
 def compile_board(design: dict, parameters: dict) -> dict:
     if not isinstance(design, dict) or design.get("contract") != "spike/v1" or design.get("units", "mm") != "mm":
-        raise ValueError("EMerge requires a millimetre DesignIR board.")
+        raise ValueError("EMerge requires a millimetre SpiDeR board.")
     signal_net = parameters.get("signal_net")
     return_net = parameters.get("return_net")
     if not isinstance(signal_net, str) or not isinstance(return_net, str) or not signal_net or not return_net or signal_net == return_net:
         raise ValueError("Choose distinct signal and return nets.")
-    stackup = design.get("stackup")
-    if not isinstance(stackup, list):
-        raise ValueError("Imported board needs a physical stackup.")
-    relevant = [layer for layer in stackup if isinstance(layer, dict) and
-                (str(layer.get("name", "")).endswith(".Cu") or
-                 str(layer.get("type", "")).lower() in {"core", "prepreg", "dielectric"})]
-    if len(relevant) != 3 or [str(layer.get("name")) for layer in relevant[::2]] != ["F.Cu", "B.Cu"]:
-        raise ValueError("Initial EMerge board adapter supports F.Cu, one dielectric, and B.Cu only.")
-    dielectric = relevant[1]
-    thickness = number(dielectric.get("thickness", dielectric.get("thickness_mm")),
-                       "dielectric thickness", low=0.025, high=10)
-    epsilon = number(dielectric.get("epsilon_r"), "relative permittivity", low=1, high=30)
-    loss = number(dielectric.get("loss_tangent", 0), "loss tangent", low=0, high=1)
-    selected = {signal_net, return_net}
+    additional = parameters.get("additional_signal_nets", [])
+    if (not isinstance(additional, list) or len(additional) > 3
+            or any(not isinstance(net, str) or not net.strip() for net in additional)
+            or len(set(additional)) != len(additional) or signal_net in additional or return_net in additional):
+        raise ValueError("additional_signal_nets needs at most three distinct nonempty nets other than the primary and return nets.")
+    signal_nets = [signal_net, *additional]
+    explicit_pairs = parameters.get("port_pairs")
+    if "port_pairs" in parameters:
+        if not isinstance(explicit_pairs, list) or not 2 <= len(explicit_pairs) <= 8:
+            raise ValueError("port_pairs needs two to eight explicit port objects.")
+        endpoints = []
+        represented = set()
+        for pair in explicit_pairs:
+            if (not isinstance(pair, dict) or set(pair) != {"signal_net", "signal_pad_id", "return_pad_id"}
+                    or any(not isinstance(value, str) or not value.strip() for value in pair.values())):
+                raise ValueError("Each port pair needs only nonempty signal_net, signal_pad_id, and return_pad_id strings.")
+            if pair["signal_net"] not in signal_nets:
+                raise ValueError("Every port pair must use an explicitly selected signal net.")
+            endpoints.append(pair["signal_pad_id"])
+            represented.add(pair["signal_net"])
+        if len(set(endpoints)) != len(endpoints):
+            raise ValueError("Multiport signal pad endpoints must not be reused.")
+        if represented != set(signal_nets):
+            raise ValueError("Every selected signal net needs an explicit port pair.")
+    elif additional:
+        raise ValueError("Additional signal nets require explicit port_pairs.")
+    copper_layers, dielectric_layers = compile_stackup(design.get("stackup"), number)
+    thickness = -copper_layers[-1]["z_mm"]
+    epsilon = dielectric_layers[0]["epsilon_r"]
+    loss = max(layer["loss_tangent"] for layer in dielectric_layers)
+    geometry_backend = parameters.get("geometry_backend", "emerge")
+    if geometry_backend not in {"emerge", "emcad"}:
+        raise ValueError("geometry_backend must be emerge or emcad.")
+    selected = {*signal_nets, return_net}
     allowed_vias = parameters.get("shorting_via_ids", [])
     if not isinstance(allowed_vias, list) or len(allowed_vias) > 16 or any(not isinstance(identity, str) or not identity for identity in allowed_vias) or len(set(allowed_vias)) != len(allowed_vias):
         raise ValueError("shorting_via_ids must be a list of at most 16 distinct source via IDs.")
@@ -173,6 +203,8 @@ def compile_board(design: dict, parameters: dict) -> dict:
     if any(str(via.get("id")) not in allowed_vias for via in selected_vias) or len(selected_vias) != len(allowed_vias):
         raise ValueError("Selected nets contain vias that are not explicitly admitted as shorting vias.")
     shorting_vias = []
+    if selected_vias and len(copper_layers) > 2:
+        raise ValueError("Multilayer shorting vias need resolved barrels and antipads; they are unsupported.")
     for via in selected_vias:
         if _net(via) != return_net or set(_layers(via)) != {"F.Cu", "B.Cu"}:
             raise ValueError("Only source-identified through-board return-net shorting vias are supported.")
@@ -205,7 +237,7 @@ def compile_board(design: dict, parameters: dict) -> dict:
     for kind in ("tracks", "pads", "zones"):
         rows = design.get(kind, [])
         if not isinstance(rows, list):
-            raise ValueError(f"DesignIR {kind} must be an array.")
+            raise ValueError(f"SpiDeR {kind} must be an array.")
         for row in rows:
             if not isinstance(row, dict) or _net(row) not in selected:
                 continue
@@ -213,7 +245,7 @@ def compile_board(design: dict, parameters: dict) -> dict:
             if not identity:
                 raise ValueError(f"Selected {kind} object lacks a stable ID.")
             layers = _layers(row)
-            if any(layer not in {"F.Cu", "B.Cu"} for layer in layers):
+            if not layers or any(layer not in {item["name"] for item in copper_layers} for layer in layers):
                 raise ValueError(f"{identity} uses an unsupported copper layer.")
             if kind == "tracks":
                 polygon = _track_polygon(row)
@@ -231,14 +263,23 @@ def compile_board(design: dict, parameters: dict) -> dict:
                                  "xs_mm": polygon[0], "ys_mm": polygon[1]})
     if not polygons or len(polygons) > MAX_POLYGONS or sum(len(p["xs_mm"]) for p in polygons) > MAX_VERTICES:
         raise ValueError("Selected copper is empty or exceeds the polygon/vertex budget.")
-    port_ids = [(parameters.get("signal_pad_id"), parameters.get("return_pad_id"))]
-    receive = (parameters.get("receive_signal_pad_id"), parameters.get("receive_return_pad_id"))
-    if any(receive):
-        if not all(receive):
-            raise ValueError("Second port needs both signal and return pad IDs.")
-        port_ids.append(receive)
-    ports = [_port(pads, signal, ground, signal_net, return_net, thickness)
-             for signal, ground in port_ids]
+    if explicit_pairs is not None:
+        ports = [_port(pads, pair["signal_pad_id"], pair["return_pad_id"],
+                       pair["signal_net"], return_net, copper_layers) for pair in explicit_pairs]
+    else:
+        port_ids = [(parameters.get("signal_pad_id"), parameters.get("return_pad_id"))]
+        receive = (parameters.get("receive_signal_pad_id"), parameters.get("receive_return_pad_id"))
+        if any(receive):
+            if not all(receive):
+                raise ValueError("Second port needs both signal and return pad IDs.")
+            port_ids.append(receive)
+        ports = [_port(pads, signal, ground, signal_net, return_net, copper_layers)
+                 for signal, ground in port_ids]
+        if len(port_ids) != len(set(port_ids)):
+            raise ValueError("Ports must use distinct pad pairs.")
+    port_mapping = [{"port": f"P{index}", "signal_net": _net(pads[port["signal_pad_id"]]),
+                     "return_net": return_net, "signal_pad_id": port["signal_pad_id"],
+                     "return_pad_id": port["return_pad_id"]} for index, port in enumerate(ports, 1)]
     fstart = number(parameters.get("frequency_start_hz"), "start frequency", low=1e8, high=1e11)
     fstop = number(parameters.get("frequency_stop_hz"), "stop frequency", low=1e8, high=1e11)
     if fstop <= fstart:
@@ -248,19 +289,67 @@ def compile_board(design: dict, parameters: dict) -> dict:
         raise ValueError("Frequency points must be an integer from 2 to 64.")
     resolution = number(parameters.get("mesh_resolution_mm"), "mesh resolution", low=0.05, high=10)
     planar_estimate = (bounds[2]-bounds[0]) * (bounds[3]-bounds[1]) / resolution**2
-    if planar_estimate > 200_000:
+    if planar_estimate * len(dielectric_layers) > 200_000:
         raise ValueError("Board area and mesh resolution exceed the 200000-cell planar preflight budget.")
+    include_loss = parameters.get("include_dielectric_loss", False)
+    parallel = parameters.get("parallel", False)
+    sparse_solver = parameters.get("sparse_solver", "auto")
+    if sparse_solver not in {"auto", "superlu"}:
+        raise ValueError("Sparse solver must be auto or superlu.")
+    nearfield_enabled = parameters.get("nearfield_enabled", False)
+    if any(not isinstance(value, bool) for value in (include_loss, parallel, nearfield_enabled)):
+        raise ValueError("Dielectric loss, parallel, and nearfield controls must be booleans.")
+    impedance = number(parameters.get("reference_impedance_ohm", 50), "reference impedance", low=1, high=1000)
+    for port in ports:
+        port["reference_impedance_ohm"] = impedance
+    workers = parameters.get("n_workers", 2)
+    excited_port = parameters.get("field_excited_port", 1)
+    if isinstance(excited_port, bool) or not isinstance(excited_port, int) or not 1 <= excited_port <= len(ports):
+        raise ValueError("Field excited port must identify an admitted port.")
+    grid_points = parameters.get("nearfield_grid_points", 11)
+    for value, label, maximum in ((workers, "n_workers", 8), (grid_points, "nearfield_grid_points", 41)):
+        if isinstance(value, bool) or not isinstance(value, int) or not (1 if label == "n_workers" else 3) <= value <= maximum:
+            raise ValueError(f"{label} is outside its bounded integer range.")
+    if nearfield_enabled and grid_points * grid_points * points > 100_000:
+        raise ValueError("Frequency and near-field grids exceed the 100000-sample budget.")
+    angular_steps = {}
+    for axis in ("theta", "phi"):
+        step = parameters.get(f"radiation_{axis}_step_deg", 15)
+        if isinstance(step, bool) or step not in (5, 10, 15, 30):
+            raise ValueError("Radiation angular steps must be 5, 10, 15, or 30 degrees.")
+        angular_steps[f"radiation_{axis}_step_deg"] = int(step)
+    angular_count = (181 // angular_steps["radiation_theta_step_deg"] + 1) * (361 // angular_steps["radiation_phi_step_deg"] + 1) + 37
+    if angular_count * points > 100_000:
+        raise ValueError("Frequency and radiation grids exceed the 100000-sample budget.")
+    if nearfield_enabled and grid_points ** 2 * points > 100_000:
+        raise ValueError("Frequency and nearfield grids exceed the 100000-sample budget.")
+    margin = parameters.get("air_margin_mm")
+    if margin is not None:
+        margin = number(margin, "absorbing air margin", low=5, high=200)
+    nearfield_z = number(parameters.get("nearfield_z_mm", 1), "nearfield plane height", low=0.05, high=100)
+    if nearfield_enabled and nearfield_z >= (margin if margin is not None else min(max(299792458 / fstop / 4 * 1000, 20), 100)):
+        raise ValueError("Nearfield plane must be inside the absorbing air margin.")
     case = {"contract": "spike/emerge-board-case/v1", "bounds_mm": bounds,
             "dielectric_thickness_mm": thickness, "epsilon_r": epsilon,
-            "loss_tangent_omitted": loss, "polygons": polygons, "ports": ports,
+            "copper_layers": copper_layers, "dielectric_layers": dielectric_layers,
+            "geometry_backend": geometry_backend,
+            "loss_tangent_omitted": 0 if include_loss else loss, "include_dielectric_loss": include_loss,
+            "reference_impedance_ohm": impedance, "parallel": parallel, "n_workers": workers,
+            "sparse_solver": sparse_solver,
+            "field_excited_port": excited_port,
+            "air_margin_mm": margin, **angular_steps,
+            "radiation_cut_phi_deg": number(parameters.get("radiation_cut_phi_deg", 0), "radiation cut phi", low=0, high=360),
+            "nearfield_enabled": nearfield_enabled, "nearfield_z_mm": nearfield_z,
+            "nearfield_grid_points": grid_points, "polygons": polygons, "ports": ports,
             "frequency_start_hz": fstart, "frequency_stop_hz": fstop,
             "frequency_points": points, "mesh_resolution_mm": resolution,
             "planar_cell_estimate": math.ceil(planar_estimate),
+            "layered_cell_estimate": math.ceil(planar_estimate * len(dielectric_layers)),
             "shorting_vias": shorting_vias,
             "attributed_graphic_polygon_ids": attributed_graphics,
             "idealized_reference_plane_ids": idealized_planes,
             "fragment_copper": fragment_copper,
-            "modeled_nets": [signal_net, return_net],
+            "modeled_nets": [*signal_nets, return_net], "port_mapping": port_mapping,
             "geometry_status": "approximate_rectangular_surface_pec_with_dielectric_surroundings" if surroundings else "approximate_rectangular_surface_pec"}
     if surroundings:
         case["surrounding_geometry"] = surroundings

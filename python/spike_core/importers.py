@@ -1,6 +1,6 @@
 """EDA-source importer contracts and registry.
 
-Importers own source detection and conversion into DesignIR. Solvers, renderers,
+Importers own source detection and conversion into SpiDeR. Solvers, renderers,
 reports, the CLI, and the desktop worker must not depend on vendor parsers.
 """
 
@@ -11,8 +11,8 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Callable, Dict, Iterable, List, Optional, Protocol, Sequence
 
-from .contracts import DesignIR
-from .design_ir_v2 import DesignIRV2
+from .contracts import SpiDeR
+from .spider_v2 import SpiDeRV2
 
 
 IMPORT_REPORT_CONTRACT = "spike/import-report/v1"
@@ -65,7 +65,7 @@ class ImportReport:
 
 @dataclass
 class ImportOutcome:
-    design: DesignIRV2
+    design: SpiDeRV2
     report: ImportReport
 
     def to_dict(self) -> Dict[str, Any]:
@@ -91,16 +91,16 @@ class ImporterDescriptor:
 class DesignImporter(Protocol):
     descriptor: ImporterDescriptor
 
-    def import_design(self, path: str) -> DesignIR:
-        """Convert one source artifact into normalized DesignIR."""
+    def import_design(self, path: str) -> SpiDeR:
+        """Convert one source artifact into normalized SpiDeR."""
 
 
 @dataclass
 class FunctionImporter:
     descriptor: ImporterDescriptor
-    implementation: Callable[[str], DesignIR]
+    implementation: Callable[[str], SpiDeR]
 
-    def import_design(self, path: str) -> DesignIR:
+    def import_design(self, path: str) -> SpiDeR:
         return self.implementation(path)
 
 
@@ -153,7 +153,7 @@ class ImporterRegistry:
             f"No installed importer supports {Path(path).name or path}. Supported extensions: {supported}."
         )
 
-    def import_design(self, path: str, format_hint: str = "", *, options: Dict[str, Any] | None = None) -> DesignIR:
+    def import_design(self, path: str, format_hint: str = "", *, options: Dict[str, Any] | None = None) -> SpiDeR:
         source = Path(path)
         if not source.exists():
             raise FileNotFoundError(f"Design source does not exist: {source}")
@@ -171,8 +171,8 @@ class ImporterRegistry:
             if options:
                 raise ValueError("This importer does not accept import options.")
             design = importer.import_design(str(source))
-        if not isinstance(design, DesignIR):
-            raise TypeError(f"Importer {importer.descriptor.importer_id} did not return DesignIR")
+        if not isinstance(design, SpiDeR):
+            raise TypeError(f"Importer {importer.descriptor.importer_id} did not return SpiDeR")
         if design.contract != "spike/v1":
             raise ValueError(
                 f"Importer {importer.descriptor.importer_id} returned unsupported contract {design.contract}"
@@ -182,7 +182,7 @@ class ImporterRegistry:
         return design
 
     def import_outcome(self, path: str, format_hint: str = "", *, options: Dict[str, Any] | None = None) -> ImportOutcome:
-        """Import a source into typed DesignIR v2 with an auditable quality report."""
+        """Import a source into typed SpiDeR v2 with an auditable quality report."""
 
         source = Path(path)
         design_v1 = self.import_design(path, format_hint, options=options)
@@ -191,7 +191,7 @@ class ImporterRegistry:
         if design_v1.metadata.get("source_sha256", digest) != digest:
             raise ValueError("Design source changed during import.")
         design_v1.metadata["source_sha256"] = digest
-        design = DesignIRV2.from_v1(design_v1, source_digest=digest)
+        design = SpiDeRV2.from_v1(design_v1, source_digest=digest)
         importer_id = str(design_v1.metadata.get("importer_id", "unknown"))
         issue_rows = [asdict(issue) if hasattr(issue, "__dataclass_fields__") else dict(issue) for issue in design_v1.issues]
         unsupported = [item for item in issue_rows if item.get("severity") == "error"]
@@ -247,7 +247,7 @@ def _sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
-def _solver_readiness(design: DesignIR) -> Dict[str, Dict[str, Any]]:
+def _solver_readiness(design: SpiDeR) -> Dict[str, Dict[str, Any]]:
     copper_tokens = {"conductor", "copper", "signal", "power", "plane", "mixed"}
     copper_layers = [
         item for item in design.layers
@@ -297,7 +297,7 @@ def _solver_readiness(design: DesignIR) -> Dict[str, Dict[str, Any]]:
     }
 
 
-def import_analysis_blockers(design: DesignIR, mode: str) -> List[str]:
+def import_analysis_blockers(design: SpiDeR, mode: str) -> List[str]:
     """Enforce declared importer losses at the execution boundary, too."""
     if design.source_format != "odb++":
         return []

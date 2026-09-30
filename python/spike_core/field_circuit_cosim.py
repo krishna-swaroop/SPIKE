@@ -14,7 +14,7 @@ import math
 import time
 from typing import Any, Callable, Dict, Iterable, List
 
-from .contracts import DesignIR
+from .contracts import SpiDeR
 from .native_circuit_compiler import run_spice_workspace_native_mna
 from .owned_spice_workspace import (
     REQUEST_CONTRACT as OWNED_SPICE_REQUEST_CONTRACT,
@@ -147,7 +147,7 @@ def validate_field_circuit_request(request: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def _run_circuit_stage(
-    workspace: Dict[str, Any], design: DesignIR, request: Dict[str, Any],
+    workspace: Dict[str, Any], design: SpiDeR, request: Dict[str, Any],
 ) -> Dict[str, Any]:
     circuit_engine = str(request.get("circuit_engine", "linear_native_mna"))
     if circuit_engine == "linear_native_mna":
@@ -297,7 +297,7 @@ def _blocked(request: Dict[str, Any], issues: List[Dict[str, str]]) -> Dict[str,
 
 
 def run_iterative_field_circuit_cosimulation(
-    design: DesignIR,
+    design: SpiDeR,
     workspace: Dict[str, Any],
     request: Dict[str, Any],
     field_provider: FieldReductionProvider | None,

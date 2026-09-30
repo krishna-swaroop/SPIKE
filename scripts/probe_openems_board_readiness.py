@@ -18,7 +18,7 @@ sys.path.insert(0, str(ROOT))
 
 from extensions.openems_suite.engine import _validate_openems_case
 from python.spike_core.cli import load_design
-from python.spike_core.contracts import AnalysisSpec, DesignIR
+from python.spike_core.contracts import AnalysisSpec, SpiDeR
 
 
 def main() -> int:
@@ -30,7 +30,7 @@ def main() -> int:
     args = parser.parse_args()
     board = args.board.resolve(strict=True)
     started = time.perf_counter()
-    design = DesignIR(**load_design(board))
+    design = SpiDeR(**load_design(board))
     imported_s = time.perf_counter() - started
     spec = AnalysisSpec(mode="si", solver_id="external.openems", net_names=[args.net],
                         frequency_start_hz=1e8, frequency_stop_hz=1e9,

@@ -128,7 +128,7 @@ spike --output emi-preflight.json emi-preflight board.kicad_pcb emi-setup.json
 spike --output emi-screening.json emi-screen board.kicad_pcb emi-setup.json
 ```
 
-Both commands accept a KiCad board, DesignIR JSON, or SPIKE project as the design
+Both commands accept a KiCad board, SpiDeR JSON, or SPIKE project as the design
 argument. Screening exits successfully only when the setup has complete,
 non-zero electrical pre-pass metrics and mapped conductor geometry.
 

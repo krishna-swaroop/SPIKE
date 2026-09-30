@@ -74,13 +74,13 @@ def acquire_network(raw: Mapping[str, Any], design=None) -> tuple[NetworkData, d
     elif kind == "geometry":
         checked(raw, {"kind", "request"}, "geometry channel")
         if design is None:
-            raise ValueError("Geometry channel requires the active canonical DesignIR v2.")
-        from .design_ir_v2 import DesignIRV2
+            raise ValueError("Geometry channel requires the active canonical SpiDeR v2.")
+        from .spider_v2 import SpiDeRV2
         from .si_channel import _validate_channel_request, extract_uniform_path_rlgc, uniform_rlgc_network
         from .si_coupled_channel import extract_coupled_path_rlgc, multiconductor_rlgc_network
         request = raw["request"]
         _validate_channel_request(request)
-        design = DesignIRV2.from_dict(design)
+        design = SpiDeRV2.from_dict(design)
         coupled = bool(request.get("victim_net"))
         evidence = (extract_coupled_path_rlgc if coupled else extract_uniform_path_rlgc)(design, request)
         network = (multiconductor_rlgc_network if coupled else uniform_rlgc_network)(

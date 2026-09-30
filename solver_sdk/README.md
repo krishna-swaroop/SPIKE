@@ -96,7 +96,7 @@ published fixture tolerances and solver-version-specific regression results.
 ## Current Plugin IDs
 
 - `spike.routed_dc`: available approximate resistive network.
-- `spike.peec_2_5d`: C++ kernel exists; DesignIR adapter is pending.
+- `spike.peec_2_5d`: C++ kernel exists; SpiDeR adapter is pending.
 - `spike.mom_surface`: interface reserved; no engine is packaged.
 - `spike.fullwave_3d`: FEM/FDTD interface reserved; no engine is packaged.
 - `spike.ngspice`: optional process-isolated explicit-netlist adapter.

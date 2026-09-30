@@ -20,8 +20,8 @@ from .batch_report import (
     normalize_pi_batch_report,
 )
 from .benchmarks import run_solver_benchmarks
-from .contracts import CONTRACT_VERSION, AnalysisSpec, DesignIR
-from .design_ir_v2 import DesignIRV2
+from .contracts import CONTRACT_VERSION, AnalysisSpec, SpiDeR
+from .spider_v2 import SpiDeRV2
 from .field_circuit_cosim import REQUEST_CONTRACT as FIELD_CIRCUIT_REQUEST_CONTRACT
 from .openems_benchmarks import evaluate_mesh_convergence, run_patch_antenna_benchmark
 from .pi_release_qualification import load_json_report, qualify_pi_release
@@ -179,8 +179,8 @@ def load_design(path: Path) -> Dict[str, Any]:
         opened = read_project(path)
         design_v2 = opened.payload.get("design_ir")
         if not isinstance(design_v2, dict):
-            raise CliError(f"{path} does not contain DesignIR v2.")
-        design = DesignIRV2.from_dict(design_v2).to_v1().to_dict()
+            raise CliError(f"{path} does not contain SpiDeR v2.")
+        design = SpiDeRV2.from_dict(design_v2).to_v1().to_dict()
         design.setdefault("metadata", {})["source_embedded"] = True
         design["source_path"] = f"package:{path.resolve()}"
         return design
@@ -193,7 +193,7 @@ def load_design(path: Path) -> Dict[str, Any]:
             return design
         if design.get("source_board"):
             return _load_kicad_source(str(design["source_board"]), str(design.get("source_file", "embedded.kicad_pcb")))
-    raise CliError(f"{path} is not a DesignIR, analysis request, or SPIKE project containing a board.")
+    raise CliError(f"{path} is not a SpiDeR, analysis request, or SPIKE project containing a board.")
 
 
 def terminal(value: str) -> Dict[str, Any]:
@@ -1191,11 +1191,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Requested solver domain; repeat as needed (defaults to all domains)",
     )
 
-    import_design = sub.add_parser("import", aliases=["import-design"], help="Normalize an EDA design into DesignIR")
+    import_design = sub.add_parser("import", aliases=["import-design"], help="Normalize an EDA design into SpiDeR")
     import_design.add_argument("design", type=Path)
     import_design.add_argument("--format", default="", help="Explicit importer format (for example odb++)")
     import_design.add_argument("--step", default="", help="Select a board step in a multi-step ODB++ job")
-    import_design.add_argument("--report", action="store_true", help="Return typed DesignIR and import quality report")
+    import_design.add_argument("--report", action="store_true", help="Return typed SpiDeR and import quality report")
 
     validate = sub.add_parser("validate", help="Validate a design or SPIKE project")
     validate.add_argument("design", type=Path)
@@ -1251,11 +1251,11 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument("--continue-on-error", action="store_true")
 
     emi_preflight = sub.add_parser("emi-preflight", help="Validate a versioned EMI setup without running field physics")
-    emi_preflight.add_argument("design", type=Path, help="DesignIR, KiCad board, or SPIKE project")
+    emi_preflight.add_argument("design", type=Path, help="SpiDeR, KiCad board, or SPIKE project")
     emi_preflight.add_argument("setup", type=Path, help="spike/emi-setup/v1 JSON")
 
     emi_screen = sub.add_parser("emi-screen", help="Rank EMI review nets from supplied pre-pass metrics")
-    emi_screen.add_argument("design", type=Path, help="DesignIR, KiCad board, or SPIKE project")
+    emi_screen.add_argument("design", type=Path, help="SpiDeR, KiCad board, or SPIKE project")
     emi_screen.add_argument("setup", type=Path, help="spike/emi-setup/v1 JSON")
 
     openems_prepare = sub.add_parser("openems-prepare", help="Prepare an inspectable openEMS case from an analysis request")
@@ -1368,7 +1368,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     field_circuit_validate = sub.add_parser(
         "field-circuit-validate",
-        help="Fail-closed validation for a reviewed DesignIR, SPICE workspace, and PEEC field-circuit package",
+        help="Fail-closed validation for a reviewed SpiDeR, SPICE workspace, and PEEC field-circuit package",
     )
     field_circuit_validate.add_argument(
         "package",
@@ -1420,13 +1420,13 @@ def build_parser() -> argparse.ArgumentParser:
     renormalize.add_argument("--format", choices=["RI", "MA", "DB"], default="RI")
     si_channel = sub.add_parser(
         "si-geometry-channel",
-        help="Run the bounded straight DesignIR v2 geometry-to-RLGC/S/TDR/TDT/NRZ-eye channel",
+        help="Run the bounded straight SpiDeR v2 geometry-to-RLGC/S/TDR/TDT/NRZ-eye channel",
     )
-    si_channel.add_argument("design", type=Path, help="DesignIR v2 JSON or object containing design_ir")
+    si_channel.add_argument("design", type=Path, help="SpiDeR v2 JSON or object containing design_ir")
     si_channel.add_argument("request", type=Path, help=f"{SI_CHANNEL_REQUEST_CONTRACT} JSON")
     si_workflow = sub.add_parser("si-workflow", help="Run an experimental source/receiver/passive loaded SI study")
     si_workflow.add_argument("request", type=Path, help="SI workflow request JSON")
-    si_workflow.add_argument("--design", type=Path, help="Optional canonical DesignIR v2 JSON for geometry extraction")
+    si_workflow.add_argument("--design", type=Path, help="Optional canonical SpiDeR v2 JSON for geometry extraction")
     si_workflow.add_argument("--touchstone-output", type=Path, help="Export the edited channel (without endpoint loading)")
     harness_pi = sub.add_parser("harness-pi", help="Run explicit-pin lumped DC harness PI (experimental)")
     harness_pi.add_argument("--request", required=True, type=Path, help="spike/harness-pi-request/v1 JSON")
@@ -2006,7 +2006,7 @@ def dispatch(args: argparse.Namespace) -> tuple[Any, int]:
             design_data = design_data["design_ir"]
         request_data = _read_json(args.request)
         result = analyze_uniform_design_channel(
-            DesignIRV2.from_dict(design_data),
+            SpiDeRV2.from_dict(design_data),
             request_data,
         )
     else:

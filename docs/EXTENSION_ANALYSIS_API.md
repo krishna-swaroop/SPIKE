@@ -11,7 +11,7 @@ SPIKE checks the exchange contract, board identity, and numeric bounds.
 Declare an `analyses` contribution with `output_contract: "spike/v1"` and
 `design.read` plus `results.write` permissions in `spike-extension.json`. When
 run, the host passes `context.design`, a
-[DesignIR v1](../schemas/design-ir-v1.schema.json) object. It contains a stable
+[SpiDeR v1](../schemas/design-ir-v1.schema.json) object. It contains a stable
 `design_id`, millimetre coordinates, nets, copper layers, tracks, vias, pads,
 zones, components, stackup, and import issues. Keep source object IDs and layer
 names in solver output so probes and fields can be mapped back to the board.
@@ -60,7 +60,7 @@ The host also passes `context.design_binding`:
 {"design_id":"board-123","digest_sha256":"<64 lowercase hex characters>"}
 ```
 
-The digest covers the exact DesignIR sent in the request, serialized as UTF-8
+The digest covers the exact SpiDeR sent in the request, serialized as UTF-8
 JSON with sorted object keys, no extra spaces, non-ASCII characters preserved,
 and no non-finite numbers. Copy the binding into the returned provenance. Do
 not recompute it from a modified design. A mismatched binding is rejected.

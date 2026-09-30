@@ -40,7 +40,7 @@ def run_python_script(params: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("Python script timeout must be between 1 and 600 seconds.")
     design = params.get("design")
     if design is not None and not isinstance(design, dict):
-        raise ValueError("Python script design context must be a DesignIR object.")
+        raise ValueError("Python script design context must be a SpiDeR object.")
     results = params.get("results")
     if results is not None and not isinstance(results, dict):
         raise ValueError("Python script result context must be an object.")

@@ -51,7 +51,7 @@ import or carry explicit diagnostics; it cannot become a silently valid board.
 - every response includes request metadata and elapsed duration.
 - health is separate from solver catalog discovery.
 - parser syntax errors raise instead of returning a partial parser.
-- recoverable object diagnostics are attached to `DesignIR`.
+- recoverable object diagnostics are attached to `SpiDeR`.
 - importer selection is explicit and unsupported formats fail clearly.
 
 ## Recovery behavior

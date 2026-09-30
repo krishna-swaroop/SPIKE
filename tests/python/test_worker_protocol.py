@@ -11,8 +11,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from python.spike_core.contracts import DesignIR
-from python.spike_core.design_ir_v2 import AssemblyIRV1, DesignIRV2
+from python.spike_core.contracts import SpiDeR
+from python.spike_core.spider_v2 import AssemblyIRV1, SpiDeRV2
 from python.spike_core.geometry_arrow import validate_geometry_arrow
 from python.spike_core.project_package import read_spike_package, write_spike_package
 
@@ -240,7 +240,7 @@ class WorkerProtocolTests(unittest.TestCase):
             source_name = "canonical.kicad_pcb"
             source_bytes = b'(kicad_pcb (version 20240108) (generator pcbnew) (layers (0 "F.Cu" signal)) (net 0 ""))'
             source_digest = hashlib.sha256(source_bytes).hexdigest()
-            design = DesignIRV2.from_v1(DesignIR(
+            design = SpiDeRV2.from_v1(SpiDeR(
                 design_id="canonical-source",
                 name="Canonical source",
                 source_format="kicad",
@@ -272,7 +272,7 @@ class WorkerProtocolTests(unittest.TestCase):
             source_path = root / "fixture.step"
             source_bytes = b"ISO-10303-21;\nHEADER;ENDSEC;DATA;ENDSEC;END-ISO-10303-21;\n"
             source_path.write_bytes(source_bytes)
-            design = DesignIRV2.from_v1(DesignIR(
+            design = SpiDeRV2.from_v1(SpiDeR(
                 design_id="mcad-worker",
                 name="MCAD worker",
                 source_format="neutral",
@@ -429,7 +429,7 @@ class WorkerProtocolTests(unittest.TestCase):
             source_path.write_bytes(source_bytes)
             child_source_bytes = b"ISO-10303-21;\nHEADER;ENDSEC;DATA;/* child */ENDSEC;END-ISO-10303-21;\n"
             child_source_path.write_bytes(child_source_bytes)
-            design = DesignIRV2.from_v1(DesignIR(
+            design = SpiDeRV2.from_v1(SpiDeR(
                 design_id="nested-mcad-worker",
                 name="Nested MCAD worker",
                 source_format="neutral",
@@ -541,7 +541,7 @@ class WorkerProtocolTests(unittest.TestCase):
             project_path = root / "placement-policy.spike"
             source_path = root / "part.step"
             source_path.write_bytes(b"ISO-10303-21;\nHEADER;ENDSEC;DATA;ENDSEC;END-ISO-10303-21;\n")
-            design = DesignIRV2.from_v1(DesignIR(
+            design = SpiDeRV2.from_v1(SpiDeR(
                 design_id="placement-policy-worker",
                 name="Placement policy worker",
                 source_format="neutral",
@@ -647,7 +647,7 @@ class WorkerProtocolTests(unittest.TestCase):
 
     def test_worker_reads_digest_verified_visual_model_artifacts(self):
         gltf = b'{"asset":{"version":"2.0"},"scenes":[{}],"nodes":[]}'
-        design = DesignIRV2.from_v1(DesignIR(
+        design = SpiDeRV2.from_v1(SpiDeR(
             design_id="visual-worker",
             name="Visual worker",
             source_format="neutral",
@@ -692,7 +692,7 @@ class WorkerProtocolTests(unittest.TestCase):
             root = Path(directory)
             original = root / "original.spike"
             resaved = root / "resaved.spike"
-            design = DesignIRV2.from_v1(DesignIR(
+            design = SpiDeRV2.from_v1(SpiDeR(
                 design_id="worker-preserve",
                 name="Worker preserve",
                 source_format="neutral",
@@ -744,7 +744,7 @@ class WorkerProtocolTests(unittest.TestCase):
             root = Path(directory)
             original = root / "assembly-original.spike"
             resaved = root / "assembly-resaved.spike"
-            design = DesignIRV2.from_v1(DesignIR(
+            design = SpiDeRV2.from_v1(SpiDeR(
                 design_id="assembly-worker-design",
                 name="Assembly worker design",
                 source_format="neutral",
@@ -829,7 +829,7 @@ class WorkerProtocolTests(unittest.TestCase):
             root = Path(directory)
             original = root / "original.spike"
             resaved = root / "resaved.spike"
-            design = DesignIRV2.from_v1(DesignIR(
+            design = SpiDeRV2.from_v1(SpiDeR(
                 design_id="worker-source-change",
                 name="Worker source change",
                 source_format="neutral",
@@ -880,7 +880,7 @@ class WorkerProtocolTests(unittest.TestCase):
             self.assertEqual(generated["rows"], 0)
             self.assertNotIn("geometry/conductors.arrow", result.members)
             validate_geometry_arrow(
-                result.members[generated["path"]], DesignIRV2.from_dict(result.payload["design_ir"]),
+                result.members[generated["path"]], SpiDeRV2.from_dict(result.payload["design_ir"]),
             )
         self.assertEqual(result.members["models/artifacts/part.step"], b"model-remains-valid")
         invalidations = [

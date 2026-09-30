@@ -13,7 +13,7 @@ from python.spike_core.dependencies import dependency_status
 from python.spike_core.mcad_package_shape import extract_step_package_shape
 from python.spike_core.mcad_selector_preview import generate_selector_preview
 from python.spike_core.mcad_tessellation import tessellate_step_to_glb
-from python.spike_core.design_ir_v2_schema import canonical_uuid
+from python.spike_core.spider_v2_schema import canonical_uuid
 
 
 def _freecad_executable() -> Path | None:

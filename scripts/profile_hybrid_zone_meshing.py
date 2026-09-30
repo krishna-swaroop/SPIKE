@@ -35,7 +35,7 @@ from python.spike_core.hybrid_mesh import (  # noqa: E402
     _segments,
     _triangulate_polygon,
 )
-from python.spike_core.contracts import AnalysisSpec, DesignIR  # noqa: E402
+from python.spike_core.contracts import AnalysisSpec, SpiDeR  # noqa: E402
 import python.spike_core.hybrid_mesh as hybrid_mesh_module  # noqa: E402
 
 
@@ -320,10 +320,10 @@ def _full_mesh_comparison(args: argparse.Namespace) -> dict[str, object]:
     payload = json.loads(args.input.read_text(encoding="utf-8"))
     raw = payload.get("design", payload)
     design_values = {
-        key: value for key, value in raw.items() if key in DesignIR.__dataclass_fields__
+        key: value for key, value in raw.items() if key in SpiDeR.__dataclass_fields__
     }
     design_values["issues"] = []
-    design = DesignIR(**design_values)
+    design = SpiDeR(**design_values)
     spec = AnalysisSpec(mode="dc", net_names=[args.net], mesh={
         "target_size_mm": args.full_target_size_mm,
         "zone_cell_mm": args.full_zone_cell_mm,

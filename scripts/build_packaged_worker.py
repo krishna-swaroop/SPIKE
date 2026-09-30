@@ -30,8 +30,8 @@ from python.spike_core.runtime_qualification import (
     collect_runtime_snapshot,
     qualify_runtime_snapshots,
 )
-from python.spike_core.contracts import DesignIR
-from python.spike_core.design_ir_v2 import DesignIRV2
+from python.spike_core.contracts import SpiDeR
+from python.spike_core.spider_v2 import SpiDeRV2
 from python.spike_core.geometry_arrow import GEOMETRY_ARROW_CONTRACT_V4, canonical_geometry_rows
 from python.spike_core.project_package import read_geometry_arrow_artifact, read_spike_package
 
@@ -176,7 +176,7 @@ def _request(
 
 def _verify_geometry_arrow_package(executable: Path) -> dict[str, Any]:
     """Prove that the frozen worker can generate and persist canonical Arrow."""
-    design = DesignIRV2.from_v1(DesignIR(
+    design = SpiDeRV2.from_v1(SpiDeR(
         design_id="packaged-arrow-probe",
         name="Packaged Arrow probe",
         source_format="ipc-2581",
@@ -277,7 +277,7 @@ def _verify_geometry_arrow_package(executable: Path) -> dict[str, Any]:
         if retained_count != 1:
             raise RuntimeError("Packaged worker Arrow probe lost its retained unresolved occurrence.")
         if rows != canonical_geometry_rows(design):
-            raise RuntimeError("Packaged worker Arrow probe did not decode canonical DesignIR rows.")
+            raise RuntimeError("Packaged worker Arrow probe did not decode canonical SpiDeR rows.")
         return {
             "contract": "spike/packaged-arrow-probe/v1",
             "status": "passed",

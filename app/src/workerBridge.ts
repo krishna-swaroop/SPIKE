@@ -71,7 +71,14 @@ const HEAVY_METHODS = new Set([
   "run_multiboard_si_independent_batch",
   "run_pi_path_native_mna",
   "run_harness_pi",
+  "run_multiboard_circuit",
+  "run_multiboard_thermal",
+  "run_multiboard_em",
   "generate_tetrahedral_mesh",
+  "prepare_pcb_volume_mesh",
+  "pcb_volume_mesh_capabilities",
+  "internal_mesh_capabilities",
+  "run_internal_meshing",
   "run_openems_case",
   "run_preflighted_analysis",
   "run_si_uniform_channel",
@@ -319,7 +326,7 @@ export async function readApprovedResultFile(path: string): Promise<NativeTextFi
   return invoke<NativeTextFile>("read_approved_result_file", { path });
 }
 
-export async function selectNativeImportFile(kind: "board" | "harness" | "extension", directory = false): Promise<NativeSelectedFile | null> {
+export async function selectNativeImportFile(kind: "board" | "harness" | "extension" | "structure", directory = false): Promise<NativeSelectedFile | null> {
   if (!isDesktopShell()) return null;
   return invoke<NativeSelectedFile | null>("select_import_file", { kind, directory });
 }
@@ -332,6 +339,11 @@ export async function takeStartupProject(): Promise<NativeSelectedFile | null> {
 export async function selectNativeMcadFile(): Promise<NativeSelectedFile | null> {
   if (!isDesktopShell()) return null;
   return invoke<NativeSelectedFile | null>("select_mcad_file");
+}
+
+export async function selectNativeAssemblySources(): Promise<NativeSelectedFile[] | null> {
+  if (!isDesktopShell()) return null;
+  return invoke<NativeSelectedFile[] | null>("select_assembly_sources");
 }
 
 export async function selectNativeProjectSavePath(suggestedName: string): Promise<string | null> {

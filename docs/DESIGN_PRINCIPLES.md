@@ -24,7 +24,7 @@ every consumer.
 
 ### Liskov substitution
 
-Any registered importer must return a valid `DesignIR` with the same units,
+Any registered importer must return a valid `SpiDeR` with the same units,
 coordinate semantics, issue behavior, and provenance guarantees. Any solver
 advertising a capability must accept the corresponding valid `AnalysisSpec`
 and return a conforming `AnalysisResult` or a structured failure.

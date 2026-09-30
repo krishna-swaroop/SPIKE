@@ -90,7 +90,7 @@ def capabilities() -> Dict[str, Any]:
                     "Touchstone import, network conversion, renormalization, "
                     "mixed-mode traces, passivity, reciprocity, group delay, "
                     "and matched-port impedance are available. The separate bounded uniform-channel path can "
-                    "generate experimental two-port S-parameters from a restricted DesignIR geometry envelope; "
+                    "generate experimental two-port S-parameters from a restricted SpiDeR geometry envelope; "
                     "general PCB and multiconductor geometry remain unsupported."
                 ),
             },

@@ -5,7 +5,7 @@ import tempfile
 import unittest
 
 from python.spike_core.kicad_importer import import_kicad_design
-from python.spike_core.design_ir_v2 import DesignIRV2
+from python.spike_core.spider_v2 import SpiDeRV2
 from python.spike_core.odb_importer import import_odb_design
 from python.spike_core.odb_features import parse_features
 from python.spike_core.source_package import SourcePackage
@@ -28,13 +28,13 @@ class PublicBoardRegressions(unittest.TestCase):
         polygon = '(fp_poly (pts (xy 0 0) (xy 1 0) (xy 1 1)) (layer "B.SilkS"))'
         d = self.kicad(f'(kicad_pcb (layers (0 "F.Cu" signal) (2 "B.Cu" signal)) (footprint "Logo" (layer "F.Cu") {polygon} {polygon}))')
         self.assertFalse(d.zones)
-        DesignIRV2.from_v1(d)
+        SpiDeRV2.from_v1(d)
 
     def test_duplicate_source_pad_ids_and_anonymous_tracks_survive(self):
         pad = '(pad "1" smd rect (at %s 0) (size 1 1) (layers "F.Cu") (uuid "same-source-uuid"))'
         track = '(segment (start 0 0) (end 1 0) (width 0.2) (layer "F.Cu"))'
         d = self.kicad(f'(kicad_pcb (layers (0 "F.Cu" signal) (2 "B.Cu" signal)) (footprint "test" (property "Reference" "J1") (layer "F.Cu") {pad % 0} {pad % 2}) {track} {track})')
-        typed = DesignIRV2.from_v1(d)
+        typed = SpiDeRV2.from_v1(d)
         self.assertEqual(len({p.id for p in typed.pads}), 2)
         self.assertEqual(len({t.id for t in typed.tracks}), 2)
         self.assertEqual(d.pads[0]["source_native_uuid"], "same-source-uuid")

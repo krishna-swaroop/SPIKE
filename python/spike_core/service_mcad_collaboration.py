@@ -7,8 +7,8 @@ import math
 from uuid import uuid4
 
 from .assembly_frames import IDENTITY, enforce_placement_policy
-from .design_ir_v2 import DesignIRV2
-from .design_ir_v2_schema import CoordinateFrame
+from .spider_v2 import SpiDeRV2
+from .spider_v2_schema import CoordinateFrame
 from .mcad_export_design import _convert_rings, _rings_from_drawings
 from .mcad_session_contract import SESSION, FEEDBACK, MAX_BYTES, digest, loads, validate
 from .project_model_artifacts import read_step_model_artifact
@@ -27,7 +27,7 @@ def _identity(payload, assembly):
 
 
 def _board_geometry(design):
-    design = DesignIRV2.from_dict(design).to_v1().to_dict()
+    design = SpiDeRV2.from_dict(design).to_v1().to_dict()
     meta = design.get("metadata", {})
     rings = _convert_rings(meta["board_outline_rings"]) if meta.get("board_outline_rings") else _rings_from_drawings(meta.get("board_outline_drawings", []))
     heights = [layer.get("thickness_mm", layer.get("thickness")) for layer in design.get("stackup", [])]

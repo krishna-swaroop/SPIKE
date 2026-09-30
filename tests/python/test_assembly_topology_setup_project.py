@@ -7,8 +7,8 @@ import unittest
 from copy import deepcopy
 from pathlib import Path
 
-from python.spike_core.contracts import DesignIR
-from python.spike_core.design_ir_v2 import DesignIRV2
+from python.spike_core.contracts import SpiDeR
+from python.spike_core.spider_v2 import SpiDeRV2
 from python.spike_core.project_package import read_project, write_spike_package
 from python.spike_core.service_project_handlers import handle_project_request
 from tests.python import test_assembly_package_shapes as package_shape_fixtures
@@ -17,7 +17,7 @@ from tests.python import test_assembly_package_shapes as package_shape_fixtures
 class AssemblyTopologySetupProjectTests(unittest.TestCase):
     def test_setup_update_preserves_exact_shapes_and_artifacts_and_fails_closed(self):
         assembly, models, index, model_artifacts, shape_artifacts = package_shape_fixtures.AssemblyPackageShapeTests().fixture()
-        design = DesignIRV2.from_v1(DesignIR(
+        design = SpiDeRV2.from_v1(SpiDeR(
             design_id="topology-setup", name="Topology setup", source_format="neutral",
             layers=[{"id": 0, "name": "F.Cu"}], metadata={"source_sha256": "8" * 64},
         ))
@@ -106,7 +106,7 @@ class AssemblyTopologySetupProjectTests(unittest.TestCase):
 
     def test_exact_concentric_constraint_applies_transactionally(self):
         assembly, models, index, model_artifacts, shape_artifacts = package_shape_fixtures.AssemblyPackageShapeTests().fixture()
-        design = DesignIRV2.from_v1(DesignIR(
+        design = SpiDeRV2.from_v1(SpiDeR(
             design_id="geometric-snap", name="Geometric snap", source_format="neutral",
             layers=[{"id": 0, "name": "F.Cu"}], metadata={"source_sha256": "9" * 64},
         ))

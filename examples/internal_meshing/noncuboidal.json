@@ -1,0 +1,39 @@
+{
+  "contract": "spike/internal-mesh-request/v1",
+  "operation": "generate",
+  "parameters": {
+    "points": [
+      [
+        0,
+        0,
+        0
+      ],
+      [
+        2,
+        0,
+        0
+      ],
+      [
+        0.3,
+        1,
+        0
+      ],
+      [
+        0.2,
+        0.2,
+        1
+      ],
+      [
+        0.12,
+        0.06,
+        0.03
+      ]
+    ],
+    "units": "mm",
+    "material_id": "dielectric",
+    "source_object_id": "example-domain",
+    "boundary_label": "exterior",
+    "optimize": true,
+    "iterations": 3
+  }
+}

@@ -36,8 +36,10 @@ class Tool:
     string_keys: tuple[str, ...] = ()
     enums: tuple[tuple[str, tuple[str, ...]], ...] = ()
 
+    integer_keys: tuple[str, ...] = ()
+
     def schema(self) -> dict[str, Any]:
-        properties = {key: {"type": "string" if key in self.path_keys + self.string_keys else "object"}
+        properties = {key: {"type": "string" if key in self.path_keys + self.string_keys else "integer" if key in self.integer_keys else "object"}
                       for key in self.required + self.optional}
         for key, values in self.enums:
             properties[key]["enum"] = list(values)
@@ -51,8 +53,10 @@ TOOLS: dict[str, Tool] = {
     "spike_capabilities": Tool("capabilities", "SPIKE capability and qualification status."),
     "spike_list_solvers": Tool("list_solvers", "Solver catalog and availability."),
     "spike_list_importers": Tool("list_importers", "Supported design importers."),
-    "spike_load_design": Tool("load_design", "Load a local supported design file as DesignIR.", ("path",), path_keys=("path",)),
-    "spike_validate_design": Tool("validate_design", "Validate a DesignIR design.", ("design",)),
+    "spike_thermal_capabilities": Tool("thermal_capabilities", "Thermal runtime availability and qualified or unsupported physics."),
+    "spike_extension_catalog": Tool("list_extensions", "Installed extension analysis contributions, input schemas, permissions and trust state; this does not grant trust."),
+    "spike_load_design": Tool("load_design", "Load a local supported design file as SpiDeR.", ("path",), path_keys=("path",)),
+    "spike_validate_design": Tool("validate_design", "Validate a SpiDeR design.", ("design",)),
     "spike_preflight_analysis": Tool("preflight_analysis", "Check an analysis setup and report readiness without solving.", ("design",), ("spec",)),
     "spike_run_preflighted_analysis": Tool("run_preflighted_analysis", "Preflight and run an admitted PI analysis; blocked setups remain blocked.", ("design",), ("spec",)),
     "spike_si_workflow_catalog": Tool("si_workflow_catalog", "Available SI workflow contract and capabilities."),
@@ -61,6 +65,8 @@ TOOLS: dict[str, Tool] = {
     "spike_estimate_thermal": Tool("estimate_thermal", "Estimate a compact thermal scenario.", ("scenario",)),
     "spike_emi_preflight": Tool("emi_preflight", "Validate an EMI setup without claiming field solve or compliance.", ("design", "setup")),
     "spike_emi_screen": Tool("emi_screen", "Run an EMI screening estimate, subject to worker qualification status.", ("design", "setup")),
+    "spike_contract_schema": Tool("schema:read", "List installed SPIKE contract schemas, or read one by its catalog filename. No arbitrary file read.", optional=("name",), string_keys=("name",)),
+    "spike_validate_contract": Tool("schema:validate", "Validate supplied analysis inputs against an installed contract schema; validation does not establish solver readiness.", ("name", "document"), string_keys=("name",)),
     "spike_gui_status": Tool("gui:status", "Inspect the running desktop state; requires the opt-in desktop bridge."),
     "spike_gui_select_workspace": Tool("gui:select_workspace", "Select a desktop workspace.", ("workspace",), string_keys=("workspace",), enums=(("workspace", ("PI", "SI", "EM", "Thermal", "Results", "Reports")),)),
     "spike_gui_set_view_mode": Tool("gui:set_view_mode", "Select the desktop 2D or 3D view.", ("mode",), string_keys=("mode",), enums=(("mode", ("2D", "3D")),)),
@@ -69,7 +75,61 @@ TOOLS: dict[str, Tool] = {
     "spike_gui_add_study_case": Tool("gui:add_study_case", "Add a PI, SI, EM, or thermal case to a study.", ("studyId", "type"), string_keys=("studyId", "type"), enums=(("type", ("pi", "si", "em", "thermal")),)),
     "spike_gui_activate_study_case": Tool("gui:activate_study_case", "Activate a study case in its desktop workspace.", ("studyId", "caseId"), string_keys=("studyId", "caseId")),
     "spike_gui_open_run_controls": Tool("gui:open_run_controls", "Open the active workspace run controls."),
+    "spike_gui_analysis_view_result": Tool("gui:analysis_view_result", "Open an actual retained result by resultId in SPIKE. EM results accept bounded frequencyIndex, quantity and sampleIndex from actual data; no invented overlay.", ("resultId",), ("frequencyIndex", "quantity", "sampleIndex"), string_keys=("resultId", "quantity"), integer_keys=("frequencyIndex", "sampleIndex")),
+    "spike_gui_analysis_generate_report": Tool("gui:analysis_generate_report", "Generate SPIKE's offline engineering report preview for the current loaded board and selected results. Does not export or overwrite files."),
+    "spike_gui_analysis_context": Tool("gui:analysis_context", "Discover loaded board nets, pads, assembly scope, contributions and retained results. Optional query filters pads by net_names and pages them with pad_offset/pad_limit.", optional=("query",)),
+    "spike_gui_analysis_describe": Tool("gui:analysis_describe", "Discover supported analysis paths, published contract names and qualification limits before preparing inputs.", optional=("kind",), string_keys=("kind",)),
+    "spike_gui_analysis_prepare": Tool("gui:analysis_prepare", "Prepare an analysis bound to the loaded board/assembly. Supply explicit active_board or reduced_assembly scope; missing physics inputs remain missing.", ("kind", "scope"), ("parameters",), string_keys=("kind", "scope"), enums=(("scope", ("active_board", "reduced_assembly")),)),
+    "spike_gui_analysis_patch": Tool("gui:analysis_patch", "Update a prepared case's parameter objects. This invalidates its preflight; no simulation runs.", ("caseId", "patch"), string_keys=("caseId",)),
+    "spike_gui_analysis_preflight": Tool("gui:analysis_preflight", "Start asynchronous preparation/admission for an exact bound case revision. Returns a job ID; poll spike_gui_analysis_job.", ("caseId",), string_keys=("caseId",)),
+    "spike_gui_analysis_run": Tool("gui:analysis_run", "Start an asynchronous run only after passing current-revision preparation. Returns a job ID; poll before interpreting solver evidence.", ("caseId",), string_keys=("caseId",)),
+    "spike_gui_analysis_job": Tool("gui:analysis_job", "Inspect asynchronous preflight/solve status and qualification evidence without rerunning it.", ("jobId",), string_keys=("jobId",)),
+    "spike_gui_analysis_evidence": Tool("gui:analysis_evidence", "Read actual returned result data by query path, offset and bounded limit. Missing samples are never invented.", ("jobId",), ("query",), string_keys=("jobId",)),
 }
+
+
+def _schema_operation(operation: str, arguments: dict[str, Any]) -> dict[str, Any]:
+    """Read only installed contract files and resolve their references offline."""
+    roots = [Path(getattr(sys, "_MEIPASS", "")) / "schemas"] if getattr(sys, "frozen", False) else []
+    roots.append(Path(__file__).resolve().parents[2] / "schemas")
+    directory = next((root.resolve() for root in roots if root.is_dir()), None)
+    if directory is None:
+        raise RuntimeError("Installed SPIKE contract schemas are unavailable")
+    catalog = {path.name: path for path in directory.glob("*.schema.json") if path.is_file() and not path.is_symlink()}
+    name = arguments.get("name")
+    if operation == "read" and name is None:
+        return {"schemas": sorted(catalog), "validation_is_not_solver_admission": True}
+    if name not in catalog:
+        raise ValueError("Choose a schema filename from spike_contract_schema; arbitrary paths are not accepted")
+    schema = json.loads(catalog[name].read_text(encoding="utf-8"))
+    if operation == "read":
+        return {"name": name, "schema": schema, "validation_is_not_solver_admission": True}
+    import jsonschema
+    from referencing import Registry, Resource
+    from referencing.jsonschema import DRAFT202012
+
+    document = arguments["document"]
+    json.dumps(document, allow_nan=False)
+    resources = []
+    for path in catalog.values():
+        contents = json.loads(path.read_text(encoding="utf-8"))
+        resource = Resource.from_contents(contents, default_specification=DRAFT202012)
+        resources.extend([(path.resolve().as_uri(), resource),
+                          (str(contents.get("$id") or path.name), resource),
+                          ("https://spike.local/schemas/" + path.name, resource)])
+    def retrieve_local(uri: str) -> Resource:
+        filename = uri.rsplit("/", 1)[-1]
+        if filename not in catalog:
+            raise ValueError("Schema reference is not in the installed SPIKE catalog")
+        return Resource.from_contents(json.loads(catalog[filename].read_text(encoding="utf-8")),
+                                      default_specification=DRAFT202012)
+
+    registry = Registry(retrieve=retrieve_local).with_resources(resources)
+    validator = jsonschema.validators.validator_for(schema)(schema, registry=registry)
+    errors = sorted(validator.iter_errors(document), key=lambda item: str(list(item.path)))
+    return {"name": name, "valid": not errors, "issues": [
+        {"path": ".".join(map(str, error.path)), "message": error.message} for error in errors[:50]],
+        "issue_count": len(errors), "validation_is_not_solver_admission": True}
 
 
 def _call_gui(command: str, arguments: dict[str, Any]) -> Any:
@@ -142,6 +202,9 @@ def _validate_arguments(tool: Tool, value: Any) -> dict[str, Any]:
         if key in tool.path_keys + tool.string_keys:
             if not isinstance(item, str) or not item.strip() or "\x00" in item or len(item) > 4096:
                 raise ValueError(key + " must be a non-empty string")
+        elif key in tool.integer_keys:
+            if isinstance(item, bool) or not isinstance(item, int) or item < 0 or item > 10_000_000:
+                raise ValueError(key + " must be a bounded nonnegative integer")
         elif not isinstance(item, dict):
             raise ValueError(key + " must be an object")
         for enum_key, values in tool.enums:
@@ -167,7 +230,9 @@ class McpServer:
             raise ValueError("Unknown tool")
         args = _validate_arguments(tool, {} if arguments is None else arguments)
         try:
-            if tool.method.startswith("gui:"):
+            if tool.method.startswith("schema:"):
+                value = _schema_operation(tool.method.removeprefix("schema:"), args)
+            elif tool.method.startswith("gui:"):
                 value = _call_gui(tool.method.removeprefix("gui:"), args)
             else:
                 with contextlib.redirect_stdout(sys.stderr):

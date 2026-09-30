@@ -7,9 +7,9 @@ import sys
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 from python.spike_core.assembly_frames import IDENTITY
-from python.spike_core.contracts import DesignIR
-from python.spike_core.design_ir_v2 import AssemblyIRV1, BoardInstance, DesignIRV2
-from python.spike_core.design_ir_v2_schema import CoordinateFrame
+from python.spike_core.contracts import SpiDeR
+from python.spike_core.spider_v2 import AssemblyIRV1, BoardInstance, SpiDeRV2
+from python.spike_core.spider_v2_schema import CoordinateFrame
 from python.spike_core.project_package import write_spike_package
 from python.spike_core.service_mcad_collaboration import export_mcad_session
 
@@ -21,7 +21,7 @@ output = Path(args.output).resolve()
 if output.exists(): raise SystemExit("Choose a new output directory.")
 output.mkdir(parents=True)
 ring = {"role": "outer", "start_mm": [0,0], "segments": [{"kind":"line", "end_mm": p} for p in [[70,0],[70,40],[0,40],[0,0]]]}
-design = DesignIRV2.from_v1(DesignIR(design_id="demo-board", name="Synthetic board", source_format="neutral",
+design = SpiDeRV2.from_v1(SpiDeR(design_id="demo-board", name="Synthetic board", source_format="neutral",
     layers=[{"id":0,"name":"F.Cu"}], stackup=[{"name":"Core","type":"dielectric","thickness_mm":1.6}],
     metadata={"board_outline_rings":[ring], "purpose":"Synthetic geometry-only collaboration example; no populated circuit or solver qualification"})).to_dict()
 boards = []

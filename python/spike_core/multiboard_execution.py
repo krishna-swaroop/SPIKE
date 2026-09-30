@@ -14,7 +14,7 @@ import json
 import math
 from typing import Any, Callable, Dict, Mapping
 
-from .design_ir_v2 import DesignIRV2
+from .spider_v2 import SpiDeRV2
 from .assembly_scale import MAX_BOARDS
 from .multiboard_analysis import PLAN_CONTRACT, REQUEST_CONTRACT, plan_multiboard_analysis
 from .si_protocol_test_runner import SiProtocolTestRunnerError, run_si_protocol_test_suite, preflight_si_suite_resources
@@ -151,9 +151,9 @@ def run_independent_si_batch(
         board = board_by_id[board_id]
         design = designs.get(board["design_id"])
         if not isinstance(design, Mapping):
-            raise MultiboardExecutionError(f"Board {board_id} has no retained DesignIR v2 payload.")
+            raise MultiboardExecutionError(f"Board {board_id} has no retained SpiDeR v2 payload.")
         try:
-            result = run_si_protocol_test_suite(DesignIRV2.from_dict(design), suite_request, cancel_check=cancel_check)
+            result = run_si_protocol_test_suite(SpiDeRV2.from_dict(design), suite_request, cancel_check=cancel_check)
         except (SiProtocolTestRunnerError, ValueError, TypeError) as exc:
             raise MultiboardExecutionError(f"SI job for board {board_id} could not run: {exc}") from exc
         admission = result["resource_admission"]

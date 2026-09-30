@@ -2972,6 +2972,8 @@ select option:disabled { color: #647b85; }
 .assembly-link-manager { margin: 16px 0; padding: 12px; border: 1px solid #4b7780; border-radius: 6px; background: #172a31; overflow-x: auto; }
 .assembly-link-manager h3 { display: flex; align-items: center; gap: 7px; margin: 0 0 8px; color: #e3f4f4; }
 .assembly-link-manager h4 { margin: 18px 0 8px; }
+.assembly-link-details { margin-top: 14px; border-top: 1px solid #3b626b; padding-top: 10px; }
+.assembly-link-details > summary { cursor: pointer; color: #b9d9dc; font-weight: 600; }
 .mcad-source-picker { width: 100%; min-width: 0; min-height: 52px; display: grid; grid-template-columns: 24px minmax(0, 1fr); align-items: center; gap: 8px; margin-top: 12px; border: 1px dashed #48616c; padding: 7px 10px; color: #94aab2; background: #0d1920; text-align: left; }
 .mcad-source-picker:hover:not(:disabled) { border-color: #d6a047; color: #edbd67; }
 .mcad-source-picker:disabled { opacity: .45; cursor: not-allowed; }
@@ -3187,3 +3189,14 @@ select option:disabled { color: #647b85; }
 .hover-probe-banner dt { flex: 1; }
 .hover-probe-banner dd { flex-shrink: 0; font-size: 11px; }
 .hover-probe-banner > small { white-space: normal; overflow-wrap: anywhere; }
+
+/* Whole-board mesh controls share the modal viewport on small screens. */
+.tetra-mesh-panel { inset: 5vh auto auto 50%; transform: translateX(-50%); width: min(900px, 94vw); max-height: 90vh; overflow: auto; padding: 0 16px 16px; }
+.tetra-mesh-panel .floating-heading { position: sticky; top: 0; background: #15232c; z-index: 1; height: auto; min-height: 44px; gap: 12px; }
+.tetra-mesh-panel .floating-heading small { display: block; letter-spacing: 0; margin-top: 4px; }
+.tetra-mesh-panel label { display: flex; flex-direction: column; gap: 6px; margin: 8px 0; }
+.tetra-mesh-panel textarea { width: 100%; min-height: 180px; resize: vertical; }
+.tetra-mesh-panel .field-row { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+.tetra-mesh-panel select[multiple] { min-width: 220px; min-height: 100px; }
+.tetra-mesh-panel dl { display: grid; grid-template-columns: minmax(140px, 1fr) 2fr; gap: 6px 12px; }
+.tetra-mesh-panel dd { margin: 0; overflow-wrap: anywhere; }

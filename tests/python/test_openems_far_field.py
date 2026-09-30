@@ -12,7 +12,7 @@ from unittest.mock import patch
 
 import numpy as np
 
-from python.spike_core.contracts import AnalysisSpec, DesignIR
+from python.spike_core.contracts import AnalysisSpec, SpiDeR
 from python.spike_core.external_engines import prepare_openems_case
 from python.spike_core.openems_adapter_source import OPENEMS_DRIVER
 from extensions.openems_suite.openems_mesh_policy import actual_grid_report, require_time_window
@@ -32,8 +32,8 @@ def _fixture_mesh() -> dict:
     return {"resolution_mm": 0.5, "actual_grid": actual}
 
 
-def far_field_design() -> DesignIR:
-    return DesignIR(
+def far_field_design() -> SpiDeR:
+    return SpiDeR(
         design_id="nf2ff-fixture",
         name="NF2FF fixture",
         layers=[{"name": "F.Cu"}, {"name": "B.Cu"}],

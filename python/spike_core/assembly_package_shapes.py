@@ -8,7 +8,7 @@ import math
 import re
 from typing import Any, Dict, Mapping
 
-from .design_ir_v2_schema import canonical_uuid
+from .spider_v2_schema import canonical_uuid
 from .package_shape_geometry import PackageShapeGeometryError, canonicalize_selector_geometry
 
 

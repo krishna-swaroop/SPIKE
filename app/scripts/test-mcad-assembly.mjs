@@ -193,8 +193,8 @@ for (const field of ["boards", "harnesses", "connector_mappings", "rigid_flex_li
   assert.ok(structureEditor.includes(field), `assembly structure request is missing ${field}`);
 }
 assert.ok(structureEditor.includes("Coupled analysis remains disabled"), "assembly structure UI must preserve its coupled-physics qualification boundary");
-assert.ok(structureEditor.includes("assemblyDesigns.designs.map"), "assembly board instances must select from retained DesignIR identities");
-assert.ok(structureEditor.includes("assemblyDesigns?.active_design_id"), "new board instances must default to the retained active DesignIR identity");
+assert.ok(structureEditor.includes("assemblyDesigns.designs.map"), "assembly board instances must select from retained SpiDeR identities");
+assert.ok(structureEditor.includes("assemblyDesigns?.active_design_id"), "new board instances must default to the retained active SpiDeR identity");
 assert.ok(topologyEditor.includes('method: "update_assembly_topology_setup_in_project"'), "exact topology setup must use its dedicated immutable-shape transaction");
 assert.ok(topologyEditor.includes('method: "apply_assembly_geometric_constraint_in_project"'), "exact topology setup must expose its manifest-bound single-constraint transaction");
 assert.ok(topologyEditor.includes("exact BREP descriptors"), "geometric snapping must name its authoritative geometry source");

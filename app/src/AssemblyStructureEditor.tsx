@@ -1,9 +1,12 @@
 import { useEffect, useState } from "react";
 import { Cable, CircuitBoard, Network, Plus, ShieldCheck } from "lucide-react";
 import { placementFromTransform, transformFromPlacement, type AssemblyDesigns, type AssemblyIr, type AssemblyPlacement } from "./mcadAssembly";
-import { runLocalWorker, runNativeProjectWorker, selectNativeMcadFile } from "./workerBridge";
+import { runLocalWorker, runNativeProjectWorker, selectNativeAssemblySources } from "./workerBridge";
 import HarnessAutoPlanner from "./HarnessAutoPlanner";
+import ConnectorGraphEditor from "./ConnectorGraphEditor";
+import type { GraphConnector } from "./connectorGraphModel";
 import AssemblySiBatch from "./AssemblySiBatch";
+import MultiboardStudyEditor from "./MultiboardStudyEditor";
 import FreecadCollaboration from "./FreecadCollaboration";
 import { formatPinMappings, parsePinMappings } from "./connectorPresets";
 
@@ -50,6 +53,7 @@ export default function AssemblyStructureEditor({ projectPath, projectManifestDi
   const [planDomain, setPlanDomain] = useState<"pi" | "si" | "thermal" | "emi">("pi");
   const [planMode, setPlanMode] = useState<"independent_board_batch" | "coupled_harness_network" | "coupled_assembly">("independent_board_batch");
   const [planSummary, setPlanSummary] = useState<Record<string, unknown> | null>(null);
+  const [importSummary, setImportSummary] = useState<Array<{ source_name: string; board_count: number; part_count: number }>>([]);
   useEffect(() => {
     setBoards(structuredClone(assemblyIr.boards as BoardRow[]));
     setHarnesses(structuredClone((assemblyIr.harnesses ?? []) as HarnessRow[]));
@@ -87,15 +91,15 @@ export default function AssemblyStructureEditor({ projectPath, projectManifestDi
     if (!projectPath || !projectManifestDigest || busy || dirty) return;
     setBusy(true);
     try {
-      const source = await selectNativeMcadFile();
-      if (!source) return;
-      if (!/\.(spikeassembly|kicad_pcb|ipc2581)$/i.test(source.path)) throw new Error("Select a .spikeassembly, .kicad_pcb or .ipc2581 file. Use Attach part for a single STEP/GLB enclosure piece.");
+      const sources = await selectNativeAssemblySources();
+      if (!sources?.length) return;
       const response = await runNativeProjectWorker({ method: "import_into_assembly_project", params: {
-        project_path: projectPath, source_path: source.path, expected_manifest_payload_sha256: projectManifestDigest,
+        project_path: projectPath, source_paths: sources.map(source => source.path), expected_manifest_payload_sha256: projectManifestDigest,
       } });
       if (!response.ok) throw new Error(response.error || "Assembly import failed.");
       await onUpdated();
-      onStatus(`Imported ${source.fileName}; assembly now contains ${response.result?.board_count} boards and ${response.result?.part_count} mechanical parts.`);
+      setImportSummary(Array.isArray(response.result?.sources) ? response.result.sources as Array<{ source_name: string; board_count: number; part_count: number }> : []);
+      onStatus(`Imported ${sources.length} source${sources.length === 1 ? "" : "s"}; assembly now contains ${response.result?.board_count} boards and ${response.result?.part_count} mechanical parts.`);
     } catch (error) { onStatus(String(error)); }
     finally { setBusy(false); }
   };
@@ -172,13 +176,35 @@ export default function AssemblyStructureEditor({ projectPath, projectManifestDi
   };
   const linkManagerEnabled = boards.length > 1 || harnesses.length > 0 || connectorMappings.length > 0 || rigidFlexLinks.length > 0;
   const mateCount = connectorMappings.filter(row => row.kind === "connector-mate").length;
+  const applyHarnessPlan = (plan: { harnesses: Array<Record<string, unknown>>; connector_mappings: Array<Record<string, unknown>> }) => {
+    setHarnesses(current => [...current, ...plan.harnesses as HarnessRow[]]);
+    setPinMapDrafts(current => ({ ...current, ...Object.fromEntries(plan.harnesses.map(h => [String(h.id), JSON.stringify(h.pin_map)])) }));
+    const existing = new Set(connectorMappings.filter(m => m.kind !== "connector-mate").map(m => `${m.data?.board_id}::${m.data?.connector_id}`));
+    const additions = (plan.connector_mappings as LinkRow[]).filter(m => !existing.has(`${m.data?.board_id}::${m.data?.connector_id}`));
+    setConnectorMappings(current => [...current, ...additions]);
+    setLinkDrafts(current => ({ ...current, ...Object.fromEntries(additions.map(m => [m.id, JSON.stringify(m.data)])) }));
+    onStatus("Virtual harness and connector mappings added to the draft. Save boards and links to persist the route.");
+  };
+  const addGraphMate = (endpointA: string, endpointB: string, pinMap: Record<string, string>, connectors: GraphConnector[]) => {
+    const id = identity("connector-mate");
+    const data = { endpoint_a: endpointA, endpoint_b: endpointB, pin_map: pinMap };
+    const mapped = new Set(connectorMappings.filter(m => m.kind !== "connector-mate").map(m => `${m.data?.board_id}::${m.data?.connector_id}`));
+    const additions: LinkRow[] = connectors.filter(connector => !mapped.has(connector.key) && connector.positionMm).map(connector => ({
+      id: identity("connector-map"), name: connector.key, kind: "connector",
+      data: { board_id: connector.boardId, connector_id: connector.connectorId, position_mm: connector.positionMm, pins: connector.pins },
+    }));
+    setConnectorMappings(current => [...current, ...additions, { id, name: `${endpointA} ↔ ${endpointB}`, kind: "connector-mate", data }]);
+    setLinkDrafts(current => ({ ...current, ...Object.fromEntries(additions.map(row => [row.id, JSON.stringify(row.data)])), [id]: JSON.stringify(data) }));
+    onStatus("Direct connector mate added to the draft. Save boards and links to persist it; contact impedance and return behavior still need explicit models.");
+  };
   return <section className="mcad-semantics-editor assembly-structure-editor">
     <h3><CircuitBoard size={15} /> Board instances</h3>
-    <p className="mcad-gate"><ShieldCheck size={13} /> Board design IDs must resolve in the retained DesignIR set. Up to 30 boards and 32 copper layers per board are admitted subject to resource budgets. Independent SI suite jobs can run sequentially. Coupled analysis remains disabled until reviewed board-port and harness-network models reach a qualified solver.</p>
+    <p className="mcad-gate"><ShieldCheck size={13} /> Board design IDs must resolve in the retained SpiDeR set. Up to 30 boards and 32 copper layers per board are admitted subject to resource budgets. Independent SI suite jobs can run sequentially. Coupled analysis remains disabled until reviewed board-port and harness-network models reach a qualified solver.</p>
     <h4>Board instances</h4>
     <FreecadCollaboration projectPath={projectPath} manifestDigest={projectManifestDigest} disabled={busy || dirty} onUpdated={onUpdated} onStatus={onStatus} />
-    <button className="secondary-btn" disabled={busy || dirty || !projectPath || !projectManifestDigest} onClick={() => void importSource()}>Import board / external assembly</button>
-    <p>Import additional KiCad or IPC-2581 boards, or a portable .spikeassembly with board files and placed STEP/GLB enclosure pieces. {dirty ? "Save structure edits before importing another source." : "The active board and existing assembly are retained."}</p>
+    <button className="secondary-btn" disabled={busy || dirty || !projectPath || !projectManifestDigest} onClick={() => void importSource()}>Import boards / external assemblies…</button>
+    <p>Select one or more KiCad or IPC-2581 boards, or portable .spikeassembly files, in one import. Native boards receive separated starter placements; edit XYZ and rotation below. {dirty ? "Save structure edits before importing another source." : "The active board and existing assembly are retained."}</p>
+    {importSummary.length > 0 && <div className="mcad-gate" role="status"><b>Last import</b><ul>{importSummary.map((source, index) => <li key={`${source.source_name}:${index}`}>{source.source_name}: {source.board_count} board{source.board_count === 1 ? "" : "s"}, {source.part_count} mechanical part{source.part_count === 1 ? "" : "s"}</li>)}</ul></div>}
     <table className="data-table"><thead><tr><th>ID / name</th><th>Retained design ID</th><th>XYZ (mm)</th><th>Rotation XYZ (deg)</th><th /></tr></thead><tbody>{boards.map(row => {
       const placement = placementFromTransform(row.frame.transform);
       return <tr key={row.id}>
@@ -187,7 +213,7 @@ export default function AssemblyStructureEditor({ projectPath, projectManifestDi
           ? <select aria-label={`${row.id} retained design`} value={row.design_id} onChange={event => patchBoard(row.id, { design_id: event.target.value })}>
             {assemblyDesigns.designs.map(design => <option key={design.design_id} value={design.design_id}>{String(design.name || design.design_id)} · {design.design_id}</option>)}
           </select>
-          : <input aria-label={`${row.id} active design`} value={row.design_id} readOnly title="This package retains only the active DesignIR." />}</td>
+          : <input aria-label={`${row.id} active design`} value={row.design_id} readOnly title="This package retains only the active SpiDeR." />}</td>
         <td>{(["xMm", "yMm", "zMm"] as const).map(field => <input key={field} aria-label={`${row.id} ${field}`} type="number" step="any" value={placement[field]} onChange={event => patchBoardPlacement(row, field, event.target.value)} />)}</td>
         <td>{(["rxDeg", "ryDeg", "rzDeg"] as const).map(field => <input key={field} aria-label={`${row.id} ${field}`} type="number" step="any" value={placement[field]} onChange={event => patchBoardPlacement(row, field, event.target.value)} />)}</td>
         <td><button className="secondary-btn" onClick={() => setBoards(current => current.filter(item => item.id !== row.id))}>Remove</button></td>
@@ -200,6 +226,16 @@ export default function AssemblyStructureEditor({ projectPath, projectManifestDi
     {linkManagerEnabled ? <section className="assembly-link-manager" aria-label="Multi-board Link Manager">
     <h3><Network size={15} /> Link Manager</h3>
     <p className="mcad-gate">{boards.length} boards · {mateCount} direct connector mate{mateCount === 1 ? "" : "s"} · {harnesses.length} cable harness{harnesses.length === 1 ? "" : "es"}. Define every connector pair and pin map here, then save the project to retain the verified assembly graph.</p>
+    {plannerAssembly && <ConnectorGraphEditor assembly={plannerAssembly} designs={assemblyDesigns} version={projectManifestDigest} onAddMate={addGraphMate} onAddConnector={(boardId, connectorId, positionMm, pins) => {
+      const id = identity("connector-map"); const data = { board_id: boardId, connector_id: connectorId, position_mm: positionMm, pins };
+      setConnectorMappings(current => [...current, { id, name: `${boardId}::${connectorId}`, kind: "connector", data }]);
+      setLinkDrafts(current => ({ ...current, [id]: JSON.stringify(data) }));
+    }} onApplyHarness={applyHarnessPlan} onRemoveLink={(id, kind) => {
+      if (kind === "harness") setHarnesses(current => current.filter(row => row.id !== id));
+      else setConnectorMappings(current => current.filter(row => row.id !== id));
+      onStatus(`Removed ${kind === "mate" ? "direct mate" : "virtual harness"} ${id} from the draft. Save boards and links to persist the change.`);
+    }} onStatus={onStatus} />}
+    <details className="assembly-link-details"><summary>Review and edit all link records</summary>
     <h4><Cable size={14} /> Harnesses</h4>
     <p className="mcad-gate">These rows place compact AssemblyIR board-to-board links. Author detailed connectors, wires, sources, loads, and explicit contact resistance in the project harness document.{onOpenHarnessEditor && <> <button className="secondary-btn" onClick={onOpenHarnessEditor}>Open Harness PI editor</button></>}</p>
     <table className="data-table"><thead><tr><th>ID / name</th><th>Endpoint A</th><th>Endpoint B</th><th>Length (mm)</th><th>Connector-to-connector pin map</th><th /></tr></thead><tbody>{harnesses.map(row => <tr key={row.id}>
@@ -224,15 +260,7 @@ export default function AssemblyStructureEditor({ projectPath, projectManifestDi
       </tr>;
     })}</tbody></table>
     <button className="secondary-btn" onClick={() => { const id = identity("connector-mate"); setConnectorMappings(current => [...current, { id, name: "Mated connector", kind: "connector-mate", data: { endpoint_a: "", endpoint_b: "", pin_map: {} } }]); setLinkDrafts(current => ({ ...current, [id]: JSON.stringify({ endpoint_a: "", endpoint_b: "", pin_map: {} }) })); }}><Plus size={13} /> Add stacked connector mate</button>
-    {plannerAssembly && <HarnessAutoPlanner assembly={plannerAssembly} designs={assemblyDesigns} onStatus={onStatus} onApply={plan => {
-      setHarnesses(current => [...current, ...plan.harnesses as HarnessRow[]]);
-      setPinMapDrafts(current => ({ ...current, ...Object.fromEntries(plan.harnesses.map(h => [String(h.id), JSON.stringify(h.pin_map)])) }));
-      const existing = new Set(connectorMappings.map(m => `${m.data?.board_id}::${m.data?.connector_id}`));
-      const additions = (plan.connector_mappings as LinkRow[]).filter(m => !existing.has(`${m.data?.board_id}::${m.data?.connector_id}`));
-      setConnectorMappings(current => [...current, ...additions]);
-      setLinkDrafts(current => ({ ...current, ...Object.fromEntries(additions.map(m => [m.id, JSON.stringify(m.data)])) }));
-      onStatus("Harnesses and connector mappings added to the draft. Save board and harness structure to persist them.");
-    }} />}
+    {plannerAssembly && <HarnessAutoPlanner assembly={plannerAssembly} designs={assemblyDesigns} onStatus={onStatus} onApply={applyHarnessPlan} />}
     {([[
       "Connector mappings", connectorMappings.filter(row => row.kind !== "connector-mate"), setConnectorMappings, "connector-map",
     ], [
@@ -248,8 +276,10 @@ export default function AssemblyStructureEditor({ projectPath, projectManifestDi
       </tr>)}</tbody></table>
       <button className="secondary-btn" onClick={() => { const id = identity(prefix); setter(current => [...current, { id, name: label.slice(0, -1), kind: prefix, data: {} }]); setLinkDrafts(current => ({ ...current, [id]: "{}" })); }}><Plus size={13} /> Add {label.slice(0, -1).toLowerCase()}</button>
     </div>)}
+    </details>
     </section> : <p className="mcad-gate">Add a second board instance to enable the Link Manager for direct connector mates and harnesses.</p>}
     {assemblyDesigns && <AssemblySiBatch key={projectManifestDigest ?? "unsaved"} assembly={assemblyIr} designs={assemblyDesigns} disabled={busy || dirty} onStatus={onStatus} />}
+    {boards.length > 1 && <MultiboardStudyEditor assembly={assemblyIr} projectPath={projectPath} manifestDigest={projectManifestDigest} disabled={busy || dirty} onUpdated={onUpdated} onStatus={onStatus} />}
     <h4><Network size={14} /> Multi-board analysis planning</h4>
     <div className="field-row">
       <label>Domain <select value={planDomain} onChange={event => { const domain = event.target.value as typeof planDomain; setPlanDomain(domain); setPlanMode("independent_board_batch"); }}><option value="pi">Power integrity</option><option value="si">Signal integrity</option><option value="thermal">Thermal</option><option value="emi">EM</option></select></label>

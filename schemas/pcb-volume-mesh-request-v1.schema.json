@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spike.local/schemas/pcb-volume-mesh-request-v1.schema.json",
+  "title": "SPIKE whole board focused tetra mesh request v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract",
+    "model",
+    "sizing",
+    "resources"
+  ],
+  "properties": {
+    "contract": {
+      "const": "spike/pcb-volume-mesh-request/v1"
+    },
+    "model": {
+      "$ref": "pcb-volume-model-v1.schema.json"
+    },
+    "sizing": {
+      "$ref": "pcb-focus-sizing-v1.schema.json"
+    },
+    "resources": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "max_cells",
+        "max_vertices"
+      ],
+      "properties": {
+        "max_cells": {
+          "type": "integer",
+          "minimum": 4,
+          "maximum": 100000
+        },
+        "max_vertices": {
+          "type": "integer",
+          "minimum": 4,
+          "maximum": 100000
+        }
+      }
+    }
+  }
+}

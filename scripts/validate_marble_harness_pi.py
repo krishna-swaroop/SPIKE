@@ -8,7 +8,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from python.spike_core.kicad_importer import import_kicad_design
-from python.spike_core.design_ir_v2 import DesignIRV2, AssemblyIRV1
+from python.spike_core.spider_v2 import SpiDeRV2, AssemblyIRV1
 from python.spike_core.assembly_frames import IDENTITY
 from python.spike_core.harness_authoring import discover_connectors, plan_harnesses
 from python.spike_core.harness_pi import run_harness_pi
@@ -21,7 +21,7 @@ def main():
     args = parser.parse_args()
     if args.output.exists():
         parser.error("Output must be a new evidence file.")
-    design = DesignIRV2.from_v1(import_kicad_design(str(args.board))).to_dict()
+    design = SpiDeRV2.from_v1(import_kicad_design(str(args.board))).to_dict()
     rotated = [0, -1, 0, 300, 1, 0, 0, 0, 0, 0, 1, 25, 0, 0, 0, 1]
     assembly = {"assembly_id": "marble-harness-smoke", "name": "Two placed occurrences",
                 "boards": [{"id": "a", "design_id": "d", "frame": {"frame_id": "a", "transform": IDENTITY}},

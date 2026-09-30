@@ -5,13 +5,13 @@
 import unittest
 from unittest.mock import patch
 
-from python.spike_core.contracts import AnalysisSpec, DesignIR
+from python.spike_core.contracts import AnalysisSpec, SpiDeR
 from python.spike_core.peec_capacitance_dispatch import estimate_branch_capacitance
 
 
 class CapacitanceDispatchTests(unittest.TestCase):
     def test_default_remains_legacy_and_volume_uses_source_area(self):
-        design = DesignIR()
+        design = SpiDeR()
         legacy_spec = AnalysisSpec(mode="ac")
         volume_spec = AnalysisSpec(mode="ac", options={"peec_volume_extraction": "enabled"})
         with patch("python.spike_core.quasistatic_capacitance.estimate_branch_capacitance",

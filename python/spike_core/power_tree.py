@@ -14,7 +14,7 @@ from dataclasses import dataclass
 import re
 from typing import Any, Dict, Iterable, Mapping, Sequence
 
-from .contracts import DesignIR
+from .contracts import SpiDeR
 
 
 POWER_PATH_CONTRACT = "spike/power-path-extraction/v1"
@@ -116,7 +116,7 @@ def _requires_pin_model(model_kind: str, pads: Sequence[Mapping[str, Any]]) -> b
     }
 
 
-def _component_metadata(design: DesignIR) -> Dict[str, Mapping[str, Any]]:
+def _component_metadata(design: SpiDeR) -> Dict[str, Mapping[str, Any]]:
     result: Dict[str, Mapping[str, Any]] = {}
     for component in design.components:
         reference = _text(component.get("reference") or component.get("ref"))
@@ -125,7 +125,7 @@ def _component_metadata(design: DesignIR) -> Dict[str, Mapping[str, Any]]:
     return result
 
 
-def _build_pad_index(design: DesignIR) -> tuple[list[Dict[str, Any]], Dict[str, Dict[str, Any]], Dict[str, list[Dict[str, Any]]]]:
+def _build_pad_index(design: SpiDeR) -> tuple[list[Dict[str, Any]], Dict[str, Dict[str, Any]], Dict[str, list[Dict[str, Any]]]]:
     pads: list[Dict[str, Any]] = []
     by_id: Dict[str, Dict[str, Any]] = {}
     by_component: Dict[str, list[Dict[str, Any]]] = defaultdict(list)
@@ -334,7 +334,7 @@ def _shunts(
 
 
 def extract_power_path(
-    design: DesignIR,
+    design: SpiDeR,
     source: str | Mapping[str, Any],
     sink: str | Mapping[str, Any],
     *,

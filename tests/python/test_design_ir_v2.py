@@ -5,8 +5,8 @@ from pathlib import Path
 
 from jsonschema import Draft202012Validator
 
-from python.spike_core.contracts import DesignIR
-from python.spike_core.design_ir_v2 import AssemblyIRV1, BoardInstance, CoordinateFrame, DesignIRV2, canonical_uuid
+from python.spike_core.contracts import SpiDeR
+from python.spike_core.spider_v2 import AssemblyIRV1, BoardInstance, CoordinateFrame, SpiDeRV2, canonical_uuid
 
 
 class DesignIRV2Tests(unittest.TestCase):
@@ -73,7 +73,7 @@ class DesignIRV2Tests(unittest.TestCase):
         }
 
     def fixture(self):
-        return DesignIR(
+        return SpiDeR(
             design_id="native-board-id",
             name="fixture",
             source_format="kicad",
@@ -86,8 +86,8 @@ class DesignIRV2Tests(unittest.TestCase):
         )
 
     def test_conversion_is_deterministic_and_round_trips_legacy_geometry(self):
-        first = DesignIRV2.from_v1(self.fixture())
-        second = DesignIRV2.from_v1(self.fixture())
+        first = SpiDeRV2.from_v1(self.fixture())
+        second = SpiDeRV2.from_v1(self.fixture())
         self.assertEqual(first.design_id, second.design_id)
         self.assertEqual(first.tracks[0].id, second.tracks[0].id)
         self.assertEqual(first.source.source_digest, "a" * 64)
@@ -110,7 +110,7 @@ class DesignIRV2Tests(unittest.TestCase):
                 "positive_filled_polygon": [[-1, -1], [1, -1], [1, 1], [-1, 1]],
             },
         }]
-        typed = DesignIRV2.from_v1(design)
+        typed = SpiDeRV2.from_v1(design)
         self.assertEqual(typed.pads[0].custom_geometry["status"], "supported")
 
         degenerate = typed.to_dict()
@@ -118,13 +118,13 @@ class DesignIRV2Tests(unittest.TestCase):
             [-1, -1], [-1, -1], [1, 1], [-1, 1],
         ]
         with self.assertRaisesRegex(ValueError, "simple"):
-            DesignIRV2.from_dict(degenerate)
+            SpiDeRV2.from_dict(degenerate)
 
         drilled = typed.to_dict()
         drilled["pads"][0]["drill_size_mm"] = [0.2, 0.2]
         drilled["pads"][0]["drill_shape"] = "circle"
         drilled["pads"][0]["plated"] = True
-        self.assertEqual(DesignIRV2.from_dict(drilled).pads[0].drill_size_mm, [0.2, 0.2])
+        self.assertEqual(SpiDeRV2.from_dict(drilled).pads[0].drill_size_mm, [0.2, 0.2])
 
     def test_canonical_uuid_changes_with_source_digest(self):
         self.assertNotEqual(
@@ -133,8 +133,8 @@ class DesignIRV2Tests(unittest.TestCase):
         )
 
     def test_typed_serialization_rehydrates_the_public_schema(self):
-        design = DesignIRV2.from_v1(self.fixture())
-        restored = DesignIRV2.from_dict(design.to_dict())
+        design = SpiDeRV2.from_v1(self.fixture())
+        restored = SpiDeRV2.from_dict(design.to_dict())
 
         self.assertEqual(json.loads(json.dumps(restored.to_dict())), json.loads(json.dumps(design.to_dict())))
         self.assertEqual(restored.to_v1().to_dict(), design.to_v1().to_dict())
@@ -159,8 +159,8 @@ class DesignIRV2Tests(unittest.TestCase):
              "offset_mm": [0.0, 0.0], "source_primitive_id": "VIA-BOT"},
         ]
 
-        design = DesignIRV2.from_v1(fixture)
-        restored = DesignIRV2.from_dict(json.loads(json.dumps(design.to_dict())))
+        design = SpiDeRV2.from_v1(fixture)
+        restored = SpiDeRV2.from_dict(json.loads(json.dumps(design.to_dict())))
         self.assertEqual(json.loads(json.dumps(restored.to_dict())), json.loads(json.dumps(design.to_dict())))
         self.assertEqual(restored.pads[0].land_profiles[1].source_primitive_id, "CIRCLE-BOT")
         self.assertEqual(restored.to_v1().vias[0]["land_profiles"][1]["size_mm"], [0.6, 0.6])
@@ -170,7 +170,7 @@ class DesignIRV2Tests(unittest.TestCase):
         broken = design.to_dict()
         broken["pads"][0]["land_profiles"][1]["layer_id"] = broken["pads"][0]["land_profiles"][0]["layer_id"]
         with self.assertRaisesRegex(ValueError, "unique canonical"):
-            DesignIRV2.from_dict(broken)
+            SpiDeRV2.from_dict(broken)
 
     def test_typed_round_path_round_trips_and_rejects_broken_groups(self):
         fixture = self.fixture()
@@ -181,8 +181,8 @@ class DesignIRV2Tests(unittest.TestCase):
              "path_id": "path", "path_step_index": 0, "path_step_count": 2, "path_end_cap": "round", "path_join_style": "round"},
         ]
 
-        design = DesignIRV2.from_v1(fixture)
-        restored = DesignIRV2.from_dict(design.to_dict())
+        design = SpiDeRV2.from_v1(fixture)
+        restored = SpiDeRV2.from_dict(design.to_dict())
         self.assertEqual(restored.to_dict(), design.to_dict())
         self.assertEqual(
             [(item["path_id"], item["path_step_index"], item["path_step_count"]) for item in restored.to_v1().tracks],
@@ -192,12 +192,12 @@ class DesignIRV2Tests(unittest.TestCase):
         broken = design.to_dict()
         broken["tracks"][0]["start_mm"] = [6, 0]
         with self.assertRaisesRegex(ValueError, "contiguous"):
-            DesignIRV2.from_dict(broken)
+            SpiDeRV2.from_dict(broken)
 
         unsupported = design.to_dict()
         unsupported["tracks"][0]["path"]["end_cap"] = "square"
         with self.assertRaisesRegex(ValueError, "Only round-ended"):
-            DesignIRV2.from_dict(unsupported)
+            SpiDeRV2.from_dict(unsupported)
 
     def test_legacy_sequence_drill_and_string_plating_are_normalized(self):
         fixture = self.fixture()
@@ -206,7 +206,7 @@ class DesignIRV2Tests(unittest.TestCase):
         fixture.pads[0]["drill"] = [0.45, 0.9]
         fixture.pads[0]["plated"] = "false"
 
-        design = DesignIRV2.from_v1(fixture)
+        design = SpiDeRV2.from_v1(fixture)
 
         self.assertEqual(design.pads[0].drill_size_mm, (0.45, 0.9))
         self.assertEqual(design.pads[0].drill_shape, "oval")
@@ -224,10 +224,10 @@ class DesignIRV2Tests(unittest.TestCase):
             "owner_kind": "via", "owner_id": "v1", "owner_match": "exact_source",
         }]
 
-        design = DesignIRV2.from_v1(fixture)
+        design = SpiDeRV2.from_v1(fixture)
         self.assertEqual(len(design.drills), 1)
         self.assertEqual(design.drills[0].owner_id, design.vias[0].id)
-        restored = DesignIRV2.from_dict(json.loads(json.dumps(design.to_dict())))
+        restored = SpiDeRV2.from_dict(json.loads(json.dumps(design.to_dict())))
         self.assertEqual(
             json.loads(json.dumps(restored.to_dict())),
             json.loads(json.dumps(design.to_dict())),
@@ -243,7 +243,7 @@ class DesignIRV2Tests(unittest.TestCase):
             "span_layer_ids": ["F.Cu", "B.Cu"], "span_provenance": "matched_owner",
             "owner_kind": "via", "owner_id": "v1", "owner_match": "exact_source",
         }]
-        raw = DesignIRV2.from_v1(fixture).to_dict()
+        raw = SpiDeRV2.from_v1(fixture).to_dict()
 
         invalid_references = {
             "owner_id": "unknown-via",
@@ -252,15 +252,15 @@ class DesignIRV2Tests(unittest.TestCase):
             "component_id": "unknown-component",
         }
         for field_name, invalid_id in invalid_references.items():
-            broken = DesignIRV2.from_dict(raw).to_dict()
+            broken = SpiDeRV2.from_dict(raw).to_dict()
             broken["drills"][0][field_name] = invalid_id
             with self.subTest(field_name=field_name), self.assertRaisesRegex(ValueError, "references unknown"):
-                DesignIRV2.from_dict(broken)
+                SpiDeRV2.from_dict(broken)
 
-        broken = DesignIRV2.from_dict(raw).to_dict()
+        broken = SpiDeRV2.from_dict(raw).to_dict()
         broken["drills"][0]["span_layer_ids"] = ["unknown-layer"]
         with self.assertRaisesRegex(ValueError, "span_layer_ids references unknown layer"):
-            DesignIRV2.from_dict(broken)
+            SpiDeRV2.from_dict(broken)
 
     def test_unresolved_manufacturing_drill_without_owner_is_valid(self):
         fixture = self.fixture()
@@ -270,9 +270,9 @@ class DesignIRV2Tests(unittest.TestCase):
             "owner_kind": "unresolved", "owner_id": "", "owner_match": "none",
         }]
 
-        design = DesignIRV2.from_v1(fixture)
+        design = SpiDeRV2.from_v1(fixture)
         self.assertEqual((design.drills[0].owner_kind, design.drills[0].owner_id), ("unresolved", ""))
-        self.assertEqual(DesignIRV2.from_dict(design.to_dict()).to_dict(), design.to_dict())
+        self.assertEqual(SpiDeRV2.from_dict(design.to_dict()).to_dict(), design.to_dict())
 
     def test_retained_incomplete_padstack_groups_round_trip_but_never_become_copper(self):
         fixture = self.fixture()
@@ -289,9 +289,9 @@ class DesignIRV2Tests(unittest.TestCase):
             }],
         }]
 
-        design = DesignIRV2.from_v1(fixture)
+        design = SpiDeRV2.from_v1(fixture)
         payload = json.loads(json.dumps(design.to_dict()))
-        restored = DesignIRV2.from_dict(payload)
+        restored = SpiDeRV2.from_dict(payload)
         self.assertEqual(json.loads(json.dumps(restored.to_dict())), payload)
         self.assertEqual(len(restored.retained_padstack_occurrence_groups), 1)
         self.assertNotIn("ipc2581_incomplete_pad_occurrence_groups", restored.metadata)
@@ -303,15 +303,15 @@ class DesignIRV2Tests(unittest.TestCase):
         broken = json.loads(json.dumps(payload))
         broken["retained_padstack_occurrence_groups"][0]["net_id"] = "unknown-net"
         with self.assertRaisesRegex(ValueError, "canonical net and layer"):
-            DesignIRV2.from_dict(broken)
+            SpiDeRV2.from_dict(broken)
 
     def test_retained_nonregular_padstack_geometry_is_typed_and_round_trips_v1_v2_v1(self):
         fixture = self.fixture()
         fixture.metadata["ipc2581_retained_nonregular_padstack_geometry"] = self.retained_nonregular_padstack_geometry()
 
-        design = DesignIRV2.from_v1(fixture)
+        design = SpiDeRV2.from_v1(fixture)
         payload = json.loads(json.dumps(design.to_dict()))
-        restored = DesignIRV2.from_dict(payload)
+        restored = SpiDeRV2.from_dict(payload)
 
         self.assertEqual(len(restored.retained_nonregular_padstack_geometry.user_primitives), 1)
         self.assertEqual(restored.retained_nonregular_padstack_geometry.occurrences[0].layer_id, design.layers[0].id)
@@ -323,7 +323,7 @@ class DesignIRV2Tests(unittest.TestCase):
         )
 
     def test_retained_nonregular_padstack_geometry_is_omitted_when_absent(self):
-        payload = DesignIRV2.from_v1(self.fixture()).to_dict()
+        payload = SpiDeRV2.from_v1(self.fixture()).to_dict()
         self.assertNotIn("retained_nonregular_padstack_geometry", payload)
 
     def test_standard_contour_land_geometry_is_typed_source_only_and_lossless(self):
@@ -332,9 +332,9 @@ class DesignIRV2Tests(unittest.TestCase):
         retained = self.retained_standard_contour_land_geometry()
         fixture.metadata["ipc2581_retained_standard_contour_land_geometry"] = retained
 
-        design = DesignIRV2.from_v1(fixture)
+        design = SpiDeRV2.from_v1(fixture)
         payload = json.loads(json.dumps(design.to_dict()))
-        restored = DesignIRV2.from_dict(payload)
+        restored = SpiDeRV2.from_dict(payload)
         geometry = restored.retained_standard_contour_land_geometry
         self.assertEqual((geometry.semantic_state, geometry.projection), ("unapplied_normative_semantics_missing", "forbidden"))
         self.assertEqual((geometry.padstacks[0].profile_xform.rotation_deg, geometry.padstacks[0].profile_xform.mirror), (90.0, False))
@@ -351,7 +351,7 @@ class DesignIRV2Tests(unittest.TestCase):
         fixture = self.fixture()
         fixture.components = [{"id": "U1", "reference": "U1", "at": [0, 0], "layer": "F.Cu"}]
         fixture.metadata["ipc2581_retained_standard_contour_land_geometry"] = self.retained_standard_contour_land_geometry()
-        payload = DesignIRV2.from_v1(fixture).to_dict()
+        payload = SpiDeRV2.from_v1(fixture).to_dict()
         for path, value in ((["projection"], "allowed"), (["occurrences", 0, "observed_layer_id"], "unknown-layer"), (["occurrences", 0, "xform", "rotation_deg"], float("nan"))):
             broken = json.loads(json.dumps(payload))
             target = broken["retained_standard_contour_land_geometry"]
@@ -359,7 +359,7 @@ class DesignIRV2Tests(unittest.TestCase):
                 target = target[key]
             target[path[-1]] = value
             with self.subTest(path=path), self.assertRaises(ValueError):
-                DesignIRV2.from_dict(broken)
+                SpiDeRV2.from_dict(broken)
 
     def test_source_only_negative_contours_round_trip_without_typed_copper(self):
         fixture = self.fixture()
@@ -383,8 +383,8 @@ class DesignIRV2Tests(unittest.TestCase):
             }],
         }
         fixture.metadata["ipc2581_retained_negative_contours"] = retained
-        design = DesignIRV2.from_v1(fixture)
-        restored = DesignIRV2.from_dict(json.loads(json.dumps(design.to_dict())))
+        design = SpiDeRV2.from_v1(fixture)
+        restored = SpiDeRV2.from_dict(json.loads(json.dumps(design.to_dict())))
         self.assertEqual(restored.to_v1().metadata["ipc2581_retained_negative_contours"], retained)
         self.assertEqual((len(restored.pads), len(restored.vias), len(restored.zones)), (1, 1, 0))
 
@@ -401,8 +401,8 @@ class DesignIRV2Tests(unittest.TestCase):
             }],
         }
         fixture.metadata["ipc2581_retained_unnetted_padstack_occurrence_groups"] = retained
-        design = DesignIRV2.from_v1(fixture)
-        restored = DesignIRV2.from_dict(json.loads(json.dumps(design.to_dict())))
+        design = SpiDeRV2.from_v1(fixture)
+        restored = SpiDeRV2.from_dict(json.loads(json.dumps(design.to_dict())))
         self.assertEqual(
             restored.to_v1().metadata["ipc2581_retained_unnetted_padstack_occurrence_groups"], retained,
         )
@@ -411,19 +411,19 @@ class DesignIRV2Tests(unittest.TestCase):
     def test_retained_nonregular_padstack_geometry_rejects_unknown_references_and_malformed_transform(self):
         fixture = self.fixture()
         fixture.metadata["ipc2581_retained_nonregular_padstack_geometry"] = self.retained_nonregular_padstack_geometry()
-        payload = DesignIRV2.from_v1(fixture).to_dict()
+        payload = SpiDeRV2.from_v1(fixture).to_dict()
 
         for field_name, invalid_value in (("layer_id", "unknown-layer"), ("resolved_net_id", "unknown-net"),
                                           ("primitive_ref", "unknown-primitive")):
             broken = json.loads(json.dumps(payload))
             broken["retained_nonregular_padstack_geometry"]["occurrences"][0][field_name] = invalid_value
             with self.subTest(field_name=field_name), self.assertRaisesRegex(ValueError, "reference"):
-                DesignIRV2.from_dict(broken)
+                SpiDeRV2.from_dict(broken)
 
         broken = json.loads(json.dumps(payload))
         broken["retained_nonregular_padstack_geometry"]["occurrences"][0]["xform"]["mirror"] = "false"
         with self.assertRaisesRegex(ValueError, "transform"):
-            DesignIRV2.from_dict(broken)
+            SpiDeRV2.from_dict(broken)
 
     def test_exact_curved_zone_boundaries_round_trip_without_sampling(self):
         fixture = self.fixture()
@@ -450,9 +450,9 @@ class DesignIRV2Tests(unittest.TestCase):
             "fill_style_id": "SOLID_FILL", "fill_property": "FILL",
         }]
 
-        design = DesignIRV2.from_v1(fixture)
+        design = SpiDeRV2.from_v1(fixture)
         payload = design.to_dict()
-        restored = DesignIRV2.from_dict(json.loads(json.dumps(payload)))
+        restored = SpiDeRV2.from_dict(json.loads(json.dumps(payload)))
         self.assertEqual(json.loads(json.dumps(restored.to_dict())), json.loads(json.dumps(payload)))
         self.assertEqual(restored.zones[0].outlines_mm, [])
         self.assertEqual(restored.zones[0].boundary_rings[1].segments[0].center_mm, (2.0, 2.0))
@@ -465,7 +465,7 @@ class DesignIRV2Tests(unittest.TestCase):
         broken = json.loads(json.dumps(payload))
         broken["zones"][0]["boundary_rings"][0]["segments"][-1]["end_mm"] = [0, 1]
         with self.assertRaisesRegex(ValueError, "close exactly"):
-            DesignIRV2.from_dict(broken)
+            SpiDeRV2.from_dict(broken)
 
     def test_assembly_admits_thirty_boards_and_rejects_thirty_one(self):
         boards = [BoardInstance(id=str(index), design_id=str(index), frame=CoordinateFrame(frame_id=f"frame-{index}")) for index in range(30)]

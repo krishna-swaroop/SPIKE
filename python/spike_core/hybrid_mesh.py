@@ -9,7 +9,7 @@ import os
 import platform
 from typing import Any, Callable, Dict, Iterable, List, Tuple
 
-from .contracts import AnalysisSpec, DesignIR, ValidationIssue
+from .contracts import AnalysisSpec, SpiDeR, ValidationIssue
 from .dc_result_utils import stratified_sample_records
 from .layers import copper_stack_profile
 from .local_mesh_controls import LocalTrackControls
@@ -145,7 +145,7 @@ def _net(item: Dict[str, Any]) -> str:
     return str(item.get("net_name") or item.get("net") or "")
 
 
-def _copper_stack(design: DesignIR) -> Tuple[List[str], Dict[str, float], Dict[str, float]]:
+def _copper_stack(design: SpiDeR) -> Tuple[List[str], Dict[str, float], Dict[str, float]]:
     return copper_stack_profile(design, DEFAULT_COPPER_THICKNESS_MM)
 
 
@@ -1228,7 +1228,7 @@ def _branch_admission(spec: AnalysisSpec) -> Dict[str, Any]:
 
 
 class _Builder:
-    def __init__(self, design: DesignIR, spec: AnalysisSpec):
+    def __init__(self, design: SpiDeR, spec: AnalysisSpec):
         self.design = design
         self.spec = spec
         self.owned_shared_faces = spec.mesh.get("pad_zone_coupling") == "owned_shared_faces"
@@ -1282,10 +1282,10 @@ class _Builder:
             self._prepare_zone_pad_connection_evidence()
 
     def _prepare_zone_pad_connection_evidence(self) -> None:
-        from .design_ir_v2 import DesignIRV2
+        from .spider_v2 import SpiDeRV2
         from .zone_pad_connection_evidence import build_zone_pad_connection_evidence
         try:
-            typed = DesignIRV2.from_v1(self.design)
+            typed = SpiDeRV2.from_v1(self.design)
             report = build_zone_pad_connection_evidence(typed)
             pad_sources = {item.id: item.source_id or item.id for item in typed.pads}
             zone_sources = {item.id: item.source_id or item.id for item in typed.zones}
@@ -2509,7 +2509,7 @@ class _Builder:
         return self.mesh
 
 
-def build_hybrid_mesh(design: DesignIR, spec: AnalysisSpec) -> HybridMesh:
+def build_hybrid_mesh(design: SpiDeR, spec: AnalysisSpec) -> HybridMesh:
     """Build one connected conductor topology for preview and solver adapters."""
 
     return _Builder(design, spec).build()

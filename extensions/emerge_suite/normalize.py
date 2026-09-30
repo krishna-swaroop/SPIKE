@@ -48,6 +48,24 @@ def _frequencies(value: object) -> list[float]:
     return frequencies
 
 
+def _excitation(raw: dict) -> dict:
+    """Preserve supplied port coefficients without inventing V/W normalization."""
+    ports = raw.get("excitation_ports")
+    if ports is None:
+        return {"excitation_normalization": "not recorded by source"}
+    if not isinstance(ports, list) or not 1 <= len(ports) <= MAX_PORTS or any(not isinstance(v, str) or not v for v in ports) or len(set(ports)) != len(ports):
+        raise ValueError("Field excitation needs uniquely named ports.")
+    values = raw.get("excitation_coefficients")
+    if not isinstance(values, list) or len(values) != len(ports):
+        raise ValueError("Field coefficients must match ports.")
+    coefficients = [_complex(value, "excitation coefficient") for value in values]
+    excited = raw.get("excitation_port")
+    if excited not in ports or any(value != ([1.0, 0.0] if port == excited else [0.0, 0.0]) for port, value in zip(ports, coefficients)):
+        raise ValueError("Field excitation must contain one unit port coefficient.")
+    return {"excitation_port": excited, "excitation_ports": ports, "excitation_coefficients": coefficients,
+            "excitation_normalization": "EMerge port coefficient convention; no voltage or power calibration claimed"}
+
+
 def radiation(raw: object) -> tuple[dict, dict]:
     """Keep complex field samples and derive only relative amplitude in dB."""
     if not isinstance(raw, dict):
@@ -79,6 +97,7 @@ def radiation(raw: object) -> tuple[dict, dict]:
         magnitudes = [math.hypot(*a, *b) for a, b in zip(etheta, ephi)]
         relative_db, peak_index = _relative_db(magnitudes)
         normalized.append({"frequency_hz": frequency, "angles_deg": angles,
+                           "phi_deg": _number(cut.get("phi_deg", 0), "cut phi"),
                            "e_theta_v_m": etheta, "e_phi_v_m": ephi,
                            "relative_amplitude_db": relative_db,
                            "peak_angle_deg": angles[peak_index]})
@@ -117,6 +136,7 @@ def radiation(raw: object) -> tuple[dict, dict]:
                                         "peak_direction_deg": [theta[peak_index // len(phi)],
                                                                phi[peak_index % len(phi)]]})
     return {"contract": "spike/emerge-radiation-cuts/v1", "frequencies_hz": frequencies,
+            **_excitation(raw),
             "cuts": normalized, "patterns_3d": normalized_patterns,
             "normalization": "each cut and sphere independently peak-normalized to 0 dB"}, {
                 "cut_count": len(cuts), "pattern_count": len(normalized_patterns),
@@ -150,3 +170,67 @@ def network(raw: object) -> tuple[dict, dict]:
             "ports": ports, "reference_impedance_ohm": z0, "values": samples,
             "matrix_order": "values[frequency][receive_port][excited_port]"}, {
                 "frequency_count": len(frequencies), "port_count": len(ports)}
+
+
+def nearfield(raw: object) -> tuple[dict, dict]:
+    """Validate bounded actual FEM plane samples; preserve outside-domain gaps."""
+    if not isinstance(raw, dict):
+        raise ValueError("nearfield must be an object.")
+    frequencies = _frequencies(raw.get("frequencies_hz"))
+    planes = raw.get("planes")
+    if not isinstance(planes, list) or len(planes) != len(frequencies):
+        raise ValueError("Nearfield needs one plane per solved frequency.")
+    normalized, count, valid_count = [], 0, 0
+    coordinates_reference = None
+    for frequency, plane in zip(frequencies, planes):
+        if not isinstance(plane, dict) or _number(plane.get("frequency_hz"), "plane frequency") != frequency:
+            raise ValueError("Nearfield plane frequency does not match the sweep.")
+        shape = plane.get("grid_shape")
+        if not isinstance(shape, list) or len(shape) != 2 or any(isinstance(v, bool) or not isinstance(v, int) or not 3 <= v <= 41 for v in shape):
+            raise ValueError("Nearfield grid must have 3 to 41 samples per axis.")
+        size = math.prod(shape)
+        count += size
+        if count > MAX_PATTERN_SAMPLES:
+            raise ValueError("Nearfield exceeds 100000 samples.")
+        arrays = [plane.get(key) for key in ("coordinates_mm", "valid", "e_v_m", "h_a_m")]
+        if any(not isinstance(value, list) or len(value) != size for value in arrays):
+            raise ValueError("Nearfield coordinates, validity, and vectors must match the grid.")
+        coordinates, valid, electric, magnetic = arrays
+        coords, fields = [], {"e_v_m": [], "h_a_m": []}
+        for index in range(size):
+            point = coordinates[index]
+            if not isinstance(point, list) or len(point) != 3:
+                raise ValueError("Nearfield coordinates need three millimetre values.")
+            coords.append([_number(value, "nearfield coordinate") for value in point])
+            if not isinstance(valid[index], bool):
+                raise ValueError("Nearfield validity must be boolean.")
+            valid_count += int(valid[index])
+            for key, values in (("e_v_m", electric), ("h_a_m", magnetic)):
+                vector = values[index]
+                if not valid[index]:
+                    if vector is not None:
+                        raise ValueError("Invalid nearfield samples must have null vectors.")
+                    fields[key].append(None)
+                else:
+                    if not isinstance(vector, list) or len(vector) != 3:
+                        raise ValueError("Valid nearfield samples need three complex components.")
+                    fields[key].append([_complex(value, key) for value in vector])
+        if coordinates_reference is not None and coords != coordinates_reference:
+            raise ValueError("Nearfield plane coordinates must match throughout the sweep.")
+        coordinates_reference = coords
+        if len({point[2] for point in coords}) != 1:
+            raise ValueError("Nearfield samples must lie on a single XY plane.")
+        ny, nx = shape
+        xs = [point[0] for point in coords[:nx]]
+        ys = [coords[row * nx][1] for row in range(ny)]
+        if (any(a >= b for a, b in zip(xs, xs[1:])) or
+                any(a >= b for a, b in zip(ys, ys[1:])) or
+                any(point[:2] != [xs[index % nx], ys[index // nx]] for index, point in enumerate(coords))):
+            raise ValueError("Nearfield coordinates must increase in y-major, x-minor grid order.")
+        normalized.append({"frequency_hz": frequency, "grid_shape": shape,
+                           "coordinates_mm": coords, "valid": valid, **fields})
+    return {"contract": "spike/emerge-nearfield-plane/v1", "frequencies_hz": frequencies,
+            **_excitation(raw),
+            "planes": normalized, "sample_order": "y-major, x-minor",
+            "source": "EMerge solved FEM complex fields interpolated at explicit coordinates"}, {
+                "plane_count": len(planes), "sample_count": count, "valid_sample_count": valid_count}

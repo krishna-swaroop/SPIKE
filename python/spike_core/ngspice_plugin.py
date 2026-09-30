@@ -10,7 +10,7 @@ import tempfile
 from pathlib import Path
 from typing import Any, Dict, List
 
-from .contracts import AnalysisResult, AnalysisSpec, DesignIR, ValidationIssue
+from .contracts import AnalysisResult, AnalysisSpec, SpiDeR, ValidationIssue
 from .solver_plugins import SolverPluginManifest
 from .runtime_locations import app_root, registered_engine_path
 from .spice_netlist_safety import (
@@ -217,7 +217,7 @@ class NgspicePlugin:
         self.manifest = ngspice_manifest()
         self.executable = _find_ngspice()
 
-    def run(self, design: DesignIR, spec: AnalysisSpec) -> AnalysisResult:
+    def run(self, design: SpiDeR, spec: AnalysisSpec) -> AnalysisResult:
         if not self.executable:
             return AnalysisResult(
                 analysis_id=spec.analysis_id,

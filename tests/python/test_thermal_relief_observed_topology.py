@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from python.spike_core.design_ir_v2 import DesignIRV2
+from python.spike_core.spider_v2 import SpiDeRV2
 from python.spike_core.kicad_importer import import_kicad_design
 from python.spike_core.thermal_relief_boundary_contact import (
     build_thermal_relief_boundary_contact_evidence,
@@ -30,7 +30,7 @@ class ThermalReliefObservedTopologyTests(unittest.TestCase):
     def design(
         self, *, width: float = 0.5, angle: float = 0.0,
         pad_x: float = 0.0, component_order=(0, 1, 2, 3),
-    ) -> DesignIRV2:
+    ) -> SpiDeRV2:
         directory = tempfile.TemporaryDirectory()
         self.addCleanup(directory.cleanup)
         path = Path(directory.name) / "observed-topology.kicad_pcb"
@@ -49,7 +49,7 @@ class ThermalReliefObservedTopologyTests(unittest.TestCase):
               (net 1 "VCC") (uuid "pad-a") (thermal_bridge_angle {angle}))))""",
             encoding="utf-8",
         )
-        return DesignIRV2.from_v1(import_kicad_design(str(path)))
+        return SpiDeRV2.from_v1(import_kicad_design(str(path)))
 
     def dependencies(self, design):
         connection = build_zone_pad_connection_evidence(design)

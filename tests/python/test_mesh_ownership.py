@@ -5,13 +5,13 @@ from __future__ import annotations
 import copy
 import unittest
 
-from python.spike_core.contracts import AnalysisSpec, DesignIR
+from python.spike_core.contracts import AnalysisSpec, SpiDeR
 from python.spike_core.mesh_ownership import audit_dc_conductor_volume_ownership
 from python.spike_core.meshing import VOLUME_3D, build_mesh
 
 
-def _volume_fixture() -> tuple[DesignIR, list[dict]]:
-    design = DesignIR(
+def _volume_fixture() -> tuple[SpiDeR, list[dict]]:
+    design = SpiDeR(
         design_id="ownership-fixture",
         layers=[{"name": "F.Cu", "type": "copper"}, {"name": "B.Cu", "type": "copper"}],
         stackup=[

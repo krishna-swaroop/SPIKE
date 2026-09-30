@@ -10,14 +10,14 @@ import numpy as np
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-from python.spike_core.design_ir_v2 import DesignIRV2, Layer, Material, Net, SourceIdentity, Track, Zone
+from python.spike_core.spider_v2 import SpiDeRV2, Layer, Material, Net, SourceIdentity, Track, Zone
 from python.spike_core.service import handle
 
 
 def example():
     copper = Material(id="cu", name="Copper", material_class="conductor", conductivity_s_per_m=5.8e7)
     dielectric = Material(id="core", name="Homogeneous example dielectric", material_class="dielectric", relative_permittivity=4., loss_tangent=.015)
-    design = DesignIRV2(design_id="si-two-line-example", name="50 mm parallel traces",
+    design = SpiDeRV2(design_id="si-two-line-example", name="50 mm parallel traces",
         source=SourceIdentity(source_format="fixture", source_digest=hashlib.sha256(b"SPIKE SI two-line example v1").hexdigest()),
         materials=[copper, dielectric],
         layers=[Layer(id="signal", name="F.Cu", layer_type="copper", order=0, z_mm=0., thickness_mm=.035, material_id="cu"),

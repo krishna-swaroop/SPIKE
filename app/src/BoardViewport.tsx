@@ -19,6 +19,8 @@ import { layerCssColor, layerThreeColor } from "./layerPalette";
 import { stackupColor } from "./stackupVisual";
 import { thermalVolume, ThermalScenarioView, ThermalSceneVisibility } from "./thermalScene";
 import { boardThermalCellProbe, boardThermalViewportResult, type BoardThermalCellProbe, type BoardThermalViewportResult } from "./boardThermalViewportProbe";
+import { buildEMViewportScene, emViewportSampleIndexForIntersection } from "./emViewportScene";
+import type { EMViewportData, EMViewportSettings } from "./emViewportResults";
 import { emRadiationMeshData, emRadiationProbeAtVertex, type EmRadiationProbe } from "./emRadiationViewport";
 import type { EMergeAngularPattern } from "./emergePatternInterpolation";
 import { admitSiCrosstalkViewport, type AdmittedSiCrosstalkViewport, type SiCrosstalkViewportResult } from "./siCrosstalkViewport";
@@ -195,6 +197,8 @@ type Props = {
   thermalScenario?: ThermalScenarioView | null;
   thermalVisibility?: ThermalSceneVisibility;
   emRadiation?: EmRadiationViewportResult | null;
+  emOverlay?: { data: EMViewportData; settings: EMViewportSettings } | null;
+  onEmSample?: (index: number) => void;
   siCrosstalk?: SiCrosstalkViewportResult | null;
   board?: ParsedBoard | null;
   onSelect: (object: BoardObject) => void;
@@ -982,7 +986,7 @@ function resultAxisTicks(minimumMm: number, maximumMm: number, desiredCount = 5)
   return ticks;
 }
 
-function BoardViewport({ onEmiScene, viewMode, visibleLayers, layerOpacity, layerSeparation, showVias, showNetNames = false, showModels, showSmdModels, showThtModels, assemblyModels = [], assemblySelectorPreviews = [], virtualBoards = [], selectedBoardInstanceId = null, onBoardInstanceSelect, virtualHarnesses = [], selectedHarnessId = null, onHarnessSelect, topologySelectorActive = false, selectedTopologyId = null, onTopologySelect, isolatedAssemblyPartId = null, assemblySection = DEFAULT_ASSEMBLY_SECTION, navigationMode, navigationInertia, showAxes = true, selectionBlink = true, cameraCommand, viewportRestore = null, selectionFilter, selectedId, selectedPosition, selectedNet = null, isolatedNet = null, analysisResult = null, resultVisualization, analysisNets = [], probes = [], showProbes = true, hoverProbeEnabled = false, hoverProbeKind = "universal", terminalMarkers = [], thermalScenario = null, thermalVisibility = { volume: true, heatSources: true, airflow: true, hardware: true, field: true }, emRadiation = null, siCrosstalk = null, board, onSelect, onHoverProbe, onContextMenu, onOrbitCenter, onCamera, onLayoutView, onTelemetry, onModelStatus, onAssemblyPartViewportStatus }: Props) {
+function BoardViewport({ onEmiScene, viewMode, visibleLayers, layerOpacity, layerSeparation, showVias, showNetNames = false, showModels, showSmdModels, showThtModels, assemblyModels = [], assemblySelectorPreviews = [], virtualBoards = [], selectedBoardInstanceId = null, onBoardInstanceSelect, virtualHarnesses = [], selectedHarnessId = null, onHarnessSelect, topologySelectorActive = false, selectedTopologyId = null, onTopologySelect, isolatedAssemblyPartId = null, assemblySection = DEFAULT_ASSEMBLY_SECTION, navigationMode, navigationInertia, showAxes = true, selectionBlink = true, cameraCommand, viewportRestore = null, selectionFilter, selectedId, selectedPosition, selectedNet = null, isolatedNet = null, analysisResult = null, resultVisualization, analysisNets = [], probes = [], showProbes = true, hoverProbeEnabled = false, hoverProbeKind = "universal", terminalMarkers = [], thermalScenario = null, thermalVisibility = { volume: true, heatSources: true, airflow: true, hardware: true, field: true }, emRadiation = null, emOverlay = null, onEmSample, siCrosstalk = null, board, onSelect, onHoverProbe, onContextMenu, onOrbitCenter, onCamera, onLayoutView, onTelemetry, onModelStatus, onAssemblyPartViewportStatus }: Props) {
   const [incomingBoard, setIncomingBoard] = useState<ParsedBoard | null>(null);
   const [fullModelState, setFullModelState] = useState<"none" | "loading" | "ready" | "failed">("none");
   const [componentModelState, setComponentModelState] = useState<"none" | "loading" | "ready" | "failed">("none");
@@ -1090,6 +1094,8 @@ function BoardViewport({ onEmiScene, viewMode, visibleLayers, layerOpacity, laye
   const thermalGroupRef = useRef<THREE.Group>();
   const thermalCellPickablesRef = useRef<THREE.InstancedMesh[]>([]);
   const thermalViewportResultRef = useRef<BoardThermalViewportResult | null>(null);
+  const onEmSampleRef = useRef(onEmSample);
+  onEmSampleRef.current = onEmSample;
   const emRadiationGroupRef = useRef<THREE.Group>();
   const emRadiationPickablesRef = useRef<THREE.Object3D[]>([]);
   const siCrosstalkGroupRef = useRef<THREE.Group>();
@@ -1336,6 +1342,8 @@ function BoardViewport({ onEmiScene, viewMode, visibleLayers, layerOpacity, laye
       if (!assemblyBounds.isEmpty()) boardBounds.union(assemblyBounds);
       if (!thermalBounds.isEmpty()) boardBounds.union(thermalBounds);
       if (!resultBounds.isEmpty()) boardBounds.union(resultBounds);
+      const emBounds = new THREE.Box3().setFromObject(emRadiationGroup);
+      if (!emBounds.isEmpty()) boardBounds.union(emBounds);
       if (!boardBounds.isEmpty()) {
         visibleBoundsRef.current = {
           center: boardBounds.getCenter(new THREE.Vector3()),
@@ -2040,6 +2048,11 @@ function BoardViewport({ onEmiScene, viewMode, visibleLayers, layerOpacity, laye
         return;
       }
       const radiationHit = radiationHitAt(event);
+      if (radiationHit?.object.userData.emOverlay) {
+        const index = emViewportSampleIndexForIntersection(radiationHit);
+        if (index !== null) onEmSampleRef.current?.(index);
+        return;
+      }
       if (radiationHit?.face && radiationHit.object instanceof THREE.Mesh) {
         const meshData = radiationHit.object.userData.emRadiationMesh as ReturnType<typeof emRadiationMeshData> | undefined;
         const position = radiationHit.object.geometry.getAttribute("position");
@@ -3358,6 +3371,17 @@ function BoardViewport({ onEmiScene, viewMode, visibleLayers, layerOpacity, laye
     clearGroup(group);
     emRadiationPickablesRef.current = [];
     setEmRadiationProbe(null);
+    if (activeBoard && emOverlay && viewMode === "3D") {
+      try {
+        // EMerge/Optycal use top copper at z=0; this viewport centers the PCB thickness.
+        const overlay = buildEMViewportScene(emOverlay.data, emOverlay.settings, { ...boardTransformRef.current, zOffsetMm: boardThicknessMm(activeBoard) / 2 });
+        group.add(overlay);
+        overlay.traverse(object => { if (object.userData.emOverlay && object.userData.emSampleIndices) emRadiationPickablesRef.current.push(object); });
+        if (hostRef.current) hostRef.current.dataset.emRadiation = `${emOverlay.data.domain};${emOverlay.data.label};samples=${emOverlay.data.values.length}`;
+      } catch (error) { if (hostRef.current) hostRef.current.dataset.emRadiation = `invalid;${String(error)}`; }
+      refreshVisibleBoundsRef.current();
+      return () => { emRadiationPickablesRef.current = []; clearGroup(group); };
+    }
     if (!activeBoard || !emRadiation || viewMode !== "3D") {
       if (hostRef.current) hostRef.current.dataset.emRadiation = "none";
       refreshVisibleBoundsRef.current();
@@ -3421,7 +3445,7 @@ function BoardViewport({ onEmiScene, viewMode, visibleLayers, layerOpacity, laye
       emRadiationPickablesRef.current = [];
       clearGroup(group);
     };
-  }, [activeBoard, emRadiation?.pattern, emRadiation?.sourceLabel, emRadiation?.surrogate, viewMode]);
+  }, [activeBoard, emRadiation?.pattern, emRadiation?.sourceLabel, emRadiation?.surrogate, emOverlay, viewMode]);
 
   useEffect(() => {
     const group = siCrosstalkGroupRef.current;
@@ -5122,6 +5146,7 @@ function BoardViewport({ onEmiScene, viewMode, visibleLayers, layerOpacity, laye
         </dl>
         <small style={{ display: "block", color: "#9ca8ba" }}>Click either highlighted route for identity. Values apply to the complete bound channel; highlight color is categorical and does not represent spatial voltage or coupling magnitude.</small>
       </aside>}
+      {viewMode === "3D" && emOverlay && <aside aria-label="EM viewport solved sample" style={{ position: "absolute", zIndex: 12, left: 10, bottom: 42, maxWidth: 300, padding: 10, background: "rgba(5,17,24,.94)", color: "#e9f7fa", pointerEvents: "none", fontSize: 11 }}><b>{emOverlay.data.label}</b><div>{emOverlay.data.frequencyHz} Hz · {emOverlay.data.domain === "angular" ? "Directional display; radius is not distance" : "Solved physical sample plane"}</div><div>Sample {emOverlay.settings.selectedSample}: {emOverlay.data.values[emOverlay.settings.selectedSample]?.toPrecision(6) ?? "invalid / undefined"} {emOverlay.data.unit}</div><small>Click an overlay sample to link the scene, probe and graphs.</small></aside>}
       {viewMode === "3D" && emRadiation && <aside aria-label="EM far-field board overlay" style={{ position: "absolute", zIndex: 12, left: 10, bottom: 42, width: "min(310px, calc(100% - 20px))", padding: "9px 11px", boxSizing: "border-box", border: `1px solid ${emRadiation.surrogate ? "#e7a44f" : "#54bbce"}`, borderRadius: 5, background: "rgba(5, 17, 24, 0.94)", color: "#e9f7fa", font: "11px/1.42 ui-monospace, SFMono-Regular, Consolas, monospace", pointerEvents: "none" }}>
         <strong style={{ display: "block", color: emRadiation.surrogate ? "#ffc978" : "#84e8f5" }}>RELATIVE FAR FIELD · {emRadiation.surrogate ? "APPROXIMATE SURROGATE" : "APPROXIMATE"}</strong>
         <span style={{ display: "block" }}>{(emRadiation.pattern.frequency_hz / 1e9).toFixed(4)} GHz · {emRadiationAnchorLabel}</span>

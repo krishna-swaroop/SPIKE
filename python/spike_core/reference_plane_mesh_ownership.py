@@ -6,7 +6,7 @@ from collections import Counter
 from math import isfinite
 from typing import Any, Dict, Mapping, Sequence
 
-from .design_ir_v2_schema import content_digest
+from .spider_v2_schema import content_digest
 from .reference_plane_antipad_geometry_v2 import CONTRACT as GEOMETRY_V2_CONTRACT
 from .reference_plane_antipad_geometry_v3 import CONTRACT as GEOMETRY_V3_CONTRACT
 from .reference_plane_antipad_mesh_v2 import (

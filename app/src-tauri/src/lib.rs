@@ -187,7 +187,14 @@ fn is_heavy_worker_method(method: &str) -> bool {
             | "run_python_script"
             | "run_pi_path_native_mna"
             | "run_harness_pi"
+            | "run_multiboard_circuit"
+            | "run_multiboard_thermal"
+            | "run_multiboard_em"
             | "generate_tetrahedral_mesh"
+            | "prepare_pcb_volume_mesh"
+            | "pcb_volume_mesh_capabilities"
+            | "internal_mesh_capabilities"
+            | "run_internal_meshing"
             | "run_preflighted_analysis"
             | "run_si_protocol_test_suite"
             | "run_si_uniform_channel"
@@ -569,32 +576,33 @@ fn project_worker_paths(request: &serde_json::Value) -> Result<Vec<PathBuf>, Str
         .get("params")
         .and_then(serde_json::Value::as_object)
         .ok_or("Project worker operations require approved path parameters")?;
-    let required_fields: &[&str] = if matches!(
-        worker_method(request),
-        "attach_mcad_part_to_project" | "import_into_assembly_project"
-    ) {
-        &["project_path", "source_path"]
-    } else if worker_method(request) == "prepare_visual_bundle" {
-        &["board_path"]
-    } else if matches!(
-        worker_method(request),
-        "export_mcad_session"
-            | "preview_mcad_feedback"
-            | "apply_mcad_feedback"
-            | "update_mcad_part_in_project"
-            | "reparent_mcad_part_in_project"
-            | "tessellate_mcad_part_in_project"
-            | "extract_mcad_package_shape_in_project"
-            | "generate_mcad_selector_preview_in_project"
-            | "update_assembly_semantics_in_project"
-            | "update_assembly_topology_setup_in_project"
-            | "apply_assembly_geometric_constraint_in_project"
-            | "update_assembly_structure_in_project"
-    ) {
-        &["project_path"]
-    } else {
-        &["path"]
-    };
+    let required_fields: &[&str] =
+        if matches!(worker_method(request), "attach_mcad_part_to_project") {
+            &["project_path", "source_path"]
+        } else if worker_method(request) == "import_into_assembly_project" {
+            &["project_path"]
+        } else if worker_method(request) == "prepare_visual_bundle" {
+            &["board_path"]
+        } else if matches!(
+            worker_method(request),
+            "export_mcad_session"
+                | "preview_mcad_feedback"
+                | "apply_mcad_feedback"
+                | "update_mcad_part_in_project"
+                | "reparent_mcad_part_in_project"
+                | "tessellate_mcad_part_in_project"
+                | "extract_mcad_package_shape_in_project"
+                | "generate_mcad_selector_preview_in_project"
+                | "update_assembly_semantics_in_project"
+                | "update_assembly_topology_setup_in_project"
+                | "apply_assembly_geometric_constraint_in_project"
+                | "update_assembly_structure_in_project"
+                | "save_multiboard_study_in_project"
+        ) {
+            &["project_path"]
+        } else {
+            &["path"]
+        };
     let mut paths = required_fields
         .iter()
         .map(|field| {
@@ -606,6 +614,28 @@ fn project_worker_paths(request: &serde_json::Value) -> Result<Vec<PathBuf>, Str
                 .ok_or_else(|| format!("Project worker operation requires approved {field}"))
         })
         .collect::<Result<Vec<_>, _>>()?;
+    if worker_method(request) == "import_into_assembly_project" {
+        if let Some(sources) = params.get("source_paths") {
+            let sources = sources
+                .as_array()
+                .filter(|items| !items.is_empty() && items.len() <= 30)
+                .ok_or("Assembly import requires 1 through 30 source_paths")?;
+            for source in sources {
+                let path = source
+                    .as_str()
+                    .filter(|value| !value.trim().is_empty())
+                    .ok_or("Assembly source_paths must contain non-empty paths")?;
+                paths.push(normalized_request_path(path));
+            }
+        } else {
+            let source = params
+                .get("source_path")
+                .and_then(serde_json::Value::as_str)
+                .filter(|value| !value.trim().is_empty())
+                .ok_or("Assembly import requires source_path or source_paths")?;
+            paths.push(normalized_request_path(source));
+        }
+    }
     if worker_method(request) == "write_project_package" {
         if let Some(base_path) = params
             .get("base_package_path")
@@ -787,6 +817,52 @@ fn select_mcad_file(
 }
 
 #[tauri::command]
+fn select_assembly_sources(
+    state: tauri::State<'_, ApprovedFileState>,
+) -> Result<Option<Vec<SelectedFile>>, String> {
+    let Some(selected) = rfd::FileDialog::new()
+        .add_filter(
+            "Assembly boards or exchange",
+            &["kicad_pcb", "ipc2581", "spikeassembly"],
+        )
+        .pick_files()
+    else {
+        return Ok(None);
+    };
+    if selected.is_empty() || selected.len() > 30 {
+        return Err("Choose 1 through 30 assembly sources".to_string());
+    }
+    let mut files = Vec::with_capacity(selected.len());
+    for path in selected {
+        let extension = path.extension().and_then(OsStr::to_str).unwrap_or("");
+        if !["kicad_pcb", "ipc2581", "spikeassembly"]
+            .iter()
+            .any(|allowed| extension.eq_ignore_ascii_case(allowed))
+        {
+            return Err("Assembly sources must be KiCad boards, IPC-2581 files, or .spikeassembly exchanges".to_string());
+        }
+        let metadata = fs::metadata(&path)
+            .map_err(|error| format!("Unable to inspect {}: {error}", path.display()))?;
+        if !metadata.is_file() || metadata.len() == 0 || metadata.len() > MAX_MCAD_FILE_BYTES {
+            return Err(format!(
+                "{} is empty or larger than the 2 GiB source limit",
+                path.display()
+            ));
+        }
+        let approved = register_approved_path(&state, &path)?;
+        files.push(SelectedFile {
+            file_name: approved
+                .file_name()
+                .and_then(OsStr::to_str)
+                .unwrap_or("board")
+                .to_string(),
+            path: approved.to_string_lossy().into_owned(),
+        });
+    }
+    Ok(Some(files))
+}
+
+#[tauri::command]
 fn select_import_file(
     kind: String,
     directory: bool,
@@ -802,6 +878,7 @@ fn select_import_file(
         }
         "extension" => rfd::FileDialog::new()
             .add_filter("SPIKE extension package", &["zip", "spike-extension"]),
+        "structure" => rfd::FileDialog::new().add_filter("STEP structure", &["step", "stp"]),
         _ => return Err("Unknown import source kind".to_string()),
     };
     let selected = if directory {
@@ -1569,6 +1646,7 @@ pub fn run() {
             read_approved_result_file,
             take_startup_project,
             select_mcad_file,
+            select_assembly_sources,
             select_import_file,
             select_project_save_path,
             save_text_file,
@@ -1810,6 +1888,21 @@ mod tests {
         assert!(project_worker_paths(&missing_source)
             .unwrap_err()
             .contains("source_path"));
+        let batch = json!({
+            "method": "import_into_assembly_project",
+            "params": { "project_path": "fixture.spike", "source_paths": ["first.kicad_pcb", "second.ipc2581"] }
+        });
+        assert_eq!(project_worker_paths(&batch).unwrap().len(), 3);
+        let empty_batch = json!({
+            "method": "import_into_assembly_project",
+            "params": { "project_path": "fixture.spike", "source_paths": [] }
+        });
+        assert!(project_worker_paths(&empty_batch).is_err());
+        let single_assembly = json!({
+            "method": "import_into_assembly_project",
+            "params": { "project_path": "fixture.spike", "source_path": "first.kicad_pcb" }
+        });
+        assert_eq!(project_worker_paths(&single_assembly).unwrap().len(), 2);
         let ordinary = json!({
             "method": "read_project_package",
             "params": { "path": "fixture.spike" }

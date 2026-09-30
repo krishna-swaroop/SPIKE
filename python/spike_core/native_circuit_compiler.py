@@ -12,7 +12,7 @@ import math
 import re
 from typing import Any, Dict, List
 
-from .contracts import DesignIR
+from .contracts import SpiDeR
 from .native_mna import REQUEST_CONTRACT, run_native_mna, validate_native_mna_request
 from .native_circuit_result import native_mna_to_analysis_result
 from .spice_workspace import SPICE_WORKSPACE_CONTRACT, validate_spice_workspace
@@ -144,7 +144,7 @@ def _analysis(workspace_analysis: Dict[str, Any]) -> Dict[str, Any]:
 
 def compile_spice_workspace_to_native_mna(
     workspace: Dict[str, Any],
-    design: DesignIR,
+    design: SpiDeR,
     *,
     resource_limits: Dict[str, Any] | None = None,
 ) -> Dict[str, Any]:
@@ -282,7 +282,7 @@ def compile_spice_workspace_to_native_mna(
 
 def run_spice_workspace_native_mna(
     workspace: Dict[str, Any],
-    design: DesignIR,
+    design: SpiDeR,
     *,
     resource_limits: Dict[str, Any] | None = None,
 ) -> Dict[str, Any]:

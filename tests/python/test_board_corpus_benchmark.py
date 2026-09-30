@@ -29,5 +29,5 @@ class CorpusBenchmarkTests(unittest.TestCase):
         self.assertFalse(inspect_import(payload, {'layers': 4})['passed'])
         payload['report']['issues'] = [{'severity': 'error', 'message': 'lost geometry'}]
         self.assertFalse(inspect_import(payload, {})['passed'])
-        with self.assertRaisesRegex(ValueError, 'typed DesignIR'):
+        with self.assertRaisesRegex(ValueError, 'typed SpiDeR'):
             inspect_import({}, {})

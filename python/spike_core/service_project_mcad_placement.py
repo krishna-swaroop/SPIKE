@@ -8,8 +8,8 @@ from typing import Any, Dict
 
 from .assembly_frames import enforce_placement_policy, reparent_part_preserving_world, validate_rigid_transform
 from .assembly_placement_policy import AssemblyPlacementPolicy
-from .design_ir_v2 import AssemblyIRV1
-from .design_ir_v2_schema import CoordinateFrame
+from .spider_v2 import AssemblyIRV1
+from .spider_v2_schema import CoordinateFrame
 from .project_package import ProjectPackageError, read_project, write_spike_package
 from .service_helpers import error_response, operation_id
 

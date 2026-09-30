@@ -15,6 +15,7 @@ import json
 import os
 from pathlib import Path
 import sys
+import sysconfig
 
 from .sparselizard_process import run_adapter_process
 
@@ -54,6 +55,23 @@ def _unique(pairs):
             raise ValueError("Duplicate control-file key")
         result[key] = value
     return result
+
+
+def _worker_interpreter():
+    """Bypass the Windows venv redirector, retaining a one-process Job limit.
+
+    Paths come solely from the running trusted interpreter configuration.
+    Package directories are inserted, not processed with site.addsitedir:
+    their .pth files are never executed by this bootstrap.
+    """
+    executable = Path(sys.executable).resolve()
+    packages = sorted({str(Path(sysconfig.get_path(kind)).resolve())
+                       for kind in ('purelib', 'platlib')})
+    if sys.platform == 'win32' and sys.prefix != sys.base_prefix:
+        executable = Path(sys._base_executable).resolve()
+    if not executable.is_file() or any(not Path(path).is_dir() for path in packages):
+        raise ValueError('GMSH_RUNTIME: trusted interpreter or package directories unavailable')
+    return executable, packages
 
 
 def worker(request_sha256):
@@ -110,14 +128,15 @@ def run_occ_case(request, output_dir, *, timeout_s=180, memory_limit_mb=2048, ca
     payload = json.dumps(request, sort_keys=True, separators=(",", ":"), allow_nan=False).encode()
     if len(payload) > MAX_REQUEST:
         raise ValueError("GMSH_RESOURCE: request exceeds 8 MiB")
+    executable, packages = _worker_interpreter()
     output = Path(output_dir).resolve()
     output.mkdir(parents=True, exist_ok=False)
     (output/"request.json").write_bytes(payload)
     digest = hashlib.sha256(payload).hexdigest()
     root = Path(__file__).resolve().parents[2]
-    source = ("import sys; sys.path.insert(0," + repr(str(root)) + "); "
+    source = ("import sys; sys.path.insert(0," + repr(str(root)) + "); sys.path.extend(" + repr(packages) + "); "
               "from python.spike_core.gmsh_occ_runtime import worker; worker(" + repr(digest) + ")")
-    process = run_adapter_process([sys.executable, "-I", "-"], cwd=output,
+    process = run_adapter_process([str(executable), "-I", "-S", "-"], cwd=output,
         timeout_s=timeout_s, memory_limit_mb=memory_limit_mb, output_limit_bytes=512*1024**2,
         stream_limit_bytes=4*1024**2, cancellation_event=cancellation_event,
         stdin_payload=source.encode(), windows_active_process_limit=1)
@@ -128,6 +147,8 @@ def run_occ_case(request, output_dir, *, timeout_s=180, memory_limit_mb=2048, ca
         "memory_limit_enforced": process.get("memory_limit_enforced", False),
         "job_assignment_race_closed": process.get("job_assignment_race_closed", False),
         "filesystem_sandbox": False, "redistribution_approved": False,
+        "worker_interpreter": str(executable), "worker_interpreter_sha256": _sha(executable),
+        "configured_package_directories": packages,
     }, indent=2), encoding="utf-8")
     if process["return_code"] != 0:
         raise RuntimeError("GMSH_EXECUTION: mesher failed; inspect " + str(output/"worker.log"))

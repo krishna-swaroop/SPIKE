@@ -74,3 +74,8 @@ assert.equal(old.snapshot, null, 'legacy result files must not pretend to contai
 assert.throws(() => createResultPackage({ analysis: {} }), /Run a simulation/);
 assert.throws(() => readResultPackage('{"contract":"unrelated"}'), /not a SPIKE/);
 console.log('future project fields, stable identities and portable 25-result package round trips passed');
+const assemblyStudy = { assembly_ir: { extensions: { 'spike.multiboard-studies': { pi: { request: { source: 12 }, result: { status: 'completed' } } } } } };
+const strippedStudy = withoutSavedResults(assemblyStudy);
+assert.deepEqual(strippedStudy.assembly_ir.extensions['spike.multiboard-studies'].pi.request, { source: 12 });
+assert.equal(strippedStudy.assembly_ir.extensions['spike.multiboard-studies'].pi.result, undefined);
+assert.equal(assemblyStudy.assembly_ir.extensions['spike.multiboard-studies'].pi.result.status, 'completed');

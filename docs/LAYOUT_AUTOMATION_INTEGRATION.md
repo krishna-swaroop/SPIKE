@@ -165,7 +165,7 @@ Ready in the source tree now:
 Not ready yet:
 
 - a router, placer, candidate mutation engine, CAD DRC engine, or automatic
-  DesignIR-to-physics-model compiler;
+  SpiDeR-to-physics-model compiler;
 - incremental solver-state reuse based only on `changed_entity_ids`;
 - qualified PCB thermal, SI, EMI, CFD, mechanics, or coupled multiphysics
   scoring in the private SPIKES runtime;

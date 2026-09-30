@@ -9,7 +9,7 @@ from types import SimpleNamespace
 from jsonschema import Draft202012Validator, ValidationError
 
 from tests.python import test_via_transition_geometry as fixtures
-from python.spike_core.design_ir_v2_schema import ZoneBoundaryRing, ZoneBoundarySegment
+from python.spike_core.spider_v2_schema import ZoneBoundaryRing, ZoneBoundarySegment
 from python.spike_core.planar_curve_tessellation import (
     PlanarCurveTessellationError,
     flatten_zone_boundaries,

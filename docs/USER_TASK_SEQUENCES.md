@@ -11,6 +11,13 @@ over this workflow guidance. For executable capability limits, read
 
 ## Start a DC PI review
 
+For boards that affect each other, use **MCAD assembly -> Board instances and
+harnesses -> Coupled multi-board analysis**. Enter reduced board circuits and
+connector properties for PI/SI, thermal nodes and contacts for heat sharing,
+or loop/mutual-inductance models for EM screening. Run, review diagnostics,
+then save setups with results or export/open standalone study files. Follow
+[the coupled study sequence](MULTIBOARD_COUPLED_ANALYSIS.md) for exact limits.
+
 1. Start the native desktop. The browser preview does not provide the local
    worker or native file dialogs.
 2. Choose **File -> New project** or **Open project**.
@@ -90,9 +97,13 @@ entities. A selected proxy for a different design cannot be solved from the
 active view.
 For SI across several boards, use explicit board jobs in the SI multi-board
 workflow; a viewport selection does not create a coupled channel.
-In MCAD assembly, add a second board instance to expose the **Link Manager**.
-Use **Stacked board connector mates** for direct headers and **Harnesses**
-for cabled links. Give each mate two `board::connector`
+In MCAD assembly, select multiple board files through **Import boards /
+external assemblies**. The import commits all files together and places native
+boards apart for initial review. A second board exposes the **Link Manager**.
+Use its **Connector graph** to discover ports, select two board connectors,
+review suggested physical pin pairs, then add a direct mate or preview and add
+a virtual cable harness. Use **Stacked board connector mates** for direct
+headers and **Harnesses** for cabled links. Give each mate two `board::connector`
 endpoints and explicit pin pairs. Review connector and return models in the
 solver workflow; board proximity alone does not connect them. Choose **Save
 boards and links**, then save the `.spike` project with results or export a

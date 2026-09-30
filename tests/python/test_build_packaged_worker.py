@@ -10,7 +10,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 
-from python.spike_core.design_ir_v2 import DesignIRV2
+from python.spike_core.spider_v2 import SpiDeRV2
 from python.spike_core.geometry_arrow import canonical_geometry_rows
 from scripts import build_packaged_worker as packaged_worker
 
@@ -81,7 +81,7 @@ class PackagedWorkerArrowProbeTests(unittest.TestCase):
 
         def decode(path: Path, table_path: str, **kwargs: object) -> dict[str, object]:
             captured["decode"] = (path, table_path, kwargs)
-            design = DesignIRV2.from_dict(captured["request"][2]["snapshot"]["design_ir"])
+            design = SpiDeRV2.from_dict(captured["request"][2]["snapshot"]["design_ir"])
             return {"rows": canonical_geometry_rows(design)}
 
         with patch.object(packaged_worker, "_request", side_effect=request), patch.object(

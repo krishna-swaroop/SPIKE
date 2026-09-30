@@ -9,7 +9,7 @@ from pathlib import Path
 
 from jsonschema import Draft202012Validator
 
-from python.spike_core.contracts import AnalysisSpec, DesignIR
+from python.spike_core.contracts import AnalysisSpec, SpiDeR
 from python.spike_core.solver_geometry import build_dc_fem_geometry
 
 
@@ -17,8 +17,8 @@ ROOT = Path(__file__).resolve().parents[2]
 SCHEMA_PATH = ROOT / "schemas" / "dc-fem-conductor-volumes-v1.schema.json"
 
 
-def dc_fixture() -> tuple[DesignIR, AnalysisSpec]:
-    design = DesignIR(
+def dc_fixture() -> tuple[SpiDeR, AnalysisSpec]:
+    design = SpiDeR(
         design_id="dc-fem-schema-fixture",
         name="DC FEM schema copper bar",
         layers=[{"name": "F.Cu", "type": "copper"}],

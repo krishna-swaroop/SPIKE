@@ -55,6 +55,16 @@ the solver and enclosure implementation notes.
   full interior-edge RWG basis evaluation/divergence. Tests cover tangency,
   normal-current continuity, divergence balance, Gram positive definiteness,
   numbering invariance and dimensional scaling. Boundary half-RWGs are absent.
+- `mom_singular_source.py` now computes bounded free-space triangular Green
+  source moments, with a singularity-cancelling fan and exact static radial
+  integration when the observation projects into the triangle. It reports
+  order-to-order error and rejects unresolved near interactions. This is one
+  source integral, **not** a triangle-pair Galerkin matrix.
+- `mom_far_field.py` evaluates radiation amplitudes and conditional bistatic
+  RCS from explicitly supplied RWG current coefficients. It checks units,
+  phase span, resource limits and quadrature change. It neither determines
+  currents nor validates a scattering object, and its result status remains
+  `not_validated`. See [operator evidence](validation/MOM_REFERENCE_OPERATORS_20260930.md).
 
 The tetrahedral operations assume an initially conforming, nonoverlapping mesh.
 Local face/topology checks do not establish global intersection freedom or
@@ -63,12 +73,18 @@ geometric intersection freedom.
 
 ## Next implementation order
 
+The [internal tetra engine increment](INTERNAL_MESH_ENGINE.md) now supplies
+bounded convex generation, deterministic bulk/size/manual marking and scalar
+refinement-only transfer. General constrained geometry and conservative
+relocation transfer in the roadmap below are still outstanding.
+
 1. Tagged CAD/PCB geometry generation with holes, via/antipad structures and
    conforming material/terminal interfaces; explicit CAD surface projection.
 2. Geometry-based local sizing and protected-region controls, sliver removal,
    high-order curved elements, boundary-layer prisms and adaptive error-driven
    refinement with conservative solution transfer.
-3. Dense Galerkin MoM reference: singular/near-singular quadrature, EFIE,
+3. Dense Galerkin MoM reference: complete singular/near-singular **triangle-pair**
+   quadrature (including edge/vertex-adjacent and disjoint-near pairs), EFIE,
    incident waves and feed models, then PEC sphere/Mie and dipole convergence.
    Add MFIE/CFIE only on their applicable closed surfaces, followed by dielectric
    transmission formulations. Keep field-solver capability off until validated.
@@ -86,6 +102,14 @@ Modern methods are evaluated against reproducible accuracy/memory/time tests,
 not adopted merely because they are newer. Gmsh documents local sizing,
 Delaunay/HXT and optimization options; it is a candidate CAD-meshing dependency,
 not an installed/admitted component of this increment. [Official manual](https://gmsh.info/doc/texinfo/gmsh.html)
+
+Research candidates for later controlled comparisons include
+[plane-wave density interpolation for EFIE singularities](https://arxiv.org/abs/1910.02046)
+and [OSRC-based EFIE preconditioning](https://arxiv.org/abs/2507.20707).
+Neither is implemented here. A candidate must beat the bounded reference on
+held-out accuracy, conditioning, memory and runtime without breaking
+reciprocity or passive-radiation checks; reported paper speedups are not SPIKE
+measurements.
 
 RWG terminology and compatible Maxwell spaces follow mathematical definitions,
 not copied implementation. [Bempp function-space documentation](https://bempp.com/handbook/api/function_spaces.html)

@@ -22,7 +22,7 @@ research prototypes do not automatically become advertised application physics.
 
 ## Runtime and model boundaries
 
-EDA input enters through an importer and becomes DesignIR. AnalysisSpec binds
+EDA input enters through an importer and becomes SpiDeR. AnalysisSpec binds
 geometry, nets, terminals, materials, resources and the study. The solver
 registry selects a declared capability. Results include issues, provenance and
 validity state, rather than only plots. The UI does not invent missing fields.

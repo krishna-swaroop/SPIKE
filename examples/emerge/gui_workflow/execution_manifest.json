@@ -1,0 +1,62 @@
+[
+  {
+    "example": "patch",
+    "solver": "EMerge/3.0.0a19",
+    "result_written_utc": "2026-09-30T12:20:29.648892+00:00",
+    "result_sha256": "51e8530256f067a03df071f03a0bc48b3ab51b39ca76e7389c91dd2bc403298b",
+    "status": "completed",
+    "model_status": "unvalidated",
+    "admission": "passed",
+    "design_binding": {
+      "design_id": "kicad-f8fd038633c5b49a3867c8f0",
+      "digest_sha256": "8f5b257976341982ca6a996179b524f2f43c5bbbd41e943341756fa1d05284af"
+    },
+    "preview_matches_executed_script": true,
+    "generated_script_sha256": "80e1601aa2e57f08b234a791b858cab896dc831b0add1f8ad61df691d3961eec"
+  },
+  {
+    "example": "radome",
+    "solver": "EMerge/3.0.0a19",
+    "result_written_utc": "2026-09-30T12:22:10.828480+00:00",
+    "result_sha256": "b4357d9723b6cc96041496cdcc93e62194331ab67fca10712c2d50c57cc31ff4",
+    "status": "completed",
+    "model_status": "unvalidated",
+    "admission": "passed",
+    "design_binding": {
+      "design_id": "kicad-b99976c1f8f09b1d03001e1d",
+      "digest_sha256": "97d24721197cd0c9669780035f84fa7d51d515c605da2b95f74ffd6f3dcc65a7"
+    },
+    "preview_matches_executed_script": true,
+    "generated_script_sha256": "42280e142d84d0f16aed75302f191bcfba501c25edb954756d6189bd28f07c3c"
+  },
+  {
+    "example": "esp32_surrogate",
+    "solver": "EMerge/3.0.0a19",
+    "result_written_utc": "2026-09-30T12:22:33.440686+00:00",
+    "result_sha256": "fccea7b16992e29e1e72e1eef21f3720d5d21eb2e2e12aea33cbcf4c92f08fd8",
+    "status": "completed",
+    "model_status": "unvalidated",
+    "admission": "passed",
+    "design_binding": {
+      "design_id": "kicad-3199ce0a25f8987020e716d8-rf-two-conductor",
+      "digest_sha256": "8ea41ffbb5e3eb2cafc42db2e4f74d2fcef1b4ce6935e0fb7283088475323ea5"
+    },
+    "preview_matches_executed_script": true,
+    "generated_script_sha256": "2691aa74afbbc5764342ab8789ffb8f16436e53fbd930e684e7689a725895528"
+  },
+  {
+    "example": "patch_fields",
+    "solver": "EMerge/3.0.0a19",
+    "result_written_utc": "2026-09-30T12:22:47.108158+00:00",
+    "result_sha256": "9504f23a0f2d8e43314c3ae9a84cf962310b7eb654df2d77d2ceddb67842c76e",
+    "status": "completed",
+    "model_status": "unvalidated",
+    "admission": "passed",
+    "design_binding": {
+      "design_id": "kicad-f8fd038633c5b49a3867c8f0",
+      "digest_sha256": "8f5b257976341982ca6a996179b524f2f43c5bbbd41e943341756fa1d05284af"
+    },
+    "preview_matches_executed_script": true,
+    "generated_script_sha256": "f0a7342b6e8f786ef5cc74054c2dc1ab35964d22b39dcc08d3c5650bd0327510"
+  }
+]

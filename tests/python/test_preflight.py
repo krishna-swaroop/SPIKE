@@ -1,7 +1,7 @@
 import unittest
 from math import hypot
 
-from python.spike_core.contracts import AnalysisSpec, DesignIR
+from python.spike_core.contracts import AnalysisSpec, SpiDeR
 from python.spike_core.dc_result_utils import stratified_sample_records
 from python.spike_core.hybrid_mesh import build_hybrid_mesh, nearest_mesh_node
 from python.spike_core.meshing import MeshingOptions, _edges
@@ -12,7 +12,7 @@ from python.spike_core.peec_plugin import native_available
 
 class PreflightTests(unittest.TestCase):
     def setUp(self):
-        self.design = DesignIR(
+        self.design = SpiDeR(
             name="preflight fixture",
             layers=[{"name": "F.Cu"}, {"name": "B.Cu"}],
             nets=[{"id": 1, "name": "VCC"}],
@@ -78,7 +78,7 @@ class PreflightTests(unittest.TestCase):
         self.assertLessEqual(expanded.memory_budget_bytes, int(64 * 1024 * 1024 * 0.75))
 
     def test_ac_branch_admission_is_derived_from_solver_ram_not_legacy_cap(self):
-        design = DesignIR(
+        design = SpiDeR(
             name="resource admission fixture",
             layers=[{"name": "F.Cu"}],
             nets=[{"id": 1, "name": "VCC"}],
@@ -177,7 +177,7 @@ class PreflightTests(unittest.TestCase):
         self.assertEqual({record["component_ref"] for record in selected}, {"C1", "C2", "C3"})
 
     def test_preview_admission_is_spatial_and_not_a_builder_prefix(self):
-        design = DesignIR(
+        design = SpiDeR(
             layers=[{"name": "F.Cu"}, {"name": "B.Cu"}],
             nets=[{"id": 1, "name": "VCC"}],
             tracks=[
@@ -221,7 +221,7 @@ class PreflightTests(unittest.TestCase):
         self.assertGreater(len(track_x), 12)
 
     def test_track_preview_caps_overlap_at_an_angled_route_joint(self):
-        design = DesignIR(
+        design = SpiDeR(
             layers=[{"name": "F.Cu"}],
             nets=[{"id": 1, "name": "VCC"}],
             tracks=[
@@ -261,7 +261,7 @@ class PreflightTests(unittest.TestCase):
         self.assertTrue(all(abs(radius - 0.5) < 1e-9 for radius in radii))
 
     def test_narrow_tracks_receive_width_aware_longitudinal_refinement(self):
-        design = DesignIR(
+        design = SpiDeR(
             layers=[{"name": "F.Cu"}],
             nets=[{"id": 1, "name": "VCC"}],
             tracks=[{
@@ -284,7 +284,7 @@ class PreflightTests(unittest.TestCase):
         self.assertAlmostEqual(mesh.minimum_local_target_mm, 0.2)
 
     def test_zone_boundary_cells_are_clipped_to_narrow_diagonal_copper(self):
-        design = DesignIR(
+        design = SpiDeR(
             layers=[{"name": "F.Cu"}],
             nets=[{"id": 1, "name": "VCC"}],
             zones=[{
@@ -309,7 +309,7 @@ class PreflightTests(unittest.TestCase):
         self.assertEqual(preview["quality"]["zero_length_edges"], 0)
 
     def test_concave_zone_does_not_create_attachment_across_void(self):
-        design = DesignIR(
+        design = SpiDeR(
             layers=[{"name": "F.Cu"}],
             nets=[{"id": 1, "name": "VCC"}],
             tracks=[{
@@ -341,7 +341,7 @@ class PreflightTests(unittest.TestCase):
 
     def test_concave_zone_cells_do_not_bridge_disconnected_copper_fragments(self):
         polygon = [(0, 0), (4, 0), (4, 10), (3, 10), (3, 1), (1, 1), (1, 10), (0, 10)]
-        design = DesignIR(
+        design = SpiDeR(
             layers=[{"name": "F.Cu"}],
             nets=[{"id": 1, "name": "VCC"}],
             zones=[{
@@ -367,7 +367,7 @@ class PreflightTests(unittest.TestCase):
                 self.assertFalse(1 < midpoint[0] < 3 and 1 < midpoint[1] < 10)
 
     def test_topology_attachments_are_not_exported_as_physical_result_samples(self):
-        design = DesignIR(
+        design = SpiDeR(
             layers=[{"name": "F.Cu"}],
             nets=[{"id": 1, "name": "VCC"}],
             tracks=[{
@@ -407,7 +407,7 @@ class PreflightTests(unittest.TestCase):
             ))
 
     def test_volume_zone_prisms_use_face_and_vertical_edges_only(self):
-        design = DesignIR(
+        design = SpiDeR(
             layers=[{"name": "F.Cu"}],
             nets=[{"id": 1, "name": "VCC"}],
             zones=[{
@@ -436,7 +436,7 @@ class PreflightTests(unittest.TestCase):
                 self.assertAlmostEqual(start[1], end[1])
 
     def test_mesh_preview_contains_only_requested_net(self):
-        design = DesignIR(
+        design = SpiDeR(
             layers=[{"name": "F.Cu"}],
             tracks=[
                 {"id": "vcc", "start": [0, 0], "end": [10, 0], "width": 1, "layer": "F.Cu", "net_name": "VCC"},
@@ -448,7 +448,7 @@ class PreflightTests(unittest.TestCase):
         self.assertEqual({cell["net"] for cell in preview["cells"]}, {"VCC"})
 
     def test_custom_pad_without_exact_geometry_is_solver_blocked(self):
-        design = DesignIR(
+        design = SpiDeR(
             layers=[{"name": "F.Cu"}],
             nets=[{"id": 1, "name": "VCC"}],
             pads=[{
@@ -547,7 +547,7 @@ class PreflightTests(unittest.TestCase):
         )
 
     def test_geometry_anchor_selects_the_intended_layer_when_copper_overlaps(self):
-        design = DesignIR(
+        design = SpiDeR(
             layers=[{"name": "F.Cu"}, {"name": "B.Cu"}],
             tracks=[
                 {"id": "front", "start": [0, 0], "end": [10, 0], "width": 1, "layer": "F.Cu", "net_name": "VCC"},
@@ -570,7 +570,7 @@ class PreflightTests(unittest.TestCase):
         self.assertEqual(mesh.nodes[node_id].layer, "B.Cu")
 
     def test_dc_connected_conductor_terminals_solve_across_a_through_via(self):
-        design = DesignIR(
+        design = SpiDeR(
             layers=[{"name": "F.Cu"}, {"name": "B.Cu"}],
             tracks=[
                 {"id": "front", "start": [0, 0], "end": [5, 0], "width": 1, "layer": "F.Cu", "net_name": "VCC"},
@@ -606,7 +606,7 @@ class PreflightTests(unittest.TestCase):
         self.assertTrue(any(edge["kind"] == "via" and abs(edge["current_a"]) > 0 for edge in result.fields["edge_results"]))
 
     def test_explicit_return_path_solves_supply_and_return_loop(self):
-        design = DesignIR(
+        design = SpiDeR(
             layers=[{"name": "F.Cu"}, {"name": "B.Cu"}],
             nets=[{"id": 1, "name": "VCC"}, {"id": 2, "name": "ISO_GND"}],
             tracks=[

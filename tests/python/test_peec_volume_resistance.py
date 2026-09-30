@@ -8,7 +8,7 @@ from pathlib import Path
 
 import numpy as np
 
-from python.spike_core.contracts import AnalysisSpec, DesignIR
+from python.spike_core.contracts import AnalysisSpec, SpiDeR
 from python.spike_core.hybrid_mesh import (
     MeshBranch, TOPOLOGY_ONLY_BRANCH_KINDS, build_hybrid_mesh,
 )
@@ -35,7 +35,7 @@ class VolumeResistanceTests(unittest.TestCase):
         duplicate = rectangle("b", (0.0, 0.0), (1.0, 0.0))
         reversed_basis = rectangle("c", (1.0, 0.0), (0.0, 0.0))
         matrix, quality = assemble_overlap_resistance(
-            DesignIR(), [forward, duplicate, reversed_basis]
+            SpiDeR(), [forward, duplicate, reversed_basis]
         )
         expected = forward.resistance_ohm
         np.testing.assert_allclose(matrix, expected * np.array([
@@ -48,13 +48,13 @@ class VolumeResistanceTests(unittest.TestCase):
         base = rectangle("a", (233.0, 159.0), (234.0, 159.0))
         shifted = rectangle("b", (233.0, 159.1), (234.0, 159.1))
         transverse = rectangle("c", (233.5, 158.7), (233.5, 159.3))
-        matrix, _ = assemble_overlap_resistance(DesignIR(), [base, shifted, transverse])
+        matrix, _ = assemble_overlap_resistance(SpiDeR(), [base, shifted, transverse])
         self.assertAlmostEqual(matrix[0, 1] / matrix[0, 0], 0.5, places=10)
         self.assertAlmostEqual(matrix[0, 2], 0.0, places=16)
         self.assertAlmostEqual(matrix[1, 2], 0.0, places=16)
 
     def test_coaxial_segment_additivity_and_cross_shape_orthogonality(self):
-        design = DesignIR(vias=[{"id": name, "drill": 0.3} for name in ("a", "b", "c")])
+        design = SpiDeR(vias=[{"id": name, "drill": 0.3} for name in ("a", "b", "c")])
         first, second = annulus("a", 0.0, 0.1), annulus("b", 0.1, 0.2)
         matrix, _ = assemble_overlap_resistance(design, [first, second,
             rectangle("track", (-0.5, 0.0), (0.5, 0.0))])
@@ -67,11 +67,11 @@ class VolumeResistanceTests(unittest.TestCase):
         first = rectangle("a", (0.0, 0.0), (1.0, 0.0), net="N")
         other = rectangle("b", (0.0, 0.0), (1.0, 0.0), net="OTHER")
         with self.assertRaisesRegex(ValueError, "incompatible net"):
-            assemble_overlap_resistance(DesignIR(), [first, other])
+            assemble_overlap_resistance(SpiDeR(), [first, other])
         crossing_other_net = rectangle("c", (0.5, -0.5), (0.5, 0.5), net="OTHER")
         with self.assertRaisesRegex(ValueError, "incompatible net"):
-            assemble_overlap_resistance(DesignIR(), [first, crossing_other_net])
-        via_design = DesignIR(vias=[{"id": name, "drill": 0.3} for name in ("a", "b")])
+            assemble_overlap_resistance(SpiDeR(), [first, crossing_other_net])
+        via_design = SpiDeR(vias=[{"id": name, "drill": 0.3} for name in ("a", "b")])
         with self.assertRaisesRegex(ValueError, "noncoaxial annuli"):
             assemble_overlap_resistance(via_design,
                                         [annulus("a", 0.0, 0.1), annulus("b", 0.0, 0.1, x=0.01)])

@@ -8,7 +8,7 @@ SPIKE must render the design that was imported, not a visual approximation based
 
 KiCAD-Prism is a useful product and workflow reference. Its current viewer is based on vendored ECAD-Viewer/KiCanvas assets, with a separate Three.js 3D path. KiCAD-Prism is Apache-2.0 licensed, ECAD-Viewer is MIT licensed, and KiCanvas has its own upstream project. SPIKE does not copy their vendored bundles. It uses the architectural ideas of dedicated renderers, stable object metadata, cross-probing, and viewer-specific validation.
 
-KiCad Monkey is an MIT-licensed Python parser, round-trip model, and IR-backed 2D renderer. It is a strong candidate for the supported KiCad ingestion layer because it separates low-level format handling from application orchestration. Adoption requires a pinned version, corpus comparison against SPIKE's DesignIR, and dependency/provenance review.
+KiCad Monkey is an MIT-licensed Python parser, round-trip model, and IR-backed 2D renderer. It is a strong candidate for the supported KiCad ingestion layer because it separates low-level format handling from application orchestration. Adoption requires a pinned version, corpus comparison against SPIKE's SpiDeR, and dependency/provenance review.
 
 References:
 
@@ -30,7 +30,7 @@ References:
   -> native Three.js 3D renderer
 ```
 
-The browser parser exists for the offline development preview. The packaged application should obtain the authoritative DesignIR from the local worker and use the same rendering contracts. The browser parser and worker importer must be compared against the same fixture corpus until their outputs agree.
+The browser parser exists for the offline development preview. The packaged application should obtain the authoritative SpiDeR from the local worker and use the same rendering contracts. The browser parser and worker importer must be compared against the same fixture corpus until their outputs agree.
 
 For KiCad sources, the local worker prepares a `spike/visual-bundle/v1` cache
 with KiCad CLI. It contains a board-only binary glTF scene, a component-only
@@ -51,7 +51,7 @@ network access after export.
   low-opacity composite rather than the default view.
 - Vector plots preserve source tracks, filled zones, pads, drills, text,
   silkscreen, and `Edge.Cuts` at arbitrary zoom.
-- 2D click selection maps the SVG coordinate back into normalized DesignIR
+- 2D click selection maps the SVG coordinate back into normalized SpiDeR
   coordinates and returns the same object metadata used by 3D and KiCad.
 - 3D uses a perspective camera with pan, orbit, zoom-to-cursor, environment lighting, and soft shadows.
 - 3D uses a permanent Z-up basis. Preset views must never change `camera.up`;
@@ -188,7 +188,7 @@ data-path bottlenecks can meet the published budgets.
 Move only the viewport to a native renderer when measured fixtures exceed those
 budgets or require capabilities WebGL cannot deliver, such as very large
 full-wave meshes, compute-heavy field visualization, or a platform-specific
-graphics feature. A native viewport must still consume the same DesignIR,
+graphics feature. A native viewport must still consume the same SpiDeR,
 selection, camera, and result contracts; it must not fork the engineering model.
 
 ## Performance Strategy
@@ -272,7 +272,33 @@ Current, current-density, electric-field, and magnetic-field views expose an ind
 
 Engineering analytics are centralized in `app/src/resultAnalytics.ts`; the Results panel and HTML report therefore use the same field extrema, probe summary, via-stress ranking, and approximate short-duration copper-fusing screen. See `docs/RESULT_VISUALIZATION_AND_LIMITS.md` for equations and validity limits.
 
-## Current Limitations
+## EM result manager
+
+Completed EMerge and Optycal results are retained in result history and project
+packages. The EM results manager overlays the selected dataset in the main
+board viewport, with the PCB and returned STEP structure visible. Saved
+projects retain quantity, frequency, projection, style and probe selection.
+Open `examples/optycal/viewport_example.spike` for a reproducible example.
+
+Spatial E/H planes use returned millimetre coordinates.
+The EMerge top-copper `z=0` frame receives a half-board-thickness display offset
+to match the viewport's centered PCB; the same offset applies to its structure.
+Time-average Poynting vectors use `0.5 Re(E cross conjugate(H))`. Invalid samples remain holes.
+Angular radiation uses a directional display sphere with an explicit display
+radius, not spatial field reconstruction. Optycal bare and installed patterns
+share the bare-reference amplitude scale.
+
+Controls expose surfaces, samples, vector directions, display contours, complex
+component projections and phase snapshots. Node and antinode markers select
+sampled amplitude threshold candidates; they do not establish standing-wave
+nodes or unsampled extrema. Graphs show actual sample traces, radiation cuts
+and returned S-parameter magnitude/phase, with linked frequency/sample selection
+and CSV/JSON/Touchstone exports. Scalar comparisons and time-average power do
+not receive node markers. The `test-em-viewport-*.mjs` checks cover coordinates,
+invalid holes, Poynting values, common references, picking and disposal.
+Supported-window screenshot qualification remains a separate acceptance gate.
+
+## Current viewer limitations
 
 - A component model cannot be accurate when its source board references a missing
   local file. The ebrake fixture currently reports 19 unresolved references;

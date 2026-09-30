@@ -66,6 +66,14 @@ The embedded design is required for portable packages. Large immutable artifacts
 
 ## Integrity
 
+Coupled multi-board setups live in AssemblyIR extensions under
+`spike.multiboard-studies`, keyed by PI/SI/thermal/EM domain. Complete results
+use the existing verified state artifacts. Result-free copies retain those
+setups and omit their outputs. Physical assembly and exact request digests
+prevent recalling results against changed placements or connection properties.
+Standalone study files also open directly in the coupled study panel. See
+[coupled study persistence](MULTIBOARD_COUPLED_ANALYSIS.md).
+
 The v2 manifest records an FNV-1a checksum of the embedded design source. This detects accidental damage and inconsistent saves; it is not a cryptographic signature. Production trust requires a separate signed manifest using an asymmetric signature verified by the native host.
 
 ## Desktop File Safety

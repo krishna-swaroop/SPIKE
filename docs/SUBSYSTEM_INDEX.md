@@ -100,14 +100,18 @@ inventory/reduction live in `si_network_workflow.py`, `si_passives.py` and
 
 | File | Responsibility |
 |---|---|
-| `python/spike_core/contracts.py` | Versioned DesignIR, AnalysisSpec, and AnalysisResult |
-| `python/spike_core/design_ir_v2.py`, `harness_authoring.py`, `multiboard_analysis.py` | AssemblyIR board occurrences, distinct direct connector mates and cable harnesses, pin ownership, and four-domain planning; coupled physics remains gated |
+| `python/spike_core/contracts.py` | Versioned SpiDeR, AnalysisSpec, and AnalysisResult |
+| `python/spike_core/spider_v2.py`, `harness_authoring.py`, `multiboard_analysis.py` | AssemblyIR board occurrences, distinct direct connector mates and cable harnesses, pin ownership, and four-domain graph planning |
+| `app/src/MultiboardStudyEditor.tsx`, `multiboardStudyPresentation.ts` | Coupled model property editing, study/result import/export, stale-result guards, occurrence result presentation |
+| `python/spike_core/multiboard_circuit.py`, `multiboard_thermal.py`, `multiboard_em.py` | Executable experimental reduced coupled circuits, shared thermal RC networks and reciprocal magnetic-loop models; general field qualification remains gated |
+| `python/spike_core/multiboard_study.py`, `multiboard_identity.py` | Assembly-derived study drafts, exact model/result binding and manifest-bound persistence |
+| `python/spike_core/service_assembly_import.py`, `app/src/AssemblyStructureEditor.tsx`, `ConnectorGraphEditor.tsx`, `connectorGraphModel.ts` | Atomic multi-source board import; connector graph editing, reviewed pin suggestions, direct mates, and virtual harness route proposals |
 | `python/spike_core/errors.py` | Canonical FE/BE diagnostic envelopes and catalog | See `docs/ERROR_HANDLING.md` |
 | `python/spike_core/spice_workspace.py` | Validated SPICE intent and deterministic netlist composition | See `docs/SPICE_WORKSPACE.md` |
 | `python/spike_core/service.py` | JSON worker request dispatch and service composition |
 | `python/spike_core/cli.py` | Headless command interface, including solver-manager and external-engine workflows |
 | `python/spike_core/importers.py` | EDA-neutral importer protocol and registry |
-| `python/spike_core/kicad_importer.py` | KiCad-to-DesignIR adapter |
+| `python/spike_core/kicad_importer.py` | KiCad-to-SpiDeR adapter |
 | `python/spike_core/solver_plugins.py` | Solver descriptors, catalog, selection, and execution |
 | `python/spike_core/preflight.py` | Analysis validation and mesh preview orchestration |
 | `python/spike_core/convergence.py` | Mesh convergence workflow |
@@ -128,11 +132,14 @@ inventory/reduction live in `si_network_workflow.py`, `si_passives.py` and
 | `python/spike_core/openfoam_runtime.py` | Bounded native/WSL OpenFOAM runtime discovery; never promotes discovery to case readiness |
 | `python/spike_core/solver_manager.py` | Workload recommendations, execution gates, and EMI pre-pass screening |
 | `python/spike_core/emi.py` | Versioned EMI setup validation, geometry coverage, stage gates, and screening orchestration |
+| `python/spike_core/mom_surface_basis.py`, `mom_singular_source.py`, `mom_far_field.py` | Internal oriented-RWG basis, bounded singular triangular-source moments, and supplied-current far-field/RCS operators; no executable surface-MoM current solve or validated scattering claim |
 | `python/spike_core/solver_state.py` | Private bounded registrations and allowlisted tuning persistence |
 | `extensions/openems_suite/` | OpenEMS PI/SI extension, engine adapter, case integrity, geometry and result validation, benchmarks, and reference evidence; `python/spike_core/openems_*.py` and `external_engines.py` are compatibility import bridges |
-| `extensions/emerge_suite/` | Optional EMerge board adapter for bounded two-layer geometry, solved S-parameters, radiation cuts, and sampled 3D patterns; results remain unvalidated. See [antenna walkthrough](EMERGE_ANTENNA_WALKTHROUGH.md) |
+| `extensions/emerge_suite/` | Optional EMerge board adapter for bounded 2-16 copper-layer geometry, dielectric loss/stackup, optional EMCAD unions, readable GUI-generated script execution, solved S-parameters, radiation patterns and complex E/H sample planes; results remain unvalidated. See [antenna walkthrough](EMERGE_ANTENNA_WALKTHROUGH.md) |
+| `extensions/optycal_suite/`, `app/src/OptycalExtension.tsx`, `optycalStudy.ts` | Optional one-way PEC STEP structure scattering driven by a design-bound complex EMerge far-zone source; GUI setup, exact script preview, coherent pattern comparisons, sample probes and exports. Unvalidated; excludes nearby coupling, tuning, diffraction, shadowing and multiple scattering. |
+| `app/src/EMergeExtension.tsx`, `EMergeNearField.tsx`, `emergeNearFieldSamples.ts`, `emergeSampleExport.ts` | GUI setup, script/feature preview, radiation/network/field review, bounded coordinate admission, explicit sample probes and CSV/Touchstone exports |
 | `app/src/AnalysisGuide.tsx`, `app/src/AnalysisGuide.css` | Floating, accessible Help-menu workflow guide with navigation and control highlighting; see `docs/ANALYSIS_GUIDE.md` |
-| `python/spike_core/sparselizard_adapter.py` | DesignIR-derived PCB mesh/material/terminal case export, cancellable process-tree-contained execution, digest binding, and strict scalar/vector/multiport result import; see `docs/SPARSELIZARD_ADAPTER.md` |
+| `python/spike_core/sparselizard_adapter.py` | SpiDeR-derived PCB mesh/material/terminal case export, cancellable process-tree-contained execution, digest binding, and strict scalar/vector/multiport result import; see `docs/SPARSELIZARD_ADAPTER.md` |
 | `python/spike_core/sparselizard_validation.py` | Fail-closed signed-runtime, PETSc/MUMPS, convergence, and five-class PCB qualification report used by CLI, worker, and Solver Manager |
 | `python/spike_core/peec_spice_export.py` | Reviewed PEEC RLCG endpoint mapping and staged geometry-parasitic handoff to process-isolated ngspice; see `docs/PEEC_NGSPICE_HYBRID.md` |
 | `python/spike_core/converter_study.py` | Versioned PWM source compilation, ngspice/PEEC staged orchestration, converter analytics, and explicit compact-thermal loss handoff; see `docs/CONVERTER_STUDY.md` |
@@ -152,6 +159,10 @@ inventory/reduction live in `si_network_workflow.py`, `si_passives.py` and
 | `ngspice_plugin.py` | ngspice co-simulation adapter | `docs/SOLVER_STATUS.md` |
 | `sparameters.py` | Network parameter calculations | `docs/SIGNAL_INTEGRITY_NETWORK_INTEGRATION.md` |
 | `meshing.py` | General mesh representations | `docs/MESHING_ENGINE.md` |
+| `internal_meshing_engine.py`, `service_meshing.py` | Versioned internal tetra worker boundary, bounded requests/candidates and digest provenance | `docs/INTERNAL_MESH_ENGINE.md` |
+| `internal_tetra_generation.py` | Deterministic convex-hull tetra generation with exact predicate fallback | `docs/INTERNAL_MESH_ENGINE.md`; experimental |
+| `pcb_volume_compiler.py`, `pcb_focus_sizing.py`, `pcb_volume_mesh.py` | Complete normalized planar PCB solids, net/source/manual sizing, bounded preparation and capability probe | `docs/PCB_FOCUSED_VOLUME_MESHING.md`; experimental external OCC generation |
+| `dynamic_tetra_adaptation.py`, `tetra_mesh_refinement.py`, `tetra_mesh_optimization.py` | Error/manual/size-driven edge-star refinement, scalar refinement transfer and fixed-interface interior smoothing | `docs/INTERNAL_MESH_ENGINE.md`; experimental |
 | `numerics.py` | Shared numerical safeguards | Tests define supported behavior |
 | `pdn.py` | PDN target review, explicit mounting-path screening, and two-port candidate loading | `docs/PDN_SCREENING.md` |
 | `thermal.py` | Compact thermal scenario/model | `docs/THERMAL_WORKFLOW.md` |
@@ -180,6 +191,8 @@ inventory/reduction live in `si_network_workflow.py`, `si_passives.py` and
 | `python/spike_core/mcp_server.py`, `scripts/spike_mcp.py` | Allowlisted local stdio MCP tools over the existing Python automation worker |
 | `python/spike_core/local_llm.py`, `scripts/spike_local_chat.py` | Loopback-only LM Studio and Ollama tool-calling client |
 | `app/src-tauri/src/mcp_bridge.rs`, `app/src/McpBridgePanel.tsx` | Opt-in authenticated desktop MCP bridge and its settings panel |
+| `app/src/mcpAnalysisConversation.ts` | Loaded-design conversational cases, missing inputs, exact-revision preflight, asynchronous jobs and bounded solver evidence |
+| `app/src/emViewportResults.ts`, `app/src/emViewportScene.ts`, `app/src/EMViewportResultManager.tsx` | Main-viewport EM sample overlays, assembly structure, linked probes and result graphs |
 | `extensions` | Built-in or example extension packages |
 | `kicad_plugin` | Legacy/source-specific adapter scaffold; standalone product commands are CAD-neutral |
 

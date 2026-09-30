@@ -6,8 +6,8 @@ from pathlib import Path
 import numpy as np
 from jsonschema import Draft202012Validator
 
-from python.spike_core.design_ir_v2 import (
-    DesignIRV2, Layer, Material, Net, SourceIdentity, Track, Via, Zone,
+from python.spike_core.spider_v2 import (
+    SpiDeRV2, Layer, Material, Net, SourceIdentity, Track, Via, Zone,
 )
 from python.spike_core.si_channel import (
     REQUEST_CONTRACT,
@@ -27,7 +27,7 @@ from python.spike_core.service import handle
 
 
 class SiUniformChannelTests(unittest.TestCase):
-    def design(self) -> DesignIRV2:
+    def design(self) -> SpiDeRV2:
         copper = Material(
             id="material-copper", name="Copper", material_class="conductor",
             conductivity_s_per_m=5.8e7,
@@ -38,7 +38,7 @@ class SiUniformChannelTests(unittest.TestCase):
         )
         signal = Net(id="net-signal", name="SIG")
         ground = Net(id="net-ground", name="GND")
-        return DesignIRV2(
+        return SpiDeRV2(
             design_id="uniform-channel-fixture",
             name="uniform channel fixture",
             source=SourceIdentity(source_format="fixture", source_digest="a" * 64),
@@ -76,7 +76,7 @@ class SiUniformChannelTests(unittest.TestCase):
             "trace_limit": 128,
         }
 
-    def coupled_design(self) -> DesignIRV2:
+    def coupled_design(self) -> SpiDeRV2:
         design = self.design()
         victim = Net(id="net-victim", name="VICTIM")
         design.nets.append(victim)

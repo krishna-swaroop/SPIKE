@@ -3,7 +3,7 @@
 import math
 import unittest
 
-from python.spike_core.contracts import AnalysisSpec, DesignIR
+from python.spike_core.contracts import AnalysisSpec, SpiDeR
 from python.spike_core.hybrid_mesh import _shared_polygon_face_length, build_hybrid_mesh
 
 
@@ -42,7 +42,7 @@ class HybridZoneFaceWidthTests(unittest.TestCase):
 
     def test_final_partial_grid_row_uses_actual_face_width(self):
         mesh = build_hybrid_mesh(
-            DesignIR(layers=[{"name": "F.Cu"}], zones=[{
+            SpiDeR(layers=[{"name": "F.Cu"}], zones=[{
                 "id": "rectangle", "net_name": "VCC", "layer": "F.Cu",
                 "points": [(0, 0), (2, 0), (2, 1.25), (0, 1.25)],
             }]),
@@ -57,7 +57,7 @@ class HybridZoneFaceWidthTests(unittest.TestCase):
 
     def test_submicrometre_face_is_not_widened_by_generic_branch_floor(self):
         mesh = build_hybrid_mesh(
-            DesignIR(layers=[{"name": "F.Cu"}], zones=[{
+            SpiDeR(layers=[{"name": "F.Cu"}], zones=[{
                 "id": "sliver", "net_name": "VCC", "layer": "F.Cu",
                 "points": [(0, 0), (2, 0), (2, 1.0005), (0, 1.0005)],
             }]),

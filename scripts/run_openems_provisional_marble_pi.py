@@ -19,7 +19,7 @@ sys.path.insert(0, str(ROOT))
 
 from extensions.openems_suite.engine import _validate_openems_case, prepare_openems_case, run_openems_case
 from python.spike_core.cli import load_design
-from python.spike_core.contracts import AnalysisSpec, DesignIR
+from python.spike_core.contracts import AnalysisSpec, SpiDeR
 
 
 SIGNAL = "+1V0"
@@ -36,10 +36,10 @@ def near(a: object, b: tuple[float, float]) -> bool:
         abs(float(x)-y) < 1e-5 for x, y in zip(a, b))
 
 
-def build_case(board: Path, excite_port: int = 1) -> tuple[DesignIR, AnalysisSpec, dict]:
+def build_case(board: Path, excite_port: int = 1) -> tuple[SpiDeR, AnalysisSpec, dict]:
     if excite_port not in (1, 2):
         raise ValueError("Exactly one of the two ports must be excited")
-    original = DesignIR(**load_design(board))
+    original = SpiDeR(**load_design(board))
     pads = []
     for name, x, y in PORTS:
         matching = [pad for pad in original.pads if pad.get("net_name") == SIGNAL
@@ -80,7 +80,7 @@ def build_case(board: Path, excite_port: int = 1) -> tuple[DesignIR, AnalysisSpe
         "limitations": ["not the full Marble PDN", "unreviewed GND plane and port planes",
                         "stackup design values have fabrication discrepancies", "no via or drilled pad modeled"],
     }
-    design = DesignIR(design_id="provisional-marble-pi-u4-c53",
+    design = SpiDeR(design_id="provisional-marble-pi-u4-c53",
                       name="Marble +1V0 local PI slice", source_format="derived",
                       source_path=str(board), layers=original.layers,
                       nets=[{"id": "power", "name": SIGNAL}, {"id": "return", "name": RETURN}],

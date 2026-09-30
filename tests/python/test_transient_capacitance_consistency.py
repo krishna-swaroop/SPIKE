@@ -6,13 +6,13 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 import numpy as np
-from python.spike_core.contracts import AnalysisSpec, DesignIR
+from python.spike_core.contracts import AnalysisSpec, SpiDeR
 from python.spike_core.transient_peec import _extract_stackup_capacitance, transient_settings
 
 
 class TransientCapacitanceConsistencyTests(unittest.TestCase):
     def fixture(self):
-        design = DesignIR(stackup=[
+        design = SpiDeR(stackup=[
             {"name": "F.Cu", "thickness": .035},
             {"name": "core", "thickness": .2, "epsilon_r": 4},
             {"name": "B.Cu", "thickness": .035},

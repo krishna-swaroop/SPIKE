@@ -4,7 +4,7 @@ from unittest.mock import patch
 
 import numpy as np
 
-from python.spike_core.contracts import AnalysisSpec, DesignIR
+from python.spike_core.contracts import AnalysisSpec, SpiDeR
 from python.spike_core.peec_plugin import native_available
 from python.spike_core.preflight import preflight_analysis
 from python.spike_core.solver_plugins import default_solver_registry
@@ -51,7 +51,7 @@ class TransientWaveformTests(unittest.TestCase):
 
 class TransientPeecTests(unittest.TestCase):
     def setUp(self):
-        self.design = DesignIR(
+        self.design = SpiDeR(
             name="straight RL transient fixture",
             layers=[{"name": "F.Cu"}],
             nets=[{"id": 1, "name": "VCC"}],
@@ -299,7 +299,7 @@ class TransientPeecTests(unittest.TestCase):
         self.assertEqual(result.provenance["branch_admission"]["workload_class"], "dense")
 
     def _explicit_return_case(self):
-        design = DesignIR(
+        design = SpiDeR(
             name="two-layer RLC transient fixture",
             layers=[{"name": "F.Cu"}, {"name": "B.Cu"}],
             nets=[{"id": 1, "name": "VCC"}, {"id": 2, "name": "GND"}],

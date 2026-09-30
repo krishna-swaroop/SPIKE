@@ -31,13 +31,13 @@ REFERENCE_ZONE_ID = "80733dce-c2c6-5804-89dd-5511566386b8"
 
 
 def build_slice() -> dict:
-    from python.spike_core.design_ir_v2 import DesignIRV2
+    from python.spike_core.spider_v2 import SpiDeRV2
     from python.spike_core.kicad_importer import import_kicad_design
 
     digest = hashlib.sha256(SOURCE.read_bytes()).hexdigest()
     if digest != SOURCE_SHA256:
         raise ValueError("ESP32 source board changed; re-review the selected coupled routes.")
-    source = DesignIRV2.from_v1(import_kicad_design(str(SOURCE)))
+    source = SpiDeRV2.from_v1(import_kicad_design(str(SOURCE)))
     nets = {net.name: net for net in source.nets}
     selected = [nets[name] for name in (AGGRESSOR, VICTIM, REFERENCE)]
     route_ids = {nets[AGGRESSOR].id, nets[VICTIM].id}

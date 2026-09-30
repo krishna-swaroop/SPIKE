@@ -4,7 +4,7 @@
 from copy import deepcopy
 import unittest
 
-from python.spike_core.contracts import AnalysisSpec, DesignIR
+from python.spike_core.contracts import AnalysisSpec, SpiDeR
 from python.spike_core.hybrid_mesh import build_hybrid_mesh
 from python.spike_core.hybrid_mesh import MeshBranch
 from python.spike_core.quasistatic_capacitance import (
@@ -16,7 +16,7 @@ from python.spike_core.quasistatic_capacitance import (
 
 class QuasistaticCapacitanceTests(unittest.TestCase):
     def test_invalid_or_ambiguous_zone_area_is_never_admitted(self):
-        design = DesignIR(
+        design = SpiDeR(
             zones=[{"id": "signal", "layer": "F.Cu", "net_name": "VCC",
                     "points": [(0, 0), (2, 0), (2, 2), (0, 2)]},
                    {"id": "return", "layer": "B.Cu", "net_name": "GND",
@@ -59,7 +59,7 @@ class QuasistaticCapacitanceTests(unittest.TestCase):
         self.assertGreater(quality["skipped_reference_geometry_branch_count"], 0)
 
     def test_fixed_zone_area_is_invariant_to_internal_link_refinement(self):
-        design = DesignIR(
+        design = SpiDeR(
             layers=[{"name": "F.Cu"}, {"name": "B.Cu"}],
             nets=[{"name": "VCC"}, {"name": "GND"}],
             zones=[
@@ -107,7 +107,7 @@ class QuasistaticCapacitanceTests(unittest.TestCase):
         self.assertLess(abs(measured - parallel_plate) / parallel_plate, 0.05)
 
     def test_explicit_return_extracts_capacitance_and_dielectric_loss(self):
-        design = DesignIR(
+        design = SpiDeR(
             layers=[{"name": "F.Cu"}, {"name": "B.Cu"}],
             nets=[{"name": "VCC"}, {"name": "GND"}],
             tracks=[
@@ -136,7 +136,7 @@ class QuasistaticCapacitanceTests(unittest.TestCase):
         self.assertGreater(info["loss_tangent_branch_coverage"], 0)
 
     def test_via_capacitance_remains_explicitly_unsupported(self):
-        design = DesignIR(
+        design = SpiDeR(
             layers=[{"name": "F.Cu"}, {"name": "B.Cu"}],
             vias=[{"id": "v1", "at": [0, 0], "drill": 0.3, "size": 0.6, "layers": ["F.Cu", "B.Cu"], "net_name": "VCC"}],
             stackup=[
@@ -152,7 +152,7 @@ class QuasistaticCapacitanceTests(unittest.TestCase):
         self.assertGreater(info["skipped_via_branch_count"], 0)
 
     def test_remote_explicit_return_copper_is_not_treated_as_a_plane(self):
-        design = DesignIR(
+        design = SpiDeR(
             layers=[{"name": "F.Cu"}, {"name": "B.Cu"}],
             tracks=[
                 {"id": "signal", "start": [0, 0], "end": [10, 0], "width": 0.5, "layer": "F.Cu", "net_name": "VCC"},

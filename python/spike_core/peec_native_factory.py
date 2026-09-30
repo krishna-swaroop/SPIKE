@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from .contracts import AnalysisSpec, DesignIR
+from .contracts import AnalysisSpec, SpiDeR
 from .hybrid_mesh import HybridMesh
 
 
@@ -33,7 +33,7 @@ def make_native_solver(native: Any, mesh: HybridMesh, epsilon_r: float,
     return solver, config
 
 
-def dielectric_epsilon(design: DesignIR) -> float:
+def dielectric_epsilon(design: SpiDeR) -> float:
     values = [
         float(layer.get("epsilon_r", layer.get("epsilonR")))
         for layer in design.stackup

@@ -8,13 +8,13 @@ the mesh branch count. They make no claim about electrostatic/fringing error.
 
 import unittest
 
-from python.spike_core.contracts import AnalysisSpec, DesignIR
+from python.spike_core.contracts import AnalysisSpec, SpiDeR
 from python.spike_core.hybrid_mesh import build_hybrid_mesh
 from python.spike_core.quasistatic_capacitance import EPSILON_0_F_M, estimate_branch_capacitance
 
 
 def _design(polygon, *, pads=(), tracks=()):
-    return DesignIR(
+    return SpiDeR(
         layers=[{"name": "F.Cu"}, {"name": "B.Cu"}],
         nets=[{"name": "N"}],
         stackup=[{"name": "F.Cu", "thickness": 0.035},

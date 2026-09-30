@@ -13,8 +13,8 @@ const retainedRow = (row: ParsedStackupLayer): Row => ({
   ...(row.lossTangent === undefined ? {} : { loss_tangent: row.lossTangent }),
 });
 
-/** Update every authoritative DesignIR v2 stackup projection used by the worker. */
-export function applyStackupToDesignIr(value: unknown, stackup: ParsedStackupLayer[]): Record<string, unknown> | null {
+/** Update every authoritative SpiDeR v2 stackup projection used by the worker. */
+export function applyStackupToSpiDeR(value: unknown, stackup: ParsedStackupLayer[]): Record<string, unknown> | null {
   if (!value || typeof value !== "object" || Array.isArray(value)) return null;
   const design = structuredClone(value) as Row;
   const retained = stackup.map(retainedRow), byName = new Map(retained.map(row => [String(row.name), row]));

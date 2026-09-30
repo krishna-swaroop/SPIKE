@@ -10,6 +10,7 @@ import { workspaceIssues } from "./workspaceIssues";
 import { createResultPackage, mergeProjectSnapshot, readResultPackage, retainOpaqueResultState, isSupportedSavedResult, withoutSavedResults } from "./projectSnapshotState";
 import StudyManager from "./StudyManager";
 import McpBridgePanel from "./McpBridgePanel";
+import { createMcpAnalysisConversation, type McpLoadedContext } from "./mcpAnalysisConversation";
 import "./mcpBridgePanel.css";
 import { listenMcpBridge, respondMcpBridge, type McpBridgeRequest } from "./workerBridge";
 import { addStudyCase, createStudy, duplicateStudyCase, moveStudyCase, normalizeStudies, removeStudy, removeStudyCase, updateStudy, updateStudyCase, type SimulationStudy, type SimulationStudyCase, type StudyJsonObject } from "./simulationStudies";
@@ -47,7 +48,11 @@ import { hydrateNormalizedSnapshot, compressNormalizedSnapshot } from "./normali
 import HarnessDocumentEditor from "./HarnessDocumentEditor";
 import TetraMeshPanel from "./TetraMeshPanel";
 import { ExtensionArtifacts, McadOptions } from "./ExtensionArtifacts";
-import { defaultEMergeSetup, EMergeResultPlot, EMergeSetupForm, emergeParameters, type EMergeSetup } from "./EMergeExtension";
+import { defaultEMergeSetup, EMergeResultPlot, EMergeSetupForm, EMergeScriptPreview, EMergeCapabilityInventory, emergeParameters, type EMergeSetup } from "./EMergeExtension";
+import EMViewportResultManager from "./EMViewportResultManager";
+import { buildEMViewportData, availableEMQuantities, emResultFrequencies, emViewportPayload, defaultEMViewportSettings, type EMViewportSettings, type EMViewportRecord } from "./emViewportResults";
+import { OptycalSetupForm, OptycalScriptPreview, OptycalResultPlot } from "./OptycalExtension";
+import { defaultOptycalSetup, optycalParameters, admitOptycalSource, type OptycalSetup } from "./optycalStudy";
 import AnalysisGuide, { type GuideDestination } from "./AnalysisGuide";
 import { selectNativeImportFile } from "./workerBridge";
 import { configureBundledVisuals, configureKnownVisuals } from "./boardVisualBundles";
@@ -61,7 +66,7 @@ import { compilePiPaths, compilePiSeriesSolveHandoff, PiPathTerminalAnchor } fro
 import { attachPiPathComponentBridges, combinePiPathPreflights, combinePiPathSegmentExtractions, createPiPathSegmentExtractionRequests, PiPathAnalysisRequest } from "./piPathCircuit";
 import { layerCssColor } from "./layerPalette";
 import { stackupBandHeight, stackupColor } from "./stackupVisual";
-import { applyStackupToDesignIr } from "./designStackup";
+import { applyStackupToSpiDeR } from "./designStackup";
 import { buildLayerManagerInventory, LAYER_INVENTORY_GROUP_ORDER } from "./layerInventory";
 import { resolveBoardCopperLayers } from "./copperLayerSelection";
 import { captureViewport, encodeGif } from "./gifExport";
@@ -903,6 +908,20 @@ export default function App() {
   const [thermalOpen, setThermalOpen] = useState(false);
   const [studyManagerOpen, setStudyManagerOpen] = useState(false);
   const [mcpBridgePanelOpen, setMcpBridgePanelOpen] = useState(false);
+  const [mcpAnalysisOutput, setMcpAnalysisOutput] = useState<Record<string, unknown> | null>(null);
+  const mcpAnalysisCallbacks = useRef({
+    getContext: (): McpLoadedContext => ({ design: null }),
+    admitScope: async (_kind: string, _parameters: Record<string, unknown>): Promise<unknown> => { throw new Error("SPIKE UI is starting"); },
+    publishResult: async (_result: Record<string, unknown>, _meta: { kind: string; caseId: string; jobId: string; scope: string; parameters: Record<string, unknown> }): Promise<void> => { throw new Error("SPIKE UI is starting"); },
+    resultAction: async (_command: string, _args: Record<string, unknown>): Promise<unknown> => { throw new Error("SPIKE UI is starting"); },
+  });
+  const mcpAnalysisConversation = useRef<ReturnType<typeof createMcpAnalysisConversation> | null>(null);
+  if (!mcpAnalysisConversation.current) mcpAnalysisConversation.current = createMcpAnalysisConversation({
+    callWorker: request => runLocalWorker(request),
+    getContext: () => mcpAnalysisCallbacks.current.getContext(),
+    admitScope: (kind, parameters) => mcpAnalysisCallbacks.current.admitScope(kind, parameters),
+    publishResult: (result, meta) => mcpAnalysisCallbacks.current.publishResult(result, meta),
+  });
   const mcpRequestHandler = useRef<(request: McpBridgeRequest) => unknown>(() => { throw new Error("SPIKE UI is starting"); });
   const [studies, setStudies] = useState<SimulationStudy[]>([]);
   const [activeStudyCaseId, setActiveStudyCaseId] = useState<string | null>(null);
@@ -943,6 +962,8 @@ export default function App() {
   const [analysisSummary, setAnalysisSummary] = useState<AnalysisSummary>(null);
   const [analysisResult, setAnalysisResult] = useState<SolverResultBundle | null>(null);
   const [resultRecords, setResultRecords] = useState<ResultRecord[]>([]);
+  const [emResultManagerOpen, setEmResultManagerOpen] = useState(false);
+  const [emViewportSettings, setEmViewportSettings] = useState<EMViewportSettings>(defaultEMViewportSettings);
   const [reportPreview, setReportPreview] = useState<{ fileName: string; html: string } | null>(null);
   const [resultDisplay, setResultDisplay] = useState<"all" | "none" | string>("none");
   const [pdnReview, setPdnReview] = useState<PdnReview | null>(null);
@@ -979,7 +1000,7 @@ export default function App() {
   const [modelLibraryOpen, setModelLibraryOpen] = useState(false);
   const [assemblyIr, setAssemblyIr] = useState<AssemblyIr | null>(null);
   const [assemblyDesigns, setAssemblyDesigns] = useState<AssemblyDesigns | null>(null);
-  const [canonicalDesignIr, setCanonicalDesignIr] = useState<Record<string, unknown> | null>(null);
+  const [canonicalSpiDeR, setCanonicalSpiDeR] = useState<Record<string, unknown> | null>(null);
   const [assemblyPackageShapes, setAssemblyPackageShapes] = useState<AssemblyPackageShapesIndex | null>(null);
   const [activeDesignId, setActiveDesignId] = useState<string | null>(null);
   const [modelIndex, setModelIndex] = useState<ModelIndex>(() => normalizeModelIndex(null));
@@ -1078,6 +1099,16 @@ export default function App() {
   const [emergeEmiSetup, setEmergeEmiSetup] = useState<EMergeSetup>(() => defaultEMergeSetup(emiSetup.selected_nets[0] ?? ""));
   const [emergeEmiRuntime, setEmergeEmiRuntime] = useState<Record<string, unknown> | null>(null);
   const [emergeEmiBusy, setEmergeEmiBusy] = useState(false);
+  const [emergeScriptPreview, setEmergeScriptPreview] = useState<Record<string, unknown> | null>(null);
+  const [optycalSource, setOptycalSource] = useState<Record<string, unknown> | null>(null);
+  const [optycalPreview, setOptycalPreview] = useState<Record<string, unknown> | null>(null);
+  const optycalGenerationRef = useRef(0);
+  const invalidateOptycalPreview = () => { optycalGenerationRef.current += 1; setOptycalPreview(null); };
+  useEffect(() => { if (admitOptycalSource(extensionResult)) { setOptycalSource(extensionResult); invalidateOptycalPreview(); } }, [extensionResult]);
+  useEffect(() => { setOptycalSource(null); invalidateOptycalPreview(); }, [boardSource]);
+  const emergePreviewGenerationRef = useRef(0);
+  const invalidateEMergePreview = () => { emergePreviewGenerationRef.current += 1; setEmergeScriptPreview(null); };
+  useEffect(() => { invalidateEMergePreview(); }, [boardSource]);
   const [emergeEmiError, setEmergeEmiError] = useState("");
   const emergeProbePathRef = useRef(emergeEmiSetup.python_executable);
   const savedEmergeInputRef = useRef<HTMLInputElement>(null);
@@ -1552,6 +1583,8 @@ export default function App() {
   };
   mcpRequestHandler.current = ({ command, args }) => {
     if (!args || typeof args !== "object" || Array.isArray(args)) throw new Error("Command arguments must be an object");
+    if (["analysis_view_result", "analysis_generate_report"].includes(command)) return mcpAnalysisCallbacks.current.resultAction(command, args);
+    if (["analysis_context", "analysis_describe", "analysis_prepare", "analysis_patch", "analysis_preflight", "analysis_run", "analysis_job", "analysis_evidence"].includes(command)) return mcpAnalysisConversation.current!.handle(command, args);
     if (command === "status") return {
       workspace: tab, viewMode, projectName, boardFile, boardLoaded: Boolean(boardData),
       studyCount: studies.length, activeStudyCaseId, workerAvailable,
@@ -1618,9 +1651,9 @@ export default function App() {
     if (!desktopShell) return;
     let disposed = false;
     let unlisten: (() => void) | undefined;
-    void listenMcpBridge(request => {
+    void listenMcpBridge(async request => {
       try {
-        const result = mcpRequestHandler.current(request);
+        const result = await mcpRequestHandler.current(request);
         void respondMcpBridge(request.requestId, result).catch(cause => setStatus(`MCP reply failed: ${String(cause)}`));
       } catch (cause) {
         void respondMcpBridge(request.requestId, undefined, cause instanceof Error ? cause.message : String(cause))
@@ -1633,12 +1666,12 @@ export default function App() {
   const redo = () => { const next = redoRef.current.pop(); if (!next) { setStatus("Nothing to redo"); return; } historyRef.current.push(snapshot()); restoreSnapshot(next); markProjectDirty(); setStatus("Change redone"); };
   const download = (name: string, content: string, type = "application/json") => { const url = URL.createObjectURL(new Blob([content], { type })); const anchor = document.createElement("a"); anchor.href = url; anchor.download = name; document.body.appendChild(anchor); anchor.click(); anchor.remove(); window.setTimeout(() => URL.revokeObjectURL(url), 1500); };
   const downloadBlob = (name: string, blob: Blob) => { const url = URL.createObjectURL(blob); const anchor = document.createElement("a"); anchor.href = url; anchor.download = name; anchor.click(); window.setTimeout(() => URL.revokeObjectURL(url), 1000); };
-  const projectData = () => createProjectPackage(mergeProjectSnapshot(retainedProjectSnapshot.current, { board_visuals: null, harness: harnessDocument, project: { name: projectName }, studies, design: { canonical_design: canonicalDesignIr, source_file: boardFile, source_format: boardFile.endsWith(".spike-design.json") ? "spike-normalized" : "kicad_pcb", source_board: boardSource, stackup: boardData?.stackup ?? [], technology: boardData?.technology ?? "rigid", regions: boardData?.regions ?? [], bend_lines: boardData?.bendLines ?? [], model_assignments: modelAssignments, component_bonds: componentBonds, topologies: { pi: piTopology, si: siTopology } }, assembly_ir: assemblyIr, assembly_designs: assemblyDesigns, assembly_package_shapes: assemblyPackageShapes, models: modelIndex, analysis: retainOpaqueResultState(retainedProjectSnapshot.current?.analysis, { mode: analysisMode, solver_id: solverId, formulation, solver_selections: solverSelections, power_nets: powerNets, pi_setup: piSetup, si: { suite: selectedSiSuite, latest_channel_result: siChannelResult }, limits, frequency, visible_layers: visibleLayers, layer_opacity: layerOpacity, layer_separation_mm: layerSeparation, show_vias: showVias, show_net_names: showNetNames, show_axes: showAxes, show_models: showModels, show_smd_models: showSmdModels, show_tht_models: showThtModels, navigation_inertia: navigationInertia, view_mode: viewMode, selection_filter: selectionFilter, isolated_net: isolatedNet, result_visualization: resultVisualization, result_display: resultDisplay, latest_result: analysisResult, result_history: resultRecords.map(record => ({ id: record.id, label: record.label, bundle: record.bundle })), pdn_review: pdnReview, pdn_review_source_id: pdnReviewSourceId, selected_net_geometry: boardData && isolatedNet ? extractNetGeometry(boardData, isolatedNet) : null }, isSupportedSavedResult), spice: { workspace: spiceWorkspace }, emi: { setup: emiSetup, preflight: emiPreflight, screening: emiScreening, field_result: emiFieldResult }, thermal: { scenario: thermalScenario, component_bonds: componentBonds }, workspace: workspaceState(), probes, probe_table: { calculated_rows: probeFormulaRows, reference_ids: probeReferenceIds }, selection: selected }));
+  const projectData = () => createProjectPackage(mergeProjectSnapshot(retainedProjectSnapshot.current, { board_visuals: null, harness: harnessDocument, project: { name: projectName }, studies, design: { canonical_design: canonicalSpiDeR, source_file: boardFile, source_format: boardFile.endsWith(".spike-design.json") ? "spike-normalized" : "kicad_pcb", source_board: boardSource, stackup: boardData?.stackup ?? [], technology: boardData?.technology ?? "rigid", regions: boardData?.regions ?? [], bend_lines: boardData?.bendLines ?? [], model_assignments: modelAssignments, component_bonds: componentBonds, topologies: { pi: piTopology, si: siTopology } }, assembly_ir: assemblyIr, assembly_designs: assemblyDesigns, assembly_package_shapes: assemblyPackageShapes, models: modelIndex, analysis: retainOpaqueResultState(retainedProjectSnapshot.current?.analysis, { mode: analysisMode, solver_id: solverId, formulation, solver_selections: solverSelections, power_nets: powerNets, pi_setup: piSetup, si: { suite: selectedSiSuite, latest_channel_result: siChannelResult }, limits, frequency, visible_layers: visibleLayers, layer_opacity: layerOpacity, layer_separation_mm: layerSeparation, show_vias: showVias, show_net_names: showNetNames, show_axes: showAxes, show_models: showModels, show_smd_models: showSmdModels, show_tht_models: showThtModels, navigation_inertia: navigationInertia, view_mode: viewMode, selection_filter: selectionFilter, isolated_net: isolatedNet, result_visualization: resultVisualization, em_viewport_settings: emViewportSettings, result_display: resultDisplay, latest_result: analysisResult, result_history: resultRecords.map(record => ({ id: record.id, label: record.label, bundle: record.bundle })), pdn_review: pdnReview, pdn_review_source_id: pdnReviewSourceId, selected_net_geometry: boardData && isolatedNet ? extractNetGeometry(boardData, isolatedNet) : null }, isSupportedSavedResult), spice: { workspace: spiceWorkspace }, emi: { setup: emiSetup, preflight: emiPreflight, screening: emiScreening, field_result: emiFieldResult }, thermal: { scenario: thermalScenario, component_bonds: componentBonds }, workspace: workspaceState(), probes, probe_table: { calculated_rows: probeFormulaRows, reference_ids: probeReferenceIds }, selection: selected }));
   const performNewProject = () => { setHarnessDocument(null); setProjectUpgradeOffer(null);
     retainedProjectSnapshot.current = null;
     resetPreparedVisualBundle();
     setDeferredBoardVisual(null);
-    historyRef.current = []; redoRef.current = []; setStudies([]); setActiveStudyCaseId(null); setStudyManagerOpen(false); setProjectName("untitled.spike"); setProjectPath(null); setProjectManifestDigest(null); setActiveDesignId(null); setCanonicalDesignIr(null); setBoardFile("untitled.kicad_pcb"); setBoardSource(""); setBoardData(null); setSelected(null); setSolverSelections({}); setPiSetup(defaultPiSetup()); setPiTopology(emptyTopology("pi")); setSiTopology(emptyTopology("si")); setSelectedSiSuite(null); setSiChannelResult(null); setSpiceWorkspace(defaultSpiceWorkspace("pi")); setEmiSetup(defaultEmiSetup()); setEmiPreflight(null); setEmiScreening(null); setEmiFieldResult(null); setThermalScenario(null); setComponentBonds([]); setAssemblyIr(null); setAssemblyDesigns(null); setAssemblyPackageShapes(null); setModelIndex(normalizeModelIndex(null)); setBondValidation([]); setProbes([]); setProbeFormulaRows([]); setSavedProbeReferenceIds({}); setAnalysisResult(null); setPdnReview(null); setPdnReviewSourceId(null); setResultRecords([]); setResultDisplay("none"); setAnalysisSummary(null); setProjectManagerOpen(false); setProjectClean(); setStatus("New SPIKE project created");
+    historyRef.current = []; redoRef.current = []; setStudies([]); setActiveStudyCaseId(null); setStudyManagerOpen(false); setProjectName("untitled.spike"); setProjectPath(null); setProjectManifestDigest(null); setActiveDesignId(null); setCanonicalSpiDeR(null); setBoardFile("untitled.kicad_pcb"); setBoardSource(""); setBoardData(null); setSelected(null); setSolverSelections({}); setPiSetup(defaultPiSetup()); setPiTopology(emptyTopology("pi")); setSiTopology(emptyTopology("si")); setSelectedSiSuite(null); setSiChannelResult(null); setSpiceWorkspace(defaultSpiceWorkspace("pi")); setEmiSetup(defaultEmiSetup()); setEmiPreflight(null); setEmiScreening(null); setEmiFieldResult(null); setThermalScenario(null); setComponentBonds([]); setAssemblyIr(null); setAssemblyDesigns(null); setAssemblyPackageShapes(null); setModelIndex(normalizeModelIndex(null)); setBondValidation([]); setProbes([]); setProbeFormulaRows([]); setSavedProbeReferenceIds({}); setAnalysisResult(null); setPdnReview(null); setPdnReviewSourceId(null); setResultRecords([]); setResultDisplay("none"); setAnalysisSummary(null); setProjectManagerOpen(false); setProjectClean(); setStatus("New SPIKE project created");
   };
   const requestUnsavedAction = (actionLabel: string, action: () => void | Promise<void>) => {
     if (!projectDirtyRef.current) { void action(); return; }
@@ -1673,7 +1706,7 @@ export default function App() {
         if (!designId) throw new Error("The project package worker did not return a canonical design identity.");
         const savedDesign = (response.result as any)?.design_ir;
         if (adoptSavedFile) {
-          setCanonicalDesignIr(savedDesign?.contract === "spike/design-ir/v2" ? savedDesign : null);
+          setCanonicalSpiDeR(savedDesign?.contract === "spike/design-ir/v2" ? savedDesign : null);
           setProjectPath(path); setProjectManifestDigest(manifestDigest); setActiveDesignId(designId); rememberProject(projectName, path);
           setProjectUpgradeOffer(null);
         }
@@ -1720,7 +1753,7 @@ export default function App() {
     setStudies(loadedStudies); setActiveStudyCaseId(null);
     canonicalDesign ??= data.design?.canonical_design ?? null;
     const nextName = data.project?.name ?? fileName.replace(/\.spike(?:\.json)?$/i, ".spike");
-    setProjectName(nextName); setProjectPath(path); setProjectManifestDigest(manifestDigest); setActiveDesignId(canonicalDesignId ?? (typeof data.design?.design_id === "string" ? data.design.design_id : null)); setCanonicalDesignIr(canonicalDesign?.contract === "spike/design-ir/v2" ? canonicalDesign : null); setBoardFile(data.design?.source_file ?? data.design?.board_file ?? data.board ?? fileName);
+    setProjectName(nextName); setProjectPath(path); setProjectManifestDigest(manifestDigest); setActiveDesignId(canonicalDesignId ?? (typeof data.design?.design_id === "string" ? data.design.design_id : null)); setCanonicalSpiDeR(canonicalDesign?.contract === "spike/design-ir/v2" ? canonicalDesign : null); setBoardFile(data.design?.source_file ?? data.design?.board_file ?? data.board ?? fileName);
     setBoardSource(source); setBoardData(parsed); setModelAssignments(data.design?.model_assignments ?? {});
     const indexedVisualModels = Array.isArray(data.models?.models)
       && data.models.models.some((model: any) => model?.model_type === "gltf" || model?.model_type === "glb");
@@ -1758,8 +1791,13 @@ export default function App() {
     setPowerNets(analysis.power_nets ?? ["+1V8_CORE", "GND"]); setPiSetup(normalizePiSetup(analysis.pi_setup)); setLimits(analysis.limits ?? { drop: "50", density: "100" }); setFrequency(analysis.frequency ?? "10 MHz");
     setVisibleLayers(parsed ? visibilityForBoard(parsed, analysis.visible_layers) : analysis.visible_layers ?? initialLayers); setLayerOpacity(analysis.layer_opacity ?? {}); setLayerSeparation(Math.max(0, Number(analysis.layer_separation_mm) || 0));
     setShowVias(analysis.show_vias ?? true); setShowNetNames(analysis.show_net_names === true); setShowAxes(analysis.show_axes ?? true); setShowModels(analysis.show_models ?? true); setShowSmdModels(analysis.show_smd_models ?? true); setShowThtModels(analysis.show_tht_models ?? true); setNavigationInertia(analysis.navigation_inertia ?? false); setViewMode(analysis.view_mode === "2D" ? "2D" : "3D"); setSelectionFilter(["all", "part", "net"].includes(analysis.selection_filter) ? analysis.selection_filter : "all"); setIsolatedNet(analysis.isolated_net ?? null);
+    const savedEmSettings = analysis.em_viewport_settings && typeof analysis.em_viewport_settings === "object" ? analysis.em_viewport_settings : {};
+    setEmViewportSettings({ ...defaultEMViewportSettings, ...Object.fromEntries(Object.entries(defaultEMViewportSettings).filter(([key, value]) => typeof savedEmSettings[key] === typeof value).map(([key]) => [key, savedEmSettings[key]])) });
     const loadedResult = isSupportedSavedResult(analysis.latest_result) ? normalizeSolverResult(analysis.latest_result) : null;
     const loadedRecords: ResultRecord[] = (analysis.result_history ?? []).flatMap((record: any, index: number) => { const bundle = isSupportedSavedResult(record.bundle) ? normalizeSolverResult(record.bundle) : null; return bundle ? [{ id: String(record.id ?? index), label: String(record.label ?? `Result ${index + 1}`), bundle }] : []; });
+    if (loadedResult && (loadedResult.em_fields || loadedResult.em_networks) && !loadedRecords.some(row => row.bundle.analysis_id === loadedResult.analysis_id)) loadedRecords.push(resultRecord(loadedResult, loadedRecords.length));
+    setEmResultManagerOpen(Boolean(loadedResult?.em_fields || loadedResult?.em_networks || loadedRecords.some(row => row.bundle.em_fields)));
+    if (loadedRecords.some(row => row.bundle.em_fields)) setEmiChamberOpen(false);
     const loadedPdnReview = analysis.pdn_review?.contract === "spike/pdn-review/v1" ? analysis.pdn_review as PdnReview : null;
     const boundedRecords = boundedResultRecords(loadedRecords);
     const persistedDisplay = String(analysis.result_display ?? "");
@@ -2103,6 +2141,9 @@ export default function App() {
       pdnReview: reportDomain === "pi" && result && resultSolvedForPresentation(result)
         && pdnReviewSourceId === result.analysis_id ? pdnReview : null,
       emi: { setup: emiSetup, preflight: emiPreflight, screening: emiScreening, fieldResult: emiFieldResult },
+      emerge: (extensionResult?.data as Record<string, unknown> | undefined)?.analysis_result
+        && ((extensionResult?.data as Record<string, unknown>).analysis_result as Record<string, unknown>).analysis_id === result?.analysis_id
+        ? extensionResult : null,
       si: { channelResult: siChannelResult, suite: selectedSiSuite },
       thermal: { scenario: thermalScenario },
       projectPayload: projectData(),
@@ -2366,7 +2407,7 @@ export default function App() {
       setBoardSource(source);
       setBoardData(parsed);
       setActiveDesignId(null);
-      setCanonicalDesignIr(null);
+      setCanonicalSpiDeR(null);
       setPiTopology(extractTopologyFromBoard(parsed, "pi"));
       setSiTopology(extractTopologyFromBoard(parsed, "si"));
       setSpiceWorkspace(defaultSpiceWorkspace("pi", parsed));
@@ -2421,6 +2462,12 @@ export default function App() {
       }));
       setResultVisualizerDomain(result.mode === "si" ? "si" : "pi");
       setResultVisualizerOpen(result.status !== "preview");
+      if (result.em_fields || result.em_networks) {
+        setResultVisualizerOpen(false); setEmResultManagerOpen(true); setEmiChamberOpen(false); setEmiDashboardOpen(false); setViewMode("3D");
+        setTab(result.mode === "si" ? "HF / SI" : "EM");
+        const quantities = availableEMQuantities({ id: record.id, label: record.label, result: emViewportPayload(result) });
+        setEmViewportSettings(current => ({ ...current, visible: true, frequencyIndex: 0, selectedSample: 0, quantity: quantities[0]?.id ?? "far_e" }));
+      }
       if (result.status !== "preview") {
         // A published solver result is terminal for the UI run lifecycle. The
         // dialog clock also stops itself, but clearing here prevents a queued
@@ -3032,6 +3079,11 @@ export default function App() {
     } finally { setExtensionTrusting(null); }
   };
   const invokeExtension = async (extensionId: string, contributionId: string, parameters: Record<string, any> = {}) => {
+    if (extensionId === "spike.optycal-suite") invalidateOptycalPreview();
+    const optycalGeneration = optycalGenerationRef.current;
+    let preparingEMerge = extensionId === "spike.emerge-suite" && ["emerge-preview", "emerge-radiation", "emerge-si"].includes(contributionId);
+    if (preparingEMerge) invalidateEMergePreview();
+    const previewGeneration = emergePreviewGenerationRef.current;
     try {
     const extension = extensionCatalog.find(item => item.id === extensionId);
     const contributionEntry = Object.entries(extension?.contributes ?? {}).flatMap(([point, entries]) => entries.map(item => ({ point, item }))).find(entry => entry.item.id === contributionId);
@@ -3066,23 +3118,58 @@ export default function App() {
       ...(permissions.includes("results.read") ? { results: extensionResultsContext(selectedResult) } : {}),
       parameters,
     };
+    if (extensionId === "spike.emerge-suite" && ["emerge-radiation", "emerge-si"].includes(contributionId)) {
+      const prepared = await runLocalWorker({ method: "invoke_extension", params: { extension_id: extensionId, contribution_id: "emerge-preview", context: { ...context, parameters: { ...parameters, preview_radiation: contributionId === "emerge-radiation" } } } });
+      if (previewGeneration !== emergePreviewGenerationRef.current) { setStatus("EMerge setup changed during preparation; run again with the current setup"); return; }
+      const preview = prepared.result?.data as Record<string, unknown> | undefined;
+      if (!prepared.ok || typeof preview?.script !== "string" || !/^[a-f0-9]{64}$/.test(String(preview.script_sha256 ?? "")) || !/^[a-f0-9]{64}$/.test(String(preview.case_sha256 ?? ""))) {
+        setEmergeEmiError(prepared.error ?? "EMerge preparation returned no verifiable generated script.");
+        setStatus("EMerge preparation failed; previous solved results preserved"); return;
+      }
+      const scriptDigest = Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(preview.script))), byte => byte.toString(16).padStart(2, "0")).join("");
+      if (previewGeneration !== emergePreviewGenerationRef.current) { setStatus("EMerge setup changed during preparation; run again with the current setup"); return; }
+      if (scriptDigest !== preview.script_sha256) { setEmergeEmiError("EMerge generated script failed its source digest check."); setStatus("EMerge preparation failed; previous solved results preserved"); return; }
+      setEmergeScriptPreview(preview);
+      context.parameters = { ...parameters, expected_generated_script_sha256: scriptDigest };
+      preparingEMerge = false;
+    }
+    if (extensionId === "spike.optycal-suite" && contributionId === "optycal-radiation") {
+      const prepared = await runLocalWorker({ method: "invoke_extension", params: { extension_id: extensionId, contribution_id: "optycal-preview", context } });
+      if (optycalGeneration !== optycalGenerationRef.current) throw new Error("Optycal setup changed during preparation; run again.");
+      const preview = prepared.result?.data as Record<string, unknown> | undefined;
+      if (!prepared.ok || typeof preview?.script !== "string") throw new Error(prepared.error ?? "Optycal returned no prepared Python script.");
+      const digest = Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(preview.script))), byte => byte.toString(16).padStart(2, "0")).join("");
+      if (optycalGeneration !== optycalGenerationRef.current || digest !== preview.script_sha256) throw new Error("Optycal script or setup changed during preparation.");
+      setOptycalPreview(preview);
+      context.parameters = { ...parameters, expected_generated_script_sha256: digest, expected_structure_source_sha256: preview.structure_source_sha256 };
+    }
     const response = await runLocalWorker({ method: "invoke_extension", params: { extension_id: extensionId, contribution_id: contributionId, context } });
     if (!response.ok) {
       const message = response.error ?? "Extension execution failed";
-      if (extensionId === "spike.emerge-suite") setExtensionResult({ status: "failed", title: "EMerge run failed", data: { error: message } });
+      if (extensionId === "spike.emerge-suite" && !preparingEMerge) setExtensionResult({ status: "failed", title: "EMerge run failed", data: { error: message } });
+      if (preparingEMerge) setEmergeEmiError(message);
       setStatus(message); return;
     }
     const title = String(response.result?.title ?? contributionId);
     const data = response.result?.data as Record<string, unknown> | undefined;
+    if (extensionId === "spike.optycal-suite" && contributionId === "optycal-preview") {
+      if (optycalGeneration === optycalGenerationRef.current) setOptycalPreview(data ?? null);
+      setStatus("Optycal structure study prepared for review"); return;
+    }
+    if (extensionId === "spike.emerge-suite" && contributionId === "emerge-preview") {
+      if (previewGeneration !== emergePreviewGenerationRef.current) return;
+      if (typeof data?.script !== "string") throw new Error("EMerge preview returned no generated script.");
+      setEmergeScriptPreview(data); setStatus("EMerge generated script ready for review"); return;
+    }
     if (contributionEntry?.point === "analyses" && contribution?.output_contract === "spike/v1") {
       const result = extensionAnalysisResult(contributionEntry.point, contribution.output_contract, data);
       if (!result) throw new Error("Extension analysis returned no admitted, design-bound SPIKE result.");
       setExtensionResult(response.result ?? null);
       recordChange();
       window.dispatchEvent(new CustomEvent("spike-analysis-result", { detail: result }));
-      if (extensionId !== "spike.emerge-suite") setExtensionsOpen(false);
+      if (!["spike.emerge-suite", "spike.optycal-suite"].includes(extensionId)) setExtensionsOpen(false);
       setDock("Console");
-      if (extensionId === "spike.emerge-suite" && contributionId === "emerge-radiation") {
+      if (["spike.emerge-suite", "spike.optycal-suite"].includes(extensionId) && ["emerge-radiation", "optycal-radiation"].includes(contributionId)) {
         if (emergeRadiationPatterns(response.result).length > 0) {
           setEmergeViewportBoardSource(boardSource);
           setTab("EM");
@@ -3090,7 +3177,7 @@ export default function App() {
           setEmergeEmiOpen(false);
           setExtensionsOpen(false);
           setEmiChamberOpen(false);
-          setEmiDashboardOpen(true);
+          setEmiDashboardOpen(false); setEmResultManagerOpen(true);
           setEmergePatternIndex(0);
           setStatus(`${title} completed: radiation pattern open in EM · ${result.model_status}`);
           return;
@@ -3109,20 +3196,22 @@ export default function App() {
     setStatus(`${title} completed${data?.net_count !== undefined ? `: ${data.net_count} nets` : ""}`);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Extension execution failed";
-      if (extensionId === "spike.emerge-suite") setExtensionResult({ status: "failed", title: "EMerge run failed", data: { error: message } });
+      if (extensionId === "spike.emerge-suite" && !preparingEMerge) setExtensionResult({ status: "failed", title: "EMerge run failed", data: { error: message } });
+      if (preparingEMerge) setEmergeEmiError(message);
       setStatus(message);
     }
   };
   const openEmiEmerge = () => {
+    invalidateEMergePreview();
     setTab("EM");
     setEmergeSiOpen(false);
     setEmergeEmiSetup(current => current.signal_net ? current : { ...current, signal_net: emiSetup.selected_nets[0] ?? selected?.net ?? "" });
-    setExtensionResult(null);
     setEmergePatternIndex(0);
     setEmergeEmiError("");
     setEmergeEmiOpen(true);
   };
   const openSiEmerge = () => {
+    invalidateEMergePreview();
     setTab("HF / SI");
     setEmergeEmiOpen(false);
     setEmergeEmiSetup(current => current.signal_net ? current : { ...current, signal_net: selected?.net ?? "" });
@@ -3192,7 +3281,9 @@ export default function App() {
       if (!preview) throw new Error("The file has no completed EMerge radiation grid for this board or its disclosed two-conductor surrogate.");
       setExtensionResult(preview.envelope);
       setEmergeViewportBoardSource(boardSource);
-      setTab("EM"); setViewMode("3D"); setEmergeEmiOpen(false); setEmiChamberOpen(false); setEmiDashboardOpen(true); setEmergePatternIndex(0);
+      setTab("EM"); setViewMode("3D"); setEmergeEmiOpen(false); setEmiChamberOpen(false); setEmiDashboardOpen(false); setEmergePatternIndex(0);
+      const result = normalizeSolverResult((preview.envelope.data as Record<string, unknown>)?.analysis_result);
+      if (result) window.dispatchEvent(new CustomEvent("spike-analysis-result", { detail: result }));
       setStatus(`${preview.envelope.title} opened in EM as an unvalidated saved-result preview${preview.surrogate ? "; source board geometry was simplified for the solve" : ""}`);
     } catch (error) { setEmergeEmiError(error instanceof Error ? error.message : "Unable to open the saved radiation result."); }
   };
@@ -3293,6 +3384,77 @@ export default function App() {
     if (!response.ok || !response.result) throw new Error(response.error ?? "Assembly resource admission returned no result.");
     requireAdmittedAssembly(response.result, workload);
     return scope;
+  };
+  // Callbacks are refreshed after all referenced setup and admission functions exist.
+  mcpAnalysisCallbacks.current = {
+    getContext: () => {
+      let scope: AssemblyAnalysisScope | null = null;
+      try { scope = assemblyAnalysisScope(assemblyIr, activeDesignId, projectManifestDigest, selectedBoardInstanceId); } catch { /* Ambiguous scope stays blocked during admission; discovery still works. */ }
+      return { design: designForExchange(), canonicalDesign: canonicalSpiDeR, assembly: assemblyIr, assemblyDesigns,
+        assemblyScope: scope, boardFile, activeDesignId, sourceKiCadPcb: boardFile.toLowerCase().endsWith(".kicad_pcb") ? boardSource : undefined, boardBoundsMm: boardData ? [boardData.bounds.minX, boardData.bounds.minY, boardData.bounds.maxX, boardData.bounds.maxY] : undefined, extensions: extensionCatalog,
+        results: [...resultRecords.map(row => row.bundle), ...(siChannelResult ? [siChannelResult] : []), ...(emiScreening ? [emiScreening] : []), ...(thermalScenario?.result ? [thermalScenario.result] : []), ...(thermalScenario?.board_thermal_result ? [thermalScenario.board_thermal_result] : [])] };
+    },
+    admitScope: async (kind, parameters) => {
+      if (!workerAvailable) throw new Error("Loaded-board analysis requires the local desktop worker.");
+      if (kind.startsWith("multiboard_")) return null;
+      const workload: AssemblyWorkload = kind === "thermal" || kind === "board_thermal" ? "thermal"
+        : kind === "si" || kind === "si_workflow" || kind === "em" || kind === "extension" ? "full_wave"
+        : ["dc", "dc_ir_drop", "bulk_net", "DC IR Drop", "Bulk Net Analysis"].includes(String((parameters.spec as Record<string, unknown> | undefined)?.mode)) ? "pi_dc" : "pi_ac";
+      return requireAssemblyAdmission(workload);
+    },
+    publishResult: async (raw, meta) => {
+      const object = (value: unknown): Record<string, unknown> => value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
+      const data = object(raw.data), payload = object(data.analysis_result ?? raw.analysis_result ?? raw);
+      setMcpAnalysisOutput({ ...raw, mcp: meta });
+      if (payload.contract === "spike/v1" && payload.analysis_id) {
+        const result = normalizeSolverResult(payload);
+        if (!result) throw new Error("Returned result cannot be admitted into SPIKE result history.");
+        if (meta.kind === "extension") setExtensionResult(raw);
+        window.dispatchEvent(new CustomEvent("spike-analysis-result", { detail: result }));
+      } else if (["spike/si-channel-result/v1", "spike/si-workflow-result/v1"].includes(String(payload.contract))) {
+        setSiChannelResult(payload); setTab("HF / SI");
+      } else if (payload.contract === "spike/thermal-result/v1") {
+        setThermalScenario(current => ({ ...current, ...(meta.parameters.scenario as Record<string, unknown> | undefined), result: payload })); setTab("Thermal");
+      } else if (payload.contract === "spike/board-thermal-result/v1") {
+        const request = meta.parameters.request as BoardThermalRequest;
+        if (!validBoardThermalResult(payload, request)) throw new Error("Returned board thermal result is invalid for its bound request.");
+        setThermalScenario(current => ({ ...current, board_thermal_request: request, board_thermal_result: payload })); setTab("Thermal");
+      } else if (meta.kind === "em" && payload.status === "completed_screening_only") {
+        setEmiScreening(payload as unknown as EmiScreening); setTab("EM");
+      }
+      setStatus(`MCP ${meta.kind} evidence returned: ${String(payload.status ?? "unknown")} · ${String(payload.model_status ?? "qualification in evidence")}`);
+    },
+    resultAction: async (command, args) => {
+      if (command === "analysis_generate_report") {
+        if (Object.keys(args).length) throw new Error("Report generation takes no arguments; select a result first.");
+        if (!boardData) throw new Error("Load a board before generating its engineering report.");
+        await generateReport(); return { status: "report_preview_ready", saved: false, message: "Offline engineering report preview opened. Export HTML or print from SPIKE." };
+      }
+      if (Object.keys(args).some(key => !["resultId", "frequencyIndex", "quantity", "sampleIndex"].includes(key))) throw new Error("Unknown result view argument.");
+      const record = resultRecords.find(row => row.id === args.resultId);
+      if (!record) throw new Error("Choose a retained result ID from analysis_context.");
+      const emRecord = { id: record.id, label: record.label, result: emViewportPayload(record.bundle) };
+      if (record.bundle.em_fields || record.bundle.em_networks) {
+        const quantities = availableEMQuantities(emRecord), frequencyIndex = args.frequencyIndex ?? 0;
+        if (!Number.isInteger(frequencyIndex) || Number(frequencyIndex) < 0 || Number(frequencyIndex) >= emResultFrequencies(emRecord).length) throw new Error("Choose an available result frequencyIndex.");
+        if (!quantities.length) {
+          if (args.quantity !== undefined || args.sampleIndex !== undefined) throw new Error("This network result has no EM field sample grid.");
+          setEmViewportSettings(current => ({ ...current, frequencyIndex: Number(frequencyIndex), visible: true }));
+          setEmResultManagerOpen(true); setViewMode("3D"); setEmiChamberOpen(false); setEmiDashboardOpen(false); setResultDisplay(record.id);
+          return { status: "result_graphs_opened", resultId: record.id };
+        }
+        const quantity = args.quantity ?? quantities[0]?.id;
+        if (!quantities.some(row => row.id === quantity)) throw new Error("Choose an available result quantity.");
+        const settings = { ...emViewportSettings, visible: true, frequencyIndex: Number(frequencyIndex), quantity: String(quantity), selectedSample: Number(args.sampleIndex ?? 0) };
+        const data = buildEMViewportData(emRecord, settings);
+        if (!Number.isInteger(settings.selectedSample) || settings.selectedSample < 0 || !data || settings.selectedSample >= data.values.length || data.values[settings.selectedSample] === null) throw new Error("Choose an actual available result sampleIndex.");
+        setEmViewportSettings(settings); setEmResultManagerOpen(true); setViewMode("3D"); setEmiChamberOpen(false); setEmiDashboardOpen(false); setTab(record.bundle.mode === "si" ? "HF / SI" : "EM");
+      } else {
+        if (args.frequencyIndex !== undefined || args.quantity !== undefined || args.sampleIndex !== undefined) throw new Error("This result has no EM sample grid; use its standard result visualizer.");
+        setResultVisualizerOpen(true); setResultVisualizerDomain(record.bundle.mode === "si" ? "si" : "pi");
+      }
+      setResultDisplay(record.id); return { status: "result_view_opened", resultId: record.id };
+    },
   };
   const requestEmiPreflight = async () => {
     const design = designForSolver();
@@ -3721,7 +3883,7 @@ export default function App() {
       setBoardData(parsed);
       setModelAssignments({});
       setActiveDesignId(normalized?.canonical_design?.design_id ?? null);
-      setCanonicalDesignIr(normalized?.canonical_design ?? null);
+      setCanonicalSpiDeR(normalized?.canonical_design ?? null);
       setSelected(null);
       setSelectedHarnessId(null);
       setSelectedBoardInstanceId(null);
@@ -3846,7 +4008,9 @@ export default function App() {
     if (emiOnly) setEmiDashboardOpen(true);
     else {
       setResultVisualizerDomain(loaded.results.si?.latest_channel_result && !loaded.results.latest_result ? "si" : "pi");
-      setResultVisualizerOpen(true);
+      const emResult = loaded.results.latest_result && normalizeSolverResult(loaded.results.latest_result);
+      setResultVisualizerOpen(!emResult?.em_fields);
+      if (emResult?.em_fields) { setEmResultManagerOpen(true); setViewMode("3D"); setEmiChamberOpen(false); }
     }
     setStatus(`Simulation results loaded: ${name}`);
   };
@@ -3921,6 +4085,10 @@ export default function App() {
     return () => window.removeEventListener("keydown", onNavigationKey);
   }, [shortcuts, shortcutsOpen]);
 
+  const emViewportRecords = useMemo<EMViewportRecord[]>(() => resultRecords.filter(row => row.bundle.em_fields || row.bundle.em_networks).map(row => ({ id: row.id, label: row.label, result: emViewportPayload(row.bundle) })), [resultRecords]);
+  const emViewportRecord = emViewportRecords.find(row => row.id === resultDisplay) ?? (resultDisplay === "all" ? emViewportRecords[emViewportRecords.length - 1] : undefined);
+  const emViewportData = useMemo(() => emViewportRecord ? buildEMViewportData(emViewportRecord, emViewportSettings) : null, [emViewportRecord, emViewportSettings]);
+  const emViewportOverlay = useMemo(() => emViewportData ? { data: emViewportData, settings: emViewportSettings } : null, [emViewportData, emViewportSettings]);
   const emergePatterns = emergeRadiationPatterns(extensionResult);
   const emergeViewportPattern = tab === "EM" && boardSource && boardSource === emergeViewportBoardSource
     ? emergePatterns[emergePatternIndex] ?? null : null;
@@ -3928,7 +4096,7 @@ export default function App() {
   const emergeProvenance = emergeAnalysis?.provenance as Record<string, unknown> | undefined;
   const emergeViewportSurrogate = String(emergeProvenance?.design_id ?? "").endsWith("-rf-two-conductor");
   const siViewportCrosstalk = (() => {
-    if (tab !== "HF / SI" || !boardData || !activeDesignId || !canonicalDesignIr
+    if (tab !== "HF / SI" || !boardData || !activeDesignId || !canonicalSpiDeR
         || siChannelResult?.contract !== "spike/si-channel-result/v1" || siChannelResult.status !== "completed") return null;
     const extraction = siChannelResult.extraction as Record<string, unknown> | undefined;
     const geometry = extraction?.geometry as Record<string, unknown> | undefined;
@@ -3937,7 +4105,7 @@ export default function App() {
     const sourceDesignId = resultDesignId.startsWith(`${activeDesignId}-si-crosstalk-`) ? activeDesignId : resultDesignId;
     const aggressorNetId = String(geometry?.signal_net_id ?? "");
     const victimNetId = String(geometry?.victim_net_id ?? "");
-    const nets = Array.isArray(canonicalDesignIr.nets) ? canonicalDesignIr.nets as Record<string, unknown>[] : [];
+    const nets = Array.isArray(canonicalSpiDeR.nets) ? canonicalSpiDeR.nets as Record<string, unknown>[] : [];
     const aggressor = nets.find(net => net.id === aggressorNetId);
     const victim = nets.find(net => net.id === victimNetId);
     if (!aggressor || !victim || typeof aggressor.name !== "string" || typeof victim.name !== "string") return null;
@@ -4263,6 +4431,7 @@ export default function App() {
           <button className="canvas-icon" title={`Zoom out (${shortcuts.zoomOut})`} onClick={() => commandCamera("zoom-out")}><ZoomOut size={15} /></button>
           <button className="canvas-icon" title={`Return to isometric view (${shortcuts.viewIso})`} disabled={viewMode === "2D"} onClick={() => commandCamera("view-iso")}><Axis3D size={15} /></button>
           <button className="canvas-icon" title={`Keyboard shortcuts (${shortcuts.shortcutWindow})`} onClick={() => setShortcutsOpen(true)}><Keyboard size={15} /></button>
+          {emViewportRecords.length > 0 && <button className={`canvas-icon ${emResultManagerOpen ? "active" : ""}`} title="EM results manager: PCB/assembly overlays and linked graphs" onClick={() => { setEmResultManagerOpen(value => !value); setEmiChamberOpen(false); setViewMode("3D"); }}><RadioTower size={15} /></button>}
           <button className={`canvas-icon ${resultVisualization.mode !== "geometry" ? "active" : ""}`} title="Analysis visualization" onClick={() => { setResultVisualizerDomain(tab === "HF / SI" || tab === "EM" ? "si" : "pi"); setResultVisualizerOpen(true); }}><LayoutDashboard size={15} /></button>
           {(analysisResult?.time_series.frames.length ?? 0) > 1 && <button className={`canvas-icon ${resultVisualization.animationPlaying ? "active" : ""}`} title={resultVisualization.animationPlaying ? "Pause result animation" : "Animate transient result"} onClick={() => setResultVisualization(current => ({ ...current, animationPlaying: !current.animationPlaying }))}>{resultVisualization.animationPlaying ? <Pause size={15} /> : <Play size={15} />}</button>}
           <span className="divider" />
@@ -4460,7 +4629,9 @@ export default function App() {
             terminalMarkers={terminalMarkers}
             thermalScenario={viewportThermalScenario}
             thermalVisibility={thermalVisibility}
-            emRadiation={emergeViewportPattern ? { pattern: emergeViewportPattern, surrogate: emergeViewportSurrogate, sourceLabel: String(extensionResult?.title ?? "EMerge result") } : null}
+            emOverlay={emViewportOverlay}
+            onEmSample={index => setEmViewportSettings(current => ({ ...current, selectedSample: index }))}
+            emRadiation={!emViewportData && emergeViewportPattern ? { pattern: emergeViewportPattern, surrogate: emergeViewportSurrogate, sourceLabel: String(extensionResult?.title ?? "EMerge result") } : null}
             siCrosstalk={siViewportCrosstalk}
             onSelect={handleSelect}
             onContextMenu={setViewportContext}
@@ -4471,6 +4642,7 @@ export default function App() {
             onModelStatus={setModelLoadStatus}
             onAssemblyPartViewportStatus={handleAssemblyPartViewportStatus}
           />
+          {emResultManagerOpen && emViewportRecords.length > 0 && <EMViewportResultManager records={emViewportRecords} activeRecordId={emViewportRecord?.id ?? ""} settings={emViewportSettings} data={emViewportData} onSelectRecord={id => { setResultDisplay(id); setEmViewportSettings(current => ({ ...current, visible: true, frequencyIndex: 0, selectedSample: 0, quantity: availableEMQuantities(emViewportRecords.find(row => row.id === id)!)[0]?.id ?? "far_e" })); setViewMode("3D"); setEmiChamberOpen(false); }} onSettingsChange={setEmViewportSettings} onClose={() => setEmResultManagerOpen(false)} />}
           {tab === "EM" && emiChamberOpen && <EmiChamberWorkspace
             source={emiScene} setup={emiSetup.chamber} hasBoard={Boolean(boardData)}
             emergePatterns={emergePatterns} emergeFrequencyIndex={emergePatternIndex} onEmergeFrequencyIndexChange={setEmergePatternIndex}
@@ -4592,7 +4764,7 @@ export default function App() {
     {netManagerOpen && <NetManager board={boardData} selectedNet={selected?.net} selectedObject={selected ?? undefined} managedNets={powerNets} setManagedNets={nets => { setPowerNets(nets); if (nets[0]) setPiSetup(current => ({ ...current, net: nets[0] })); }} loopExtractions={piSetup.loopExtractions} setLoopExtractions={loopExtractions => setPiSetup(current => ({ ...current, loopExtractions }))} pathGroups={[...new Map(piTopology.nodes.filter(node => node.pathGroupId).map(node => [node.pathGroupId!, node.pathGroupLabel || node.pathGroupId!])).entries()].map(([id, label]) => ({ id, label }))} onSelectNet={focusManagedNet} onOpenPowerPaths={() => { setNetManagerOpen(false); setDock("Power tree"); setTopologyEditor("pi"); }} onOpenSeriesAnalysis={() => { setNetManagerOpen(false); openAnalysisSetup("DC IR Drop", "path"); }} onStatus={setStatus} onClose={() => { previewViewportTarget(null); setNetManagerOpen(false); }} />}
     {topologyEditor && <TopologyEditor domain={topologyEditor} board={boardData} model={topologyEditor === "pi" ? piTopology : siTopology} onUndo={undo} onRedo={redo} setModel={(next, record = true) => { if (record) recordChange(); topologyEditor === "pi" ? setPiTopology(next) : setSiTopology(next); }} onClose={() => setTopologyEditor(null)} onUseForAnalysis={(next, scenarioId, plan) => { if (next.domain === "pi") { const jobs = topologyBatchJobs(boardData, next, plan); const first = jobs[0]; const paths = compilePiPaths(next); const reviewedPath = paths.find(path => path.issues.length === 0) ?? paths[0]; const sourceNode = next.nodes.find(node => node.pathGroupId === reviewedPath?.id && node.kind === "source"); const loadNode = next.nodes.find(node => node.pathGroupId === reviewedPath?.id && node.kind === "load"); const pathSource = reviewedPath ? topologyTerminal(boardData, sourceNode, reviewedPath.source_terminal.net, "source", 0, sourceNode?.voltageV ?? 0) : null; const pathLoad = reviewedPath ? topologyTerminal(boardData, loadNode, reviewedPath.load_terminal.net, "load", 0, loadNode ? plan.budget.nodes[loadNode.id]?.currentA ?? loadNode.loadCurrentA ?? 0 : 0) : null; const unresolved = reviewedPath ? [pathSource, pathLoad].filter(item => !item?.anchorId).length : jobs.flatMap(job => [...job.sources, ...job.loads]).filter(item => !item.anchorId).length; setPiTopology(next); if (reviewedPath && pathSource && pathLoad) setPiSetup(current => ({ ...current, powerPathId: reviewedPath.id, net: reviewedPath.source_terminal.net, sources: [pathSource], loads: [pathLoad], batchJobs: jobs })); else if (first) setPiSetup(current => ({ ...current, powerPathId: "", net: first.net, sources: first.sources, loads: first.loads, batchJobs: jobs })); setAnalysisMode(reviewedPath ? "DC IR Drop" : jobs.length > 1 ? "Bulk Net Analysis" : "DC IR Drop"); setTab("PI"); setDock("Power tree"); setAnalysisSetupWorkflow(reviewedPath ? "path" : jobs.length > 1 ? "batch" : "single"); setRightOpen(true); setDcRunOpen(true); setStatus(reviewedPath ? `Power path ${reviewedPath.label} attached: ${reviewedPath.segments.length} net segments, ${reviewedPath.transitions.length} series interfaces; ${unresolved} terminal${unresolved === 1 ? "" : "s"} require placement review` : `Power tree ${scenarioId} case attached: ${jobs.length} PI job${jobs.length === 1 ? "" : "s"}; ${unresolved} terminal${unresolved === 1 ? "" : "s"} require placement review`); } else { setSiTopology(next); setTab("HF / SI"); setStatus(`SI channel topology saved: ${next.nodes.length} elements, ${next.edges.length} connections`); } setTopologyEditor(null); }} onStatus={setStatus} />}
     {layersOpen && <LayerManager definitions={boardData?.layerDefinitions ?? layerEntries.map((name, id) => ({ id, name, kind: name.endsWith(".Cu") ? "signal" : "user" }))} stackup={boardData?.stackup ?? []} layers={visibleLayers} opacity={layerOpacity} viaCount={boardData?.vias.length ?? 0} showNetNames={showNetNames} setShowNetNames={setShowNetNames} showVias={showVias} setShowVias={setShowVias} showOnlyVias={showOnlyVias} layerSeparation={layerSeparation} setLayerSeparation={setLayerSeparation} toggleLayer={toggleLayer} setLayersVisible={setLayersVisible} showOnlyLayer={showOnlyLayer} changeOpacity={changeLayerOpacity} beginOpacityChange={recordChange} restoreDefaults={restoreLayerDefaults} showModels={showModels} setShowModels={setShowModels} showSmdModels={showSmdModels} setShowSmdModels={setShowSmdModels} showThtModels={showThtModels} setShowThtModels={setShowThtModels} smdCount={componentMountCounts.smd} thtCount={componentMountCounts.tht} onClose={() => setLayersOpen(false)} />}
-    {stackupOpen && <EditableStackupManager stackup={boardData?.stackup ?? []} copperLayers={boardData?.layers ?? []} onSave={stackup => { recordChange(); setBoardData(current => current ? { ...current, stackup } : current); setCanonicalDesignIr(current => applyStackupToDesignIr(current, stackup)); setStatus("Project-local stackup updated; solver validity will be re-evaluated"); }} onClose={() => setStackupOpen(false)} />}
+    {stackupOpen && <EditableStackupManager stackup={boardData?.stackup ?? []} copperLayers={boardData?.layers ?? []} onSave={stackup => { recordChange(); setBoardData(current => current ? { ...current, stackup } : current); setCanonicalSpiDeR(current => applyStackupToSpiDeR(current, stackup)); setStatus("Project-local stackup updated; solver validity will be re-evaluated"); }} onClose={() => setStackupOpen(false)} />}
     {modelLibraryOpen && selected?.ref && <ModelLibraryPanel componentRef={selected.ref} assignedPath={modelAssignments[selected.ref]} onAssign={(path) => { recordChange(); setModelAssignments(current => ({ ...current, [selected.ref!]: path })); setStatus(`${selected.ref} model assignment saved in the SPIKE project`); setModelLibraryOpen(false); }} onClose={() => setModelLibraryOpen(false)} />}
     {mcadAttachmentOpen && <McadAttachmentPanel projectPath={projectPath} projectManifestDigest={projectManifestDigest} assemblyIr={assemblyIr} assemblyDesigns={assemblyDesigns} assemblyPackageShapes={assemblyPackageShapes} focusedPartId={mcadFocusedPartId} focusedTopologyReference={selectedTopologyReference} desktopShell={desktopShell} isolatedPartId={isolatedAssemblyPartId} section={assemblySection} onIsolatedPart={partId => { setIsolatedAssemblyPartId(partId); setStatus(partId ? "Assembly part isolated temporarily" : "Complete assembly restored"); }} onSection={setAssemblySection} onAttached={async () => {
       if (!projectPath) throw new Error("Save the project before attaching MCAD.");
@@ -4610,7 +4782,7 @@ export default function App() {
     {tracePlotsOpen && <div className="modal-shade"><div style={{ width: "min(1400px, 94vw)", height: "88vh", background: "#101c25", overflow: "auto" }}><TraceResultsWorkbench result={activeAnalysisResult} domain={resultVisualizerDomain} targetNet={activePdnReview?.net} targetOhm={activePdnReview?.target_ohm}
       onClose={() => setTracePlotsOpen(false)} onDetach={() => void detachTool("trace-plots")} /></div></div>}
     {resultVisualizerOpen && <ResultVisualizationPanel onTracePlots={() => setTracePlotsOpen(true)} onDetach={() => void detachTool("results")} domain={resultVisualizerDomain} board={boardData} selectedNet={selected?.net ?? piSetup.net ?? null} result={activeAnalysisResult} sourceResult={analysisResult} visualization={resultVisualization} workerAvailable={workerAvailable} parasiticsAvailable={solverSupports("partial_inductance", "frequency_dependent_impedance")} riskAvailable={solverSupports("coupled_line_extraction", "electric_field_coupling", "magnetic_field_coupling")} pdnReview={activePdnReview} pdnReviewSourceId={pdnReviewSourceId} dropLimitMv={Number.isFinite(Number(limits.drop)) && Number(limits.drop) > 0 ? Number(limits.drop) : null} densityLimitAMm2={Number.isFinite(Number(limits.density)) && Number(limits.density) > 0 ? Number(limits.density) : null} onVisualization={setResultVisualization} onConfigure={() => { setResultVisualizerOpen(false); setDcRunOpen(true); }} onRunParasitics={runParasitics} onRunRisk={runSiRisk} onRunPdn={(target, candidate) => void runPdnReview(target, candidate)} onExportAnimation={() => void exportResultAnimation()} onClose={() => setResultVisualizerOpen(false)} />}
-    <div hidden={!sparameterOpen}><SParameterWorkbench assemblyDesigns={assemblyDesigns} canonicalDesign={canonicalDesignIr} suite={selectedSiSuite} initialResult={siChannelResult} initialView={siWorkbenchIntent.view} initialFocus={siWorkbenchIntent.focus} intentToken={siWorkbenchIntent.token} onClose={() => setSparameterOpen(false)} onStatus={setStatus} onResult={result => { recordChange(); setSiChannelResult(result); }} /></div>
+    <div hidden={!sparameterOpen}><SParameterWorkbench assemblyDesigns={assemblyDesigns} canonicalDesign={canonicalSpiDeR} suite={selectedSiSuite} initialResult={siChannelResult} initialView={siWorkbenchIntent.view} initialFocus={siWorkbenchIntent.focus} intentToken={siWorkbenchIntent.token} onClose={() => setSparameterOpen(false)} onStatus={setStatus} onResult={result => { recordChange(); setSiChannelResult(result); }} /></div>
     </Suspense>
     {emiDashboardOpen && tab === "EM" && !emiChamberOpen && <EmiDashboard preflight={emiPreflight} screening={emiScreening} fieldResult={emiFieldResult} onClose={() => setEmiDashboardOpen(false)} onScreen={() => void runEmiScreening()} onPrepare={() => void prepareEmiCase()} onSolverManager={() => void openExternalEngineCenter()} />}
     {reportPreview && <ReportPreview fileName={reportPreview.fileName} html={reportPreview.html} onExport={exportPreparedReport} onClose={() => setReportPreview(null)} />}
@@ -4637,7 +4809,7 @@ export default function App() {
       onRemoveCase={(studyId, caseId) => { recordChange(); setStudies(current => current.map(study => study.id === studyId ? removeStudyCase(study, caseId) : study)); if (activeStudyCaseId === caseId) setActiveStudyCaseId(null); }}
       onMoveCase={(studyId, caseId, destination) => { recordChange(); setStudies(current => current.map(study => study.id === studyId ? moveStudyCase(study, caseId, destination) : study)); }}
       onActivateCase={activateStudyCase} onSaveCaseSetup={saveCaseSetup} onCaptureCaseResult={captureCaseResult} onClose={() => setStudyManagerOpen(false)} />}
-    {mcpBridgePanelOpen && desktopShell && <McpBridgePanel onClose={() => setMcpBridgePanelOpen(false)} />}
+    {mcpBridgePanelOpen && desktopShell && <McpBridgePanel onClose={() => setMcpBridgePanelOpen(false)} latestEvidence={mcpAnalysisOutput} />}
     {preferencesOpen && <UniversalSettingsModal settings={appSettings} onClose={() => setPreferencesOpen(false)} onSave={next => { setAppSettings(next); saveAppSettings(next); setNavigationInertia(next.navigationInertia); setPreferencesOpen(false); setStatus("Application settings saved locally"); }} />}
     {helpOpen && <Suspense fallback={<div className="modal-shade" role="status">Loading help…</div>}><HelpCenter context={tab} diagnosticCode={helpDiagnosticCode} onClose={() => { setHelpOpen(false); setHelpDiagnosticCode(undefined); }} /></Suspense>}
     {guideOpen && <AnalysisGuide boardLoaded={Boolean(boardData)} resultAvailable={Boolean(analysisResult || resultRecords.length)} onNavigate={navigateAnalysisGuide} onClose={() => setGuideOpen(false)} />}
@@ -4686,19 +4858,22 @@ export default function App() {
       onHoverBond={bond => previewViewportTarget(bond ? { kind: "object", id: bond.padId, type: "pad", net: bond.net, ref: bond.reference, layer: bond.connectedLayers[0], position: bond.position, label: `${bond.reference}.${bond.pad} bond` } : null)}
       onClose={() => { previewViewportTarget(null); setBondManagerOpen(false); }}
     />}
-    {extensionsOpen && <ExtensionManager extensions={extensionCatalog} board={boardData} preferredId={extensionSelectedId} preferredContributionId={extensionSelectedContributionId} defaultNet={selected?.net ?? ""} uiVisible={extensionUiVisible} onToggleUi={toggleExtensionUi} result={extensionResult} harness={harnessDocument} trustBusy={extensionTrusting} trustError={extensionTrustError} onTrust={extensionId => void trustExtension(extensionId)} onHarnessChange={value => { recordChange(); setHarnessDocument(value); }} onClose={() => setExtensionsOpen(false)} onRefresh={() => void openExtensionManager()} onRun={(extensionId, contributionId, parameters) => void invokeExtension(extensionId, contributionId, parameters)} />}
+    {extensionsOpen && <ExtensionManager extensions={extensionCatalog} board={boardData} preferredId={extensionSelectedId} preferredContributionId={extensionSelectedContributionId} defaultNet={selected?.net ?? ""} uiVisible={extensionUiVisible} onToggleUi={toggleExtensionUi} result={extensionResult} emergePreview={emergeScriptPreview} optycalSource={optycalSource} optycalPreview={optycalPreview} onInvalidateOptycalPreview={invalidateOptycalPreview} onInvalidatePreview={() => invalidateEMergePreview()} harness={harnessDocument} trustBusy={extensionTrusting} trustError={extensionTrustError} onTrust={extensionId => void trustExtension(extensionId)} onHarnessChange={value => { recordChange(); setHarnessDocument(value); }} onClose={() => { invalidateEMergePreview(); invalidateOptycalPreview(); setExtensionsOpen(false); }} onRefresh={() => void openExtensionManager()} onRun={(extensionId, contributionId, parameters) => invokeExtension(extensionId, contributionId, parameters)} />}
     {(emergeEmiOpen || emergeSiOpen) && <div className="modal-shade"><div className="floating-panel extension-manager" style={{ gridTemplateRows: "48px minmax(0, 1fr) 45px" }} role="dialog" aria-label={emergeSiOpen ? "EMerge SI analysis" : "EMerge EMI analysis"}>
-      <div className="floating-heading"><div><b>{emergeSiOpen ? "EMERGE SI / S-PARAMETERS" : "EMERGE IN EM"}</b><small>{emergeSiOpen ? "Board-bound two-port frequency sweep" : "Board-bound SI and relative radiation analysis"}</small></div><button onClick={() => { setEmergeEmiOpen(false); setEmergeSiOpen(false); }} aria-label="Close EMerge analysis"><X size={15} /></button></div>
+      <div className="floating-heading"><div><b>{emergeSiOpen ? "EMERGE SI / S-PARAMETERS" : "EMERGE IN EM"}</b><small>{emergeSiOpen ? "Board-bound two-port frequency sweep" : "Board-bound SI and relative radiation analysis"}</small></div><button onClick={() => { invalidateEMergePreview(); setEmergeEmiOpen(false); setEmergeSiOpen(false); }} aria-label="Close EMerge analysis"><X size={15} /></button></div>
       <div className="extension-detail">
-        <p>Choose an imported two-layer board and aligned top signal/bottom return pads. EMerge results remain unvalidated{emergeSiOpen ? "." : " and do not predict EMI compliance."}</p>
+        <p>Choose an imported 2–16 copper-layer board and aligned signal/return pads on adjacent layers. EMerge results remain unvalidated{emergeSiOpen ? "." : " and do not predict EMI compliance."}</p>
         {!emergeEmiExtension && <div className="stack-warning">EMerge Suite is not installed or has not loaded. Check Extension manager.</div>}
         {emergeEmiExtension && !emergeEmiExtension.trusted && <div className="stack-warning">EMerge Suite needs session trust before its local runtime can run.</div>}
-        <div data-guide="emerge-emi-setup"><EMergeSetupForm value={emergeEmiSetup} onChange={value => { if (value.python_executable !== emergeEmiSetup.python_executable) { emergeProbePathRef.current = value.python_executable.trim(); setEmergeEmiRuntime(null); } setEmergeEmiSetup(value); setEmergeEmiError(""); }} netOptions={[...new Set(Object.values(boardData?.nets ?? {}))].sort()} padOptions={(boardData?.pads ?? []).map(pad => pad.id).filter(Boolean).sort()} boardBounds={boardData?.bounds} /></div>
+        <div data-guide="emerge-emi-setup"><EMergeSetupForm value={emergeEmiSetup} onChange={value => { if (value.python_executable !== emergeEmiSetup.python_executable) { emergeProbePathRef.current = value.python_executable.trim(); setEmergeEmiRuntime(null); } setEmergeEmiSetup(value); invalidateEMergePreview(); setEmergeEmiError(""); }} netOptions={[...new Set(Object.values(boardData?.nets ?? {}))].sort()} padOptions={(boardData?.pads ?? []).map(pad => pad.id).filter(Boolean).sort()} boardPads={boardData?.pads} copperLayerOrder={boardData?.stackup.filter(layer => layer.name.endsWith(".Cu")).map(layer => layer.name)} boardBounds={boardData?.bounds} /></div>
         <div className="wizard-actions">
           <button className="secondary-btn" data-guide="emerge-emi-probe" disabled={emergeEmiBusy || !emergeEmiExtension?.trusted || emergeEmiExtension.state === "disabled"} onClick={() => void probeEmiEmerge()}><Activity size={14} /> {emergeEmiBusy ? "Checking or running…" : "Check EMerge runtime"}</button>
           {!emergeSiOpen && <><button className="secondary-btn" disabled={!boardData || emergeEmiBusy} onClick={() => void openSavedEmergeRadiation()}>Open saved radiation result</button><input ref={savedEmergeInputRef} type="file" accept=".json" style={{ display: "none" }} onChange={event => { const file = event.target.files?.[0]; event.target.value = ""; if (file) void file.text().then(text => showSavedEmergeRadiation(JSON.parse(text))).catch(error => setEmergeEmiError(String(error))); }} /></>}
-          <button className="secondary-btn" onClick={() => { setEmergeEmiOpen(false); setEmergeSiOpen(false); void openExtensionManager("spike.emerge-suite"); }}><Puzzle size={14} /> Extension manager</button>
+          <button className="secondary-btn" onClick={() => { invalidateEMergePreview(); setEmergeEmiOpen(false); setEmergeSiOpen(false); void openExtensionManager("spike.emerge-suite"); }}><Puzzle size={14} /> Extension manager</button>
         </div>
+        <button className="secondary-btn" disabled={!boardData || emergeEmiBusy || !emergeEmiExtension?.trusted || emergeEmiExtension.state === "disabled"} onClick={() => { setEmergeEmiBusy(true); invalidateEMergePreview(); try { const parameters = { ...emergeParameters(emergeEmiSetup), preview_radiation: !emergeSiOpen }; void invokeExtension("spike.emerge-suite", "emerge-preview", parameters).finally(() => setEmergeEmiBusy(false)); } catch (error) { setEmergeEmiError(String(error)); setEmergeEmiBusy(false); } }}>{emergeSiOpen ? "Preview SI Python" : "Preview radiation Python"}</button>
+        <EMergeScriptPreview data={emergeScriptPreview} />
+        <EMergeCapabilityInventory rows={emergeEmiRuntime?.feature_inventory ?? emergeScriptPreview?.capabilities} />
         {emergeEmiRuntime && <div className="extension-output"><div className="extension-output-title"><b>{emergeEmiRuntime.available === true ? `EMerge ${String(emergeEmiRuntime.version ?? "")} ready` : "EMerge runtime unavailable"}</b></div><small>{emergeEmiRuntime.available === true ? `Available: ${emergeEmiCapabilities.join(", ") || "none"}` : String(emergeEmiRuntime.reason ?? "Runtime check failed.")}</small></div>}
         {emergeEmiError && <p role="alert">{emergeEmiError}</p>}
         <div className="extension-contributions"><label>AVAILABLE EMERGE ANALYSES</label>
@@ -6842,7 +7017,7 @@ type ExtensionPackagePreview = {
   can_install: boolean;
 };
 
-function ExtensionManager({ extensions, board, preferredId, preferredContributionId, defaultNet, uiVisible, onToggleUi, result, harness, trustBusy, trustError, onTrust, onHarnessChange, onClose, onRefresh, onRun }: {
+function ExtensionManager({ extensions, board, preferredId, preferredContributionId, defaultNet, uiVisible, onToggleUi, result, emergePreview, optycalSource, optycalPreview, onInvalidateOptycalPreview, onInvalidatePreview, harness, trustBusy, trustError, onTrust, onHarnessChange, onClose, onRefresh, onRun }: {
   extensions: ExtensionCatalogEntry[];
   board: ParsedBoard | null;
   preferredId: string;
@@ -6851,6 +7026,11 @@ function ExtensionManager({ extensions, board, preferredId, preferredContributio
   uiVisible: (extension: ExtensionCatalogEntry, part: "menuBar" | "titleBar") => boolean;
   onToggleUi: (extensionId: string, part: "menuBar" | "titleBar") => void;
   result: Record<string, unknown> | null;
+  emergePreview: Record<string, unknown> | null;
+  optycalSource: Record<string, unknown> | null;
+  optycalPreview: Record<string, unknown> | null;
+  onInvalidateOptycalPreview: () => void;
+  onInvalidatePreview: () => void;
   harness: Record<string, any> | null;
   trustBusy: string | null;
   trustError: string;
@@ -6858,7 +7038,7 @@ function ExtensionManager({ extensions, board, preferredId, preferredContributio
   onHarnessChange: (value: Record<string, any>) => void;
   onClose: () => void;
   onRefresh: () => void;
-  onRun: (extensionId: string, contributionId: string, parameters: Record<string, any>) => void;
+  onRun: (extensionId: string, contributionId: string, parameters: Record<string, any>) => void | Promise<void>;
 }) {
   const [query, setQuery] = useState("");
   const [managerPage, setManagerPage] = useState<"browse" | "manage">(preferredId ? "manage" : "browse");
@@ -6874,11 +7054,28 @@ function ExtensionManager({ extensions, board, preferredId, preferredContributio
   const [meshTargetMm, setMeshTargetMm] = useState("1");
   const [meshDimension, setMeshDimension] = useState("surface_2_5d");
   const [emergeSetup, setEmergeSetup] = useState<EMergeSetup>(() => defaultEMergeSetup(defaultNet));
+  const [emergePreviewStudy, setEmergePreviewStudy] = useState<"radiation" | "si">("radiation");
+  const [optycalSetup, setOptycalSetup] = useState<OptycalSetup>(defaultOptycalSetup);
+  const [savedOptycalSource, setSavedOptycalSource] = useState<Record<string, unknown> | null>(null);
+  const [optycalBusy, setOptycalBusy] = useState(false);
+  const activeOptycalSource = savedOptycalSource ?? optycalSource;
+  const chooseOptycalStep = async () => {
+    try { const file = await selectNativeImportFile("structure"); if (file) { setOptycalSetup(value => ({ ...value, step_path: file.path })); onInvalidateOptycalPreview(); } }
+    catch (error) { setParameterError(String(error)); }
+  };
+  const chooseOptycalSource = async () => {
+    try {
+      const file = await openNativeTextFile("result"); if (!file) return;
+      const parsed = JSON.parse(file.contents);
+      if (!admitOptycalSource(parsed)) throw new Error("Select a completed EMerge result with complex radiation samples and excitation metadata.");
+      setSavedOptycalSource(parsed); setOptycalSetup(value => ({ ...value, frequency_hz: "" })); onInvalidateOptycalPreview();
+    } catch (error) { setParameterError(String(error)); }
+  };
   const [selectedId, setSelectedId] = useState(preferredId || extensions[0]?.id || "");
   const [selectedContributionId, setSelectedContributionId] = useState(preferredContributionId);
   useEffect(() => { if (preferredId) { setSelectedId(preferredId); setManagerPage("manage"); } }, [preferredId]);
   useEffect(() => { if (preferredContributionId) setSelectedContributionId(preferredContributionId); }, [preferredContributionId]);
-  useEffect(() => { setParameterText("{}"); setParameterError(""); }, [selectedId]);
+  useEffect(() => { setParameterText("{}"); setParameterError(""); onInvalidatePreview(); }, [selectedId]);
   const filtered = extensions.filter(extension => `${extension.name} ${extension.provider} ${extension.description}`.toLowerCase().includes(query.toLowerCase()));
   const selectedExtension = extensions.find(extension => extension.id === selectedId) ?? filtered[0];
   const contributions = selectedExtension
@@ -6924,14 +7121,18 @@ function ExtensionManager({ extensions, board, preferredId, preferredContributio
     } catch (error) { setPackageError(error instanceof Error ? error.message : String(error)); }
     finally { setPackageBusy(false); }
   };
-  const run = (id: string) => {
-    if (!selectedExtension) return;
+  const run = async (id: string) => {
+    if (!selectedExtension || optycalBusy) return;
+    if (selectedExtension.id === "spike.optycal-suite") setOptycalBusy(true);
     try {
       const parameters = JSON.parse(parameterText);
       if (!parameters || typeof parameters !== "object" || Array.isArray(parameters)) throw new Error("Options must be an object.");
       const contribution = contributions.find(item => item.id === id);
-      if (selectedExtension.id === "spike.emerge-suite" && ["emerge-radiation", "emerge-si"].includes(id)) Object.assign(parameters, emergeParameters(emergeSetup));
+      if (selectedExtension.id === "spike.emerge-suite" && ["emerge-radiation", "emerge-si", "emerge-preview"].includes(id)) Object.assign(parameters, emergeParameters(emergeSetup));
+      if (selectedExtension.id === "spike.emerge-suite" && id === "emerge-preview") parameters.preview_radiation = emergePreviewStudy === "radiation";
       if (selectedExtension.id === "spike.emerge-suite" && id === "emerge-probe" && emergeSetup.python_executable.trim()) parameters.python_executable = emergeSetup.python_executable.trim();
+      if (selectedExtension.id === "spike.optycal-suite" && ["optycal-preview", "optycal-radiation"].includes(id)) Object.assign(parameters, optycalParameters(optycalSetup, activeOptycalSource));
+      if (selectedExtension.id === "spike.optycal-suite" && id === "optycal-probe" && optycalSetup.python_executable.trim()) parameters.python_executable = optycalSetup.python_executable.trim();
       if (contribution?.point === "analyses" && selectedExtension.permissions.includes("mesh.read") && parameters.mesh_spec === undefined) {
         const target = Number(meshTargetMm);
         if (!Number.isFinite(target) || target < 0.05) throw new Error("Mesh target size must be at least 0.05 mm.");
@@ -6939,8 +7140,9 @@ function ExtensionManager({ extensions, board, preferredId, preferredContributio
           net_names: meshNets.split(",").map(value => value.trim()).filter(Boolean),
           mesh: { target_size_mm: target, dimension: meshDimension } };
       }
-      setParameterError(""); onRun(selectedExtension.id, id, parameters);
+      setParameterError(""); await onRun(selectedExtension.id, id, parameters);
     } catch (e) { setParameterError(String(e)); }
+    finally { setOptycalBusy(false); }
   };
   return <div className="modal-shade"><div className="floating-panel extension-manager">
     <div className="floating-heading"><div><b>EXTENSION MANAGER</b><small>Applications, solvers, tools, importers, reports, and validators</small></div><button onClick={onClose}><X size={15} /></button></div>
@@ -6961,11 +7163,14 @@ function ExtensionManager({ extensions, board, preferredId, preferredContributio
         {selectedExtension.permissions.includes("mesh.read") && contributions.some(item => item.point === "analyses") && <div className="wizard-section"><label>BOARD MESH HANDOFF</label><small>SPIKE sends complete bounded topology plus materials, excitations and a separate display preview. A blank net list includes all nets.</small><div className="sweep-grid"><label>Analysis mode<select value={meshMode} onChange={event => setMeshMode(event.target.value)}><option value="dc">DC / PI</option><option value="ac">AC / RLCG</option><option value="si">SI</option><option value="thermal">Thermal</option></select></label><label>Nets (comma separated)<input value={meshNets} onChange={event => setMeshNets(event.target.value)} placeholder="All nets" /></label><label>Target size (mm)<input type="number" min="0.05" step="0.05" value={meshTargetMm} onChange={event => setMeshTargetMm(event.target.value)} /></label><label>Representation<select value={meshDimension} onChange={event => setMeshDimension(event.target.value)}><option value="surface_2_5d">2.5D surface</option><option value="volume_3d">3D conductor volume</option></select></label></div></div>}
         {selectedExtension.permissions.includes("harness.read") && <HarnessDocumentEditor value={harness} onChange={onHarnessChange} />}
         {selectedExtension.id === "spike.mcad" && <McadOptions text={parameterText} onChange={setParameterText} onError={setParameterError} />}
-        {selectedExtension.id === "spike.emerge-suite" && <div data-guide="emerge-setup"><EMergeSetupForm value={emergeSetup} onChange={setEmergeSetup} netOptions={emergeNetOptions} padOptions={emergePadOptions} boardBounds={board?.bounds} /></div>}
+        {selectedExtension.id === "spike.emerge-suite" && <div data-guide="emerge-setup"><EMergeSetupForm value={emergeSetup} onChange={value => { setEmergeSetup(value); onInvalidatePreview(); }} netOptions={emergeNetOptions} padOptions={emergePadOptions} boardPads={board?.pads} copperLayerOrder={board?.stackup.filter(layer => layer.name.endsWith(".Cu")).map(layer => layer.name)} boardBounds={board?.bounds} /></div>}
+        {selectedExtension.id === "spike.optycal-suite" && <OptycalSetupForm value={optycalSetup} onChange={value => { setOptycalSetup(value); onInvalidateOptycalPreview(); }} sourceResult={activeOptycalSource} onSelectStep={chooseOptycalStep} onSelectSource={chooseOptycalSource} busy={optycalBusy} />}
         {(contributions.some(c => c.input_schema) || contributions.some(c => c.point === "analyses")) && <details><summary>Extension options</summary><p>JSON options sent to the selected extension. Leave as an empty object when no options are needed.</p><textarea aria-label="Extension options JSON" rows={4} value={parameterText} onChange={e => setParameterText(e.target.value)} /></details>}
         {parameterError && <p role="alert">{parameterError}</p>}
-        <div className="extension-contributions"><label>CONTRIBUTIONS</label>{contributions.map(contribution => <div key={`${contribution.point}-${contribution.id}`} className={selectedContributionId === contribution.id ? "selected" : ""}><span><b>{contribution.name}</b><small>{contribution.point.replace("_", " ")} · {contribution.description ?? contribution.id}</small></span><button data-guide={contribution.id === "emerge-si" ? "emerge-run-si" : contribution.id === "emerge-radiation" ? "emerge-run-radiation" : undefined} disabled={!selectedExtension.trusted || selectedExtension.state === "disabled" || !["applications", "commands", "reports", "validators", "importers", "exporters", "harness_engines", "schemas", "analyses", "panels"].includes(contribution.point)} onClick={() => { setSelectedContributionId(contribution.id); run(contribution.id); }}><Play size={12} /> Run</button></div>)}</div>
-        {result && <div className="extension-output" data-guide={selectedExtension.id === "spike.emerge-suite" ? "emerge-result" : undefined}><label>EXTENSION OUTPUT</label><div className="extension-output-title">{result.status !== "completed" ? <AlertTriangle size={14} /> : <CheckCircle2 size={14} />}<b>{String(result.title ?? "Extension completed")}</b></div><EMergeResultPlot result={selectedExtension.id === "spike.emerge-suite" ? result : null} />{resultView?.type === "property_table" && Array.isArray(resultView.rows) ? <table><thead><tr>{(resultView.columns ?? []).map((column, index) => <th key={index}>{String(column)}</th>)}</tr></thead><tbody>{resultView.rows.map((row, rowIndex) => <tr key={rowIndex}>{row.map((cell, cellIndex) => <td key={cellIndex}>{String(cell)}</td>)}</tr>)}</tbody></table> : ["spike/mcad-export/v1", "spike/artifact-export/v1"].includes((result.data as any)?.contract) ? <ExtensionArtifacts data={result.data as Record<string, any>} /> : selectedExtension.id === "spike.emerge-suite" && (result.data as any)?.analysis_result ? null : <pre>{JSON.stringify(result.data ?? result, null, 2)}</pre>}</div>}
+        <div className="extension-contributions"><label>CONTRIBUTIONS</label>{contributions.map(contribution => <div key={`${contribution.point}-${contribution.id}`} className={selectedContributionId === contribution.id ? "selected" : ""}><span><b>{contribution.name}</b><small>{contribution.point.replace("_", " ")} · {contribution.description ?? contribution.id}</small></span><button data-guide={contribution.id === "emerge-si" ? "emerge-run-si" : contribution.id === "emerge-radiation" ? "emerge-run-radiation" : undefined} disabled={optycalBusy || !selectedExtension.trusted || selectedExtension.state === "disabled" || !["applications", "commands", "reports", "validators", "importers", "exporters", "harness_engines", "schemas", "analyses", "panels"].includes(contribution.point)} onClick={() => { setSelectedContributionId(contribution.id); run(contribution.id); }}><Play size={12} /> Run</button></div>)}</div>
+        {selectedExtension.id === "spike.emerge-suite" && <><label>Python preview study<select aria-label="EMerge Python preview study" value={emergePreviewStudy} onChange={event => { setEmergePreviewStudy(event.target.value as "radiation" | "si"); onInvalidatePreview(); }}><option value="radiation">Radiation</option><option value="si">SI / S-parameters</option></select></label><EMergeScriptPreview data={emergePreview} /><EMergeCapabilityInventory rows={emergePreview?.capabilities ?? (result?.data as Record<string, unknown> | undefined)?.feature_inventory} /></>}
+        {selectedExtension.id === "spike.optycal-suite" && <OptycalScriptPreview data={optycalPreview} />}
+        {result && <div className="extension-output" data-guide={selectedExtension.id === "spike.emerge-suite" ? "emerge-result" : undefined}><label>EXTENSION OUTPUT</label><div className="extension-output-title">{result.status !== "completed" ? <AlertTriangle size={14} /> : <CheckCircle2 size={14} />}<b>{String(result.title ?? "Extension completed")}</b></div><EMergeResultPlot result={selectedExtension.id === "spike.emerge-suite" ? result : null} /><OptycalResultPlot result={selectedExtension.id === "spike.optycal-suite" ? result : null} />{resultView?.type === "property_table" && Array.isArray(resultView.rows) ? <table><thead><tr>{(resultView.columns ?? []).map((column, index) => <th key={index}>{String(column)}</th>)}</tr></thead><tbody>{resultView.rows.map((row, rowIndex) => <tr key={rowIndex}>{row.map((cell, cellIndex) => <td key={cellIndex}>{String(cell)}</td>)}</tr>)}</tbody></table> : ["spike/mcad-export/v1", "spike/artifact-export/v1"].includes((result.data as any)?.contract) ? <ExtensionArtifacts data={result.data as Record<string, any>} /> : ["spike.emerge-suite", "spike.optycal-suite"].includes(selectedExtension.id) && (result.data as any)?.analysis_result ? null : <pre>{JSON.stringify(result.data ?? result, null, 2)}</pre>}</div>}
         {!selectedExtension.trusted && <div className="stack-warning"><ShieldAlert size={15} /><span>Trusting this extension allows its local code to execute with the listed permissions for this session. Process separation is not a complete operating-system sandbox.</span><button type="button" disabled={trustBusy !== null || selectedExtension.state === "disabled"} onClick={() => onTrust(selectedExtension.id)}>{trustBusy === selectedExtension.id ? "Trusting…" : "Trust for session"}</button></div>}
         {trustError && <p role="alert">{trustError}</p>}
       </> : <div className="extension-empty">No extension selected. Use Browse to install a local package.</div>}</div>

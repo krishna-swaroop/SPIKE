@@ -2,7 +2,7 @@ import unittest
 
 from python.spike_core.assembly_resources import GIB, estimate_assembly_resources
 from python.spike_core.assembly_scale import MAX_COMPONENTS_PER_BOARD, MAX_NETS_PER_BOARD
-from python.spike_core.design_ir_v2 import AssemblyIRV1
+from python.spike_core.spider_v2 import AssemblyIRV1
 
 
 def design(

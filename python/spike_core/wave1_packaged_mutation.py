@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Any, Dict, Mapping
 
 from .assembly_frames import multiply, resolve_world
-from .design_ir_v2 import AssemblyIRV1
+from .spider_v2 import AssemblyIRV1
 from .project_package import read_project
 
 

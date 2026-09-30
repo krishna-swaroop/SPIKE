@@ -6,8 +6,8 @@ import re
 from collections import defaultdict
 
 from .assembly_frames import resolve_world
-from .design_ir_v2 import AssemblyIRV1
-from .design_ir_v2_schema import canonical_uuid, content_digest
+from .spider_v2 import AssemblyIRV1
+from .spider_v2_schema import canonical_uuid, content_digest
 from .harness_routing import point, route_cable
 
 
@@ -137,6 +137,10 @@ def plan_harnesses(request):
         for a, b in harness.pin_map.items():
             occupied.update(((harness.endpoint_a if "::" in harness.endpoint_a else harness.endpoint_a.replace(":", "::", 1), a),
                              (harness.endpoint_b if "::" in harness.endpoint_b else harness.endpoint_b.replace(":", "::", 1), b)))
+    for mate in assembly.connector_mappings:
+        if mate.kind == "connector-mate":
+            for a, b in mate.data["pin_map"].items():
+                occupied.update(((mate.data["endpoint_a"], a), (mate.data["endpoint_b"], b)))
     pairs = request.get("pairs")
     if pairs is None:
         # Automatic proposals require a net to resolve to exactly two free pins

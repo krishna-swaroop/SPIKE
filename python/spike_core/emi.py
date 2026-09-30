@@ -10,7 +10,7 @@ from __future__ import annotations
 import math
 from typing import Any, Dict, Iterable, List, Tuple
 
-from .contracts import DesignIR
+from .contracts import SpiDeR
 from .solver_manager import recommend_emi_nets, recommend_solver
 
 
@@ -161,7 +161,7 @@ def _names(values: Any, *, limit: int = 128) -> List[str]:
     return result
 
 
-def _design_net_names(design: DesignIR) -> set[str]:
+def _design_net_names(design: SpiDeR) -> set[str]:
     return {
         str(item.get("name", item.get("net_name", ""))).strip()
         for item in design.nets
@@ -173,7 +173,7 @@ def _geometry_net(item: Dict[str, Any]) -> str:
     return str(item.get("net_name", item.get("net", ""))).strip()
 
 
-def _geometry_coverage(design: DesignIR, net_names: Iterable[str]) -> List[Dict[str, Any]]:
+def _geometry_coverage(design: SpiDeR, net_names: Iterable[str]) -> List[Dict[str, Any]]:
     coverage: List[Dict[str, Any]] = []
     for net in net_names:
         tracks = [item for item in design.tracks if _geometry_net(item) == net]
@@ -315,7 +315,7 @@ def _validate_metrics(
 
 
 def validate_emi_setup(
-    design: DesignIR,
+    design: SpiDeR,
     setup: Dict[str, Any],
     solver_catalog: List[Dict[str, Any]],
 ) -> Dict[str, Any]:
@@ -346,7 +346,7 @@ def validate_emi_setup(
         issues.append(_issue("EMI_NET_REQUIRED", "error", "Select at least one aggressor or candidate net.", "selected_nets"))
     for net in [*selected_nets, *return_nets]:
         if net not in available_nets:
-            issues.append(_issue("EMI_NET_UNKNOWN", "error", f"Net '{net}' does not exist in DesignIR.", "selected_nets"))
+            issues.append(_issue("EMI_NET_UNKNOWN", "error", f"Net '{net}' does not exist in SpiDeR.", "selected_nets"))
     overlap = sorted(set(selected_nets) & set(return_nets))
     if overlap:
         issues.append(_issue("EMI_RETURN_OVERLAP", "error", f"Candidate and return selections overlap: {', '.join(overlap)}.", "return_nets"))
@@ -490,7 +490,7 @@ def validate_emi_setup(
 
 
 def screen_emi_setup(
-    design: DesignIR,
+    design: SpiDeR,
     setup: Dict[str, Any],
     solver_catalog: List[Dict[str, Any]],
 ) -> Dict[str, Any]:

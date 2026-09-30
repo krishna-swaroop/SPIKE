@@ -3,7 +3,7 @@ from unittest.mock import patch
 
 import numpy as np
 
-from python.spike_core.contracts import AnalysisSpec, DesignIR
+from python.spike_core.contracts import AnalysisSpec, SpiDeR
 from python.spike_core.hybrid_mesh import HybridMesh, MeshBranch, MeshNode
 from python.spike_core.peec_plugin import (
     _solve_shared_reference_port_matrix,
@@ -92,7 +92,7 @@ class SharedReferenceMatrixTests(unittest.TestCase):
 @unittest.skipUnless(native_available(), "Native PEEC extension is not built")
 class NativePdnMultiportTests(unittest.TestCase):
     def test_candidate_ports_emit_bounded_multiport_contract(self):
-        design = DesignIR(
+        design = SpiDeR(
             name="PDN multiport rail",
             layers=[{"name": "F.Cu"}],
             nets=[{"id": 1, "name": "VCC"}],
@@ -157,7 +157,7 @@ class NativePdnMultiportTests(unittest.TestCase):
         )
 
     def test_candidate_for_another_net_does_not_create_false_error(self):
-        design = DesignIR(
+        design = SpiDeR(
             name="Single VCC rail",
             layers=[{"name": "F.Cu"}],
             nets=[{"id": 1, "name": "VCC"}],

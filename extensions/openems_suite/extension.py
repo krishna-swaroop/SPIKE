@@ -10,7 +10,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from python.spike_core.contracts import AnalysisSpec, DesignIR
+from python.spike_core.contracts import AnalysisSpec, SpiDeR
 from extensions.openems_suite.engine import (
     _validate_openems_case,
     prepare_openems_case,
@@ -28,7 +28,7 @@ def _mapping(value: object, label: str) -> dict:
 
 
 def _em_workflow(contribution: str, context: dict) -> dict:
-    design = DesignIR(**_mapping(context.get("design"), "design"))
+    design = SpiDeR(**_mapping(context.get("design"), "design"))
     parameters = _mapping(context.get("parameters"), "parameters")
     analysis = _mapping(parameters.get("analysis"), "analysis")
     if not analysis.get("net_names") or not isinstance(analysis["net_names"], list):

@@ -1,7 +1,7 @@
 """Bounded geometry-derived signal-integrity channel analysis.
 
 This module deliberately starts with a narrow, inspectable geometry envelope:
-one straight, constant-width DesignIR v2 conductor path above one explicit
+one straight, constant-width SpiDeR v2 conductor path above one explicit
 reference layer.  It produces a uniform quasi-TEM RLGC model, a reciprocal
 two-port network, explicit TDR/TDT transforms, and a normalized NRZ eye.  The
 formulation is independently implemented from the multiconductor telegrapher
@@ -18,7 +18,7 @@ from typing import Any, Callable, Mapping, Sequence
 
 import numpy as np
 
-from .design_ir_v2 import DesignIRV2
+from .spider_v2 import SpiDeRV2
 from .hybrid_mesh import _segment_inside_polygon
 from .quasistatic_capacitance import estimate_line_capacitance_per_m
 from .sparameters import NetworkData, analyze_network
@@ -219,7 +219,7 @@ def _reference_zone_covers_path(zone: Any, tracks: Sequence[Any]) -> bool:
     return True
 
 
-def extract_uniform_path_rlgc(design: DesignIRV2, request: Mapping[str, Any]) -> dict[str, Any]:
+def extract_uniform_path_rlgc(design: SpiDeRV2, request: Mapping[str, Any]) -> dict[str, Any]:
     """Extract a bounded straight single-reference quasi-TEM channel."""
 
     _validate_channel_request(request)
@@ -398,7 +398,7 @@ def uniform_rlgc_network(
         reference_impedance_ohm=np.asarray([z0, z0]),
         parameter_kind="S",
         data_format="RI",
-        source=f"DesignIR:{geometry.get('design_id', '')}:{extraction.get('geometry_digest', '')}",
+        source=f"SpiDeR:{geometry.get('design_id', '')}:{extraction.get('geometry_digest', '')}",
         warnings=["Geometry-derived uniform-channel output is experimental and not protocol-compliance evidence."],
     )
 
@@ -587,7 +587,7 @@ def normalized_nrz_eye(
 
 
 def analyze_uniform_design_channel(
-    design: DesignIRV2, request: Mapping[str, Any],
+    design: SpiDeRV2, request: Mapping[str, Any],
     *, cancel_check: Callable[[], bool] | None = None,
 ) -> dict[str, Any]:
     _validate_channel_request(request)

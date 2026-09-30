@@ -17,8 +17,8 @@ from python.spike_core.cli import (
     execute_request,
     main,
 )
-from python.spike_core.contracts import DesignIR
-from python.spike_core.design_ir_v2 import DesignIRV2
+from python.spike_core.contracts import SpiDeR
+from python.spike_core.spider_v2 import SpiDeRV2
 from python.spike_core.project_package import write_spike_package
 
 
@@ -36,7 +36,7 @@ class SpikeCliTests(unittest.TestCase):
         self.root = Path(self.temporary.name)
         self.state_environment = patch.dict(os.environ, {"SPIKE_STATE_HOME": str(self.root / "state")})
         self.state_environment.start()
-        design = DesignIR(
+        design = SpiDeR(
             name="cli fixture",
             source_format="fixture",
             source_path=str(self.root / "fixture.json"),
@@ -226,7 +226,7 @@ class SpikeCliTests(unittest.TestCase):
         design = json.loads(self.design_path.read_text(encoding="utf-8"))
         source_bytes = self.design_path.read_bytes()
         source_digest = hashlib.sha256(source_bytes).hexdigest()
-        design_v2 = DesignIRV2.from_v1(DesignIR(**design)).to_dict()
+        design_v2 = SpiDeRV2.from_v1(SpiDeR(**design)).to_dict()
         design_v2["source"]["source_digest"] = source_digest
         design_v2["source"]["artifact_path"] = f"package:sources/{source_digest}.json"
         package_path = self.root / "fixture.spike"
@@ -250,7 +250,7 @@ class SpikeCliTests(unittest.TestCase):
         design = json.loads(self.design_path.read_text(encoding="utf-8"))
         source_bytes = self.design_path.read_bytes()
         source_digest = hashlib.sha256(source_bytes).hexdigest()
-        design_v2 = DesignIRV2.from_v1(DesignIR(**design)).to_dict()
+        design_v2 = SpiDeRV2.from_v1(SpiDeR(**design)).to_dict()
         design_v2["source"]["source_digest"] = source_digest
         design_v2["source"]["artifact_path"] = f"package:sources/{source_digest}.json"
         package_path = self.root / "assembly-fixture.spike"
@@ -556,7 +556,7 @@ class SpikeCliTests(unittest.TestCase):
         self.assertGreater(request["spec"]["transient"]["time_step_s"], 0)
 
     def test_cli_runs_an_isolated_secondary_return_loop(self):
-        design = DesignIR(
+        design = SpiDeR(
             name="isolated cli fixture",
             source_format="fixture",
             layers=[{"name": "F.Cu"}, {"name": "B.Cu"}],

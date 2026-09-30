@@ -211,7 +211,7 @@ fields, dispersion or the removed conductors' shielding. This transformation
 and its fixtures were independently authored for SPIKE; no EMerge numerical
 implementation was copied. EMerge remains an optional external solver.
 
-The exact generated [DesignIR](evidence/rf_surrogate_design.json),
+The exact generated [SpiDeR](evidence/rf_surrogate_design.json),
 [EMerge case](evidence/rf_surrogate_case.json), and
 [assumptions](evidence/rf_surrogate_assumptions.json) are saved. EMerge
 3.0.0a19 completed a three-point 2.30–2.60 GHz solve through SPIKE's

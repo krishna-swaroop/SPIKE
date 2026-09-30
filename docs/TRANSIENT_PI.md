@@ -5,7 +5,7 @@
 `spike.peec_rl_transient` is SPIKE's first geometry-derived time-domain PI
 solver. The stable solver ID is retained for project compatibility; the current
 implementation reports itself as `spike-peec-rlc-transient/v0.2`. It consumes
-the same normalized `DesignIR`, topology-preserving hybrid conductor mesh,
+the same normalized `SpiDeR`, topology-preserving hybrid conductor mesh,
 terminal definitions, return-path model, and solver-plugin contract used by DC
 and AC PI.
 

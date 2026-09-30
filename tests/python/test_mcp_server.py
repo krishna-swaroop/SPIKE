@@ -64,6 +64,30 @@ class McpServerTests(unittest.TestCase):
         self.assertTrue(failed["result"]["isError"])
         self.assertIn("invalid geometry", failed["result"]["content"][0]["text"])
 
+    def test_schema_discovery_validation_and_no_arbitrary_files(self):
+        catalog = json.loads(self.server.call_tool("spike_contract_schema", {})["content"][0]["text"])
+        self.assertIn("si-uniform-channel-request-v1.schema.json", catalog["schemas"])
+        refused = self.server.call_tool("spike_contract_schema", {"name": "../../LICENSE"})
+        self.assertTrue(refused["isError"])
+        result = self.server.call_tool("spike_validate_contract", {
+            "name": "si-uniform-channel-request-v1.schema.json", "document": {}})
+        self.assertFalse(result["isError"], result)
+        validated = json.loads(result["content"][0]["text"])
+        self.assertFalse(validated["valid"])
+        self.assertTrue(validated["validation_is_not_solver_admission"])
+        self.assertGreater(validated["issue_count"], 0)
+        self.assertEqual(self.calls, [])
+
+    def test_bound_analysis_tools_use_gui_allowlist_and_job_polling(self):
+        names = {"context", "describe", "prepare", "patch", "preflight", "run", "job", "evidence"}
+        self.assertTrue({"spike_gui_analysis_" + name for name in names}.issubset(TOOLS))
+        with patch("python.spike_core.mcp_server._call_gui", return_value={"jobId": "job", "status": "running"}) as bridge:
+            result = self.server.call_tool("spike_gui_analysis_preflight", {"caseId": "case"})
+        self.assertFalse(result["isError"])
+        bridge.assert_called_once_with("analysis_preflight", {"caseId": "case"})
+        with self.assertRaises(ValueError):
+            self.server.call_tool("spike_gui_analysis_run", {"caseId": "case", "method": "run_python_script"})
+
     def test_stdio_has_only_json_rpc_frames(self):
         frames = [
             {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {"protocolVersion": PROTOCOL_VERSION}},
@@ -95,6 +119,18 @@ class McpServerTests(unittest.TestCase):
             result = self.server.call_tool("spike_gui_list_studies", {})
         self.assertFalse(result["isError"])
         bridge.assert_called_once_with("list_studies", {})
+
+    def test_gui_result_actions_are_bounded_tools(self):
+        self.initialize()
+        for name, command, arguments in [
+            ("spike_gui_analysis_view_result", "analysis_view_result", {"resultId": "actual", "frequencyIndex": 0, "quantity": "near_e", "sampleIndex": 4}),
+            ("spike_gui_analysis_generate_report", "analysis_generate_report", {}),
+        ]:
+            with patch("python.spike_core.mcp_server._call_gui", return_value={"status": "ready"}) as bridge:
+                self.assertFalse(self.server.call_tool(name, arguments)["isError"])
+                bridge.assert_called_once_with(command, arguments)
+        invalid = self.rpc(99, "tools/call", {"name": "spike_gui_analysis_generate_report", "arguments": {"script": "bad"}})
+        self.assertEqual(invalid["error"]["code"], -32602)
 
     def test_gui_bridge_loopback_exchange(self):
         received = []

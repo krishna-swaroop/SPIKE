@@ -43,7 +43,7 @@ class SpikesEngineVersionTests(unittest.TestCase):
         self.assertIsNotNone(project)
         self.assertIsNotNone(prerelease)
         self.assertEqual(
-            f"{project.group(1)}-{prerelease.group(1)}", ENGINE_VERSION,
+            re.search(r'"([0-9.]+)-\$\{SPIKES_ENGINE_PRERELEASE\}"', cmake).group(1) + "-" + prerelease.group(1), ENGINE_VERSION,
         )
         console = (ROOT / "src/spikes/console_main.cpp").read_text(encoding="utf-8")
         self.assertIn('"spikes_console " SPIKES_ENGINE_VERSION', console)

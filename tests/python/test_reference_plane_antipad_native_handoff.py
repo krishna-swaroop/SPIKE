@@ -22,7 +22,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def full_plane_fixture() -> tuple[dict, dict]:
-    # The exact full-zone builder needs the source DesignIR as well as its via artifact.
+    # The exact full-zone builder needs the source SpiDeR as well as its via artifact.
     from tests.python.test_via_transition_geometry import ViaTransitionGeometryTests
 
     helper = ViaTransitionGeometryTests()

@@ -38,7 +38,8 @@ def _version_check(root: Path) -> dict[str, Any]:
     prerelease = re.search(r'set\(SPIKES_ENGINE_PRERELEASE "([^"]+)"', cmake)
     if project is None or prerelease is None:
         raise PublicReleaseGateError("CMake engine version declarations are missing")
-    cmake_version = f"{project.group(1)}-{prerelease.group(1)}"
+    engine_base = re.search(r'"([0-9.]+)-\$\{SPIKES_ENGINE_PRERELEASE\}"', cmake)
+    cmake_version = f"{engine_base.group(1) if engine_base else project.group(1)}-{prerelease.group(1)}"
     vcpkg = _read_object(root / "standalone" / "spikes_project" / "vcpkg.json")
     observed = {
         "python": ENGINE_VERSION,

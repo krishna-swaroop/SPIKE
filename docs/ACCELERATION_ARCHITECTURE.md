@@ -17,7 +17,7 @@ hybrid copper-geometry DC solver in
 ## Current execution path
 
 ```text
-DesignIR + AnalysisSpec
+SpiDeR + AnalysisSpec
   -> hybrid mesh construction
   -> active branch graph
   -> graph-Laplacian triplet assembly

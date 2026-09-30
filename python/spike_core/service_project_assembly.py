@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any, Dict
 
 from .assembly_designs import AssemblyDesignError, canonicalize_assembly_designs
-from .design_ir_v2 import AssemblyIRV1
+from .spider_v2 import AssemblyIRV1
 from .project_package import ProjectPackageError, read_project, write_spike_package
 from .service_helpers import error_response, operation_id
 from .service_project_geometric_constraint import apply_assembly_geometric_constraint_in_project
@@ -14,6 +14,7 @@ from .service_assembly_import import import_into_assembly
 from .harness_authoring import validate_harness_connections
 from .assembly_frames import validate_rigid_transform
 from .service_mcad_collaboration import export_mcad_session, preview_mcad_feedback, apply_mcad_feedback
+from .multiboard_study import save_multiboard_study_in_project
 
 
 def update_assembly_structure_in_project(params: Dict[str, Any], *, application_version: str) -> Dict[str, Any]:
@@ -61,7 +62,7 @@ def update_assembly_structure_in_project(params: Dict[str, Any], *, application_
     else:
         active_id = str((active or {}).get("design_id", "")) if isinstance(active, dict) else ""
         if any(board.design_id != active_id for board in assembly.boards):
-            raise ProjectPackageError("Retain every referenced DesignIR before assigning multiple board designs.")
+            raise ProjectPackageError("Retain every referenced SpiDeR before assigning multiple board designs.")
     payload = dict(opened.payload)
     payload["assembly_ir"] = assembly.to_dict()
     audit = list(payload.get("audit") or [])
@@ -87,6 +88,7 @@ def update_assembly_structure_in_project(params: Dict[str, Any], *, application_
 
 def handle_assembly_project_request(method: Any, params: Dict[str, Any], *, request_id: Any, application_version: str) -> Dict[str, Any] | None:
     operations = {
+        "save_multiboard_study_in_project": save_multiboard_study_in_project,
         "export_mcad_session": export_mcad_session,
         "preview_mcad_feedback": preview_mcad_feedback,
         "apply_mcad_feedback": apply_mcad_feedback,

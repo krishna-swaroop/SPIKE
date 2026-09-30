@@ -144,3 +144,35 @@ chamber frequency selector to switch solved frequencies and **Bench display**
 to make the test table visible, translucent, or hidden. These view settings
 do not change the field solve. A curved radome or arbitrary imported complex
 structure is outside this adapter's current geometry support.
+
+## Setup assistance and sampled network reports
+
+Select the modeled signal and return nets to populate **Suggested excitation
+pair** and **Suggested receive pair**. These proposals use explicit undrilled
+single-layer board pads with exactly matching centres, with the signal pad
+above its return on adjacent copper layers in the explicit stackup. Without
+an explicit copper order, enter pad IDs manually. Up to 100 proposals are shown. Applying one fills the pad IDs;
+it does not run a solve or establish geometry validity. If no proposal is shown,
+enter IDs manually and inspect preflight diagnostics.
+
+**Geometry preparation** defaults to EMerge native geometry. The optional
+**emcad copper union** prepares same-net copper surfaces by layer through the
+separately installed emcad package. Selecting an unavailable package fails with
+a dependency diagnostic. Geometry preprocessing does not itself improve or
+validate numerical accuracy; compare mesh-refined solves.
+
+The results pane shows the best sampled match, return loss, and VSWR for each
+returned port. An engineering report for the active EMerge SI or EM result adds
+these metrics, transmission extrema, and contiguous sampled spans whose
+reflection magnitude is at most -10 dB. Span endpoints are solved frequencies,
+not interpolated bandwidth boundaries; an isolated matched sample has zero
+span. Zero reflection has no finite dB value, and VSWR is unavailable when
+reflection magnitude is at least one. Reports retain the model status, warnings,
+case digest, stackup summary, raw network samples, and provenance in their
+downloadable evidence. Failed, malformed, and unrelated result networks cannot
+supply sampled analytics. These metrics do not establish efficiency, passivity,
+compliance, or independent validation.
+
+Presentation regressions: `node app/scripts/test-emerge-network-review.mjs`.
+The pure `emergeNetworkReview.ts` module is shared by the results pane and
+`engineeringReport.ts`; `emergeSetupSuggestions.ts` owns bounded pad proposals.

@@ -8,7 +8,7 @@ import unittest
 from python.core.board_parser import KicadParser
 from python.spike_core.hybrid_mesh import HybridMesh
 
-from python.spike_core.contracts import AnalysisSpec, DesignIR
+from python.spike_core.contracts import AnalysisSpec, SpiDeR
 from python.spike_core.hybrid_mesh import (
     _PolygonContainmentCache,
     _clip_polygon_to_rect_fragments,
@@ -86,7 +86,7 @@ class HybridMeshContainmentTests(unittest.TestCase):
             },
         ]
         mesh = build_hybrid_mesh(
-            DesignIR(
+            SpiDeR(
                 layers=[{"name": "F.Cu"}, {"name": "B.Cu"}],
                 nets=[{"id": 1, "name": "VCC"}],
                 pads=pads,
@@ -206,7 +206,7 @@ class HybridMeshContainmentTests(unittest.TestCase):
             "net_name": "VCC",
         }
         mesh = build_hybrid_mesh(
-            DesignIR(
+            SpiDeR(
                 layers=[{"name": "F.Cu"}, {"name": "B.Cu"}],
                 nets=[{"id": 1, "name": "VCC"}],
                 pads=[pad],
@@ -256,7 +256,7 @@ class HybridMeshContainmentTests(unittest.TestCase):
             "net_name": "VCC",
         }
         mesh = build_hybrid_mesh(
-            DesignIR(
+            SpiDeR(
                 layers=[{"name": "F.Cu"}],
                 nets=[{"id": 1, "name": "VCC"}],
                 pads=[pad],
@@ -294,7 +294,7 @@ class HybridMeshContainmentTests(unittest.TestCase):
             "drill_shape": "oval", "plating_thickness_mm": 0.03,
             "layers": ["F.Cu", "B.Cu"], "net_name": "VCC",
         }
-        design = DesignIR(
+        design = SpiDeR(
             layers=[{"name": "F.Cu"}, {"name": "B.Cu"}],
             stackup=[
                 {"name": "F.Cu", "type": "copper", "thickness": 0.035},
@@ -321,7 +321,7 @@ class HybridMeshContainmentTests(unittest.TestCase):
 
     def test_genuine_self_crossing_zone_remains_rejected(self):
         mesh = build_hybrid_mesh(
-            DesignIR(
+            SpiDeR(
                 layers=[{"name": "F.Cu"}],
                 nets=[{"id": 1, "name": "VCC"}],
                 zones=[{
@@ -367,7 +367,7 @@ class HybridMeshContainmentTests(unittest.TestCase):
         # The narrow zone crosses only the right edge of this coarse pad. No
         # pad center/corner or zone vertex is inside the other shape.
         polygon = [(1.5, -5), (1.7, -5), (1.7, 5), (1.5, 5)]
-        design = DesignIR(
+        design = SpiDeR(
             layers=[{"name": "F.Cu"}],
             nets=[{"id": 1, "name": "VCC"}],
             zones=[{
@@ -428,7 +428,7 @@ class HybridMeshContainmentTests(unittest.TestCase):
             "zone_connection_layer_overrides": {}, "thermal_settings_valid": True,
         }
         mesh = build_hybrid_mesh(
-            DesignIR(layers=[{"name": "F.Cu"}], nets=[{"id": 1, "name": "VCC"}], zones=[zone], pads=[pad]),
+            SpiDeR(layers=[{"name": "F.Cu"}], nets=[{"id": 1, "name": "VCC"}], zones=[zone], pads=[pad]),
             AnalysisSpec(mode="dc", net_names=["VCC"], mesh={"target_size_mm": 1, "zone_cell_mm": 1}),
         )
         self.assertFalse(any(branch.kind == "pad_zone_attachment" for branch in mesh.branches))
@@ -443,7 +443,7 @@ class HybridMeshContainmentTests(unittest.TestCase):
             (0, 0), (8, 0), (8, 10), (5.002, 10), (5.002, 1),
             (2.998, 1), (2.998, 10), (0, 10),
         ]
-        design = DesignIR(
+        design = SpiDeR(
             layers=[{"name": "F.Cu"}],
             nets=[{"id": 1, "name": "VCC"}],
             zones=[{"id": "concave-zone", "points": polygon, "layer": "F.Cu", "net_name": "VCC"}],
@@ -502,7 +502,7 @@ class HybridMeshContainmentTests(unittest.TestCase):
                 "positive_filled_polygon": [list(point) for point in polygon],
             },
         }
-        design = DesignIR(
+        design = SpiDeR(
             layers=[{"name": "F.Cu"}],
             nets=[{"id": 1, "name": "VCC"}],
             pads=[pad],
@@ -536,7 +536,7 @@ class HybridMeshContainmentTests(unittest.TestCase):
             "custom_geometry": {"status": "unsupported", "reason": "primitive_gr_circle"},
         }
         mesh = build_hybrid_mesh(
-            DesignIR(
+            SpiDeR(
                 layers=[{"name": "F.Cu"}],
                 nets=[{"id": 1, "name": "VCC"}],
                 pads=[pad],
@@ -553,7 +553,7 @@ class HybridMeshContainmentTests(unittest.TestCase):
             (1.996, 1), (1.996, 8), (0, 8),
         ]
         mesh = build_hybrid_mesh(
-            DesignIR(
+            SpiDeR(
                 layers=[{"name": "F.Cu"}],
                 nets=[{"id": 1, "name": "VCC"}],
                 zones=[{"id": "narrow-void", "points": polygon, "layer": "F.Cu", "net_name": "VCC"}],
@@ -579,7 +579,7 @@ class HybridMeshContainmentTests(unittest.TestCase):
             {"id": "right", "start": [4.6, 1.5], "end": [7, 1.5], "width": 0.4, "layer": "F.Cu", "net_name": "VCC", "path_id": "route", "path_step_index": 2, "path_step_count": 3, "path_end_cap": "round", "path_join_style": "round"},
         ]
         mesh = build_hybrid_mesh(
-            DesignIR(layers=[{"name": "F.Cu"}], nets=[{"id": 1, "name": "VCC"}], tracks=tracks),
+            SpiDeR(layers=[{"name": "F.Cu"}], nets=[{"id": 1, "name": "VCC"}], tracks=tracks),
             AnalysisSpec(mode="dc", net_names=["VCC"], mesh={"target_size_mm": 5, "feature_aware": False}),
         )
 

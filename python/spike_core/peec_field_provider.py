@@ -15,7 +15,7 @@ from copy import deepcopy
 import math
 from typing import Any, Dict, List
 
-from .contracts import AnalysisSpec, DesignIR
+from .contracts import AnalysisSpec, SpiDeR
 from .field_circuit_cosim import FIELD_REQUEST_CONTRACT, FIELD_RESULT_CONTRACT
 from .peec_plugin import solve_peec_2_5d
 
@@ -33,7 +33,7 @@ _PARAMETERS = (
 class NativePeecFieldReductionProvider:
     """Map native PEEC RLCG networks to reviewed circuit parasitics."""
 
-    def __init__(self, design: DesignIR, analysis_spec: AnalysisSpec) -> None:
+    def __init__(self, design: SpiDeR, analysis_spec: AnalysisSpec) -> None:
         if analysis_spec.mode not in {"ac", "broadband_hf"}:
             raise ValueError("The native PEEC field provider requires AC extraction mode.")
         if not str(analysis_spec.analysis_id or "").strip():

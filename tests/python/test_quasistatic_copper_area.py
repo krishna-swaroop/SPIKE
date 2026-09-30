@@ -8,7 +8,7 @@ from types import SimpleNamespace
 
 import numpy as np
 
-from python.spike_core.contracts import AnalysisSpec, DesignIR
+from python.spike_core.contracts import AnalysisSpec, SpiDeR
 from python.spike_core.hybrid_mesh import build_hybrid_mesh
 from python.spike_core.quasistatic_copper_area import (
     _partition_area, estimate_branch_capacitance,
@@ -25,7 +25,7 @@ def zone(owner, points, net="SIG", layer="F.Cu"):
 
 
 def design(**kwargs):
-    return DesignIR(layers=[{"name": "F.Cu"}, {"name": "B.Cu"}], stackup=[
+    return SpiDeR(layers=[{"name": "F.Cu"}, {"name": "B.Cu"}], stackup=[
         {"name": "F.Cu", "thickness": 0.035},
         {"name": "core", "thickness": 0.2, "epsilon_r": 4, "loss_tangent": 0.02},
         {"name": "B.Cu", "thickness": 0.035},

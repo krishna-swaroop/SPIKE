@@ -9,7 +9,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from python.spike_core.capabilities import capabilities
-from python.spike_core.contracts import AnalysisSpec, DesignIR
+from python.spike_core.contracts import AnalysisSpec, SpiDeR
 from python.spike_core.extensions import ExtensionManifest, ExtensionRegistry
 from python.spike_core.kicad_importer import _resolve_model_reference
 from python.spike_core.service import handle, validate_design
@@ -60,7 +60,7 @@ class SpikeCoreContractTests(unittest.TestCase):
         self.assertEqual(data["analyses"]["spice_export"]["state"], "integration_pending")
 
     def test_empty_design_is_not_reported_as_valid(self):
-        result = validate_design(DesignIR())
+        result = validate_design(SpiDeR())
         self.assertFalse(result["valid"])
         self.assertTrue(any(item["code"] == "NO_CONDUCTIVE_GEOMETRY" for item in result["issues"]))
 
@@ -71,7 +71,7 @@ class SpikeCoreContractTests(unittest.TestCase):
         self.assertEqual(response["result"]["model_status"], "unsupported")
 
     def test_dc_solver_reports_a_routed_copper_voltage_drop(self):
-        design = DesignIR(
+        design = SpiDeR(
             name="two-segment fixture",
             source_path="fixture.kicad_pcb",
             layers=[{"name": "F.Cu"}, {"name": "B.Cu"}],
@@ -121,7 +121,7 @@ class SpikeCoreContractTests(unittest.TestCase):
                 self.assertGreaterEqual(len(sample["vertices_mm"]), 3)
 
     def test_preflighted_analysis_keeps_validation_and_solve_in_one_transaction(self):
-        design = DesignIR(
+        design = SpiDeR(
             name="transaction fixture",
             layers=[{"name": "F.Cu"}, {"name": "B.Cu"}],
             nets=[{"id": "1", "name": "VCC"}],
@@ -141,7 +141,7 @@ class SpikeCoreContractTests(unittest.TestCase):
         self.assertEqual(response["result"]["analysis_result"]["status"], "completed")
 
     def test_dc_solver_supports_multiple_sink_points(self):
-        design = DesignIR(
+        design = SpiDeR(
             name="branched multi-sink fixture",
             source_path="fixture.kicad_pcb",
             layers=[{"name": "F.Cu"}],
@@ -172,7 +172,7 @@ class SpikeCoreContractTests(unittest.TestCase):
         self.assertEqual(currents, [0.4, 0.6])
 
     def test_dc_solver_connects_tracks_through_a_pad(self):
-        design = DesignIR(
+        design = SpiDeR(
             layers=[{"name": "F.Cu"}],
             tracks=[
                 {"start": (0, 0), "end": (4, 0), "width": 1, "layer": "F.Cu", "net_name": "VCC"},
@@ -195,7 +195,7 @@ class SpikeCoreContractTests(unittest.TestCase):
         self.assertTrue(any(edge["kind"] == "pad" for edge in response["result"]["fields"]["edge_results"]))
 
     def test_dc_solver_models_zone_current_spreading(self):
-        design = DesignIR(
+        design = SpiDeR(
             layers=[{"name": "F.Cu"}],
             zones=[{"points": [(0, 0), (10, 0), (10, 2), (0, 2)], "layer": "F.Cu", "net_name": "VCC"}],
             stackup=[{"name": "F.Cu", "type": "copper", "thickness": 0.035}],
@@ -240,7 +240,7 @@ class SpikeCoreContractTests(unittest.TestCase):
                 "layer": "B.Cu",
                 "net_name": "VCC",
             })
-        design = DesignIR(
+        design = SpiDeR(
             name="large stitched result-admission fixture",
             source_path="fixture.kicad_pcb",
             layers=[{"name": "F.Cu"}, {"name": "B.Cu"}],
@@ -287,7 +287,7 @@ class SpikeCoreContractTests(unittest.TestCase):
                 self.assertIn(sample["element_id"], mesh_ids)
 
     def test_dc_solver_applies_explicit_package_and_contact_resistance(self):
-        design = DesignIR(
+        design = SpiDeR(
             layers=[{"name": "F.Cu"}],
             tracks=[{"start": (0, 0), "end": (10, 0), "width": 1, "layer": "F.Cu", "net_name": "VCC"}],
             stackup=[{"name": "F.Cu", "type": "copper", "thickness": 0.035}],
@@ -328,7 +328,7 @@ class SpikeCoreContractTests(unittest.TestCase):
         self.assertIn("external.fasthenry", catalog)
 
     def test_explicit_incompatible_solver_is_blocked(self):
-        design = DesignIR(tracks=[{"start": [0, 0], "end": [1, 0], "width": 1, "layer": "F.Cu", "net_name": "VCC"}])
+        design = SpiDeR(tracks=[{"start": [0, 0], "end": [1, 0], "width": 1, "layer": "F.Cu", "net_name": "VCC"}])
         response = handle({
             "method": "run_analysis",
             "params": {
@@ -425,7 +425,7 @@ class SpikeCoreContractTests(unittest.TestCase):
             ".end\n"
         )
         result = NgspicePlugin().run(
-            DesignIR(design_id="ngspice-rc", name="ngspice RC fixture"),
+            SpiDeR(design_id="ngspice-rc", name="ngspice RC fixture"),
             AnalysisSpec(
                 analysis_id="ngspice-rc",
                 mode="transient",
@@ -459,7 +459,7 @@ class SpikeCoreContractTests(unittest.TestCase):
             self.assertEqual(result["models"][0]["path"], str(model))
 
     def test_complete_net_geometry_includes_all_conductor_types(self):
-        design = DesignIR(
+        design = SpiDeR(
             design_id="geometry-fixture",
             layers=[{"name": "F.Cu"}, {"name": "B.Cu"}],
             tracks=[{"id": "t1", "net_name": "VCC", "layer": "F.Cu"}],
@@ -482,7 +482,7 @@ class SpikeCoreContractTests(unittest.TestCase):
         self.assertEqual([item["name"] for item in response["result"]["layers"]], ["F.Cu", "B.Cu"])
 
     def test_solver_geometry_handoff_contains_materials_ports_and_complete_nets(self):
-        design = DesignIR(
+        design = SpiDeR(
             design_id="handoff",
             layers=[{"name": "F.Cu"}],
             tracks=[{"id": "t1", "net_name": "VCC", "layer": "F.Cu"}],
@@ -819,7 +819,7 @@ class SpikeCoreContractTests(unittest.TestCase):
         diagnostics = registry.discover([root / "extensions"], trusted_roots=[root / "extensions"])
         self.assertTrue(any(item["id"] == "spike.example.net-inventory" and item["status"] == "loaded" for item in diagnostics))
         result = registry.invoke("spike.example.net-inventory", "summarize-nets", {
-            "design": DesignIR(
+            "design": SpiDeR(
                 layers=[{"name": "F.Cu"}],
                 nets=[{"id": "1", "name": "VCC"}],
                 tracks=[{"net_name": "VCC"}],

@@ -1,0 +1,188 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spike.local/schemas/pcb-volume-model-v1.schema.json",
+  "title": "SPIKE complete normalized planar PCB volumes v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract",
+    "board",
+    "layers",
+    "copper",
+    "vias",
+    "copper_material_id",
+    "drill_material_id"
+  ],
+  "properties": {
+    "contract": {
+      "const": "spike/pcb-volume-model/v1"
+    },
+    "copper_material_id": {
+      "$ref": "#/$defs/identity"
+    },
+    "drill_material_id": {
+      "$ref": "#/$defs/identity"
+    },
+    "board": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "outer_mm",
+        "holes_mm"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/identity"
+        },
+        "outer_mm": {
+          "$ref": "#/$defs/loop"
+        },
+        "holes_mm": {
+          "$ref": "#/$defs/holes"
+        }
+      }
+    },
+    "layers": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 10000,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "z_min_mm",
+          "z_max_mm",
+          "background_material_id"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/$defs/identity"
+          },
+          "z_min_mm": {
+            "$ref": "#/$defs/coordinate"
+          },
+          "z_max_mm": {
+            "$ref": "#/$defs/coordinate"
+          },
+          "background_material_id": {
+            "$ref": "#/$defs/identity"
+          }
+        }
+      }
+    },
+    "copper": {
+      "type": "array",
+      "maxItems": 10000,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "net",
+          "layer_id",
+          "outer_mm",
+          "holes_mm"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/$defs/identity"
+          },
+          "net": {
+            "$ref": "#/$defs/identity"
+          },
+          "layer_id": {
+            "$ref": "#/$defs/identity"
+          },
+          "outer_mm": {
+            "$ref": "#/$defs/loop"
+          },
+          "holes_mm": {
+            "$ref": "#/$defs/holes"
+          }
+        }
+      }
+    },
+    "vias": {
+      "type": "array",
+      "maxItems": 10000,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "net",
+          "z_min_mm",
+          "z_max_mm",
+          "center_mm",
+          "outer_radius_mm",
+          "inner_radius_mm"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/$defs/identity"
+          },
+          "net": {
+            "$ref": "#/$defs/identity"
+          },
+          "z_min_mm": {
+            "$ref": "#/$defs/coordinate"
+          },
+          "z_max_mm": {
+            "$ref": "#/$defs/coordinate"
+          },
+          "center_mm": {
+            "$ref": "#/$defs/point"
+          },
+          "outer_radius_mm": {
+            "type": "number",
+            "minimum": 1e-06,
+            "maximum": 1000000
+          },
+          "inner_radius_mm": {
+            "type": "number",
+            "minimum": 1e-06,
+            "maximum": 1000000
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "identity": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "coordinate": {
+      "type": "number",
+      "minimum": -1000000,
+      "maximum": 1000000
+    },
+    "point": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": {
+        "$ref": "#/$defs/coordinate"
+      }
+    },
+    "loop": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 131072,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/point"
+      }
+    },
+    "holes": {
+      "type": "array",
+      "maxItems": 128,
+      "items": {
+        "$ref": "#/$defs/loop"
+      }
+    }
+  }
+}
