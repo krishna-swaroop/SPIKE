@@ -32,6 +32,7 @@ the local analysis worker; Linux and macOS packages also include CLI launchers.
 · [Five-minute ESP32 walkthrough](docs/ESP32_QUICKSTART.md)
 · [User guides](docs/README.md)
 · [Build from source](docs/DEVELOPER_GUIDE.md)
+· [Automated builds](docs/BUILD_AND_RELEASE.md)
 
 See [Linux and macOS installation and CLI commands](docs/PLATFORM_PACKAGES.md).
 
