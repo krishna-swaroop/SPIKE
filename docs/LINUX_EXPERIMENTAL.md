@@ -1,18 +1,15 @@
 # Experimental Linux package
 
-An experimental Debian package for Ubuntu 24.04 on x86-64 is being tested.
-The Linux package is not attached
-to the release yet. The build contains the SPIKE desktop app and a frozen local
-Python worker.
+SPIKE 0.3.0 is available as an x86-64 Flatpak. It includes the desktop app,
+a frozen Python worker, native kernels, and the full command-line interface.
 
-The package was built on Ubuntu 24.04 under WSL2. Its extracted worker passed
-SPIKE's packaged-worker checks and answered a health request, and the Debian
-package installed successfully in that test environment. The desktop was
-launched briefly under WSLg;
-that session reported graphics-driver warnings. A full GUI analysis run on a
-physical Linux desktop has not been checked. Older distributions and other CPU
-architectures have not been tested.
+See [installation and CLI commands](PLATFORM_PACKAGES.md#linux-flatpak).
 
-Optional solver engines such as EMerge, openEMS, ngspice, and OpenFOAM are
-separate installations. The tested package does not download or include them. See the
-[solver status](SOLVER_STATUS.md) for the current analysis limits.
+The package was built and installed on Ubuntu 24.04 in CI. The bundled worker,
+CLI command surface, board inspection, error output, and desktop startup were
+checked. A full interactive analysis session on a physical Linux desktop has
+not been tested.
+
+Optional engines such as EMerge, openEMS, ngspice, and OpenFOAM are separate
+installations. Host executables are not automatically available inside the
+Flatpak sandbox. See the [solver status](SOLVER_STATUS.md) for analysis limits.

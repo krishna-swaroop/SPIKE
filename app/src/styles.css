@@ -3189,3 +3189,14 @@ button.net-name { width: 100%; border: 0; background: transparent; padding: 0; t
 .hover-probe-banner dt { flex: 1; }
 .hover-probe-banner dd { flex-shrink: 0; font-size: 11px; }
 .hover-probe-banner > small { white-space: normal; overflow-wrap: anywhere; }
+
+/* Whole-board mesh controls share the modal viewport on small screens. */
+.tetra-mesh-panel { inset: 5vh auto auto 50%; transform: translateX(-50%); width: min(900px, 94vw); max-height: 90vh; overflow: auto; padding: 0 16px 16px; }
+.tetra-mesh-panel .floating-heading { position: sticky; top: 0; background: #15232c; z-index: 1; height: auto; min-height: 44px; gap: 12px; }
+.tetra-mesh-panel .floating-heading small { display: block; letter-spacing: 0; margin-top: 4px; }
+.tetra-mesh-panel label { display: flex; flex-direction: column; gap: 6px; margin: 8px 0; }
+.tetra-mesh-panel textarea { width: 100%; min-height: 180px; resize: vertical; }
+.tetra-mesh-panel .field-row { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+.tetra-mesh-panel select[multiple] { min-width: 220px; min-height: 100px; }
+.tetra-mesh-panel dl { display: grid; grid-template-columns: minmax(140px, 1fr) 2fr; gap: 6px 12px; }
+.tetra-mesh-panel dd { margin: 0; overflow-wrap: anywhere; }

@@ -1,10 +1,12 @@
 <img src="app/public/spike-icon.png" alt="SPIKE icon" width="96" height="96">
 
-# SPIKE — PCB Simulation for KiCad
+# SPIKE - PCB Simulation for KiCad
 
-[![Latest release: v0.3.0](https://img.shields.io/badge/latest_release-v0.3.0-blue)](https://github.com/wayri/SPIKE-Main/releases/tag/v0.3.0)
-[![Community preview](https://img.shields.io/badge/status-community_preview-orange)](https://github.com/wayri/SPIKE-Main/releases/tag/v0.3.0)
-[![Windows x64 download](https://img.shields.io/badge/download-Windows_x64-0078D4)](https://github.com/wayri/SPIKE-Main/releases/download/v0.3.0/SPIKE_0.3.0_x64-setup.exe)
+[![Latest release: v0.3.2](https://img.shields.io/badge/latest_release-v0.3.2-blue)](https://github.com/wayri/SPIKE-Main/releases/tag/v0.3.2)
+[![Community preview](https://img.shields.io/badge/status-early_community_preview-orange)](https://github.com/wayri/SPIKE-Main/releases/tag/v0.3.2)
+[![Windows x64 download](https://img.shields.io/badge/download-Windows_x64-0078D4)](https://github.com/wayri/SPIKE-Main/releases/download/v0.3.2/SPIKE_0.3.2_x64-setup.exe)
+[![Linux Flatpak download](https://img.shields.io/badge/download-Linux_Flatpak-orange)](https://github.com/wayri/SPIKE-Main/releases/download/v0.3.2/SPIKE_0.3.2_linux-x86_64_EXPERIMENTAL.flatpak)
+[![macOS download](https://img.shields.io/badge/download-macOS_DMG-orange)](https://github.com/wayri/SPIKE-Main/releases/tag/v0.3.2)
 [![License: Apache 2.0](https://img.shields.io/badge/license-Apache_2.0-blue)](LICENSE)
 
 [![Power integrity](https://img.shields.io/badge/analysis-power_integrity-476582)](#pcb-analysis-capabilities)
@@ -21,15 +23,16 @@ board viewport. Optional **[EMerge](https://github.com/FennisRobert/EMerge)** an
 **[openEMS](https://openems.de/)** extensions add electromagnetic
 simulation workflows.
 
-SPIKE runs locally and includes a command-line interface. Version 0.3.0 is a
-community preview, available as source and an unsigned Windows x64 installer.
+SPIKE runs locally and includes a command-line interface. Version 0.3.2 is an
+early community preview with an unsigned Windows x64 installer, an experimental
+Linux Flatpak, and experimental macOS DMGs for Apple Silicon and Intel.
 
-[Download SPIKE for Windows](https://github.com/wayri/SPIKE-Main/releases/tag/v0.3.0)
+[Downloads and release notes](https://github.com/wayri/SPIKE-Main/releases/tag/v0.3.2)
 · [Five-minute ESP32 walkthrough](docs/ESP32_QUICKSTART.md)
 · [User guides](docs/README.md)
 · [Build from source](docs/DEVELOPER_GUIDE.md)
 
-An [experimental Linux build](docs/LINUX_EXPERIMENTAL.md) is being tested.
+See [platform installation and CLI commands](docs/PLATFORM_PACKAGES.md).
 
 **Disclaimer:** SPIKE is a work in progress and is provided **AS IS**, without
 warranty or guarantee of any kind, including accuracy, reliability, or fitness

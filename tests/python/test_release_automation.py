@@ -78,6 +78,33 @@ class ReleaseAutomationTests(unittest.TestCase):
                 release.check(self.root)
             github.assert_not_called()
 
+    def test_versioned_notes_keep_llm_review_disclosure_and_portable_links(self):
+        notes = self.root / 'docs' / 'releases' / 'v0.3.0.md'
+        notes.parent.mkdir(parents=True)
+        notes.write_text('Largely LLM-driven under human review. Early community preview.\n'
+                         '[Disclosure](../LLM_DEVELOPMENT.md)\n'
+                         '[License](../../LICENSE)\n', encoding='utf-8')
+        published_notes = []
+
+        def fake_gh(*args, **kwargs):
+            if args[0] == 'api':
+                return '[[]]'
+            if '--notes-file' in args:
+                published_notes.append(Path(args[args.index('--notes-file') + 1]).read_text())
+            return ''
+
+        with patch.dict(os.environ, {'RELEASE_TAG': 'v0.3.0', 'RELEASE_COMMIT': 'a' * 40,
+                                     'GITHUB_REPOSITORY': 'example/spike'}), \
+                patch.object(release, 'version', return_value='0.3.0'), \
+                patch.object(release, 'tag_commit', return_value=None), \
+                patch.object(release, 'gh', side_effect=fake_gh):
+            release.publish(self.root)
+        self.assertEqual(len(published_notes), 2)
+        for content in published_notes:
+            self.assertIn('LLM-driven under human review', content)
+            self.assertIn('https://github.com/example/spike/blob/v0.3.0/docs/LLM_DEVELOPMENT.md', content)
+            self.assertIn('https://github.com/example/spike/blob/v0.3.0/LICENSE', content)
+
     def test_version_drift_is_rejected(self):
         paths = {
             'app/package.json': json.dumps({'version': '0.3.0'}),

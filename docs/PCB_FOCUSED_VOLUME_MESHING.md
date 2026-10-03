@@ -130,7 +130,7 @@ Timeout and private memory are enforced by the existing separate-process runner.
 Windows venv redirectors are bypassed without relaxing the one-process Job limit;
 `-I -S` and explicit configured package paths avoid startup `.pth` execution.
 There is no filesystem/network sandbox or fully admitted transitive DLL set.
-The runtime remains local-development-only and is not redistribution-approved.
+Gmsh is an optional, separately installed runtime.
 
 ## Use with SI EM and thermal studies
 

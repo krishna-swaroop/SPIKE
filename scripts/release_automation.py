@@ -114,6 +114,8 @@ def publish(root: Path = ROOT) -> None:
     if existing and not existing['draft']:
         raise ValueError('This release is already published. Create a new version to publish different binaries.')
     notes = (f'SPIKE {release_version} is a community preview for PCB power, signal, thermal, and electromagnetic analysis.\n\n'
+             'Development is largely LLM-driven under human review. SPIKE is at a very early release stage '
+             'and may have instabilities, bugs and incomplete behavior. The community is invited to test and provide feedback.\n\n'
              'Downloads include a Windows x64 installer, an experimental Linux x86-64 Flatpak, '
              'and experimental macOS DMGs for Apple Silicon and Intel. Each package includes the local analysis worker and command-line interface.\n\n'
              'The Windows installer is unsigned. macOS builds are ad-hoc signed without Apple notarization. '
@@ -121,6 +123,13 @@ def publish(root: Path = ROOT) -> None:
              f'[Installation and CLI commands](https://github.com/{repo}/blob/{tag}/docs/PLATFORM_PACKAGES.md) '
              f'· [ESP32 walkthrough](https://github.com/{repo}/blob/{tag}/docs/ESP32_QUICKSTART.md)\n\n'
              'SHA-256 checksums are attached. SPIKE is a work in progress, provided AS IS without warranty or guarantee.\n')
+    release_notes = root / 'docs' / 'releases' / f'v{release_version}.md'
+    if release_notes.is_file():
+        notes = release_notes.read_text(encoding='utf-8')
+        # GitHub release text needs repository links rather than local doc paths.
+        notes = re.sub(r'\]\((\.\.?/[^)]+)\)', lambda match:
+                       '](' + f'https://github.com/{repo}/blob/{tag}/' +
+                       str((release_notes.parent / match.group(1)).resolve().relative_to(root.resolve())).replace('\\', '/') + ')', notes)
     with tempfile.TemporaryDirectory() as directory:
         notes_path = Path(directory) / 'notes.md'
         notes_path.write_text(notes)

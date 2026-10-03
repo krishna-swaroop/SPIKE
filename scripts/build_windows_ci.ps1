@@ -106,6 +106,7 @@ Invoke-Checked "cmake" @(
 ) $root
 
 Invoke-Checked $python @("scripts/build_packaged_worker.py") $root
+Invoke-Checked "cargo" @("test", "--manifest-path", "app/src-tauri/Cargo.toml", "--lib") $root
 $frozenWorker = Join-Path $root "app\src-tauri\resources\worker\spike-worker\spike-worker.exe"
 if (-not (Test-Path -LiteralPath $frozenWorker -PathType Leaf)) {
     throw "The packaged worker was not produced at $frozenWorker"

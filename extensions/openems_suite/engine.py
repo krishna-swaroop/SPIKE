@@ -729,15 +729,15 @@ def run_openems_case(
     timeout_seconds: int = 3600,
 ) -> Dict[str, Any]:
     root, job, validation, spec, geometry = _validated_job(case_dir)
-    engine = _openems_descriptor()
-    if engine.state not in RUNNABLE_OPENEMS_STATES:
-        return {"status": "solver_unavailable", "message": engine.reason, "engine": engine.to_dict(), "case_dir": str(root)}
     if not validation.get("can_prepare", False):
         return {"status": "blocked", "message": "The prepared openEMS inputs no longer pass preflight.", "validation": validation, "case_dir": str(root)}
     if setup_only and validation.get("run_blockers"):
         return {"status": "blocked", "message": "The selected geometry has unsupported openEMS translations; a complete CSXCAD setup cannot be generated.", "validation": validation, "case_dir": str(root)}
     if not setup_only and not validation.get("can_run", False):
         return {"status": "blocked", "message": "The openEMS preflight does not permit a solver run.", "validation": validation, "case_dir": str(root)}
+    engine = _openems_descriptor()
+    if engine.state not in RUNNABLE_OPENEMS_STATES:
+        return {"status": "solver_unavailable", "message": engine.reason, "engine": engine.to_dict(), "case_dir": str(root)}
     python_executable = _openems_python()
     arguments = ["--job", str(root)]
     if setup_only:

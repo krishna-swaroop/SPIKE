@@ -15,7 +15,7 @@ their SHA-256 files appear under that run's artifacts and are retained for
 From the command line:
 
 ```sh
-gh workflow run release.yml --repo wayri/SPIKE --ref main
+gh workflow run release.yml --repo wayri/SPIKE-Main --ref main
 ```
 
 ## Publish a new version
@@ -26,8 +26,8 @@ Set the new version in `app/package.json`, `app/package-lock.json`,
 push a matching tag, for example:
 
 ```sh
-git tag v0.3.1
-git push origin main v0.3.1
+git tag v0.3.2
+git push origin main v0.3.2
 ```
 
 Pushing a `v*` tag starts the complete build and publication chain. The tag must

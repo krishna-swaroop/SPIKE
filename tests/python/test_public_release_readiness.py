@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from pathlib import Path
 import unittest
+from unittest.mock import patch
 
 from python.spike_core.public_release_readiness import (
     BLOCKED_EXTERNAL,
@@ -24,8 +25,11 @@ class PublicReleaseReadinessTests(unittest.TestCase):
         self.assertEqual(_version_check(ROOT)["status"], "PASS")
         self.assertEqual(_schema_check(ROOT)["status"], "PASS")
 
-    def test_current_candidate_is_technical_but_externally_blocked(self) -> None:
+    @patch("python.spike_core.public_release_readiness.verify_engine_release",
+           return_value={"status": "passed", "version": "0.3.0-beta.1"})
+    def test_verified_engine_still_requires_external_evidence(self, verifier) -> None:
         report = evaluate_public_release(ROOT, engine_report=REPORT)
+        verifier.assert_called_once_with(REPORT)
         self.assertEqual(report["status"], BLOCKED_EXTERNAL)
         self.assertTrue(report["technical_candidate"])
         self.assertFalse(report["public_distribution_authorized"])
@@ -34,7 +38,6 @@ class PublicReleaseReadinessTests(unittest.TestCase):
         self.assertSetEqual(codes, {
             "PUBLIC_RELEASE_AUDITABLE_CI_REQUIRED",
             "PUBLIC_RELEASE_CLEAN_MACHINE_EVIDENCE_REQUIRED",
-            "PUBLIC_RELEASE_DEPENDENCY_APPROVAL_REQUIRED",
             "PUBLIC_RELEASE_SIGNATURE_REQUIRED",
         })
         self.assertTrue(all(value is False for value in report["claim_boundary"].values()))

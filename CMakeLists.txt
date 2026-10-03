@@ -1,10 +1,10 @@
 cmake_minimum_required(VERSION 3.20)
-project(SPIKE VERSION 0.3.0 LANGUAGES CXX)
+project(SPIKE VERSION 0.3.2 LANGUAGES CXX)
 
 set(SPIKES_ENGINE_PRERELEASE "beta.1" CACHE STRING
     "SPIKES engine prerelease identifier")
 set(SPIKES_ENGINE_VERSION
-    "${PROJECT_VERSION}-${SPIKES_ENGINE_PRERELEASE}")
+    "0.3.0-${SPIKES_ENGINE_PRERELEASE}")
 
 # ============================================================================
 # SPIKE: Signal, Power, and Integrity Knowledge Engine

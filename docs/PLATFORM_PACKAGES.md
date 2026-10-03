@@ -6,16 +6,16 @@ not needed.
 
 ## Linux: Flatpak
 
-Download the `.flatpak` file from the [0.3.0 release](https://github.com/wayri/SPIKE/releases/tag/v0.3.0).
+Download the `.flatpak` file from the [0.3.2 release](https://github.com/wayri/SPIKE-Main/releases/tag/v0.3.2).
 With Flatpak installed, run:
 
 ```sh
 flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
-flatpak install --user ./SPIKE_0.3.0_linux-x86_64_EXPERIMENTAL.flatpak
+flatpak install --user ./SPIKE_0.3.2_linux-x86_64_EXPERIMENTAL.flatpak
 flatpak run org.spike.integrity
 ```
 
-The package is for x86-64 Linux and uses the GNOME 48 runtime. Flatpak downloads
+The package is for x86-64 Linux and uses the GNOME 50 runtime. Flatpak downloads
 the runtime on first installation. SPIKE can then run locally without a network
 connection. The app can read and write your home directory and uses the network
 for configured local model services and extensions.
@@ -58,7 +58,7 @@ inside the sandbox. This restriction also applies to CLI extension commands.
 
 ## Building
 
-The `Linux and macOS packages` GitHub Actions workflow builds each architecture
-on its native operating system. It runs `scripts/build_unix_release.sh`, followed
-by `scripts/package_unix_release.py`. The resulting packages and SHA-256 files
-are stored in `dist-release`.
+The [automated build and release chain](BUILD_AND_RELEASE.md) generates the
+Windows installer, Flatpak, and both macOS DMGs. It runs on version tags or from
+**Actions - Build and release SPIKE - Run workflow**. The resulting packages
+and SHA-256 files are stored in `dist-release`.
