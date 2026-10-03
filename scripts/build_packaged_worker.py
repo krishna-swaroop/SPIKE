@@ -530,6 +530,8 @@ def build(*, keep_work: bool = False) -> tuple[Path, Path]:
         "--hidden-import",
         "python.spike_core.odb_importer",
         "--hidden-import",
+        "python.spike_core.odb_source_inspection",
+        "--hidden-import",
         "python.spike_core.harness",
         "--hidden-import",
         "python.spike_core.mcad_export",
