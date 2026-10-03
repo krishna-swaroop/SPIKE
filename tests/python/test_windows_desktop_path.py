@@ -32,7 +32,7 @@ class WindowsDesktopPathTests(unittest.TestCase):
                 path.touch()
             result = self.select(root)
             self.assertEqual(result.returncode, 0, result.stderr)
-            self.assertEqual(Path(result.stdout.strip()), root / "spike-desktop.exe")
+            self.assertTrue(Path(result.stdout.strip()).samefile(root / "spike-desktop.exe"))
 
     def test_auxiliary_or_nested_desktop_cannot_substitute_for_root_entrypoint(self):
         with tempfile.TemporaryDirectory() as directory:

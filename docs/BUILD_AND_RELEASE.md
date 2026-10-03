@@ -26,8 +26,8 @@ Set the new version in `app/package.json`, `app/package-lock.json`,
 push a matching tag, for example:
 
 ```sh
-git tag v0.3.4
-git push origin main v0.3.4
+git tag v0.3.5
+git push origin main v0.3.5
 ```
 
 Pushing a `v*` tag starts the complete build and publication chain. The tag must

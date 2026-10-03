@@ -6,12 +6,12 @@ not needed.
 
 ## Linux: Flatpak
 
-Download the `.flatpak` file from the [0.3.4 release](https://github.com/wayri/SPIKE/releases/tag/v0.3.4).
+Download the `.flatpak` file from the [0.3.5 release](https://github.com/wayri/SPIKE/releases/tag/v0.3.5).
 With Flatpak installed, run:
 
 ```sh
 flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
-flatpak install --user ./SPIKE_0.3.4_linux-x86_64_EXPERIMENTAL.flatpak
+flatpak install --user ./SPIKE_0.3.5_linux-x86_64_EXPERIMENTAL.flatpak
 flatpak run org.spike.integrity
 ```
 
