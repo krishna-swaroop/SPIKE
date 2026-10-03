@@ -2,7 +2,7 @@
   "name": "spike-desktop",
   "license": "Apache-2.0",
   "private": true,
-  "version": "0.3.3",
+  "version": "0.3.4",
   "type": "module",
   "scripts": {
     "test:plot-interaction": "node scripts/test-plot-interaction.mjs && node scripts/test-plot-wheel-events.mjs && node scripts/test-report-plot-interaction.mjs",

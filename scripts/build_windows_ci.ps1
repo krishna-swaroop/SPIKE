@@ -53,6 +53,8 @@ $env:CARGO_PROFILE_RELEASE_STRIP = "symbols"
 $env:RUSTFLAGS = "--remap-path-prefix=$root=C:\build\spike --remap-path-prefix=$profileRoot=C:\build\user"
 $env:CL = "/pathmap:$root=C:\build\spike /pathmap:$profileRoot=C:\build\user"
 
+Invoke-Checked $python @("-m", "unittest", "tests.python.test_windows_desktop_path", "-v") $root
+
 # Install runtime wheels before the hash-locked build tooling. The packaged-worker
 # builder checks every Windows build-tool version against this lock.
 Invoke-Checked $python @(
@@ -157,12 +159,9 @@ Invoke-Checked $python @(
     "scripts/verify_packaged_cli.py", "--", "cmd.exe", "/d", "/c", $installedLauncher
 ) $root
 
-$desktopCandidates = @(Get-ChildItem -LiteralPath $installRoot -Recurse -Filter "*.exe" -File |
-    Where-Object { $_.Name -notin @("spike-worker.exe", "uninstall.exe") })
-if ($desktopCandidates.Count -ne 1) {
-    throw "Expected exactly one installed desktop executable; found $($desktopCandidates.Count)."
-}
-$desktop = Start-Process -FilePath $desktopCandidates[0].FullName -WindowStyle Hidden -PassThru
+. (Join-Path $PSScriptRoot "windows_desktop_path.ps1")
+$desktopPath = Get-SpikeInstalledDesktopPath -InstallRoot $installRoot
+$desktop = Start-Process -FilePath $desktopPath -WindowStyle Hidden -PassThru
 try {
     Start-Sleep -Seconds 10
     if ($desktop.HasExited) {

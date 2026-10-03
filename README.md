@@ -2,11 +2,11 @@
 
 # SPIKE - PCB Simulation for KiCad
 
-[![Latest release: v0.3.3](https://img.shields.io/badge/latest_release-v0.3.3-blue)](https://github.com/wayri/SPIKE/releases/tag/v0.3.3)
-[![Community preview](https://img.shields.io/badge/status-early_community_preview-orange)](https://github.com/wayri/SPIKE/releases/tag/v0.3.3)
-[![Windows x64 download](https://img.shields.io/badge/download-Windows_x64-0078D4)](https://github.com/wayri/SPIKE/releases/download/v0.3.3/SPIKE_0.3.3_x64-setup.exe)
-[![Linux Flatpak download](https://img.shields.io/badge/download-Linux_Flatpak-orange)](https://github.com/wayri/SPIKE/releases/download/v0.3.3/SPIKE_0.3.3_linux-x86_64_EXPERIMENTAL.flatpak)
-[![macOS download](https://img.shields.io/badge/download-macOS_DMG-orange)](https://github.com/wayri/SPIKE/releases/tag/v0.3.3)
+[![Latest release: v0.3.4](https://img.shields.io/badge/latest_release-v0.3.4-blue)](https://github.com/wayri/SPIKE/releases/tag/v0.3.4)
+[![Community preview](https://img.shields.io/badge/status-early_community_preview-orange)](https://github.com/wayri/SPIKE/releases/tag/v0.3.4)
+[![Windows x64 download](https://img.shields.io/badge/download-Windows_x64-0078D4)](https://github.com/wayri/SPIKE/releases/download/v0.3.4/SPIKE_0.3.4_x64-setup.exe)
+[![Linux Flatpak download](https://img.shields.io/badge/download-Linux_Flatpak-orange)](https://github.com/wayri/SPIKE/releases/download/v0.3.4/SPIKE_0.3.4_linux-x86_64_EXPERIMENTAL.flatpak)
+[![macOS download](https://img.shields.io/badge/download-macOS_DMG-orange)](https://github.com/wayri/SPIKE/releases/tag/v0.3.4)
 [![License: Apache 2.0](https://img.shields.io/badge/license-Apache_2.0-blue)](LICENSE)
 
 [![Power integrity](https://img.shields.io/badge/analysis-power_integrity-476582)](#pcb-analysis-capabilities)
@@ -23,11 +23,11 @@ board viewport. Optional **[EMerge](https://github.com/FennisRobert/EMerge)** an
 **[openEMS](https://openems.de/)** extensions add electromagnetic
 simulation workflows.
 
-SPIKE runs locally and includes a command-line interface. Version 0.3.3 is an
+SPIKE runs locally and includes a command-line interface. Version 0.3.4 is an
 early community preview with an unsigned Windows x64 installer, an experimental
 Linux Flatpak, and experimental macOS DMGs for Apple Silicon and Intel.
 
-[Downloads and release notes](https://github.com/wayri/SPIKE/releases/tag/v0.3.3)
+[Downloads and release notes](https://github.com/wayri/SPIKE/releases/tag/v0.3.4)
 · [Five-minute ESP32 walkthrough](docs/ESP32_QUICKSTART.md)
 · [User guides](docs/README.md)
 · [Build from source](docs/DEVELOPER_GUIDE.md)
