@@ -28,6 +28,9 @@ const kicadDesign = {
   layers:[{name:"F.Cu",type:"signal"},{name:"B.Cu",type:"signal"}], nets:[], tracks:[], vias:[], zones:[], stackup:[],
   pads:[{id:"p1",name:"1",component:"U1",at:[12,7],size:[1.5,2],layers:["B.Cu"],layer:"B.Cu",rotation:180}],
   components:[{id:"c1",reference:"U1",library:"Package_QFP:LQFP-48",at:[12,7],rotation:180,layer:"B.Cu"}],
+  technology:"flex",
+  regions:[{id:"region:implicit-freekicad-board",name:"FreekiCAD flex board",kind:"flex",outline:[[10,5],[30,5],[30,15],[10,15],[10,5]],source_layer:"Edge.Cuts",source:"implicit-board-outline",format:"kikakuka/freekicad-v1"}],
+  bends:[{id:"bend:source-uuid",name:"FreekiCAD bend 1",points:[[20,5],[20,15]],source_layer:"User.4",source_layer_user_name:"FreekiCAD",source_drawing_id:"source-uuid",source:"kikakuka-freekicad",format:"kikakuka/freekicad-v1",annotation:"a=-90 s=1.2mm",annotation_position:[20,5],angle_deg:-90,span_mm:1.2,radius_mm:.664,radius_source:"s",configured:true,issues:[{code:"KIKAKUKA_TEST",severity:"info",message:"retained"}]}],
   metadata:{board_bounds_mm:[10,5,30,15],board_outline_drawings:[
     {type:"line",start:[10,5],end:[30,5],layer:"Edge.Cuts",width:.05},
     {type:"line",start:[30,5],end:[30,15],layer:"Edge.Cuts",width:.05},
@@ -44,6 +47,21 @@ assert.equal(kicadBoard.pads[0].name,"1");
 assert.equal(kicadBoard.components[0].library,"Package_QFP:LQFP-48");
 assert.equal(kicadBoard.components[0].layer,"B.Cu","legacy normalized KiCad components must retain their source side");
 assert.deepEqual(kicadBoard.components[0].at,[12,7]);
+assert.equal(kicadBoard.technology,"flex");
+assert.deepEqual(kicadBoard.regions[0].outline,[[10,5],[30,5],[30,15],[10,15],[10,5]],"normalized regions retain worker outline and source identity");
+assert.equal(kicadBoard.regions[0].sourceLayer,"Edge.Cuts");
+assert.deepEqual(kicadBoard.bendLines[0].points,[[20,5],[20,15]],"normalized bends retain worker endpoints");
+assert.equal(kicadBoard.bendLines[0].spanMm,1.2);
+assert.equal(kicadBoard.bendLines[0].sourceDrawingId,"source-uuid");
+assert.equal(kicadBoard.bendLines[0].sourceLayerUserName,"FreekiCAD");
+assert.equal(kicadBoard.bendLines[0].issues[0].code,"KIKAKUKA_TEST");
+const canonicalModelBoard = parseNormalizedBoard(JSON.stringify({contract:"spike/design-snapshot/v1",design:kicadDesign,canonical_design:{
+  layers:[],nets:[],zones:[],metadata:{},
+  components:[{id:"c1",model_ids:["m1","m2"]}],
+  models:[{id:"m1",uri:"a.step",transform:[1,0,0,4,0,1,0,5,0,0,1,6,0,0,0,1]},{id:"m2",uri:"b.wrl",transform:[]}],
+}}));
+assert.deepEqual(canonicalModelBoard.components[0].modelPaths,["a.step","b.wrl"],"canonical imports retain every model assignment");
+assert.deepEqual(canonicalModelBoard.components[0].models[0].transform,[1,0,0,4,0,1,0,5,0,0,1,6,0,0,0,1]);
 console.log("Normalized display projection preserves hole geometry and keeps exact solver source independent.");
 
 const artworkSnapshot = {contract:"spike/design-snapshot/v1", design: {...design, metadata:{...design.metadata, odb_artwork:[

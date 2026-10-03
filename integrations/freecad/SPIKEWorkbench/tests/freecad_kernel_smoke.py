@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MIT
 """Run the SPIKE exchange path inside the real FreeCAD Python kernel."""
 
 from __future__ import annotations

@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spike.local/schemas/internal-mesh-request-v1.schema.json",
+  "title": "SPIKE internal tetra meshing request v1",
+  "type": "object", "additionalProperties": false,
+  "required": ["contract", "operation", "parameters"],
+  "properties": {
+    "contract": {"const": "spike/internal-mesh-request/v1"},
+    "operation": {"enum": ["generate", "adapt", "optimize"]},
+    "parameters": {"type": "object"}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"operation": {"const": "generate"}}},
+      "then": {"properties": {"parameters": {
+        "type": "object", "additionalProperties": false, "required": ["points"],
+        "properties": {
+          "points": {"type": "array", "minItems": 4, "maxItems": 128, "uniqueItems": true, "items": {"$ref": "#/$defs/point"}},
+          "units": {"enum": ["m", "mm"]},
+          "material_id": {"type": "string", "minLength": 1, "maxLength": 256},
+          "source_object_id": {"type": "string", "minLength": 1, "maxLength": 1024},
+          "boundary_label": {"type": "string", "minLength": 1, "maxLength": 128},
+          "max_cells": {"$ref": "#/$defs/cellBudget"},
+          "optimize": {"type": "boolean"},
+          "iterations": {"$ref": "#/$defs/iterations"},
+          "protected_vertices": {"$ref": "#/$defs/vertexIndices"}
+        }
+      }}}
+    },
+    {
+      "if": {"properties": {"operation": {"const": "adapt"}}},
+      "then": {"properties": {"parameters": {
+        "type": "object", "additionalProperties": false, "required": ["mesh", "boundary_triangles"],
+        "properties": {
+          "mesh": {"$ref": "solver-mesh-v1.schema.json"},
+          "boundary_triangles": {"$ref": "#/$defs/boundary"},
+          "cell_indicators": {"type": "object", "maxProperties": 5000, "additionalProperties": {"type": "number", "minimum": 0}},
+          "marking_fraction": {"type": "number", "exclusiveMinimum": 0, "maximum": 1},
+          "target_edge_length": {"type": "number", "exclusiveMinimum": 0},
+          "manual_edges": {"type": "array", "maxItems": 256, "items": {"type": "array", "minItems": 2, "maxItems": 2, "uniqueItems": true, "items": {"type": "integer", "minimum": 0}}},
+          "protected_vertices": {"$ref": "#/$defs/vertexIndices"},
+          "optimize": {"type": "boolean"},
+          "iterations": {"$ref": "#/$defs/iterations"},
+          "max_cells": {"$ref": "#/$defs/cellBudget"},
+          "max_vertices": {"type": "integer", "minimum": 4, "maximum": 10000},
+          "nodal_fields": {"$ref": "#/$defs/fields"},
+          "cell_fields": {"$ref": "#/$defs/fields"}
+        }
+      }}}
+    },
+    {
+      "if": {"properties": {"operation": {"const": "optimize"}}},
+      "then": {"properties": {"parameters": {
+        "type": "object", "additionalProperties": false, "required": ["mesh", "boundary_triangles"],
+        "properties": {
+          "mesh": {"$ref": "solver-mesh-v1.schema.json"},
+          "boundary_triangles": {"$ref": "#/$defs/boundary"},
+          "protected_vertices": {"$ref": "#/$defs/vertexIndices"},
+          "iterations": {"$ref": "#/$defs/iterations"}
+        }
+      }}}
+    }
+  ],
+  "$defs": {
+    "point": {"type": "array", "minItems": 3, "maxItems": 3, "items": {"type": "number"}},
+    "cellBudget": {"type": "integer", "minimum": 1, "maximum": 5000},
+    "iterations": {"type": "integer", "minimum": 1, "maximum": 10},
+    "vertexIndices": {"type": "array", "maxItems": 10000, "uniqueItems": true, "items": {"type": "integer", "minimum": 0}},
+    "fields": {"type": "object", "maxProperties": 32, "additionalProperties": {"type": "array", "maxItems": 10000, "items": {"type": "number"}}},
+    "boundary": {"type": "array", "maxItems": 20000, "items": {
+      "type": "object", "additionalProperties": false, "required": ["vertices", "label"],
+      "properties": {
+        "vertices": {"type": "array", "minItems": 3, "maxItems": 3, "uniqueItems": true, "items": {"type": "integer", "minimum": 0}},
+        "label": {"type": "string", "minLength": 1, "maxLength": 128}
+      }
+    }}
+  }
+}

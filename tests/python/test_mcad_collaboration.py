@@ -8,9 +8,9 @@ import tempfile
 import unittest
 
 from python.spike_core.assembly_frames import IDENTITY, resolve_world
-from python.spike_core.contracts import DesignIR
-from python.spike_core.design_ir_v2 import AssemblyIRV1, AssemblyPart, BoardInstance, DesignIRV2
-from python.spike_core.design_ir_v2_schema import CoordinateFrame
+from python.spike_core.contracts import SpiDeR
+from python.spike_core.spider_v2 import AssemblyIRV1, AssemblyPart, BoardInstance, SpiDeRV2
+from python.spike_core.spider_v2_schema import CoordinateFrame
 from python.spike_core.mcad_session_contract import FEEDBACK, HEADER, digest, loads, validate
 from python.spike_core.mcad_tessellation import _freecad_path, McadTessellationError
 from python.spike_core.mcad_importer import import_mcad_artifact
@@ -23,7 +23,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 def fixture(path):
     ring = {"role": "outer", "start_mm": [0, 0], "segments": [{"kind": "line", "end_mm": p} for p in [[10,0],[10,10],[0,10],[0,0]]]}
-    design = DesignIRV2.from_v1(DesignIR(design_id="board", name="Board", source_format="neutral",
+    design = SpiDeRV2.from_v1(SpiDeR(design_id="board", name="Board", source_format="neutral",
         layers=[{"id": 0, "name": "F.Cu"}], stackup=[{"name": "Core", "type": "dielectric", "thickness_mm": 1.6}],
         metadata={"source_sha256": "a"*64, "board_outline_rings": [ring]})).to_dict()
     t = list(IDENTITY); t[3] = 20
@@ -32,7 +32,9 @@ def fixture(path):
               BoardInstance(id="b", name="B", design_id=design["design_id"], frame=CoordinateFrame(frame_id="b-frame", parent_frame_id="assembly", transform=tuple(t)))]
     assembly = AssemblyIRV1(assembly_id="assembly-id", name="Two boards", boards=boards, parts=[group])
     return write_spike_package(path, {"project": {"id": "project-id", "name": "Collaboration"}, "design_ir": design,
-        "assembly_ir": assembly.to_dict(), "analyses": {"latest_result": {"temperature": 300}, "setup": "preserved"},
+        "assembly_ir": assembly.to_dict(),
+        "assembly_designs": {"contract": "spike/assembly-designs/v1", "active_design_id": design["design_id"], "designs": [design]},
+        "analyses": {"latest_result": {"temperature": 300}, "setup": "preserved"},
         "results": {"old": 42}, "extensions": {"legacy": {"analysis": {"latest_result": {"temperature": 300}, "result_history": [1]},
             "thermal": {"scenario": {"ambient": 298, "result": {"temperature": 300}}}}}})
 
@@ -68,6 +70,33 @@ class CollaborationTests(unittest.TestCase):
         before = self.path.read_bytes()
         request(self.path, "export_mcad_session")
         self.assertEqual(before, self.path.read_bytes())
+
+    def test_repeated_design_occurrences_roundtrip_by_id_and_cannot_be_removed(self):
+        rows = {row["id"]: row for row in self.session["objects"]}
+        self.assertEqual({"a", "b", "group"}, set(rows))
+        self.assertEqual(rows["a"]["geometry"], rows["b"]["geometry"])
+        self.assertNotEqual(rows["a"]["transform"], rows["b"]["transform"])
+        moved = feedback(self.session)
+        by_id = {row["id"]: row for row in moved["objects"]}
+        by_id["a"]["transform"] = [0.0, -1.0, 0.0, 3.0, 1.0, 0.0, 0.0, 4.0,
+                                      0.0, 0.0, 1.0, 5.0, 0.0, 0.0, 0.0, 1.0]
+        preview = request(self.path, "preview_mcad_feedback", feedback=moved)
+        self.assertTrue(preview["ok"], preview)
+        applied = request(self.path, "apply_mcad_feedback", feedback=moved,
+                          reviewed_feedback_sha256=preview["result"]["feedback_sha256"])
+        self.assertTrue(applied["ok"], applied)
+        reopened = AssemblyIRV1.from_dict(read_project(self.path).payload["assembly_ir"])
+        self.assertEqual({board.id for board in reopened.boards}, {"a", "b"})
+        self.assertEqual(list(next(board for board in reopened.boards if board.id == "a").frame.transform),
+                         by_id["a"]["transform"])
+
+        fresh = request(self.path, "export_mcad_session")["result"]
+        removed = feedback(fresh)
+        removed["objects"] = [row for row in removed["objects"] if row["id"] != "b"]
+        rejected = request(self.path, "preview_mcad_feedback", feedback=removed)
+        self.assertFalse(rejected["ok"])
+        self.assertEqual({board.id for board in AssemblyIRV1.from_dict(read_project(self.path).payload["assembly_ir"]).boards},
+                         {"a", "b"})
 
     def test_review_apply_repeat_and_result_archiving(self):
         old = read_project(self.path, include_members=True)
@@ -202,6 +231,7 @@ App.closeDocument(doc.Name)
 doc = App.openDocument("collaboration.FCStd")
 root = session_root(doc)
 good = build_feedback(doc, root)
+assert {{o["id"] for o in good["objects"]}} == {{"a", "b", "group"}}
 write_feedback("feedback.json", good)
 by_id = {{o.SPIKEOccurrenceId:o for o in doc.Objects if hasattr(o,"SPIKEOccurrenceId")}}
 feature = doc.getObject(by_id["a"].SPIKEGeometryName)

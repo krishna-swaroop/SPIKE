@@ -6,7 +6,7 @@ import unittest
 
 import numpy as np
 
-from python.spike_core.contracts import AnalysisSpec, DesignIR
+from python.spike_core.contracts import AnalysisSpec, SpiDeR
 from python.spike_core.hybrid_mesh import TOPOLOGY_ONLY_BRANCH_KINDS
 from python.spike_core.conforming_local_refinement import LocalCopperRegion, refine_local_rectangles
 from python.spike_core.peec_conforming_mesh import build_conforming_mesh, _coalesce_rectangles
@@ -19,7 +19,7 @@ except ImportError:
 
 
 def _design(points):
-    return DesignIR(layers=[{"name": "F.Cu"}],
+    return SpiDeR(layers=[{"name": "F.Cu"}],
         stackup=[{"name": "F.Cu", "type": "copper", "thickness": 0.035}],
         zones=[{"id": "sheet", "net_name": "N", "layer": "F.Cu", "points": points}])
 
@@ -244,7 +244,7 @@ class ConformingCopperTests(unittest.TestCase):
 
     def test_via_has_distributed_fixed_contacts_with_finite_planar_faces(self):
         from shapely.geometry import Point, box
-        design = DesignIR(layers=[{"name":"F.Cu"}, {"name":"B.Cu"}],
+        design = SpiDeR(layers=[{"name":"F.Cu"}, {"name":"B.Cu"}],
             vias=[{"id":"v", "at":[0,0], "size":0.6, "drill":0.3,
                    "layers":["F.Cu","B.Cu"], "net_name":"N"}])
         # This is a mesh/contact test, not a dense magnetic solve. Use the

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MIT
 """Tests that run with stock Python; FreeCAD is not required."""
 
 import json
@@ -137,7 +138,7 @@ class WorkbenchLoaderTests(unittest.TestCase):
             else:
                 sys.modules["FreeCADGui"] = previous
         self.assertEqual(len(fake_gui.registered), 1)
-        self.assertEqual(fake_gui.registered[0].MenuText, "SPIKE ECAD/MCAD")
+        self.assertEqual(fake_gui.registered[0].MenuText, "SPIKE")
         self.assertEqual(fake_gui.registered[0].GetClassName(), "Gui::PythonWorkbench")
 
 

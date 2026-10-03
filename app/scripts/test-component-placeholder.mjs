@@ -23,6 +23,13 @@ assert.equal(tiny.planarSource, "pads", "Marble copper pads must outrank its tex
 assert.ok(tiny.widthMm <= 1.2 && tiny.depthMm <= 1.2, `0201 proxy must remain sub-1.2 mm, got ${tiny.widthMm} x ${tiny.depthMm}`);
 assert.equal(tiny.heightMm, 0.33, "explicit Marble component height must be preserved in millimeters");
 assert.equal(tiny.heightSource, "metadata");
+const dictionary = deriveComponentPlaceholder({ ...marble0201, properties: { Height: "40mil", Description: "retained KiCad metadata" } }, marble0201Pads, "smd");
+assert.equal(dictionary.heightMm, 1.016, "dictionary properties from retained boards preserve height units without crashing");
+for (const properties of [null, "invalid", [{ name: "Height", values: 3 }], [null]]) {
+  const fallback = deriveComponentPlaceholder({ ...marble0201, properties }, marble0201Pads, "smd");
+  assert.equal(fallback.heightSource, "default", "malformed optional properties use conservative visual dimensions");
+  assert.ok(Number.isFinite(fallback.heightMm));
+}
 
 const connector = deriveComponentPlaceholder({
   ref: "J15", value: "FMC connector", library: "FMC_HPC", at: [20, 30], width: 100, height: 100, rotation: 0,

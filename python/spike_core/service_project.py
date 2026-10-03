@@ -8,7 +8,7 @@ import copy
 from pathlib import Path
 from typing import Any, Dict
 
-from .design_ir_v2 import DesignIRV2
+from .spider_v2 import SpiDeRV2
 from .importers import FunctionImporter, ImporterDescriptor, ImporterRegistry
 from .ipc2581_importer import import_ipc2581_design
 from .kicad_importer import import_kicad_design
@@ -84,7 +84,7 @@ def canonicalize_project_payload(raw: Dict[str, Any]) -> tuple[Dict[str, Any], D
             snapshot = json.loads(source_text)
             if snapshot.get("contract") != "spike/design-snapshot/v1":
                 raise ProjectPackageError("Invalid normalized source snapshot.")
-            DesignIRV2.from_dict(snapshot["canonical_design"])  # Validate without discarding newer fields.
+            SpiDeRV2.from_dict(snapshot["canonical_design"])  # Validate without discarding newer fields.
             canonical = copy.deepcopy(snapshot["canonical_design"])
             # The original archive/directory digest remains the source identity.
             # A portable normalized snapshot is an additional artifact, not a
@@ -95,7 +95,7 @@ def canonicalize_project_payload(raw: Dict[str, Any]) -> tuple[Dict[str, Any], D
         if source_name.lower().endswith(".kicad_pcb"):
             with tempfile.TemporaryDirectory(prefix="spike-project-import-") as directory:
                 source_path = Path(directory) / source_name
-                # The imported DesignIR digest must describe the exact bytes
+                # The imported SpiDeR digest must describe the exact bytes
                 # embedded in the package.  write_text() performs newline
                 # translation on Windows, producing a digest for CRLF input
                 # while the source artifact below retains its original LF.
@@ -103,7 +103,7 @@ def canonicalize_project_payload(raw: Dict[str, Any]) -> tuple[Dict[str, Any], D
                 imported = _IMPORTERS.import_design(source_path, "kicad_pcb")
                 imported.source_path = f"package:sources/{source_name}"
                 imported.metadata["source_embedded"] = True
-                payload["design_ir"] = DesignIRV2.from_v1(imported).to_dict()
+                payload["design_ir"] = SpiDeRV2.from_v1(imported).to_dict()
                 payload["design_ir"]["source"]["artifact_path"] = (
                     "package:" + _source_member_name(
                         source_name, payload["design_ir"]["source"]["source_digest"],
@@ -181,7 +181,7 @@ def frontend_project_payload(package_payload: Dict[str, Any]) -> Dict[str, Any]:
         if isinstance(package_payload.get("assembly_designs"), dict):
             projected["assembly_designs"] = package_payload["assembly_designs"]
         return projected
-    design = DesignIRV2.from_dict(package_payload.get("design_ir") or {}).to_v1().to_dict()
+    design = SpiDeRV2.from_dict(package_payload.get("design_ir") or {}).to_v1().to_dict()
     projected = {
         "format": "spike-project-package/v2",
         "contract": "spike/project/v2",

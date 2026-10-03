@@ -1,6 +1,6 @@
 """Versioned solver plugin registry and isolated process adapter.
 
-Solver plugins consume DesignIR plus AnalysisSpec and return AnalysisResult.
+Solver plugins consume SpiDeR plus AnalysisSpec and return AnalysisResult.
 The desktop UI and service never import solver-specific geometry or APIs.
 """
 
@@ -15,7 +15,7 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Callable, Dict, Iterable, List, Protocol
 
-from .contracts import AnalysisResult, AnalysisSpec, DesignIR, ValidationIssue
+from .contracts import AnalysisResult, AnalysisSpec, SpiDeR, ValidationIssue
 from .dc_solver import solve_dc
 from .solver_geometry import build_solver_geometry
 
@@ -122,7 +122,7 @@ class SolverPluginManifest:
 class SolverPlugin(Protocol):
     manifest: SolverPluginManifest
 
-    def run(self, design: DesignIR, spec: AnalysisSpec) -> AnalysisResult:
+    def run(self, design: SpiDeR, spec: AnalysisSpec) -> AnalysisResult:
         ...
 
 
@@ -130,13 +130,13 @@ class BuiltinSolverPlugin:
     def __init__(
         self,
         manifest: SolverPluginManifest,
-        runner: Callable[[DesignIR, AnalysisSpec], AnalysisResult],
+        runner: Callable[[SpiDeR, AnalysisSpec], AnalysisResult],
     ) -> None:
         manifest.validate()
         self.manifest = manifest
         self._runner = runner
 
-    def run(self, design: DesignIR, spec: AnalysisSpec) -> AnalysisResult:
+    def run(self, design: SpiDeR, spec: AnalysisSpec) -> AnalysisResult:
         return self._runner(design, spec)
 
 
@@ -147,7 +147,7 @@ class DeclaredSolverPlugin:
         manifest.validate()
         self.manifest = manifest
 
-    def run(self, design: DesignIR, spec: AnalysisSpec) -> AnalysisResult:
+    def run(self, design: SpiDeR, spec: AnalysisSpec) -> AnalysisResult:
         return _blocked_result(
             spec,
             "SOLVER_PLUGIN_UNAVAILABLE",
@@ -235,7 +235,7 @@ class ExternalProcessSolverPlugin:
         self._probe_result = result
         return dict(result)
 
-    def run(self, design: DesignIR, spec: AnalysisSpec) -> AnalysisResult:
+    def run(self, design: SpiDeR, spec: AnalysisSpec) -> AnalysisResult:
         if self.manifest.qualification.get("runtime_probe_required", False):
             probe = self.probe()
             if probe.get("status") != "passed":
@@ -415,7 +415,7 @@ class SolverRegistry:
             candidates.append(plugin)
         return max(candidates, key=lambda item: item.manifest.priority, default=None)
 
-    def run(self, design: DesignIR, spec: AnalysisSpec) -> AnalysisResult:
+    def run(self, design: SpiDeR, spec: AnalysisSpec) -> AnalysisResult:
         plugin = self.select(spec)
         from .importers import import_analysis_blockers
         blockers = import_analysis_blockers(design, spec.mode)

@@ -1,45 +1,46 @@
 // SPDX-License-Identifier: Apache-2.0
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import {readFileSync} from 'node:fs';
+import {createRequire} from 'node:module';
+import React from 'react';
+import {renderToStaticMarkup} from 'react-dom/server';
 import ts from 'typescript';
-
-const compile = source => ts.transpileModule(source, { compilerOptions: {
-  module: ts.ModuleKind.ES2022, target: ts.ScriptTarget.ES2022,
-} }).outputText;
-const load = async source => import(`data:text/javascript;base64,${Buffer.from(compile(source)).toString('base64')}`);
-const source = await readFile(new URL('../src/BoardViewport.tsx', import.meta.url), 'utf8');
-const ast = ts.createSourceFile('BoardViewport.tsx', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
-const helper = ast.statements.find(node => ts.isFunctionDeclaration(node) && node.name?.text === 'board3DNetLegend');
-assert.ok(helper, 'the 3D viewport must expose a bounded board-net selector');
-const copper = await load(await readFile(new URL('../src/copperLayerSelection.ts', import.meta.url), 'utf8'));
-const select = new Function('resolveBoardCopperLayers', `${compile(helper.getText(ast))}; return board3DNetLegend;`)(copper.resolveBoardCopperLayers);
-
-const synthetic = {
-  layers: ['F.Cu', 'B.Cu'],
-  pads: [
-    { id: 'ant-pad', ref: 'C1', name: '1', net: '/cpu/ANT', layers: ['F.Cu'] },
-    { id: 'ground-pad', ref: 'C1', name: '2', net: 'GND', layers: ['B.Cu'] },
-    { id: 'no-net-pad', ref: 'J1', name: '1', layers: ['F.Cu'] },
-  ],
-  tracks: [{ id: 'supply-track', net: '+3V3', layer: 'F.Cu' }],
-  drawings: [{ id: 'antenna-art', layer: 'F.Cu', filled: true }],
-};
-assert.deepEqual(select(synthetic, {}, null).map(row => row.net), ['/cpu/ANT', 'GND', '+3V3']);
-assert.ok(select(synthetic, {}, null).every(row => row.id !== 'antenna-art' && row.id !== 'no-net-pad'));
-assert.deepEqual(select(synthetic, { 'F.Cu': false }, null).map(row => row.net), ['GND']);
-assert.deepEqual(select(synthetic, {}, 'GND').map(row => row.net), ['GND']);
-assert.deepEqual(select(synthetic, {}, null, 2).map(row => row.net), ['/cpu/ANT', 'GND']);
-
-const numeric = await readFile(new URL('../src/numericRange.ts', import.meta.url), 'utf8');
-const parser = (await readFile(new URL('../src/boardParser.ts', import.meta.url), 'utf8')).replace('import { numericExtent } from "./numericRange";', '');
-const { parseKicadBoard } = await load(`${numeric}\n${parser}`);
-const board = parseKicadBoard(await readFile(new URL('../../examples/esp32/source/iot-esp-eth-ind.kicad_pcb', import.meta.url), 'utf8'));
-const rows = select(board, {}, null);
-assert.ok(rows.length > 0 && rows.length <= 8);
-assert.equal(new Set(rows.map(row => row.net)).size, rows.length);
-assert.ok(rows.some(row => row.net === '/cpu/ANT'));
-assert.ok(rows.some(row => row.net === 'GND'));
-assert.ok(rows.every(row => board.pads.some(pad => pad.id === row.id && pad.net === row.net)
-  || board.tracks.some(track => track.id === row.id && track.net === row.net)), 'every legend entry has netted source geometry');
-assert.match(source, /viewMode === "3D" && netLegend3D\.length > 0/);
-console.log(`3D board net legend: ${rows.length} distinct ESP32 nets, visible-layer and isolated-net filters, no unnetted antenna graphic attribution`);
+import {importTestTypescript} from './import-test-typescript.mjs';
+const m=await importTestTypescript('viewportNetViewerModel');
+const board=(prefix,unique)=>({nets:{n1:'GND',n2:'VCC',n3:unique},pads:[{id:`${prefix}-pad`,ref:'J1',name:'2',net:'VCC',layers:['F.Cu'],at:[1,2]}],tracks:[],zones:[],vias:[]});
+const a=board('a','ONLY_A'),b=board('b','ONLY_B');
+const instances=[{id:'A',name:'Controller A',designId:'a',active:true},{id:'B',name:'Power B',designId:'b',active:false}];
+assert.equal(m.netViewerBoard(a,instances,{b},null).board,null);
+assert.equal(m.netViewerBoard(a,instances,{b},'stale').board,null);
+const scope=m.netViewerBoard(a,instances,{b},'B');assert.equal(scope.board,b);assert.equal(scope.key,'B');
+assert.equal(m.netViewerBoard(a,instances,{},'B').board,null,'unavailable secondary geometry must not leak the active board nets');
+assert.equal(m.netViewerBoard(a,instances,{},'A').board,a);
+assert.equal(m.netViewerBoard(a,[],{},null).board,a);
+const rows=m.viewportNetRows(scope.board);
+assert.deepEqual(rows.map(r=>r.name),['GND','ONLY_B','VCC']);
+assert.equal(rows.find(r=>r.name==='VCC').id,'n2');assert.equal(rows.find(r=>r.name==='VCC').object.id,'b-pad');
+assert.deepEqual(m.filterViewportNets(rows,'j1.2 f.cu').map(r=>r.name),['VCC']);
+assert.deepEqual(m.filterViewportNets(rows,'only_a'),[]);
+assert.ok(m.viewportNetRows({...b,nets:{}}).every(r=>!r.canonical));
+const many={...b,nets:Object.fromEntries(Array.from({length:300},(_,i)=>[`n${i}`,`SIGNAL_${i}`]))};
+assert.ok(m.viewportNetRows(many).length>=300);
+const compiled=ts.transpileModule(readFileSync(new URL('../src/ViewportNetViewer.tsx',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText;
+const require=createRequire(import.meta.url);
+const minimized=new Map(),minimizedApi={minimizeTool:item=>{minimized.set(item.id,item);return true;},removeMinimizedTool:id=>minimized.delete(id)};
+function loadPanel(react){const module={exports:{}};new Function('require','module','exports',compiled)(name=>name==='react'?react:name==='./viewportNetViewerModel'?m:name==='./minimizedTools'?minimizedApi:name.endsWith('.css')?{}:require(name),module,module.exports);return module.exports.default;}
+const props={boardKey:'B',boardName:'Power B with a long occurrence name',rows,assembly:true,available:true,selectedIds:['n2'],onSelect:()=>{}};
+const markup=renderToStaticMarkup(React.createElement(loadPanel(React),props));
+assert.match(markup,/Search board nets/);assert.match(markup,/Minimize net viewer/);assert.doesNotMatch(markup,/ONLY_A/);assert.match(markup,/aria-pressed="true"/);
+assert.doesNotMatch(markup,/n2|Selected board · B/,'canonical and occurrence IDs stay in callbacks and keys, not visible net-viewer text');
+let state=[],cursor=0;const chosen=[];
+const Panel=loadPanel({useState(initial){const i=cursor++;if(!(i in state))state[i]=initial;return[state[i],v=>state[i]=typeof v==='function'?v(state[i]):v];},useMemo:fn=>fn(),useEffect:()=>{}});
+const render=()=>{cursor=0;return Panel({...props,onSelect:row=>chosen.push({boardId:props.boardKey,netId:row.id})});};
+function nodes(tree){if(!tree||typeof tree!=='object')return[];return[tree,...React.Children.toArray(tree.props?.children).flatMap(nodes)];}
+let tree=render();nodes(tree).find(n=>n.type==='button'&&n.props.title?.startsWith('VCC')).props.onClick();assert.deepEqual(chosen,[{boardId:'B',netId:'n2'}]);
+nodes(tree).find(n=>n.type==='input').props.onChange({target:{value:'only_b'}});
+assert.deepEqual(nodes(render()).filter(n=>n.type==='button'&&n.props.title?.includes(' · ')).map(n=>n.props.title.split(' · ')[0]),['ONLY_B']);
+nodes(tree).find(n=>n.props['aria-label']==='Minimize net viewer').props.onClick();assert.equal(render(),null);
+assert.equal(minimized.get('viewport-board-nets').label,'Power B with a long occurrence name');
+minimized.get('viewport-board-nets').restore();assert.equal(nodes(render()).some(n=>n.type==='input'),true);
+const viewport=readFileSync(new URL('../src/BoardViewport.tsx',import.meta.url),'utf8');assert.match(viewport,/onAssemblyNetSelect\?\.\(netViewerScope\.occurrence\.id, row\.id\)/);
+console.log('Net viewer scoping, canonical IDs, complete inventory, search, row selection, bottom-shelf minimize/restore and accessible rendering passed');

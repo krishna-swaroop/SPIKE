@@ -7,12 +7,14 @@ import json
 from pathlib import Path
 import types
 import unittest
+from unittest.mock import patch
 
 from extensions.emerge_suite.board_adapter import compile_board
 from extensions.emerge_suite.capture import theta_cut
-from extensions.emerge_suite.extension import execute
+from extensions.emerge_suite.extension import execute, _probe_executable
 from extensions.emerge_suite.normalize import network, radiation
 from extensions.emerge_suite.runner import run_case
+from extensions.emerge_suite.script_builder import generate_script
 from python.spike_core.extension_analysis_results import admit_analysis_result
 from python.spike_core.extensions import ExtensionManifest, ExtensionRegistry
 
@@ -69,6 +71,81 @@ def backend_result():
 
 
 class EMergeSuiteTests(unittest.TestCase):
+    def test_gui_script_preview_is_deterministic_and_does_not_solve(self):
+        self.request["contribution_id"] = "emerge-preview"
+        self.request["context"]["parameters"]["preview_radiation"] = False
+        result = execute(self.request, backend=lambda *args, **kwargs: self.fail("Preview must not solve"))
+        self.assertFalse(result["data"]["solved"])
+        self.assertNotIn("analysis_result", result["data"])
+        case = compile_board(board(), self.request["context"]["parameters"])
+        generated = generate_script(case, radiation_requested=False)
+        self.assertEqual(result["data"]["script_sha256"], generated["script_sha256"])
+        self.assertIn("def run_case", generated["script"])
+        self.assertIn("model.generate_mesh()", generated["script"])
+        self.assertIn("RADIATION_REQUESTED = False", generated["script"])
+        self.assertNotIn("from extensions.", generated["script"])
+        scope = {"__name__": "preview_test"}
+        exec(generated["script"], scope)
+        self.assertEqual(scope["CASE"], case)
+        changed = generate_script({**case, "mesh_resolution_mm": 0.5}, radiation_requested=False)
+        self.assertNotEqual(changed["script_sha256"], generated["script_sha256"])
+        self.assertTrue(any(feature["status"] == "adapter_pending" for feature in result["data"]["capabilities"]))
+        self.request["contribution_id"] = "emerge-radiation"
+        self.request["context"]["parameters"]["expected_generated_script_sha256"] = generated["script_sha256"]
+        with self.assertRaisesRegex(ValueError, "does not match"):
+            execute(self.request, backend=lambda *args, **kwargs: self.fail("Mismatched preview must not solve"))
+
+    def test_probe_reports_optional_emcad_and_rejects_malformed_metadata(self):
+        executable = Path(__file__)
+        checks = {name: True for name in ("pcb_layer_polygons", "pcb_geometry", "microwave_sweep",
+                                          "microwave_boundaries", "mesh_generation", "mesh_sizing", "mesh_export")}
+        metadata = {"version": "3.0.0a19", "emcad_version": "0.1.0", "api_checks": checks}
+        process = types.SimpleNamespace(returncode=0, stdout=(json.dumps(metadata) + "\n").encode(), stderr=b'')
+        with patch("extensions.emerge_suite.extension.subprocess.run", return_value=process) as launched:
+            result = _probe_executable(executable)
+        self.assertEqual(result["geometry_backends"], ["emerge", "emcad"])
+        self.assertEqual(result["max_copper_layers"], 16)
+        self.assertEqual(result["adapter_evidence"], "executed_fixture")
+        self.assertIn("pcb_tetrahedral_mesh", result["capabilities"])
+        self.assertEqual(next(row["status"] for row in result["feature_inventory"]
+                              if row["id"] == "thermal"), "adapter_pending")
+        self.assertEqual(launched.call_args.args[0][1:4], ["-I", "-X", "utf8"])
+        metadata["version"] = "3.0.0a20"
+        metadata["api_checks"]["mesh_export"] = False
+        process.stdout = (json.dumps(metadata) + "\n").encode()
+        with patch("extensions.emerge_suite.extension.subprocess.run", return_value=process):
+            result = _probe_executable(executable)
+        self.assertTrue(result["available"])
+        self.assertEqual(result["adapter_evidence"], "executed_fixture")
+        self.assertNotIn("pcb_tetrahedral_mesh", result["capabilities"])
+        for version in ("3.1.0", "4.0.0"):
+            metadata["version"] = version
+            process.stdout = (json.dumps(metadata) + "\n").encode()
+            with patch("extensions.emerge_suite.extension.subprocess.run", return_value=process):
+                result = _probe_executable(executable)
+            self.assertTrue(result["available"])
+            self.assertEqual(result["adapter_evidence"], "api_detected")
+        metadata["version"] = "2.8.9"
+        process.stdout = (json.dumps(metadata) + "\n").encode()
+        with patch("extensions.emerge_suite.extension.subprocess.run", return_value=process):
+            result = _probe_executable(executable)
+        self.assertFalse(result["available"])
+        self.assertIn("major version 3 or newer", result["reason"])
+        metadata["version"] = "3.1.0"
+        metadata["api_checks"]["microwave_sweep"] = False
+        process.stdout = (json.dumps(metadata) + "\n").encode()
+        with patch("extensions.emerge_suite.extension.subprocess.run", return_value=process):
+            result = _probe_executable(executable)
+        self.assertFalse(result["available"])
+        self.assertEqual(result["missing_api"], ["microwave_sweep"])
+        metadata["version"] = 3
+        process.stdout = (json.dumps(metadata) + "\n").encode()
+        with patch("extensions.emerge_suite.extension.subprocess.run", return_value=process):
+            self.assertFalse(_probe_executable(executable)["available"])
+        process.stdout = b'not json\n'
+        with patch("extensions.emerge_suite.extension.subprocess.run", return_value=process):
+            self.assertFalse(_probe_executable(executable)["available"])
+
     def setUp(self):
         self.request = {"contract": "spike/extension/v1", "request_id": "job-a",
                         "contribution_id": "emerge-radiation", "context": {
@@ -226,6 +303,7 @@ class EMergeSuiteTests(unittest.TestCase):
             freq = np.asarray([1e9, 2e9])
             def S(self, receive, excited): return np.asarray([0.1 * receive + 0j, 0.2 * excited + 0j])
         class Field:
+            def set_excitations(self, *values): calls.append(("excitation", values))
             def farfield(self, theta, phi, faces, origin=None):
                 return np.asarray([[1+0j] * len(theta), [0j] * len(theta),
                                    [0j] * len(theta)]), None, None
@@ -234,7 +312,7 @@ class EMergeSuiteTests(unittest.TestCase):
                 LumpedPort=lambda *args, **kwargs: calls.append(("port", args, kwargs)),
                 AbsorbingBoundary=lambda value: calls.append(("absorbing", value)))
             def set_frequency_range(self, *args): calls.append(("frequency", args))
-            def run_sweep(self):
+            def run_sweep(self, **kwargs):
                 calls.append(("solve",))
                 return types.SimpleNamespace(scalar=types.SimpleNamespace(grid=Grid()),
                     field=types.SimpleNamespace(find=lambda **kwargs: Field()))
@@ -246,7 +324,7 @@ class EMergeSuiteTests(unittest.TestCase):
             def commit_geometry(self): calls.append(("commit",))
             def generate_mesh(self): calls.append(("mesh",))
         em = types.SimpleNamespace(__version__="2.8.9", Simulation=Simulation,
-            Material=lambda value: value, lib=types.SimpleNamespace(PEC="PEC"), ZAX="Z",
+            Material=lambda value, **kwargs: value, lib=types.SimpleNamespace(PEC="PEC"), ZAX="Z",
             geo=types.SimpleNamespace(PCBNew=lambda *args, **kwargs: PCB(),
                 Plate=lambda *args: calls.append(("plate", args)) or "plate",
                 open_region=lambda *args: Air()))
@@ -258,7 +336,68 @@ class EMergeSuiteTests(unittest.TestCase):
         first_plate = next(call for call in calls if call[0] == "plate")
         self.assertAlmostEqual(first_plate[1][0][2], -0.001)
         self.assertIn(("absorbing", "air-boundary"), calls)
+        self.assertIn(("excitation", (1 + 0j, 0j)), calls)
         self.assertLess(calls.index(("mesh",)), next(i for i, call in enumerate(calls) if call[0] == "port"))
+        # An independent four-layer fixture uses unequal dielectric spacings.
+        multilayer = board()
+        multilayer["stackup"][1:2] = [
+            {"name": "D1", "type": "core", "thickness": 0.2, "epsilon_r": 3.2},
+            {"name": "In1.Cu", "type": "copper"},
+            {"name": "D2", "type": "prepreg", "thickness": 0.5, "epsilon_r": 4.1},
+            {"name": "In2.Cu", "type": "copper"},
+            {"name": "D3", "type": "core", "thickness": 0.3, "epsilon_r": 3.8}]
+        for pad in multilayer["pads"]:
+            if pad["net_name"] == "GND": pad["layer"] = "In1.Cu"
+        multilayer["tracks"].append({"id": "inner", "net_name": "RF", "layer": "In2.Cu",
+                                    "start": [1, 1], "end": [2, 1], "width": 0.2})
+        class Solid:
+            def __init__(self, *args, **kwargs): calls.append(("dielectric", args, kwargs))
+            def set_material(self, value): calls.append(("material", value))
+        em.geo.Box = Solid
+        em.geo.PCBNew = lambda *args, **kwargs: calls.append(("pcb", kwargs)) or PCB()
+        em.__version__ = "3.0.0a19"
+        PCB.add_poly = lambda self, xs, ys, **kwargs: calls.append(("poly-layer", kwargs["layer"]))
+        calls.clear()
+        case = compile_board(multilayer, parameters())
+        raw = run_case(case, em, radiation=False)
+        self.assertEqual([row["name"] for row in case["copper_layers"]], ["F.Cu", "In1.Cu", "In2.Cu", "B.Cu"])
+        np.testing.assert_allclose(next(call[1]["zs"] for call in calls if call[0] == "pcb"), [-1, -0.7, -0.2, 0])
+        self.assertEqual([call[1] for call in calls if call[0] == "material"], [3.2, 4.1, 3.8])
+        self.assertIn(("poly-layer", 1), calls)  # In2.Cu, reversed bottom-up API order.
+        self.assertIn(("poly-layer", 2), calls)  # In1.Cu return pad.
+        em.__version__ = "3.1.0"
+        calls.clear()
+        run_case(case, em, radiation=False)
+        self.assertIn(("poly-layer", 1), calls)
+        boxes = [call for call in calls if call[0] == "dielectric"]
+        np.testing.assert_allclose([call[1] for call in boxes], [[0.014, 0.004, 0.0002],
+                                                               [0.014, 0.004, 0.0005],
+                                                               [0.014, 0.004, 0.0003]])
+        np.testing.assert_allclose([call[2]["position"] for call in boxes],
+                                  [[-0.002, -0.002, -0.0002], [-0.002, -0.002, -0.0007],
+                                   [-0.002, -0.002, -0.001]])
+        first_plate = next(call for call in calls if call[0] == "plate")
+        self.assertAlmostEqual(first_plate[1][0][2], -0.0002)
+        self.assertAlmostEqual(first_plate[1][2][2], 0.0002)
+        self.assertTrue(all(abs(call[2]["height"] - 0.0002) < 1e-12 for call in calls if call[0] == "port"))
+        for pad in multilayer["pads"]:
+            if pad["net_name"] == "GND": pad["layer"] = "B.Cu"
+        with self.assertRaisesRegex(ValueError, "adjacent copper"):
+            compile_board(multilayer, parameters())
+
+    def test_multilayer_stackup_and_via_failure_gates(self):
+        altered = board()
+        altered["stackup"].insert(1, {"name": "In1.Cu", "type": "copper"})
+        with self.assertRaisesRegex(ValueError, "alternate"):
+            compile_board(altered, parameters())
+        altered = parameters()
+        altered["receive_signal_pad_id"], altered["receive_return_pad_id"] = "P1", "G1"
+        with self.assertRaisesRegex(ValueError, "distinct pad pairs"):
+            compile_board(board(), altered)
+        altered = parameters()
+        altered["geometry_backend"] = "unknown"
+        with self.assertRaisesRegex(ValueError, "geometry_backend"):
+            compile_board(board(), altered)
 
     def test_emerge_3_farfield_object_uses_cartesian_samples(self):
         try:

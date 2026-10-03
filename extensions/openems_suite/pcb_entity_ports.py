@@ -13,7 +13,7 @@ import hashlib
 import json
 import math
 
-from python.spike_core.contracts import AnalysisSpec, DesignIR
+from python.spike_core.contracts import AnalysisSpec, SpiDeR
 from .openems_geometry_admission import screen_geometry
 from .openems_validation import _conductor_hits, _stackup_elevations
 
@@ -34,14 +34,14 @@ def _number(value):
         raise ValueError("E_PORT_NUMBER: value out of range") from exc
 
 
-def compile_entity_ports(design: DesignIR, spec: AnalysisSpec, request: dict) -> AnalysisSpec:
+def compile_entity_ports(design: SpiDeR, spec: AnalysisSpec, request: dict) -> AnalysisSpec:
     """Return a new spec accepted by prepare_openems_case, without executing it.
 
 The zero-tolerance source test is complemented by the normal runtime geometry,
 resource and port checks. Only straight axis-aligned lumped excitations are
 constructed. Fields remain unqualified for arbitrary-PCB accuracy.
 """
-    if not isinstance(design, DesignIR) or not isinstance(spec, AnalysisSpec):
+    if not isinstance(design, SpiDeR) or not isinstance(spec, AnalysisSpec):
         raise ValueError("E_PORT_CONTRACT: typed design/spec required")
     _keys(request, ("contract", "ports"))
     if request["contract"] != CONTRACT:
@@ -99,7 +99,7 @@ constructed. Fields remain unqualified for arbitrary-PCB accuracy.
             along, across = px * ux + py * uy, -px * uy + py * ux
             if not (0 <= along <= length and abs(across) <= _number(entity.get("width")) / 2):
                 raise ValueError("E_PORT_ATTACHMENT: point outside exported track rectangle")
-        isolated = DesignIR(stackup=copy.deepcopy(design.stackup))
+        isolated = SpiDeR(stackup=copy.deepcopy(design.stackup))
         setattr(isolated, collection, [copy.deepcopy(entity)])
         if _conductor_hits(isolated, {net}, point, 0.0) != {net}:
             raise ValueError("E_PORT_ATTACHMENT: point is not on declared source")
@@ -133,7 +133,7 @@ constructed. Fields remain unqualified for arbitrary-PCB accuracy.
     result.options["ports"] = derived
     # Keep mapping in authenticated AnalysisSpec rather than a disconnected sidecar.
     # Bind precisely the physical fields retained by the runtime's authenticated
-    # DesignIR reconstruction; UI name/net catalog/source-path are not geometry.
+    # SpiDeR reconstruction; UI name/net catalog/source-path are not geometry.
     physical = {key: getattr(design, key) for key in ("design_id", "units", "layers",
         "tracks", "zones", "vias", "pads", "components", "component_bonds", "connectors",
         "stackup", "technology", "regions", "bends", "metadata")}

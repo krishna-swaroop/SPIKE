@@ -4,6 +4,7 @@ import { createRequire } from 'node:module';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import ts from 'typescript';
+import loadDataTable from './load-data-table.mjs';
 
 const require = createRequire(import.meta.url);
 let expanded = null;
@@ -12,7 +13,8 @@ const compiled = ts.transpileModule(fs.readFileSync(new URL('../src/TerminalTabl
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020, jsx: ts.JsxEmit.ReactJSX },
 }).outputText;
 new Function('require', 'module', 'exports', compiled)(name => name.endsWith('.css') ? {} : name === 'react'
-  ? { ...React, useState: () => [expanded, value => { expanded = value; }] } : require(name), module, module.exports);
+  ? { ...React, useState: () => [expanded, value => { expanded = value; }] }
+  : name === './DataTable' ? { default: loadDataTable(), __esModule: true } : require(name), module, module.exports);
 const Table = module.exports.default;
 const rows = Array.from({ length: 100 }, (_, i) => ({ id: `s${i}`, name: `Source ${i}`, x: '1', y: '2', layer: 'auto', value: '3.3', contactResistance: '0', packageResistance: '0' }));
 let details = 0;
@@ -24,8 +26,10 @@ let tree = Table(props);
 let html = renderToStaticMarkup(tree);
 assert.equal(details, 0, 'collapsed rows must not scan pads or render waveform editors');
 assert.match(html, /<table/);
-assert.equal((html.match(/<tr>/g) ?? []).length, 101);
-assert.match(html, /Voltage sources · VCC · 100 terminals/);
+assert.equal((html.match(/<tr\b/g) ?? []).length, 101);
+assert.match(html, /<strong[^>]*>Voltage sources · VCC<\/strong>/);
+assert.match(html, /role="status">100 rows/);
+assert.ok(!html.includes('<caption'), 'the toolbar supplies the title and count without a duplicate title band');
 nodes(tree).find(n => n.props?.['aria-label'] === 'Edit pads and details for Source 0').props.onClick();
 tree = Table(props);
 assert.equal(details, 1);

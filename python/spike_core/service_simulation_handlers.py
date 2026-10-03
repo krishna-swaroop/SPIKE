@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any, Dict
 
 from .assembly_analysis_scope import attach_scope_provenance, write_case_scope
-from .contracts import AnalysisResult, AnalysisSpec, DesignIR, ValidationIssue
+from .contracts import AnalysisResult, AnalysisSpec, SpiDeR, ValidationIssue
 from .component_thermal import run_component_thermal
 from .board_thermal import run_board_thermal
 from .external_engines import prepare_openems_case, run_openems_case
@@ -38,8 +38,11 @@ def handle_simulation_request(
     thermal_adapter_registry: Dict[str, Any] | None = None,
 ) -> Dict[str, Any] | None:
     """Handle model and simulation requests, or return ``None``."""
+    if method == "analyze_ac_power_integrity":
+        from .ac_power_integrity import analyze_ac_power_integrity
+        return {"ok": True, "result": analyze_ac_power_integrity(params["request"])}
     if method == "model_manifest":
-        design = DesignIR(**params["design"])
+        design = SpiDeR(**params["design"])
         return {"ok": True, "result": build_model_manifest(design.components)}
     if method == "model_library":
         additional_roots = [params["root"]] if params.get("root") else []
@@ -49,6 +52,18 @@ def handle_simulation_request(
                 params.get("query", ""), int(params.get("limit", 200)), additional_roots,
             ),
         }
+    if method in {"model_library_status", "resolve_3d_model", "model_library_add_root", "remember_3d_model"}:
+        from .model_library import library_status, resolve_model, add_library_root, register_alias
+        roots = [params["root"]] if params.get("root") else []
+        if method == "model_library_status":
+            result = library_status(refresh=bool(params.get("refresh", False)), additional_roots=roots)
+        elif method == "resolve_3d_model":
+            result = resolve_model(reference=str(params.get("reference", "")), footprint=str(params.get("footprint", "")), additional_roots=roots)
+        elif method == "model_library_add_root":
+            result = add_library_root(str(params.get("path", "")))
+        else:
+            result = register_alias(reference=str(params.get("reference", "")), footprint=str(params.get("footprint", "")), path=str(params.get("path", "")), confirmed=True)
+        return {"ok": True, "result": result}
     if method == "scene_capabilities":
         return {"ok": True, "result": kicad_scene_capabilities()}
     if method == "prepare_3d_scene":
@@ -88,7 +103,7 @@ def handle_simulation_request(
                     "issues": [{"code": "BOARD_THERMAL_SOURCE_IMPORT_FAILED", "severity": "error", "message": str(exc)}],
                     "provenance": {"solver_id": "spike.layered_board_thermal", "production_qualified": False}}}
         else:
-            design = DesignIR(**params["design"])
+            design = SpiDeR(**params["design"])
         return {"ok": True, "result": attach_scope_provenance(run_board_thermal(design, params["request"]), assembly_scope)}
     if method == "plan_thermal_field_job":
         # Solver descriptors come from the worker-owned catalog.  A client may
@@ -166,7 +181,7 @@ def handle_simulation_request(
         return {"ok": True, "result": attach_scope_provenance(result, assembly_scope)}
     if method == "prepare_openems_case":
         result = prepare_openems_case(
-            DesignIR(**params["design"]),
+            SpiDeR(**params["design"]),
             AnalysisSpec(**params.get("spec", {})),
             params.get("output_dir") or None,
             params.get("options") or {},
@@ -184,7 +199,7 @@ def handle_simulation_request(
     if method == "run_analysis":
         spec = AnalysisSpec(**params.get("spec", {}))
         if params.get("design"):
-            result = solver_registry.run(DesignIR(**params["design"]), spec).to_dict()
+            result = solver_registry.run(SpiDeR(**params["design"]), spec).to_dict()
             return {"ok": True, "result": attach_scope_provenance(result, assembly_scope)}
         result = AnalysisResult(
             analysis_id=spec.analysis_id or str(uuid.uuid4()),
@@ -195,7 +210,7 @@ def handle_simulation_request(
                 code="DESIGN_CONTEXT_REQUIRED",
                 severity="error",
                 message="Solver plugins require a normalized design context.",
-                suggestion="Load a design or provide a valid DesignIR with the analysis request.",
+                suggestion="Load a design or provide a valid SpiDeR with the analysis request.",
             )],
             provenance={"worker": "python.spike_core.service", "contract": "spike/v1"},
         )

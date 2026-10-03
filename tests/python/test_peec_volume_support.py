@@ -10,7 +10,7 @@ from types import SimpleNamespace
 import unittest
 from unittest.mock import Mock
 
-from python.spike_core.contracts import AnalysisSpec, DesignIR
+from python.spike_core.contracts import AnalysisSpec, SpiDeR
 from python.spike_core.hybrid_mesh import MeshBranch, build_hybrid_mesh
 from python.spike_core.peec_volume_adapter import extract_volume_matrices
 from python.spike_core.peec_volume_support import (
@@ -19,7 +19,7 @@ from python.spike_core.peec_volume_support import (
 
 
 def _design(points):
-    return DesignIR(zones=[{"id": "source-zone", "layer": "F.Cu",
+    return SpiDeR(zones=[{"id": "source-zone", "layer": "F.Cu",
                            "net_name": "N", "points": points}])
 
 
@@ -75,7 +75,7 @@ class ZoneBasisSupportTests(unittest.TestCase):
 
     def test_ambiguous_missing_mismatched_and_hole_sources_fail_closed(self):
         baseline = _design([(0, 0), (2, 0), (2, 1), (0, 1)])
-        variants = [DesignIR(), replace(baseline, zones=baseline.zones * 2)]
+        variants = [SpiDeR(), replace(baseline, zones=baseline.zones * 2)]
         for field, value in (("layer", "B.Cu"), ("net_name", "other"),
                              ("holes", [[(0, 0), (1, 0), (0, 1)]])):
             altered = deepcopy(baseline)
@@ -113,7 +113,7 @@ class ZoneBasisSupportTests(unittest.TestCase):
         backend.VolumeMatrixIntegrationOptions.assert_not_called()
 
     def test_nonzone_bases_are_outside_this_gate_scope(self):
-        self.assertEqual(admit_zone_basis_support(DesignIR(), [replace(_branch(), kind="track")])[
+        self.assertEqual(admit_zone_basis_support(SpiDeR(), [replace(_branch(), kind="track")])[
             "zone_basis_count"], 0)
 
     def test_optional_marble_reproduces_independent_support_audit(self):

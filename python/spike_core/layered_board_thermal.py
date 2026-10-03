@@ -19,11 +19,11 @@ from scipy.sparse import diags, lil_matrix
 from scipy.sparse.linalg import splu, spsolve
 
 from .board_thermal import CONTRACT, MAX_CELLS, MAX_COMPONENTS, _number, _pad_contacts, _point
-from .contracts import DesignIR
+from .contracts import SpiDeR
 from .thermal_copper_geometry import rasterize_copper
 
 
-def _stackup(design: DesignIR, thickness: float) -> tuple[list[dict[str, Any]], list[str]]:
+def _stackup(design: SpiDeR, thickness: float) -> tuple[list[dict[str, Any]], list[str]]:
     if not isinstance(design.stackup, list) or len(design.stackup) < 3:
         raise ValueError("Layered thermal model needs an explicit copper/dielectric stackup.")
     rows: list[dict[str, Any]] = []
@@ -66,7 +66,7 @@ def _layer_span(raw: Any, names: list[str], label: str) -> tuple[int, int]:
     return min(a, b), max(a, b)
 
 
-def _barrel_paths(design: DesignIR, names: list[str], plating: float) -> list[tuple[float, float, int, int, float]]:
+def _barrel_paths(design: SpiDeR, names: list[str], plating: float) -> list[tuple[float, float, int, int, float]]:
     paths: list[tuple[float, float, int, int, float]] = []
     for i, via in enumerate(design.vias):
         if not isinstance(via, Mapping):
@@ -117,7 +117,7 @@ def _barrel_paths(design: DesignIR, names: list[str], plating: float) -> list[tu
     return paths
 
 
-def solve_layered_board_thermal(design: DesignIR, request: Mapping[str, Any]) -> dict[str, Any]:
+def solve_layered_board_thermal(design: SpiDeR, request: Mapping[str, Any]) -> dict[str, Any]:
     """Solve a bounded layered board; caller converts input errors to blocked results."""
     board = request.get("board")
     parts = request.get("components")

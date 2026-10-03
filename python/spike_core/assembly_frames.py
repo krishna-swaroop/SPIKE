@@ -6,8 +6,8 @@ import math
 from typing import Dict, Iterable
 
 from .assembly_placement_policy import AssemblyPlacementPolicy
-from .design_ir_v2 import AssemblyIRV1
-from .design_ir_v2_schema import CoordinateFrame
+from .spider_v2 import AssemblyIRV1
+from .spider_v2_schema import CoordinateFrame
 
 
 IDENTITY = (

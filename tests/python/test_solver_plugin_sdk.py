@@ -8,7 +8,7 @@ from pathlib import Path
 
 from jsonschema import Draft202012Validator, ValidationError
 
-from python.spike_core.contracts import AnalysisSpec, DesignIR
+from python.spike_core.contracts import AnalysisSpec, SpiDeR
 from python.spike_core.solver_plugins import SolverPluginManifest, SolverRegistry
 
 
@@ -125,7 +125,7 @@ class SolverPluginSdkTests(unittest.TestCase):
 
         registry = SolverRegistry()
         registry.register(MustNotRun())
-        result = registry.run(DesignIR(), AnalysisSpec(mode="dc", solver_id=manifest.id))
+        result = registry.run(SpiDeR(), AnalysisSpec(mode="dc", solver_id=manifest.id))
         self.assertEqual(result.status, "blocked")
         self.assertEqual(result.issues[0].code, "SOLVER_PLUGIN_UNAVAILABLE")
 

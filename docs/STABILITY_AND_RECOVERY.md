@@ -27,6 +27,17 @@ import or carry explicit diagnostics; it cannot become a silently valid board.
   interface-state reset, and copyable diagnostics.
 - `workerBridge.ts` catches native invocation rejection and always returns a
   structured `WorkerResponse`.
+- `SPIKE-FE-VIEW-E-0001` identifies a failed assembly display stage by board;
+  other loaded stages and retained procedural geometry remain available. Repair
+  the model assignment or local resource condition and retry visual preparation.
+- `SPIKE-FE-VIEW-E-0002` identifies a lost WebGL context. Drawing pauses until
+  restoration; close other GPU-heavy applications or reopen if it does not return.
+- Minimized tools are hidden with their backdrops and restore from the bottom
+  dock. A rejected restore or close uses `SPIKE-FE-APP-E-0001`, keeps its retry
+  control and reports the action and recovery. Retry there or reopen a closed tool.
+- Retained component properties accept both named property objects and property
+  lists. Optional malformed height metadata falls back to footprint dimensions
+  instead of aborting rendering.
 - heavy operations have operation IDs and frontend admission control.
 - activity events report start, completion, failure, rejection, and duration.
 - local preference writes tolerate unavailable browser storage.
@@ -35,6 +46,15 @@ import or carry explicit diagnostics; it cannot become a silently valid board.
 - project save records bounded dock layout plus exact 2D and 3D viewport state
   through `spike/workspace-state/v1`; reopen restores the active view without
   an unconditional fit.
+
+### Assembly visual preparation
+
+Manifest and source identity are checked before independent layout, board and
+component exports run concurrently in isolated temporary directories. A failed
+optional stage returns `SPIKE-BE-VIEW-E-0001` with preserved and retryable stages.
+Completed artifacts remain usable; correct the reported source, model, KiCad or
+resource condition and retry. Corrupt packages and stale identities still fail
+before export. See [the measured preparation record](validation/MULTIBOARD_BACKEND_VISUAL_PREPARATION_20261003.md).
 
 ### Native host
 
@@ -51,7 +71,7 @@ import or carry explicit diagnostics; it cannot become a silently valid board.
 - every response includes request metadata and elapsed duration.
 - health is separate from solver catalog discovery.
 - parser syntax errors raise instead of returning a partial parser.
-- recoverable object diagnostics are attached to `DesignIR`.
+- recoverable object diagnostics are attached to `SpiDeR`.
 - importer selection is explicit and unsupported formats fail clearly.
 
 ## Recovery behavior
@@ -74,7 +94,7 @@ import or carry explicit diagnostics; it cannot become a silently valid board.
 - Progress streaming for mesh and solver phases rather than elapsed time only.
 - A persistent crash bundle with logs, versions, resource snapshots, and input
   hashes while excluding embedded confidential design data by default.
-- WebGL context-loss recovery and per-scene GPU budget reporting.
+- Automatic GPU budget enforcement and broader native GPU recovery coverage.
 - Process-boundary integration tests for timeout, cancellation, malformed
   output, oversized output, and forced worker termination.
 - Checkpointed or restartable long batch analyses.

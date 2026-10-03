@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MIT
 """Menus for explicit assembly feedback and solid clearance measurements."""
 from pathlib import Path
 

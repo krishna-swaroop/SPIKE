@@ -78,7 +78,7 @@ def operation_id(value: Any) -> str | None:
 
 
 def prepare_visual_bundle(params: Dict[str, Any]) -> Dict[str, Any]:
-    options = {key: params[key] for key in ("stage", "lightweight_board", "model_overrides") if key in params}
+    options = {key: params[key] for key in ("stage", "lightweight_board", "model_overrides", "component_model_overrides") if key in params}
     if params.get("board_path"):
         return export_kicad_visual_bundle_path_payload(
             str(params.get("board_path", "")),

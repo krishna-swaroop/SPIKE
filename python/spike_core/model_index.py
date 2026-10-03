@@ -7,7 +7,7 @@ import re
 from dataclasses import asdict
 from typing import Any, Dict, Mapping
 
-from .design_ir_v2_schema import ModelReference
+from .spider_v2_schema import ModelReference
 
 
 MODEL_INDEX_CONTRACT_V1 = "spike/model-index/v1"

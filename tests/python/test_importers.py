@@ -2,7 +2,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from python.spike_core.contracts import DesignIR
+from python.spike_core.contracts import SpiDeR
 from python.spike_core.importers import (
     FunctionImporter,
     ImporterDescriptor,
@@ -20,7 +20,7 @@ class ImporterRegistryTests(unittest.TestCase):
                 source_formats=(importer_id,),
                 extensions=extensions,
             ),
-            implementation=lambda path: DesignIR(name=Path(path).stem, source_path=path),
+            implementation=lambda path: SpiDeR(name=Path(path).stem, source_path=path),
         )
 
     def test_detects_by_extension_and_records_provenance(self):

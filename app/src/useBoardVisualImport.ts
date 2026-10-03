@@ -4,7 +4,7 @@ import { materializeVisualBundle, type VisualBundlePayload } from "./boardVisual
 import { cancelLocalWorker, isDesktopShell, runLocalWorker, runNativeProjectWorker, selectNativeMcadFile, type WorkerResponse } from "./workerBridge";
 import { IMPORT_STAGES, missingModelProblems, useNativeCopperForImport, type BoardImportProgress } from "./boardImportProgress";
 
-type ImportContext = { board: ParsedBoard; fileName: string; source: string; path?: string | null; overrides: Record<string, string>; warnings: Map<string, string> };
+type ImportContext = { board: ParsedBoard; fileName: string; source: string; path?: string | null; overrides: Record<string, string>; componentOverrides?: Record<string, string>; missingRefs?: string[]; warnings: Map<string, string> };
 
 export function useBoardVisualImport(apply: (board: ParsedBoard) => void, status: (message: string) => void) {
   const [progress, setProgress] = useState<BoardImportProgress | null>(null);
@@ -28,7 +28,7 @@ export function useBoardVisualImport(apply: (board: ParsedBoard) => void, status
   useEffect(() => reset, [reset]);
 
   const begin = useCallback((fileName: string) => {
-    setOpen(true);
+    setOpen(false);
     setProgress({ fileName, stage: "parsing", percent: 0, label: "Reading board geometry and layers", startedAt: Date.now(), busy: true, warnings: [], problems: [] });
   }, []);
   const finishBasic = useCallback(() => {
@@ -37,7 +37,6 @@ export function useBoardVisualImport(apply: (board: ParsedBoard) => void, status
   }, []);
   const fail = useCallback((message: string) => {
     setProgress(current => current ? { ...current, busy: false, label: "Import needs attention", warnings: [message] } : null);
-    setOpen(true);
   }, []);
 
   const executeRun = useCallback(async (input: ImportContext, componentsOnly = false) => {
@@ -45,7 +44,6 @@ export function useBoardVisualImport(apply: (board: ParsedBoard) => void, status
     if (activeId.current) await cancelLocalWorker(activeId.current);
     if (generation.current !== token) return;
     context.current = input;
-    setOpen(true);
     if (!componentsOnly) input.warnings.clear();
     let missingPaths: string[] = [];
     let missingRefs: string[] = [];
@@ -63,6 +61,7 @@ export function useBoardVisualImport(apply: (board: ParsedBoard) => void, status
           ...(input.path ? { board_path: input.path } : { source_board: input.source, source_file: input.fileName }),
           stage: step.stage, lightweight_board: lightweight, timeout_seconds: 600,
           max_artifact_bytes: 96 * 1024 * 1024, model_overrides: input.overrides,
+          component_model_overrides: input.componentOverrides ?? {},
         };
         try {
           return await (input.path ? runNativeProjectWorker : runLocalWorker)({ id, method: "prepare_visual_bundle", params });
@@ -91,6 +90,7 @@ export function useBoardVisualImport(apply: (board: ParsedBoard) => void, status
         previousDispose?.();
         if (step.stage === "components") {
           missingRefs = materialized.missingReferences;
+          input.missingRefs = missingRefs;
           missingPaths = (response.result as unknown as VisualBundlePayload).quality?.unresolved_model_paths ?? [];
         }
         setProgress(current => current ? { ...current, percent: step.end } : null);
@@ -106,11 +106,11 @@ export function useBoardVisualImport(apply: (board: ParsedBoard) => void, status
       if (!missingPaths.length) input.warnings.set("components", `KiCad could not convert models for ${missingRefs.join(", ")}.`);
     }
     const warnings = [...input.warnings.values()];
-    const problems = missingModelProblems(input.board, missingPaths);
+    const problems = missingModelProblems(input.board, missingPaths, missingRefs);
     const message = warnings.length || problems.length ? "Board imported with items to review" : "Board, layers and 3D parts imported";
     setProgress(current => current ? { ...current, stage: "ready", percent: 100, busy: false, label: message, warnings, problems } : null);
     callbacks.current.status(message);
-    setOpen(Boolean(warnings.length || problems.length));
+    if (!warnings.length && !problems.length) setOpen(false);
   }, []);
 
   const run = useCallback((input: ImportContext, componentsOnly = false) => {
@@ -123,10 +123,18 @@ export function useBoardVisualImport(apply: (board: ParsedBoard) => void, status
     while (pending.current) await pending.current;
     return context.current?.board ?? null;
   }, []);
-  const prepare = useCallback(async (board: ParsedBoard, fileName: string, source: string, path?: string | null) => {
+  const prepare = useCallback(async (board: ParsedBoard, fileName: string, source: string, path?: string | null, componentOverrides: Record<string, string> = {}) => {
     if (!isDesktopShell() || !fileName.toLowerCase().endsWith(".kicad_pcb")) { finishBasic(); return; }
-    await run({ board, fileName, source, path, overrides: {}, warnings: new Map() });
+    await run({ board, fileName, source, path, overrides: {}, componentOverrides, warnings: new Map() });
   }, [run, finishBasic]);
+  const prepareComponents = useCallback(async (board: ParsedBoard, fileName: string, source: string, componentOverrides: Record<string, string>) => {
+    if (!source.trimStart().startsWith("(kicad_pcb")) throw new Error("Component model replacement requires retained KiCad board source.");
+    await whenReady();
+    const current = context.current;
+    await run({ board, fileName, source, overrides: current?.source === source ? current.overrides : {}, componentOverrides, warnings: new Map() }, true);
+    if (context.current?.warnings.has("components")) throw new Error(context.current.warnings.get("components"));
+    if (context.current?.missingRefs?.some(ref => ref in componentOverrides)) throw new Error("A selected replacement could not be converted by KiCad; choose another model.");
+  }, [run, whenReady]);
   const cancel = useCallback(async () => {
     const token = ++generation.current;
     const id = activeId.current;
@@ -147,5 +155,5 @@ export function useBoardVisualImport(apply: (board: ParsedBoard) => void, status
     await run(current, true);
   }, [run, fail]);
   const retry = useCallback(async () => { if (context.current) await run(context.current); }, [run]);
-  return { progress, open, begin, finishBasic, fail, prepare, reset, cancel, locate, retry, whenReady, dismiss: () => setOpen(false), show: () => setOpen(true) };
+  return { progress, open, begin, finishBasic, fail, prepare, prepareComponents, reset, cancel, locate, retry, whenReady, dismiss: () => setOpen(false), show: () => setOpen(true) };
 }

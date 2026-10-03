@@ -16,7 +16,7 @@ from scipy.sparse import lil_matrix
 from scipy.sparse.linalg import MatrixRankWarning, spsolve
 import warnings
 
-from .contracts import AnalysisResult, AnalysisSpec, DesignIR, ValidationIssue
+from .contracts import AnalysisResult, AnalysisSpec, SpiDeR, ValidationIssue
 from .layers import copper_stack_profile, ordered_copper_layer_names
 
 
@@ -77,7 +77,7 @@ def _point_in_pad(point: Tuple[float, float], pad: Dict[str, Any]) -> bool:
     return abs(x) <= width / 2 and abs(y) <= height / 2
 
 
-def _copper_layers(design: DesignIR) -> List[str]:
+def _copper_layers(design: SpiDeR) -> List[str]:
     return ordered_copper_layer_names(design)
 
 
@@ -102,11 +102,11 @@ def _terminal_resistance(item: Dict[str, Any], spec: AnalysisSpec) -> float:
     )))
 
 
-def _copper_thicknesses(design: DesignIR) -> Dict[str, float]:
+def _copper_thicknesses(design: SpiDeR) -> Dict[str, float]:
     return copper_stack_profile(design, DEFAULT_COPPER_THICKNESS_MM)[2]
 
 
-def _copper_layer_z(design: DesignIR) -> Dict[str, float]:
+def _copper_layer_z(design: SpiDeR) -> Dict[str, float]:
     return copper_stack_profile(design, DEFAULT_COPPER_THICKNESS_MM)[1]
 
 
@@ -149,7 +149,7 @@ def _resolve_terminal(item: Dict[str, Any], nodes: Dict[Tuple[int, int, str], in
     )
 
 
-def _solve_dc_legacy(design: DesignIR, spec: AnalysisSpec) -> AnalysisResult:
+def _solve_dc_legacy(design: SpiDeR, spec: AnalysisSpec) -> AnalysisResult:
     issues: List[ValidationIssue] = []
     if spec.mode != "dc":
         return AnalysisResult(analysis_id=spec.analysis_id, mode=spec.mode, status="failed", model_status="unsupported", issues=[ValidationIssue(code="SPIKE-BE-PI-E-0002", severity="error", message="The routed-copper solver supports DC mode only.", path="analysis.mode", suggestion="Select the DC PI formulation or choose a solver that supports the requested mode.")])
@@ -505,7 +505,7 @@ def _solve_dc_legacy(design: DesignIR, spec: AnalysisSpec) -> AnalysisResult:
     )
 
 
-def solve_dc(design: DesignIR, spec: AnalysisSpec) -> AnalysisResult:
+def solve_dc(design: SpiDeR, spec: AnalysisSpec) -> AnalysisResult:
     """Run production DCIR on the same hybrid topology used by preflight."""
 
     from .hybrid_dc_solver import solve_hybrid_dc

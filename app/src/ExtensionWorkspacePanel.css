@@ -1,0 +1,16 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+.extension-workspace-panel { padding: 12px; border: 1px solid var(--border, #344b56); border-radius: 7px; background: var(--panel-bg, #142029); color: var(--text, #b9cbd1); }
+.extension-workspace-panel h3 { margin: 0 0 8px; font-size: 13px; }
+.extension-workspace-panel p { font-size: 12px; line-height: 1.5; }
+.extension-workspace-panel label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; }
+.extension-workspace-panel select, .extension-workspace-panel input { min-height: 30px; padding: 5px; max-width: 100%; }
+.extension-workspace-panel dl { display: grid; grid-template-columns: minmax(100px, .7fr) 1.3fr; gap: 5px 10px; font-size: 12px; }
+.extension-workspace-panel dd { margin: 0; overflow-wrap: anywhere; }
+.extension-workspace-inputs { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; }
+.extension-workspace-inputs small { line-height: 1.4; }
+.extension-workspace-actions { display: flex; gap: 7px; flex-wrap: wrap; margin-top: 12px; }
+.extension-workspace-actions button { padding: 7px 9px; }
+
+.extension-workspace-panel { min-width: 0; overflow-wrap: anywhere; margin: 8px; }
+.extension-workspace-panel select, .extension-workspace-panel input { min-width: 0; width: 100%; box-sizing: border-box; }
+.extension-workspace-panel textarea { width: 100%; box-sizing: border-box; }

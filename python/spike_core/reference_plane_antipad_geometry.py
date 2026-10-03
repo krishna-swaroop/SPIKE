@@ -5,8 +5,8 @@ from __future__ import annotations
 import math
 from typing import Any, Dict, Mapping, Sequence
 
-from .design_ir_v2 import DesignIRV2
-from .design_ir_v2_schema import content_digest
+from .spider_v2 import SpiDeRV2
+from .spider_v2_schema import content_digest
 from .via_transition_geometry import CONTRACT as VIA_GEOMETRY_CONTRACT
 
 
@@ -82,7 +82,7 @@ def _edge_distance(center: Sequence[float], left: Sequence[float], right: Sequen
 
 
 def build_reference_plane_antipad_geometry(
-    design: DesignIRV2, *, via_geometry: Mapping[str, Any]
+    design: SpiDeRV2, *, via_geometry: Mapping[str, Any]
 ) -> Dict[str, Any]:
     """Capture each complete admitted source zone and subtract its explicit antipad."""
 
@@ -155,7 +155,7 @@ def build_reference_plane_antipad_geometry(
 
 
 def validate_reference_plane_antipad_geometry(
-    report: Mapping[str, Any], *, design: DesignIRV2, via_geometry: Mapping[str, Any]
+    report: Mapping[str, Any], *, design: SpiDeRV2, via_geometry: Mapping[str, Any]
 ) -> Dict[str, Any]:
     """Regenerate the bounded analytic artifact and reject stale or promoted claims."""
 

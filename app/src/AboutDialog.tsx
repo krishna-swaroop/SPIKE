@@ -1,4 +1,4 @@
-import { BookOpen, CircleCheck, Gauge, Info, X } from "lucide-react";
+import { BookOpen, CircleCheck, Gauge, Info, X } from "./icons";
 import { useEffect, useState } from "react";
 import { APP_VERSION, PRODUCT_NAME, PRODUCT_TAGLINE, RELEASE_CHANNEL } from "./appVersion";
 import { getDesktopAppVersion } from "./workerBridge";

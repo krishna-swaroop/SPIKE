@@ -4,14 +4,14 @@ from __future__ import annotations
 
 from typing import Dict, List, Tuple
 
-from .contracts import DesignIR
+from .contracts import SpiDeR
 
 
 DEFAULT_COPPER_THICKNESS_MM = 0.035
 DEFAULT_BOARD_THICKNESS_MM = 1.6
 
 
-def ordered_copper_layer_names(design: DesignIR) -> List[str]:
+def ordered_copper_layer_names(design: SpiDeR) -> List[str]:
     table_names: List[str] = []
     for item in design.layers:
         name = str(item.get("name", "")).strip('"')
@@ -33,7 +33,7 @@ def ordered_copper_layer_names(design: DesignIR) -> List[str]:
 
 
 def copper_stack_profile(
-    design: DesignIR,
+    design: SpiDeR,
     default_thickness_mm: float = DEFAULT_COPPER_THICKNESS_MM,
 ) -> Tuple[List[str], Dict[str, float], Dict[str, float]]:
     """Return all copper layers even when KiCad's material stackup is partial."""

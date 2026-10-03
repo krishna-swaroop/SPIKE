@@ -26,6 +26,7 @@ endif()
 # Legacy field-kernel optimization policy.  Keep these flags target-scoped:
 # circuit convergence/failure detection must not inherit fast-math or a
 # build-machine ISA requirement.
+option(SPIKE_PORTABLE_BUILD "Build without host-specific CPU instructions" OFF)
 function(spike_enable_legacy_hpc TARGET_NAME)
 if(MSVC)
     target_compile_options(${TARGET_NAME} PRIVATE
@@ -40,7 +41,7 @@ if(MSVC)
 else()
     target_compile_options(${TARGET_NAME} PRIVATE
         $<$<CONFIG:Release>:-O3>
-        -march=native
+        $<$<NOT:$<BOOL:${SPIKE_PORTABLE_BUILD}>>:-march=native>
         -fopenmp
         -ffast-math
     )

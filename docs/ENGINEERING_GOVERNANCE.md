@@ -73,7 +73,7 @@ not the prompt that happened to produce it.
 
 - Dependency directions in `ARCHITECTURE.md` are enforced by
   `scripts/check_architecture.py`.
-- New EDA sources use importer adapters and return `DesignIR`.
+- New EDA sources use importer adapters and return `SpiDeR`.
 - New solvers use the solver SDK/registry and return `AnalysisResult`.
 - Process, persistence, contract, rendering-engine, and plugin-boundary changes
   require an ADR.

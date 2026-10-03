@@ -1,0 +1,307 @@
+<!doctype html><html lang='en'><meta charset='utf-8'><title>SPIKE EMerge execution examples</title><style>body{font:16px system-ui;max-width:1100px;margin:30px auto;padding:0 20px}img{max-width:100%}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#eee;padding:16px}section{border-top:1px solid #aaa;margin-top:30px}</style><h1>SPIKE EMerge: fresh board simulations</h1><p>Report generated 2026-09-30T12:24:35.920460+00:00.</p><p>Real solver output; execution evidence only. No mesh convergence, measurement correlation or calibrated gain. Plots show normalized electric-field amplitude, not realized gain, efficiency or compliance. A successful admission proves the data contract, not physical accuracy.</p><p>Patch and radome geometry: SPIKE contributors, original Apache-2.0 fixtures. ESP32 board: uysan, <a href='https://github.com/uysan/iot-esp-eth'>iot-esp-eth</a>, CERN-OHL-P-2.0; retain <a href='../../esp32/source/LICENSE.md'>source license</a> and notices. The ESP32 result uses a disclosed two-conductor RF surrogate, not the complete four-layer source board.</p><section><h2>Original Apache-2.0 patch PCB</h2><p>Status: completed; model: unvalidated. Admission passed SPIKE's contract checks.</p><img src="patch_sphere.png" alt="Sampled radiation sphere"><img src="patch_analysis.png" alt="S11 and radiation cuts"><h3>Angular probe (sampled, no interpolation)</h3><pre>{
+  &quot;sample_kind&quot;: &quot;solver_angular_grid_point&quot;,
+  &quot;frequency_hz&quot;: 3000000000.0,
+  &quot;theta_deg&quot;: 0.0,
+  &quot;phi_deg&quot;: 15.0,
+  &quot;relative_amplitude_db&quot;: 0.0,
+  &quot;e_theta_v_m&quot;: [
+    -1.1117133099499052,
+    6.051516513857456
+  ],
+  &quot;e_phi_v_m&quot;: [
+    0.28255098715328403,
+    -1.5856361939080308
+  ]
+}</pre><h3>Solver provenance</h3><pre>{
+  &quot;board_case_sha256&quot;: &quot;d1513adfe4a329e4208058a85da6edab0c6dce2fd2fb06bf7d143ec163822f0f&quot;,
+  &quot;generated_script_sha256&quot;: &quot;80e1601aa2e57f08b234a791b858cab896dc831b0add1f8ad61df691d3961eec&quot;,
+  &quot;case_contract&quot;: &quot;spike/emerge-board-case/v1&quot;,
+  &quot;geometry_status&quot;: &quot;approximate_rectangular_surface_pec&quot;,
+  &quot;copper_layers&quot;: [
+    {
+      &quot;name&quot;: &quot;F.Cu&quot;,
+      &quot;z_mm&quot;: -0.0
+    },
+    {
+      &quot;name&quot;: &quot;B.Cu&quot;,
+      &quot;z_mm&quot;: -1.6
+    }
+  ],
+  &quot;dielectric_layers&quot;: [
+    {
+      &quot;name&quot;: &quot;dielectric 1&quot;,
+      &quot;thickness_mm&quot;: 1.6,
+      &quot;epsilon_r&quot;: 4.3,
+      &quot;loss_tangent&quot;: 0.02,
+      &quot;z_top_mm&quot;: -0.0,
+      &quot;z_bottom_mm&quot;: -1.6
+    }
+  ],
+  &quot;geometry_backend&quot;: &quot;emerge&quot;,
+  &quot;geometry_backend_version&quot;: null,
+  &quot;surrounding_geometry&quot;: [],
+  &quot;modeled_nets&quot;: [
+    &quot;RF&quot;,
+    &quot;GND&quot;
+  ],
+  &quot;air_margin_m&quot;: 0.02,
+  &quot;qualification&quot;: &quot;not independently validated&quot;,
+  &quot;design_id&quot;: &quot;kicad-f8fd038633c5b49a3867c8f0&quot;,
+  &quot;design_digest_sha256&quot;: &quot;8f5b257976341982ca6a996179b524f2f43c5bbbd41e943341756fa1d05284af&quot;,
+  &quot;solver&quot;: &quot;EMerge/3.0.0a19&quot;,
+  &quot;extension_id&quot;: &quot;spike.emerge-suite&quot;
+}</pre><h3>Warnings</h3><pre>EMERGE_BOARD_MODEL_UNVALIDATED: Surface PEC copper, rectangular board bounds, selected nets and a finite absorbing region need mesh convergence and physical correlation.
+EMERGE_DIELECTRIC_LOSS_OMITTED: Imported dielectric loss tangent was not represented; insertion loss is incomplete.
+EMERGE_EMI_NOT_COMPLIANCE: Relative far-field pattern is not a calibrated EMI compliance prediction.</pre><pre></pre><p><a href="patch_simulation.py">Exact GUI-generated simulation source</a> · <a href="patch_preview.json">Prepared model</a> · <a href="patch_result.json">Raw result</a> · <a href="patch_admitted_result.json">SPIKE-admitted result</a></p></section><section><h2>Original Apache-2.0 patch PCB with dielectric slab</h2><p>Status: completed; model: unvalidated. Admission passed SPIKE's contract checks.</p><img src="radome_sphere.png" alt="Sampled radiation sphere"><img src="radome_analysis.png" alt="S11 and radiation cuts"><h3>Angular probe (sampled, no interpolation)</h3><pre>{
+  &quot;sample_kind&quot;: &quot;solver_angular_grid_point&quot;,
+  &quot;frequency_hz&quot;: 3000000000.0,
+  &quot;theta_deg&quot;: 0.0,
+  &quot;phi_deg&quot;: 45.0,
+  &quot;relative_amplitude_db&quot;: 0.0,
+  &quot;e_theta_v_m&quot;: [
+    -0.8469752161861355,
+    4.418374047032863
+  ],
+  &quot;e_phi_v_m&quot;: [
+    0.8451700532513506,
+    -4.4372484393628895
+  ]
+}</pre><h3>Solver provenance</h3><pre>{
+  &quot;board_case_sha256&quot;: &quot;1b3d8204167a712c50d83c4a524fc8a311f7043c745e146f3a672f78708bb79f&quot;,
+  &quot;generated_script_sha256&quot;: &quot;42280e142d84d0f16aed75302f191bcfba501c25edb954756d6189bd28f07c3c&quot;,
+  &quot;case_contract&quot;: &quot;spike/emerge-board-case/v1&quot;,
+  &quot;geometry_status&quot;: &quot;approximate_rectangular_surface_pec_with_dielectric_surroundings&quot;,
+  &quot;copper_layers&quot;: [
+    {
+      &quot;name&quot;: &quot;F.Cu&quot;,
+      &quot;z_mm&quot;: -0.0
+    },
+    {
+      &quot;name&quot;: &quot;B.Cu&quot;,
+      &quot;z_mm&quot;: -1.6
+    }
+  ],
+  &quot;dielectric_layers&quot;: [
+    {
+      &quot;name&quot;: &quot;dielectric 1&quot;,
+      &quot;thickness_mm&quot;: 1.6,
+      &quot;epsilon_r&quot;: 4.3,
+      &quot;loss_tangent&quot;: 0.02,
+      &quot;z_top_mm&quot;: -0.0,
+      &quot;z_bottom_mm&quot;: -1.6
+    }
+  ],
+  &quot;geometry_backend&quot;: &quot;emerge&quot;,
+  &quot;geometry_backend_version&quot;: null,
+  &quot;surrounding_geometry&quot;: [
+    {
+      &quot;kind&quot;: &quot;dielectric_box&quot;,
+      &quot;name&quot;: &quot;Radome slab&quot;,
+      &quot;origin_mm&quot;: [
+        95.0,
+        95.0,
+        10.0
+      ],
+      &quot;size_mm&quot;: [
+        50.0,
+        40.0,
+        1.5
+      ],
+      &quot;epsilon_r&quot;: 2.1
+    }
+  ],
+  &quot;modeled_nets&quot;: [
+    &quot;RF&quot;,
+    &quot;GND&quot;
+  ],
+  &quot;air_margin_m&quot;: 0.02,
+  &quot;qualification&quot;: &quot;not independently validated&quot;,
+  &quot;design_id&quot;: &quot;kicad-b99976c1f8f09b1d03001e1d&quot;,
+  &quot;design_digest_sha256&quot;: &quot;97d24721197cd0c9669780035f84fa7d51d515c605da2b95f74ffd6f3dcc65a7&quot;,
+  &quot;solver&quot;: &quot;EMerge/3.0.0a19&quot;,
+  &quot;extension_id&quot;: &quot;spike.emerge-suite&quot;
+}</pre><h3>Warnings</h3><pre>EMERGE_BOARD_MODEL_UNVALIDATED: Surface PEC copper, rectangular board bounds, selected nets and a finite absorbing region need mesh convergence and physical correlation.
+EMERGE_DIELECTRIC_LOSS_OMITTED: Imported dielectric loss tangent was not represented; insertion loss is incomplete.
+EMERGE_EMI_NOT_COMPLIANCE: Relative far-field pattern is not a calibrated EMI compliance prediction.
+EMERGE_SURROUNDINGS_UNVALIDATED: Dielectric surroundings are explicit ideal boxes without measured dispersion or loss; compare with a bare case and refine the mesh and air domain.</pre><pre></pre><p><a href="radome_simulation.py">Exact GUI-generated simulation source</a> · <a href="radome_preview.json">Prepared model</a> · <a href="radome_result.json">Raw result</a> · <a href="radome_admitted_result.json">SPIKE-admitted result</a></p></section><section><h2>uysan iot-esp-eth, CERN-OHL-P-2.0: explicit RF surrogate</h2><p>Status: completed; model: unvalidated. Admission passed SPIKE's contract checks.</p><img src="esp32_surrogate_sphere.png" alt="Sampled radiation sphere"><img src="esp32_surrogate_analysis.png" alt="S11 and radiation cuts"><h3>Angular probe (sampled, no interpolation)</h3><pre>{
+  &quot;sample_kind&quot;: &quot;solver_angular_grid_point&quot;,
+  &quot;frequency_hz&quot;: 2300000000.0,
+  &quot;theta_deg&quot;: 150.0,
+  &quot;phi_deg&quot;: 135.0,
+  &quot;relative_amplitude_db&quot;: 0.0,
+  &quot;e_theta_v_m&quot;: [
+    4.529710446419742,
+    2.951261938509648
+  ],
+  &quot;e_phi_v_m&quot;: [
+    5.483633552182598,
+    2.850229096326189
+  ]
+}</pre><h3>Solver provenance</h3><pre>{
+  &quot;board_case_sha256&quot;: &quot;c5bec70fa58b24858065920ab03b045b6d4ab09551f6c465e4af0eff2ca9ac74&quot;,
+  &quot;generated_script_sha256&quot;: &quot;2691aa74afbbc5764342ab8789ffb8f16436e53fbd930e684e7689a725895528&quot;,
+  &quot;case_contract&quot;: &quot;spike/emerge-board-case/v1&quot;,
+  &quot;geometry_status&quot;: &quot;approximate_rectangular_surface_pec&quot;,
+  &quot;copper_layers&quot;: [
+    {
+      &quot;name&quot;: &quot;F.Cu&quot;,
+      &quot;z_mm&quot;: -0.0
+    },
+    {
+      &quot;name&quot;: &quot;B.Cu&quot;,
+      &quot;z_mm&quot;: -1.5162
+    }
+  ],
+  &quot;dielectric_layers&quot;: [
+    {
+      &quot;name&quot;: &quot;equivalent dielectric&quot;,
+      &quot;thickness_mm&quot;: 1.5162,
+      &quot;epsilon_r&quot;: 4.540694764082664,
+      &quot;loss_tangent&quot;: 0.02,
+      &quot;z_top_mm&quot;: -0.0,
+      &quot;z_bottom_mm&quot;: -1.5162
+    }
+  ],
+  &quot;geometry_backend&quot;: &quot;emerge&quot;,
+  &quot;geometry_backend_version&quot;: null,
+  &quot;surrounding_geometry&quot;: [],
+  &quot;modeled_nets&quot;: [
+    &quot;/cpu/ANT&quot;,
+    &quot;GND&quot;
+  ],
+  &quot;air_margin_m&quot;: 0.028826197884615386,
+  &quot;qualification&quot;: &quot;not independently validated&quot;,
+  &quot;design_id&quot;: &quot;kicad-3199ce0a25f8987020e716d8-rf-two-conductor&quot;,
+  &quot;design_digest_sha256&quot;: &quot;8ea41ffbb5e3eb2cafc42db2e4f74d2fcef1b4ce6935e0fb7283088475323ea5&quot;,
+  &quot;solver&quot;: &quot;EMerge/3.0.0a19&quot;,
+  &quot;extension_id&quot;: &quot;spike.emerge-suite&quot;
+}</pre><h3>Warnings</h3><pre>EMERGE_BOARD_MODEL_UNVALIDATED: Surface PEC copper, rectangular board bounds, selected nets and a finite absorbing region need mesh convergence and physical correlation.
+EMERGE_DIELECTRIC_LOSS_OMITTED: Imported dielectric loss tangent was not represented; insertion loss is incomplete.
+EMERGE_SOLID_PEC_SHORTING_VIAS: Explicit return-net shorting vias use solid PEC cylinders; barrels, drills and antipads are not resolved.
+EMERGE_ATTRIBUTED_UNNETTED_COPPER: Selected source copper graphics had no net assignment; their antenna-net attribution is a documented model assumption.
+EMERGE_IDEALIZED_REFERENCE_PLANE: The reference plane is an idealized rectangle over source ground extents; source voids and detailed return paths are omitted.
+EMERGE_COPPER_FRAGMENTATION_DISABLED: Overlapping same-net copper polygons were sent without planar fragmentation; inspect the resulting mesh for seams or duplicates.
+EMERGE_EMI_NOT_COMPLIANCE: Relative far-field pattern is not a calibrated EMI compliance prediction.</pre><pre>{
+  &quot;source_board_sha256&quot;: &quot;3199ce0a25f8987020e716d82a4a35d9b6b04541d33b2f2e46406376713eab33&quot;,
+  &quot;conductors&quot;: [
+    &quot;F.Cu antenna and feed&quot;,
+    &quot;idealized B.Cu GND reference bounded by source fill&quot;
+  ],
+  &quot;removed_copper&quot;: [
+    &quot;In1.Cu&quot;,
+    &quot;In2.Cu&quot;
+  ],
+  &quot;dielectric_thickness_mm&quot;: 1.5162,
+  &quot;effective_epsilon_r&quot;: 4.540694764082664,
+  &quot;effective_epsilon_method&quot;: &quot;series-capacitance slab reduction; internal copper thickness replaced with adjacent dielectric average&quot;,
+  &quot;attributed_antenna_graphics&quot;: [
+    &quot;817c03f8-f9e8-4029-897c-528a2659f8a0&quot;,
+    &quot;b3e2ed36-ac4c-4dfe-8147-1d61b463a2a2&quot;
+  ],
+  &quot;reference_plane_bounds_mm&quot;: [
+    51.308,
+    122.930417,
+    79.756,
+    177.286417
+  ],
+  &quot;return_port&quot;: &quot;0.5 mm synthetic B.Cu pad marker inside source-filled GND at the antenna feed; vertical 50 ohm lumped port&quot;,
+  &quot;short&quot;: &quot;one pinned source GND via represented as a solid PEC cylinder&quot;,
+  &quot;omissions&quot;: &quot;Source GND plane voids, other nets, matching components, shield, extra ground vias, internal copper, solder mask, copper loss, dielectric loss and nonrectangular board outline&quot;,
+  &quot;qualification&quot;: &quot;illustrative surrogate; not a validated radiation prediction&quot;
+}
+</pre><p><a href="esp32_surrogate_simulation.py">Exact GUI-generated simulation source</a> · <a href="esp32_surrogate_preview.json">Prepared model</a> · <a href="esp32_surrogate_result.json">Raw result</a> · <a href="esp32_surrogate_admitted_result.json">SPIKE-admitted result</a></p></section><section><h2>Original patch PCB: dielectric loss and near-field plane</h2><p>Status: completed; model: unvalidated. Admission passed SPIKE's contract checks.</p><img src="patch_fields_sphere.png" alt="Sampled radiation sphere"><img src="patch_fields_analysis.png" alt="S11 and radiation cuts"><h3>Angular probe (sampled, no interpolation)</h3><pre>{
+  &quot;sample_kind&quot;: &quot;solver_angular_grid_point&quot;,
+  &quot;frequency_hz&quot;: 3400000000.0000005,
+  &quot;theta_deg&quot;: 0.0,
+  &quot;phi_deg&quot;: 0.0,
+  &quot;relative_amplitude_db&quot;: 0.0,
+  &quot;e_theta_v_m&quot;: [
+    7.551943098605946,
+    6.5858421784612196
+  ],
+  &quot;e_phi_v_m&quot;: [
+    0.062210236381980685,
+    -0.13205975744222712
+  ]
+}</pre><h3>Solver provenance</h3><pre>{
+  &quot;board_case_sha256&quot;: &quot;bda56e0b71109fcbc87d6e6f4ce782a6a72a83fd44e3b1539f5984d9f0148efb&quot;,
+  &quot;generated_script_sha256&quot;: &quot;f0a7342b6e8f786ef5cc74054c2dc1ab35964d22b39dcc08d3c5650bd0327510&quot;,
+  &quot;case_contract&quot;: &quot;spike/emerge-board-case/v1&quot;,
+  &quot;geometry_status&quot;: &quot;approximate_rectangular_surface_pec&quot;,
+  &quot;copper_layers&quot;: [
+    {
+      &quot;name&quot;: &quot;F.Cu&quot;,
+      &quot;z_mm&quot;: -0.0
+    },
+    {
+      &quot;name&quot;: &quot;B.Cu&quot;,
+      &quot;z_mm&quot;: -1.6
+    }
+  ],
+  &quot;dielectric_layers&quot;: [
+    {
+      &quot;name&quot;: &quot;dielectric 1&quot;,
+      &quot;thickness_mm&quot;: 1.6,
+      &quot;epsilon_r&quot;: 4.3,
+      &quot;loss_tangent&quot;: 0.02,
+      &quot;z_top_mm&quot;: -0.0,
+      &quot;z_bottom_mm&quot;: -1.6
+    }
+  ],
+  &quot;geometry_backend&quot;: &quot;emerge&quot;,
+  &quot;geometry_backend_version&quot;: null,
+  &quot;surrounding_geometry&quot;: [],
+  &quot;modeled_nets&quot;: [
+    &quot;RF&quot;,
+    &quot;GND&quot;
+  ],
+  &quot;air_margin_m&quot;: 0.020818920694444444,
+  &quot;qualification&quot;: &quot;not independently validated&quot;,
+  &quot;design_id&quot;: &quot;kicad-f8fd038633c5b49a3867c8f0&quot;,
+  &quot;design_digest_sha256&quot;: &quot;8f5b257976341982ca6a996179b524f2f43c5bbbd41e943341756fa1d05284af&quot;,
+  &quot;solver&quot;: &quot;EMerge/3.0.0a19&quot;,
+  &quot;extension_id&quot;: &quot;spike.emerge-suite&quot;
+}</pre><h3>Warnings</h3><pre>EMERGE_BOARD_MODEL_UNVALIDATED: Surface PEC copper, rectangular board bounds, selected nets and a finite absorbing region need mesh convergence and physical correlation.
+EMERGE_CONSTANT_DIELECTRIC_LOSS: Imported constant loss tangent is enabled; frequency-dependent material loss and finite copper conductivity remain unmodeled.
+EMERGE_SAMPLED_NEARFIELD: E/H vectors are interpolated from the solved FEM field at an explicit XY grid. Invalid points remain null; this plane does not describe a full spatial field.
+EMERGE_EMI_NOT_COMPLIANCE: Relative far-field pattern is not a calibrated EMI compliance prediction.</pre><pre></pre><h3>Solved near-field plane and peak sampled E probe</h3><img src="patch_fields_nearfield.png" alt="Solved E and H plane"><pre>{
+  &quot;sample_kind&quot;: &quot;solver_fem_interpolation_at_explicit_coordinate&quot;,
+  &quot;frequency_hz&quot;: 3400000000.0000005,
+  &quot;coordinate_mm&quot;: [
+    104.0,
+    115.0,
+    1.0
+  ],
+  &quot;e_v_m&quot;: [
+    [
+      1961.8972491522275,
+      -1082.1639738711897
+    ],
+    [
+      -138.6729757906402,
+      82.57704398369474
+    ],
+    [
+      -3392.609369886105,
+      1398.9024515864928
+    ]
+  ],
+  &quot;h_a_m&quot;: [
+    [
+      0.20828620311252166,
+      0.07061816773105534
+    ],
+    [
+      4.022377948812656,
+      -0.1827846315781798
+    ],
+    [
+      -0.27680819541485846,
+      -0.06186288086943392
+    ]
+  ],
+  &quot;electric_magnitude_v_m&quot;: 4302.661414831194,
+  &quot;magnetic_magnitude_a_m&quot;: 4.042493592540932,
+  &quot;valid_samples&quot;: 121,
+  &quot;total_samples&quot;: 121
+}</pre><p>Invalid samples remain gaps. Complex component norms use the solver excitation; they do not indicate safety limits or measurement agreement.</p><p><a href="patch_fields_simulation.py">Exact GUI-generated simulation source</a> · <a href="patch_fields_preview.json">Prepared model</a> · <a href="patch_fields_result.json">Raw result</a> · <a href="patch_fields_admitted_result.json">SPIKE-admitted result</a></p></section></html>

@@ -13,7 +13,7 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from python.spike_core.contracts import DesignIR  # noqa: E402
+from python.spike_core.contracts import SpiDeR  # noqa: E402
 from python.spike_core.service import _design_from_kicad, handle  # noqa: E402
 
 
@@ -37,7 +37,7 @@ def run(
     source = pads["U37.18"]
     load_name = "C383.1" if original_disconnected_ports else "R195.1"
     load = pads[load_name]
-    slice_design = DesignIR(
+    slice_design = SpiDeR(
         design_id="marble-v1.4.4-C383-volume-ac", name="Marble C383 volume AC probe",
         source_format="kicad", source_path="Marble-v1.4.4/design/Marble.kicad_pcb",
         layers=design.layers, nets=[item for item in design.nets if item.get("name") == net],

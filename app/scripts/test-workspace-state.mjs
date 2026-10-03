@@ -29,6 +29,9 @@ const valid = workspace.normalizeWorkspaceState({
 });
 assert.equal(valid.viewMode, "2D");
 assert.equal(valid.docks.activeBottomDock, "Console");
+const notifications = workspace.normalizeWorkspaceState({ ...valid, docks: { ...valid.docks, activeBottomDock: "Notifications", bottomOpen: true } });
+assert.equal(notifications.docks.activeBottomDock, "Notifications", "the docked notification panel survives workspace restore");
+assert.equal(notifications.docks.bottomOpen, true);
 assert.equal(valid.docks.leftOpen, false);
 assert.deepEqual(valid.viewports.twoD, { contract: "spike/layout-view/v1", x: 10, y: 20, width: 30, height: 40 });
 

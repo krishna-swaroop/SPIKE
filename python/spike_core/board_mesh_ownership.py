@@ -16,8 +16,8 @@ import json
 from math import hypot, isfinite
 from typing import Any, Callable, Dict, Mapping, Sequence
 
-from .contracts import DesignIR
-from .design_ir_v2_schema import content_digest
+from .contracts import SpiDeR
+from .spider_v2_schema import content_digest
 from .hybrid_mesh import (
     _custom_pad_local_polygon,
     _net,
@@ -63,21 +63,21 @@ def _canonical_bytes(value: Any) -> bytes:
         ) from error
 
 
-def _design(value: DesignIR | Mapping[str, Any]) -> tuple[DesignIR, Dict[str, Any]]:
-    if isinstance(value, DesignIR):
+def _design(value: SpiDeR | Mapping[str, Any]) -> tuple[SpiDeR, Dict[str, Any]]:
+    if isinstance(value, SpiDeR):
         payload = value.to_dict()
         design = value
     elif isinstance(value, Mapping):
         payload = dict(value)
-        allowed = {item.name for item in fields(DesignIR)}
+        allowed = {item.name for item in fields(SpiDeR)}
         try:
-            design = DesignIR(**{key: payload[key] for key in allowed if key in payload})
+            design = SpiDeR(**{key: payload[key] for key in allowed if key in payload})
         except (TypeError, ValueError) as error:
             raise BoardMeshOwnershipError(
                 f"{ERROR_CODE}: source geometry is not a valid SPIKE v1 solver projection"
             ) from error
     else:
-        _fail("source geometry must be a DesignIR or mapping")
+        _fail("source geometry must be a SpiDeR or mapping")
     if str(payload.get("contract") or "") != GEOMETRY_CONTRACT:
         _fail("board ownership v1 requires a spike/v1 solver geometry projection")
     if not str(payload.get("design_id") or "").strip():
@@ -100,7 +100,7 @@ def _source_id(record: Mapping[str, Any], kind: str, index: int) -> str:
 
 
 def _mesh_scope(
-    mesh: Mapping[str, Any], design: DesignIR, cells: Sequence[Mapping[str, Any]],
+    mesh: Mapping[str, Any], design: SpiDeR, cells: Sequence[Mapping[str, Any]],
 ) -> Dict[str, Any]:
     raw = mesh.get("scope")
     source_nets = {
@@ -139,7 +139,7 @@ def _selected(net: str, scope: Mapping[str, Any]) -> bool:
     )
 
 
-def _unsupported_reason(kind: str, record: Mapping[str, Any], design: DesignIR) -> str:
+def _unsupported_reason(kind: str, record: Mapping[str, Any], design: SpiDeR) -> str:
     try:
         if kind == "track":
             start, end = _point(record.get("start", (0, 0))), _point(record.get("end", (0, 0)))
@@ -178,7 +178,7 @@ def _unsupported_reason(kind: str, record: Mapping[str, Any], design: DesignIR) 
 
 
 def build_board_mesh_ownership_overlay(
-    mesh: Mapping[str, Any], *, source_geometry: DesignIR | Mapping[str, Any],
+    mesh: Mapping[str, Any], *, source_geometry: SpiDeR | Mapping[str, Any],
     cancel_check: Callable[[], Any] | None = None,
 ) -> Dict[str, Any]:
     """Build deterministic ownership/accounting evidence for one supplied mesh."""
@@ -323,7 +323,7 @@ def build_board_mesh_ownership_overlay(
 
 def validate_board_mesh_ownership_overlay(
     report: Mapping[str, Any], *, mesh: Mapping[str, Any],
-    source_geometry: DesignIR | Mapping[str, Any],
+    source_geometry: SpiDeR | Mapping[str, Any],
 ) -> Dict[str, Any]:
     regenerated = build_board_mesh_ownership_overlay(
         mesh, source_geometry=source_geometry,

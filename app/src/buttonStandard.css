@@ -1,0 +1,150 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+@import "./tableTheme.css";
+
+/*
+ * Shared SPIKE control baseline. Keep these selectors at zero specificity so
+ * scoped tool styles can define deliberate compact, icon, ribbon and grid
+ * geometry without fighting the application baseline.
+ */
+:root {
+  --spike-control-height: 30px;
+  --spike-control-radius: 4px;
+  --spike-control-padding: 4px 9px;
+  --spike-control-font: 11px/1.35 Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --spike-control-border: var(--spike-table-border-strong);
+  --spike-control-border-hover: var(--spike-table-choice-border);
+  --spike-control-text: var(--spike-table-text);
+  --spike-control-muted: var(--spike-table-muted);
+  --spike-control-surface: var(--spike-table-action-bg);
+  --spike-control-surface-hover: var(--spike-table-action-hover);
+  --spike-control-surface-active: var(--spike-table-choice-bg);
+  --spike-control-field: var(--spike-table-field);
+  --spike-control-focus: var(--spike-table-focus);
+  --spike-control-primary-text: var(--spike-table-text-strong);
+  --spike-control-primary-surface: var(--spike-table-choice-bg);
+  --spike-control-primary-border: var(--spike-table-choice-border);
+  --spike-control-danger-text: var(--spike-table-danger-text);
+  --spike-control-danger-surface: var(--spike-table-danger-bg);
+  --spike-control-danger-border: var(--spike-table-danger-border);
+}
+
+/* Normal element specificity intentionally wins the legacy global font reset. */
+button,
+input,
+select,
+textarea,
+[role="button"] {
+  box-sizing: border-box;
+  font: var(--spike-control-font);
+}
+
+:where(button, [role="button"], input:is([type="button"], [type="submit"], [type="reset"])) {
+  appearance: none;
+  min-height: var(--spike-control-height);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  border: 1px solid var(--spike-control-border);
+  border-radius: var(--spike-control-radius);
+  padding: var(--spike-control-padding);
+  color: var(--spike-control-text);
+  background: var(--spike-control-surface);
+  cursor: pointer;
+}
+
+:where(button, [role="button"], input:is([type="button"], [type="submit"], [type="reset"])):hover:not(:disabled, [aria-disabled="true"]) {
+  border-color: var(--spike-control-border-hover);
+  background: var(--spike-control-surface-hover);
+}
+
+:where(button, [role="button"], input:is([type="button"], [type="submit"], [type="reset"])):active:not(:disabled, [aria-disabled="true"]),
+:where(button, [role="button"])[aria-pressed="true"] {
+  background: var(--spike-control-surface-active);
+}
+
+:where(
+  input:not([type]),
+  input:is([type="text"], [type="search"], [type="email"], [type="url"], [type="tel"], [type="password"], [type="number"], [type="date"], [type="time"], [type="datetime-local"], [type="month"], [type="week"]),
+  select,
+  textarea
+) {
+  min-height: var(--spike-control-height);
+  min-width: 0;
+  border: 1px solid var(--spike-control-border);
+  border-radius: var(--spike-control-radius);
+  padding: var(--spike-control-padding);
+  color: var(--spike-control-text);
+  background: var(--spike-control-field);
+  color-scheme: var(--spike-table-scheme);
+}
+
+:where(input, select, textarea)::placeholder {
+  color: var(--spike-control-muted);
+  opacity: 1;
+}
+
+:where(input[type="checkbox"], input[type="radio"], input[type="range"]) {
+  accent-color: var(--spike-table-edit);
+}
+
+:where(input[type="file"])::file-selector-button {
+  appearance: none;
+  min-height: var(--spike-control-height);
+  margin-inline-end: 8px;
+  border: 1px solid var(--spike-control-border);
+  border-radius: var(--spike-control-radius);
+  padding: var(--spike-control-padding);
+  color: var(--spike-control-text);
+  background: var(--spike-control-surface);
+  font: var(--spike-control-font);
+  cursor: pointer;
+}
+
+:where(button, [role="button"], input, select, textarea):focus-visible {
+  outline: 2px solid var(--spike-control-focus);
+  outline-offset: 2px;
+}
+
+:where(button, input, select, textarea):disabled,
+:where([role="button"])[aria-disabled="true"] {
+  opacity: .48;
+  cursor: not-allowed;
+}
+
+:where(.spike-control--primary, [data-spike-control="primary"]) {
+  border-color: var(--spike-control-primary-border);
+  color: var(--spike-control-primary-text);
+  background: var(--spike-control-primary-surface);
+}
+
+:where(.spike-control--danger, [data-spike-control="danger"]) {
+  border-color: var(--spike-control-danger-border);
+  color: var(--spike-control-danger-text);
+  background: var(--spike-control-danger-surface);
+}
+
+:where(.spike-control--compact, [data-spike-control="compact"]) {
+  min-height: 24px;
+  padding: 2px 6px;
+  font-size: 10px;
+}
+
+:where(.spike-control--icon, [data-spike-control="icon"]) {
+  width: var(--spike-control-height);
+  min-width: var(--spike-control-height);
+  padding: 0;
+}
+
+:where(.spike-control--bare, [data-spike-control="bare"]) {
+  min-height: 0;
+  border-color: transparent;
+  padding: 0;
+  background: transparent;
+}
+
+@media (forced-colors: active) {
+  :where(button, [role="button"], input, select, textarea) {
+    forced-color-adjust: auto;
+  }
+}

@@ -1,0 +1,12 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+.python-net-browser { padding: 10px; min-width: 0; display: grid; gap: 8px; }
+.python-net-browser h2 { margin: 0; font-size: 13px; }
+.python-net-browser p { margin: 0; font-size: 11px; line-height: 1.5; color: var(--spike-table-muted, #acc2ca); }
+.python-net-browser label { display: grid; gap: 4px; font-size: 11px; }
+.python-net-browser select, .python-net-browser input { width: 100%; min-width: 0; }
+.python-net-browser small { color: var(--spike-table-muted, #acc2ca); font-size: 10px; }
+.python-net-rows article { display: grid; gap: 4px; padding: 8px 0; border-bottom: 1px solid var(--spike-table-border, #344e59); min-width: 0; }
+.python-net-rows article > strong, .python-net-rows article > small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.python-net-rows article > strong { font: 11px/1.4 Consolas, monospace; }
+.python-net-rows article > div { display: flex; flex-wrap: wrap; gap: 5px; }
+.python-workspace .python-net-rows button { min-height: 25px; font-size: 10px; padding: 3px 6px; }

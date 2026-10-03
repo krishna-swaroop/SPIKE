@@ -12,7 +12,7 @@ from contextlib import redirect_stdout
 from io import StringIO
 from pathlib import Path
 
-from .contracts import DesignIR, ValidationIssue
+from .contracts import SpiDeR, ValidationIssue
 
 
 def _kicad_model_roots() -> list[Path]:
@@ -50,7 +50,7 @@ def _resolve_model_reference(reference: str, project_directory: str | Path | Non
     return ""
 
 
-def import_kicad_design(path: str) -> DesignIR:
+def import_kicad_design(path: str) -> SpiDeR:
     """Normalize a KiCad PCB file without leaking parser objects downstream."""
 
     from python.core.board_parser import KicadParser
@@ -197,7 +197,7 @@ def import_kicad_design(path: str) -> DesignIR:
         float(board_bbox["min_x"]), float(board_bbox["min_y"]),
         float(board_bbox["max_x"]), float(board_bbox["max_y"]),
     ]
-    return DesignIR(
+    return SpiDeR(
         design_id=f"kicad-{source_digest[:24]}",
         name=Path(path).stem,
         source_format="kicad",

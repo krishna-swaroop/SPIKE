@@ -1,4 +1,4 @@
-import { FileOutput, Printer, X } from "lucide-react";
+import { FileOutput, Printer, X } from "./icons";
 import { useEffect, useMemo, useRef } from "react";
 import "./reportPreview.css";
 
@@ -17,9 +17,10 @@ type ReportPreviewProps = {
   html: string;
   onClose: () => void;
   onExport: () => void;
+  mode?: "modal" | "window";
 };
 
-export default function ReportPreview({ fileName, html, onClose, onExport }: ReportPreviewProps) {
+export default function ReportPreview({ fileName, html, onClose, onExport, mode = "modal" }: ReportPreviewProps) {
   const frameRef = useRef<HTMLIFrameElement>(null);
   const previewDocument = useMemo(() => printableReportDocument(html), [html]);
   useEffect(() => {
@@ -30,7 +31,7 @@ export default function ReportPreview({ fileName, html, onClose, onExport }: Rep
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [onClose]);
 
-  return <div className="report-preview-shade" role="dialog" aria-modal="true" aria-label="Engineering report preview">
+  return <div className={mode === "window" ? "report-preview-window" : "report-preview-shade"} role={mode === "window" ? "main" : "dialog"} aria-modal={mode === "modal" ? true : undefined} aria-label="Engineering report preview">
     <section className="report-preview">
       <header className="report-preview-toolbar">
         <div>

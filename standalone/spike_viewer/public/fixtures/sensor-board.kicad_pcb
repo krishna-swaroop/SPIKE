@@ -1,0 +1,30 @@
+(kicad_pcb
+  (version 20240108)
+  (generator "SPIKE portable fixture")
+  (general (thickness 1.0))
+  (layers
+    (0 "F.Cu" signal)
+    (31 "B.Cu" signal)
+    (37 "F.SilkS" user "f.Silkscreen")
+    (44 "Edge.Cuts" user)
+  )
+  (setup
+    (stackup
+      (layer "F.Cu" (type "copper") (thickness 0.035))
+      (layer "dielectric 1" (type "core") (thickness 0.93) (material "FR4") (epsilon_r 4.2))
+      (layer "B.Cu" (type "copper") (thickness 0.035))
+    )
+  )
+  (net 0 "")
+  (net 1 "SENSE")
+  (gr_rect (start 100 200) (end 125 220) (stroke (width 0.1) (type default)) (fill none) (layer "Edge.Cuts"))
+  (segment (start 105 210) (end 120 210) (width 0.25) (layer "B.Cu") (net 1))
+  (footprint "SPIKE:Sensor"
+    (layer "B.Cu")
+    (at 112.5 210 180)
+    (property "Reference" "U1")
+    (property "Value" "SENSOR")
+    (pad "1" smd roundrect (at -1 0 180) (size 1.4 1.8) (layers "B.Cu" "B.Paste" "B.Mask") (roundrect_rratio 0.2) (net 1 "SENSE"))
+    (pad "2" smd roundrect (at 1 0 180) (size 1.4 1.8) (layers "B.Cu" "B.Paste" "B.Mask") (roundrect_rratio 0.2))
+  )
+)

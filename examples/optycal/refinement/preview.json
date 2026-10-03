@@ -1,0 +1,48 @@
+{
+  "script_sha256": "b3d5af8992e0ff2031b3b89f01595cdc2e7930c86fd423577383ee77d3b58485",
+  "case_sha256": "df2bc60c83c328c7ba6a35e5ea3bf634fdc37ee98d69780c71ebc2aa33a7f964",
+  "solved": false,
+  "model_status": "unvalidated",
+  "setup": {
+    "contract": "spike/optycal-case/v1",
+    "frequency_hz": 3400000000.0000005,
+    "source_analysis_id": "emerge-ed13a74e-6262-494e-a0d4-ddd77574aec1",
+    "source_model_status": "unvalidated",
+    "source_excitation": {
+      "excitation_port": "P1",
+      "excitation_ports": [
+        "P1"
+      ],
+      "excitation_coefficients": [
+        [
+          1.0,
+          0.0
+        ]
+      ],
+      "excitation_normalization": "EMerge port coefficient convention; no voltage or power calibration claimed"
+    },
+    "source_sha256": "a9cb2f5c3d98a0889ce5dc3566014f73efef4ff15a80a956f0900112915e32b1",
+    "source_phase_assumption": "emerge_farfield_coefficient_e_plus_jwt",
+    "antenna_translation_mm": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "antenna_rotation_deg": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "antenna_aperture_mm": 100.0,
+    "observation_radius_m": 100.0,
+    "theta_step_deg": 15,
+    "phi_step_deg": 30,
+    "structure_material": "PEC",
+    "minimum_separation_bound_m": 0.9927864776035498,
+    "required_separation_m": 0.44087126176470587,
+    "required_observation_radius_m": 14.776419971658369,
+    "angular_sample_count": 169,
+    "structure_triangle_count": 8060
+  },
+  "structure_source_sha256": "c66e5ec11e98882244f17cc5a5f8aa67edd34705955a4259e7772257315890a2"
+}

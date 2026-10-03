@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spike.local/schemas/assembly-view-factor-request-v1.schema.json",
+  "$comment": "SPDX-License-Identifier: Apache-2.0; Copyright (c) 2026 SigHarmonic. Structural schema; runtime additionally enforces aggregate triangle/work budgets, finite JSON, unique IDs, valid separated geometry, planar orientation, conditioning and physical row bounds. JSON Schema integer includes integral-valued numbers; runtime quadrature fields require actual JSON integer tokens.",
+  "title": "SPIKE Assembly View-Factor Request v1",
+  "description": "Experimental SI-metre diffuse planar-patch view-factor estimation. Triangle vertex order defines the emitting side. All emitters and occluders are opaque. Unaccounted view remains unresolved, not ambient.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract", "units", "surfaces", "quadrature"],
+  "properties": {
+    "contract": {"const": "spike/assembly-view-factor-request/v1"},
+    "units": {"const": "m"},
+    "surfaces": {
+      "type": "array", "minItems": 2, "maxItems": 32,
+      "description": "Unique surface IDs required by runtime; at most 256 triangles total across surfaces and occluders.",
+      "items": {"$ref": "#/$defs/surface"}
+    },
+    "occluders": {
+      "type": "array", "maxItems": 256,
+      "items": {"$ref": "#/$defs/triangle"}
+    },
+    "quadrature": {
+      "type": "object", "additionalProperties": false,
+      "required": ["level", "max_pair_evaluations", "max_visibility_tests", "max_geometry_pairs"],
+      "properties": {
+        "level": {"type": "integer", "minimum": 0, "maximum": 5},
+        "max_pair_evaluations": {"type": "integer", "minimum": 1, "maximum": 10000000},
+        "max_visibility_tests": {"type": "integer", "minimum": 1, "maximum": 50000000},
+        "max_geometry_pairs": {"type": "integer", "minimum": 1, "maximum": 32768}
+      }
+    }
+  },
+  "$defs": {
+    "coordinate": {"type": "number", "minimum": -1000000000000, "maximum": 1000000000000},
+    "point": {
+      "type": "array", "minItems": 3, "maxItems": 3,
+      "items": {"$ref": "#/$defs/coordinate"}
+    },
+    "triangle": {
+      "type": "array", "minItems": 3, "maxItems": 3,
+      "items": {"$ref": "#/$defs/point"}
+    },
+    "surface": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "triangles"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1, "maxLength": 128, "pattern": "\\S"},
+        "triangles": {
+          "type": "array", "minItems": 1, "maxItems": 256,
+          "description": "Nonoverlapping, coplanar, consistently oriented triangles; shared triangulation edges are allowed.",
+          "items": {"$ref": "#/$defs/triangle"}
+        }
+      }
+    }
+  }
+}

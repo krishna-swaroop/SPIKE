@@ -2,7 +2,7 @@
 from dataclasses import asdict
 import json
 
-from .contracts import DesignIR, ValidationIssue
+from .contracts import SpiDeR, ValidationIssue
 from .importers import ImporterDescriptor
 
 
@@ -34,7 +34,7 @@ class ExtensionDesignImporter:
             raise ValueError("Extension importer must return data.design using spike/v1.")
         # Reject NaN/Infinity even when a third party JSON writer allows them.
         json.dumps(raw, allow_nan=False)
-        design = DesignIR(**raw)
+        design = SpiDeR(**raw)
         if not isinstance(design.metadata, dict):
             raise ValueError("Imported metadata must be an object.")
         for name in ("layers", "nets", "tracks", "vias", "pads", "zones", "components", "stackup"):

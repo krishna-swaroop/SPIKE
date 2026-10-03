@@ -7,8 +7,8 @@ import json
 from pathlib import Path
 from typing import Any, Dict, Mapping
 
-from .contracts import DesignIR
-from .design_ir_v2 import AssemblyIRV1
+from .contracts import SpiDeR
+from .spider_v2 import AssemblyIRV1
 
 
 SCOPE_CONTRACT = "spike/assembly-analysis-scope/v1"
@@ -24,7 +24,7 @@ def _canonical_digest(value: Mapping[str, Any]) -> str:
     return hashlib.sha256(encoded).hexdigest()
 
 
-def _design_identities(design: DesignIR) -> set[str]:
+def _design_identities(design: SpiDeR) -> set[str]:
     values = {str(design.design_id or "").strip()}
     metadata = design.metadata if isinstance(design.metadata, dict) else {}
     values.add(str(metadata.get("design_ir_v2_id") or "").strip())
@@ -32,7 +32,7 @@ def _design_identities(design: DesignIR) -> set[str]:
     return {value for value in values if value}
 
 
-def validate_assembly_analysis_scope(raw: Mapping[str, Any], design: DesignIR | None = None) -> Dict[str, Any]:
+def validate_assembly_analysis_scope(raw: Mapping[str, Any], design: SpiDeR | None = None) -> Dict[str, Any]:
     """Normalize one explicit board-only scope; coupled assembly solving is gated."""
 
     if not isinstance(raw, Mapping):
@@ -61,7 +61,7 @@ def validate_assembly_analysis_scope(raw: Mapping[str, Any], design: DesignIR | 
     if active_board.design_id != active_design_id:
         raise AssemblyAnalysisScopeError("The selected board design_id does not match active_design_id.")
     if design is not None and active_design_id not in _design_identities(design):
-        raise AssemblyAnalysisScopeError("The submitted DesignIR identity does not match the selected AssemblyIR board instance.")
+        raise AssemblyAnalysisScopeError("The submitted SpiDeR identity does not match the selected AssemblyIR board instance.")
 
     ignored = {
         "boards": [board.id for board in assembly.boards if board.id != active_board_id],
@@ -92,7 +92,7 @@ def validate_assembly_analysis_scope(raw: Mapping[str, Any], design: DesignIR | 
     return normalized
 
 
-def scope_from_params(params: Mapping[str, Any], design: DesignIR | None = None) -> Dict[str, Any] | None:
+def scope_from_params(params: Mapping[str, Any], design: SpiDeR | None = None) -> Dict[str, Any] | None:
     """Validate a supplied scope, rejecting partial assembly context."""
 
     raw = params.get("assembly_scope")

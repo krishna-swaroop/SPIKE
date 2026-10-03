@@ -3,7 +3,7 @@
 SPIKE extensions are local process modules described by
 `spike/extension/v1`. They can contribute applications, commands, analyses,
 importers, exporters, reports, schema-driven panels, and validators. A solver
-that consumes `DesignIR` can use a declared analysis contribution. Existing
+that consumes `SpiDeR` can use a declared analysis contribution. Existing
 solver plugins may continue using the solver SDK.
 
 ## Package layout
@@ -88,7 +88,7 @@ solver; its extension exposes no thermal contribution.
 
 Declare an `analyses` contribution with `output_contract: "spike/v1"` and both
 `design.read` and `results.write` permissions. The host passes a normalized
-`spike/v1` DesignIR in `context.design` and a SHA-256 binding in
+`spike/v1` SpiDeR in `context.design` and a SHA-256 binding in
 `context.design_binding`. Return a completed `spike/v1` AnalysisResult as
 `data.analysis_result` inside the extension result envelope. Its provenance
 must include the input `design_id`, `design_digest_sha256`, and solver identity.

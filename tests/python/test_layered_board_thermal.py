@@ -8,11 +8,11 @@ import numpy as np
 from scipy.linalg import expm
 
 from python.spike_core.board_thermal import run_board_thermal
-from python.spike_core.contracts import DesignIR
+from python.spike_core.contracts import SpiDeR
 
 
 def design(vias=None, pads=None):
-    return DesignIR(design_id="layered-oracle", units="mm", components=[{"reference": "U1", "at": [5, 5]}],
+    return SpiDeR(design_id="layered-oracle", units="mm", components=[{"reference": "U1", "at": [5, 5]}],
         stackup=[{"name": "F.Cu", "type": "copper", "thickness": 0.1},
                  {"name": "core", "type": "dielectric", "thickness": 0.8},
                  {"name": "B.Cu", "type": "copper", "thickness": 0.1}],

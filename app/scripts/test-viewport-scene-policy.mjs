@@ -322,6 +322,18 @@ try {
   assert.doesNotMatch(innerOnly, /aria-label="B.Cu native vector geometry"/);
   const hiddenSelectedNet = render({ visibleLayers: allOff, showVias: false, selectedNet: "VCC" });
   assert.doesNotMatch(hiddenSelectedNet, /stroke="#55e5d5"|fill="#55e5d5"/, "a selected net must not resurrect hidden copper");
+  const secondNetBoard = { ...board,
+    nets: { ...board.nets, 2: "ALT" },
+    tracks: [...board.tracks, { id: "alt-track", start: [15, 7], end: [19, 7], width: .22, layer: "F.Cu", net: "ALT" }],
+    pads: [...board.pads, { ...board.pads[0], id: "alt-pad", at: [17, 8], net: "ALT", ref: "U2" }],
+  };
+  const oneNetHighlight = render({ board: secondNetBoard, selectedNet: "VCC" });
+  const multipleNetHighlight = render({ board: secondNetBoard, selectedNet: "VCC", highlightedNets: ["ALT"] });
+  assert.match(multipleNetHighlight, /data-highlighted-net="VCC ALT"/, "all requested source net names are retained by the overlay");
+  assert.ok((multipleNetHighlight.match(/stroke="#55e5d5"|fill="#55e5d5"/g) ?? []).length > (oneNetHighlight.match(/stroke="#55e5d5"|fill="#55e5d5"/g) ?? []).length,
+    "a second highlighted net contributes its copper to the selection overlay");
+  const isolatedHighlight = render({ board: secondNetBoard, selectedNet: "VCC", highlightedNets: ["ALT"], isolatedNet: "VCC" });
+  assert.match(isolatedHighlight, /data-highlighted-net="VCC"/, "isolation remains authoritative over supplemental highlights");
   const hiddenPreviewNet = render({ visibleLayers: allOff, showVias: false, hoverPreview: { kind: "net", net: "VCC" } });
   assert.doesNotMatch(hiddenPreviewNet, /stroke="#ff38c7"|fill="#ff38c7"/, "net hover must not resurrect hidden copper");
   for (const filename of process.argv.slice(2)) {

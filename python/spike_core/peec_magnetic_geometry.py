@@ -14,7 +14,7 @@ from math import dist, isclose, isfinite, pi
 from numbers import Real
 from typing import Any, Mapping
 
-from .contracts import DesignIR
+from .contracts import SpiDeR
 from .hybrid_mesh import TOPOLOGY_ONLY_BRANCH_KINDS, MeshBranch
 
 
@@ -56,7 +56,7 @@ def _coordinate(value: Any) -> float:
     return number
 
 
-def _source(design: DesignIR, branch: MeshBranch) -> Mapping[str, Any]:
+def _source(design: SpiDeR, branch: MeshBranch) -> Mapping[str, Any]:
     if branch.kind == "via":
         items = design.vias
         fallback = "via"
@@ -99,7 +99,7 @@ def _pad_drill_diameter(pad: Mapping[str, Any]) -> float:
 
 
 def describe_magnetic_cross_section(
-    design: DesignIR, branch: MeshBranch
+    design: SpiDeR, branch: MeshBranch
 ) -> MagneticCrossSection:
     """Describe a branch cross-section without reusing barrel circumference as width.
 
@@ -109,7 +109,7 @@ def describe_magnetic_cross_section(
     and ambiguous source identifiers fail closed.
     """
     if design.units != "mm":
-        raise MagneticGeometryError("magnetic geometry requires DesignIR units=mm")
+        raise MagneticGeometryError("magnetic geometry requires SpiDeR units=mm")
     if branch.kind in TOPOLOGY_ONLY_BRANCH_KINDS:
         raise MagneticGeometryError(
             f"{branch.kind} is a graph-only link, not a magnetic current basis"

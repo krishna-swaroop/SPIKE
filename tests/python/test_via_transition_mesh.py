@@ -8,8 +8,8 @@ from pathlib import Path
 
 from jsonschema import Draft202012Validator
 
-from python.spike_core.contracts import DesignIR
-from python.spike_core.design_ir_v2 import DesignIRV2
+from python.spike_core.contracts import SpiDeR
+from python.spike_core.spider_v2 import SpiDeRV2
 from python.spike_core.via_transition_geometry import AntipadSpec, build_via_transition_geometry
 from python.spike_core.via_transition_mesh import (
     ViaTransitionMeshError, build_via_transition_mesh, validate_via_transition_mesh,
@@ -22,7 +22,7 @@ ROOT = Path(__file__).resolve().parents[2]
 class ViaTransitionMeshTests(unittest.TestCase):
     def geometry(self, via_type: str = "through", layers: tuple[str, str] = ("F.Cu", "B.Cu")) -> dict:
         names = ["F.Cu", "In1.Cu", "In2.Cu", "B.Cu"]
-        legacy = DesignIR(
+        legacy = SpiDeR(
             design_id="mesh-via-board", name="mesh-via-board", source_format="fixture",
             layers=[{"id": index, "name": name, "type": "copper", "thickness_mm": 0.035}
                     for index, name in enumerate(names)],
@@ -33,7 +33,7 @@ class ViaTransitionMeshTests(unittest.TestCase):
                     "polygons": [[[-5.0, -5.0], [9.0, -5.0], [9.0, 11.0], [-5.0, 11.0]]]}
                    for name in names], metadata={"source_sha256": "b" * 64},
         )
-        design = DesignIRV2.from_v1(legacy)
+        design = SpiDeRV2.from_v1(legacy)
         via = design.vias[0]
         reference_net = next(item.id for item in design.nets if item.name == "GND")
         reference_zone = next(item.id for item in design.zones

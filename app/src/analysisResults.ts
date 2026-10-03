@@ -234,6 +234,8 @@ export type ComponentStress = {
 };
 
 export type SolverResultBundle = {
+  em_fields?: Record<string, unknown>;
+  em_networks?: Record<string, unknown>;
   contract: string;
   analysis_id: string;
   status: string;
@@ -504,6 +506,7 @@ export function normalizeSolverResult(raw: unknown): SolverResultBundle | null {
     ? (scalarFields[key] as Record<string, unknown>[]).map(item => scalar(item, "value"))
     : [];
   return {
+    ...(fields.radiation || fields.nearfield || fields.comparison || fields.openems_far_field || fields.openems_grid || (result.networks as Record<string, unknown> | undefined)?.s_parameters ? { em_fields: fields, em_networks: (result.networks as Record<string, unknown>) ?? {} } : {}),
     contract: String(result.contract ?? "spike/v1"),
     analysis_id: String(result.analysis_id ?? ""),
     status: String(result.status ?? "failed"),

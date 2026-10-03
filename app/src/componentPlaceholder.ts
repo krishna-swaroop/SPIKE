@@ -17,7 +17,7 @@ type PlaceholderComponent = {
   rotation?: number;
   bodyBounds?: ComponentPlaceholderBounds;
   courtyardBounds?: ComponentPlaceholderBounds;
-  properties?: readonly { name?: unknown; values?: readonly unknown[] }[];
+  properties?: readonly { name?: unknown; values?: readonly unknown[] }[] | Record<string, unknown>;
 };
 
 type PlaceholderPad = {
@@ -109,9 +109,13 @@ function padEnvelope(component: PlaceholderComponent, pads: readonly Placeholder
 }
 
 function explicitHeight(component: PlaceholderComponent) {
-  for (const property of component.properties ?? []) {
+  const rawProperties = component.properties;
+  const properties = Array.isArray(rawProperties) ? rawProperties
+    : rawProperties && typeof rawProperties === "object" ? Object.entries(rawProperties).map(([name, value]) => ({ name, values: Array.isArray(value) ? value : [value] })) : [];
+  for (const property of properties) {
+    if (!property || typeof property !== "object") continue;
     if (!/height/i.test(String(property.name ?? ""))) continue;
-    for (const raw of property.values ?? []) {
+    for (const raw of Array.isArray(property.values) ? property.values : []) {
       const match = String(raw).trim().match(/^([0-9]+(?:\.[0-9]+)?)\s*(mm|mil|in|inch|inches)?$/i);
       if (!match) continue;
       let value = Number(match[1]);

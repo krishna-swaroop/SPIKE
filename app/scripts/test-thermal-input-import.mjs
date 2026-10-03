@@ -19,6 +19,9 @@ const odb = thermalRowsFromOdb(board);
 assert.equal(odb.rows.length, 2);
 assert.equal(odb.rows[0].theta_top_c_per_w, 10);
 assert.equal(odb.rows[1].power_w, 0.25);
+const dictionary = thermalRowsFromOdb({ components: [{ ref: "U1", properties: { POWER_W: "1.2", RTH_TOP_K_W: "10", RTH_BOTTOM_K_W: "30" } }] });
+assert.equal(dictionary.rows[0].power_w, 1.2);
+assert.equal(dictionary.rows[0].theta_top_c_per_w, 10, "retained dictionary properties use the same explicit thermal units");
 
 const milli = parseThermalDelimited("Ref;Power (mW);Rth top K/W;Rth bottom K/W\nU1;250;10;30");
 assert.equal(mapThermalRecords(milli.records, suggestThermalMapping(milli.headers), board).rows[0].power_w, 0.25);

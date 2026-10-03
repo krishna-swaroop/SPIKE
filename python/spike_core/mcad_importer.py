@@ -15,8 +15,8 @@ from pathlib import Path
 from typing import Any, Dict, Mapping
 
 from .assembly_placement_policy import AssemblyPlacementPolicy
-from .design_ir_v2 import AssemblyPart
-from .design_ir_v2_schema import CoordinateFrame, ModelReference, canonical_uuid
+from .spider_v2 import AssemblyPart
+from .spider_v2_schema import CoordinateFrame, ModelReference, canonical_uuid
 from .importers import ImportPolicy, ImportReport
 
 

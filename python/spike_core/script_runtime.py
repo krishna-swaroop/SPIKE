@@ -16,6 +16,8 @@ from typing import Any
 
 from . import script_child as _script_child  # Static import for the frozen worker bundle.
 from .extension_analysis_results import admit_analysis_result, design_binding
+from .script_api_context import admit_ui_actions, normalize_script_workspace
+from .script_workspace_files import resolve_script_paths
 
 
 MAX_CODE_BYTES = 512_000
@@ -26,7 +28,7 @@ MAX_DIAGNOSTIC_BYTES = 32_000
 
 def _failed(message: str, *, elapsed_ms: int = 0) -> dict[str, Any]:
     return {"contract": "spike/python-script-result/v1", "status": "failed", "stdout": "",
-            "stderr": message, "return_code": 1, "duration_ms": elapsed_ms}
+            "stderr": message, "return_code": 1, "duration_ms": elapsed_ms, "ui_actions": []}
 
 
 def run_python_script(params: dict[str, Any]) -> dict[str, Any]:
@@ -40,21 +42,24 @@ def run_python_script(params: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("Python script timeout must be between 1 and 600 seconds.")
     design = params.get("design")
     if design is not None and not isinstance(design, dict):
-        raise ValueError("Python script design context must be a DesignIR object.")
+        raise ValueError("Python script design context must be a SpiDeR object.")
     results = params.get("results")
     if results is not None and not isinstance(results, dict):
         raise ValueError("Python script result context must be an object.")
-    binding = design_binding(design) if design is not None else None
+    workspace, selected_design = normalize_script_workspace(params.get("workspace"), design)
+    binding = design_binding(selected_design) if selected_design is not None else None
     trusted = params.get("_trusted_extension_ids", [])
     if not isinstance(trusted, list) or any(not isinstance(item, str) for item in trusted):
         raise ValueError("Trusted extension IDs must be a string array.")
-    context = {"design": design, "results": results, "design_binding": binding,
+    working, filename = resolve_script_paths(params)
+    context = {"design": selected_design, "workspace": workspace,
+               "results": results, "design_binding": binding,
                "trusted_extension_ids": trusted}
-    request = json.dumps({"code": code, "context": context}, ensure_ascii=False,
+    request = json.dumps({"code": code, "context": context, "filename": str(filename),
+                         "working_directory": str(working)}, ensure_ascii=False,
                          allow_nan=False).encode("utf-8")
     if len(request) > MAX_REQUEST_BYTES:
         raise ValueError("Python script context exceeds 64 MB.")
-    workspace = Path(os.environ.get("SPIKE_WORKSPACE") or Path(__file__).resolve().parents[2]).resolve()
     started = time.monotonic()
     directory = tempfile.mkdtemp(prefix="spike-python-")
     try:
@@ -70,7 +75,12 @@ def run_python_script(params: dict[str, Any]) -> dict[str, Any]:
         else:
             command = [sys.executable, "-m", "python.spike_core.script_child"]
         command.extend(["--request", str(request_path), "--result", str(result_path)])
-        process = subprocess.Popen(command, cwd=workspace, stdout=subprocess.PIPE,
+        child_environment = os.environ.copy()
+        source_root = str(Path(__file__).resolve().parents[2])
+        child_environment["PYTHONPATH"] = os.pathsep.join(filter(None, (
+            source_root, child_environment.get("PYTHONPATH", ""),
+        )))
+        process = subprocess.Popen(command, cwd=working, env=child_environment, stdout=subprocess.PIPE,
                                    stderr=subprocess.STDOUT, shell=False,
                                    creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0)
         diagnostic_tail = bytearray()
@@ -122,13 +132,14 @@ def run_python_script(params: dict[str, Any]) -> dict[str, Any]:
                     raise ValueError("A board is required to publish script analysis results.")
                 result["published_result"] = admit_analysis_result(
                     published, binding, extension_id="spike.python-workspace")
+            result["ui_actions"] = admit_ui_actions(result.get("ui_actions"), workspace)
             result["duration_ms"] = elapsed_ms
             return result
         except (ValueError, TypeError, json.JSONDecodeError) as exc:
             if isinstance(result, dict) and result.get("contract") == "spike/python-script-result/v1":
                 return {**result, "status": "failed", "return_code": 1,
                         "stderr": f"{result.get('stderr') or ''}\n{exc}".strip(),
-                        "published_result": None, "duration_ms": elapsed_ms}
+                        "published_result": None, "ui_actions": [], "duration_ms": elapsed_ms}
             return _failed(str(exc), elapsed_ms=elapsed_ms)
     finally:
         for attempt in range(8):

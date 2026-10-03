@@ -7,7 +7,7 @@ import unittest
 from typing import Any
 
 from python.spike_core.cli import execute_request
-from python.spike_core.contracts import AnalysisSpec, DesignIR
+from python.spike_core.contracts import AnalysisSpec, SpiDeR
 from python.spike_core.service import handle
 
 
@@ -43,7 +43,7 @@ class PiRequestParityTests(unittest.TestCase):
 
     @staticmethod
     def _request() -> dict[str, Any]:
-        design = DesignIR(
+        design = SpiDeR(
             name="PI request parity fixture",
             source_format="fixture",
             metadata={"source_embedded": True},

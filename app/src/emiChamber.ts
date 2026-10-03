@@ -84,8 +84,14 @@ export function disposeEmiGeometry(root: THREE.Object3D) {
 export function snapshotEmiDut(groups: THREE.Object3D[], unitsPerMm: number): THREE.Group {
   const snapshot = new THREE.Group();
   const cloneVisible = (object: THREE.Object3D): THREE.Object3D | null => {
-    if (!object.visible) return null;
+    if (object.userData.presentationOnly || !object.visible) return null;
     const clone = object.clone(false);
+    // Exploded display separation is not a physical DUT displacement.
+    const explodedOffset = object.userData.displayExplodeOffsetMm;
+    if (typeof explodedOffset === "number" && Number.isFinite(explodedOffset)) {
+      clone.matrix.elements[14] -= explodedOffset;
+      if (clone.matrixAutoUpdate) clone.position.z -= explodedOffset;
+    }
     if (clone instanceof THREE.Mesh || clone instanceof THREE.Line || clone instanceof THREE.Points) {
       clone.geometry = clone.geometry.clone();
       const copyMaterial = (material: THREE.Material) => {

@@ -7,7 +7,7 @@ from typing import Any, Dict
 
 from .assembly_geometric_constraints import apply_single_geometric_constraint
 from .assembly_package_shapes import canonicalize_assembly_package_shapes, selector_inventory_sha256
-from .design_ir_v2 import AssemblyIRV1
+from .spider_v2 import AssemblyIRV1
 from .project_package import ProjectPackageError, read_project, write_spike_package
 
 

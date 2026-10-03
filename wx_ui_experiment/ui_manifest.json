@@ -1,0 +1,2212 @@
+{
+  "reference": "app/src/App.tsx",
+  "css": "app/src/styles.css",
+  "sourceDigest": "18cca83a7758c90ef515286359d82e3a2572ba7f36e7efdf3afc9850e2cdeb82",
+  "tabs": [
+    {
+      "tab": "Home",
+      "icon": "FolderOpen",
+      "groups": [
+        {
+          "label": "PROJECT",
+          "dynamic": false,
+          "tools": [
+            {
+              "icon": "Upload",
+              "label": "Import",
+              "id": "ribbon/home/project/import",
+              "sourceLine": 4000,
+              "handler": "() => void importNativeBoard()",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "Import"
+            },
+            {
+              "icon": "FolderOpen",
+              "label": "Open",
+              "id": "ribbon/home/project/open",
+              "sourceLine": 4000,
+              "handler": "() => void openProject()",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "Open"
+            },
+            {
+              "icon": "FileArchive",
+              "label": "Manager",
+              "id": "ribbon/home/project/manager",
+              "sourceLine": 4000,
+              "handler": "() => setProjectManagerOpen(true)",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "Manager"
+            },
+            {
+              "icon": "Save",
+              "label": "Save",
+              "id": "ribbon/home/project/save",
+              "sourceLine": 4000,
+              "handler": "() => void saveProject()",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "Save"
+            }
+          ]
+        },
+        {
+          "label": "DESIGN READINESS",
+          "dynamic": false,
+          "tools": [
+            {
+              "icon": "ShieldCheck",
+              "label": "Validate",
+              "id": "ribbon/home/design-readiness/validate",
+              "sourceLine": 4000,
+              "handler": "validateDesign",
+              "disabledWhen": "false",
+              "activeWhen": "true",
+              "labelExpression": "Validate"
+            },
+            {
+              "icon": "Layers3",
+              "label": "Stackup",
+              "id": "ribbon/home/design-readiness/stackup",
+              "sourceLine": 4000,
+              "handler": "() => setStackupOpen(true)",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "Stackup"
+            },
+            {
+              "icon": "BadgeAlert",
+              "label": "Issues",
+              "id": "ribbon/home/design-readiness/issues",
+              "sourceLine": 4000,
+              "handler": "() => setDock(\"Issues\")",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "Issues"
+            }
+          ]
+        },
+        {
+          "label": "WORKSPACE",
+          "dynamic": false,
+          "tools": [
+            {
+              "icon": "GalleryVertical",
+              "label": "Layers",
+              "id": "ribbon/home/workspace/layers",
+              "sourceLine": 4000,
+              "handler": "() => setLayersOpen(!layersOpen)",
+              "disabledWhen": "false",
+              "activeWhen": "layersOpen",
+              "labelExpression": "Layers"
+            },
+            {
+              "icon": "Boxes",
+              "label": "3D models",
+              "id": "ribbon/home/workspace/3d-models",
+              "sourceLine": 4000,
+              "handler": "() => setShowModels(!showModels)",
+              "disabledWhen": "false",
+              "activeWhen": "showModels",
+              "labelExpression": "3D models"
+            },
+            {
+              "icon": "Cable",
+              "label": "Bonds",
+              "id": "ribbon/home/workspace/bonds",
+              "sourceLine": 4000,
+              "handler": "() => setBondManagerOpen(true)",
+              "disabledWhen": "false",
+              "activeWhen": "bondManagerOpen",
+              "labelExpression": "Bonds"
+            },
+            {
+              "icon": "Workflow",
+              "label": "Power tree",
+              "id": "ribbon/home/workspace/power-tree",
+              "sourceLine": 4000,
+              "handler": "() => { setDock(\"Power tree\"); setTopologyEditor(\"pi\"); }",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "Power tree"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "tab": "Mesh",
+      "icon": "Grid3X3",
+      "groups": [
+        {
+          "label": "SHARED DOMAIN",
+          "dynamic": false,
+          "tools": [
+            {
+              "icon": "BatteryCharging",
+              "label": "PI mesh",
+              "id": "ribbon/mesh/shared-domain/pi-mesh",
+              "sourceLine": 4014,
+              "handler": "() => setSimulationDomain(\"pi\")",
+              "disabledWhen": "false",
+              "activeWhen": "simulationDomain === \"pi\"",
+              "labelExpression": "PI mesh"
+            },
+            {
+              "icon": "AudioWaveform",
+              "label": "SI mesh",
+              "id": "ribbon/mesh/shared-domain/si-mesh",
+              "sourceLine": 4014,
+              "handler": "() => setSimulationDomain(\"si\")",
+              "disabledWhen": "false",
+              "activeWhen": "simulationDomain === \"si\"",
+              "labelExpression": "SI mesh"
+            }
+          ]
+        },
+        {
+          "label": "MESH INPUTS",
+          "dynamic": false,
+          "tools": [
+            {
+              "icon": "Grid3X3",
+              "label": "Mesh settings",
+              "id": "ribbon/mesh/mesh-inputs/mesh-settings",
+              "sourceLine": 4014,
+              "handler": "() => simulationDomain === \"pi\" ? openAnalysisSetup() : openSiWorkbench(\"geometry\", \"channel\")",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "Mesh settings"
+            },
+            {
+              "icon": "Layers3",
+              "label": "Stackup",
+              "id": "ribbon/mesh/mesh-inputs/stackup",
+              "sourceLine": 4014,
+              "handler": "() => setStackupOpen(true)",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "Stackup"
+            },
+            {
+              "icon": "ListTree",
+              "label": "Nets",
+              "id": "ribbon/mesh/mesh-inputs/nets",
+              "sourceLine": 4014,
+              "handler": "() => simulationDomain === \"pi\" ? setNetManagerOpen(true) : openSiWorkbench(\"geometry\", \"channel\")",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "Nets"
+            }
+          ]
+        },
+        {
+          "label": "NEXT",
+          "dynamic": false,
+          "tools": [
+            {
+              "icon": "Play",
+              "label": "Solve workspace",
+              "id": "ribbon/mesh/next/solve-workspace",
+              "sourceLine": 4014,
+              "handler": "() => openSharedWorkspace(\"Solve\", simulationDomain)",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "Solve workspace"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "tab": "Solve",
+      "icon": "Play",
+      "groups": [
+        {
+          "label": "SHARED DOMAIN",
+          "dynamic": false,
+          "tools": [
+            {
+              "icon": "BatteryCharging",
+              "label": "PI solve",
+              "id": "ribbon/solve/shared-domain/pi-solve",
+              "sourceLine": 4016,
+              "handler": "() => setSimulationDomain(\"pi\")",
+              "disabledWhen": "false",
+              "activeWhen": "simulationDomain === \"pi\"",
+              "labelExpression": "PI solve"
+            },
+            {
+              "icon": "AudioWaveform",
+              "label": "SI solve",
+              "id": "ribbon/solve/shared-domain/si-solve",
+              "sourceLine": 4016,
+              "handler": "() => setSimulationDomain(\"si\")",
+              "disabledWhen": "false",
+              "activeWhen": "simulationDomain === \"si\"",
+              "labelExpression": "SI solve"
+            }
+          ]
+        },
+        {
+          "label": "EXECUTION",
+          "dynamic": false,
+          "tools": [
+            {
+              "icon": "SlidersHorizontal",
+              "label": "Review setup",
+              "id": "ribbon/solve/execution/review-setup",
+              "sourceLine": 4016,
+              "handler": "() => simulationDomain === \"pi\" ? openAnalysisSetup() : openSiWorkbench(\"geometry\", \"channel\")",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "Review setup"
+            },
+            {
+              "icon": "Play",
+              "label": "Run controls",
+              "id": "ribbon/solve/execution/run-controls",
+              "sourceLine": 4016,
+              "handler": "() => simulationDomain === \"pi\" ? runAnalysis() : openSiWorkbench(\"geometry\", \"channel\")",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "simulationDomain === \"si\" ? \"Run SI channel\" : universalRunning ? \"Running...\" : \"Run controls\""
+            },
+            {
+              "icon": "X",
+              "label": "Stop",
+              "id": "ribbon/solve/execution/stop",
+              "sourceLine": 4016,
+              "handler": "() => void cancelActiveAnalysis()",
+              "disabledWhen": "!universalRunning || activeWorkerOperation?.cancelling",
+              "activeWhen": "false",
+              "labelExpression": "activeWorkerOperation?.cancelling ? \"Stopping...\" : \"Stop\""
+            }
+          ]
+        },
+        {
+          "label": "REVIEW",
+          "dynamic": false,
+          "tools": [
+            {
+              "icon": "BarChart3",
+              "label": "Results",
+              "id": "ribbon/solve/review/results",
+              "sourceLine": 4016,
+              "handler": "() => { if (simulationDomain === \"si\") openSiWorkbench(siChannelResult?.contract === \"spike/si-workflow-result/v1\" ? \"workflow\" : \"geometry\", \"channel\"); else { setResultVisualizerDomain(\"pi\"); setResultVisualizerOpen(true); } }",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "Results"
+            },
+            {
+              "icon": "SquareTerminal",
+              "label": "Console",
+              "id": "ribbon/solve/review/console",
+              "sourceLine": 4016,
+              "handler": "() => setDock(\"Console\")",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "Console"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "tab": "PI",
+      "icon": "BatteryCharging",
+      "groups": [
+        {
+          "label": "POWER ANALYSES",
+          "dynamic": false,
+          "tools": [
+            {
+              "icon": "BatteryCharging",
+              "label": "DC drop",
+              "id": "ribbon/pi/power-analyses/dc-drop",
+              "sourceLine": 4004,
+              "handler": "() => openAnalysisSetup(\"DC IR Drop\")",
+              "disabledWhen": "false",
+              "activeWhen": "analysisMode === \"DC IR Drop\" && analysisSetupWorkflow === \"single\"",
+              "labelExpression": "DC drop"
+            },
+            {
+              "icon": "Route",
+              "label": "Series path",
+              "id": "ribbon/pi/power-analyses/series-path",
+              "sourceLine": 4004,
+              "handler": "() => openAnalysisSetup(\"DC IR Drop\", \"path\")",
+              "disabledWhen": "false",
+              "activeWhen": "analysisMode === \"DC IR Drop\" && analysisSetupWorkflow === \"path\"",
+              "labelExpression": "Series path"
+            },
+            {
+              "icon": "Waypoints",
+              "label": "Bulk nets",
+              "id": "ribbon/pi/power-analyses/bulk-nets",
+              "sourceLine": 4004,
+              "handler": "() => openAnalysisSetup(\"Bulk Net Analysis\")",
+              "disabledWhen": "false",
+              "activeWhen": "analysisMode === \"Bulk Net Analysis\" && analysisSetupWorkflow !== \"batch\"",
+              "labelExpression": "Bulk nets"
+            },
+            {
+              "icon": "ChartSpline",
+              "label": "AC sweep",
+              "id": "ribbon/pi/power-analyses/ac-sweep",
+              "sourceLine": 4004,
+              "handler": "() => openAnalysisSetup(\"AC Impedance Sweep\")",
+              "disabledWhen": "false",
+              "activeWhen": "analysisMode === \"AC Impedance Sweep\"",
+              "labelExpression": "AC sweep"
+            },
+            {
+              "icon": "AudioWaveform",
+              "label": "Transient",
+              "id": "ribbon/pi/power-analyses/transient",
+              "sourceLine": 4004,
+              "handler": "() => openAnalysisSetup(\"Transient PI\")",
+              "disabledWhen": "false",
+              "activeWhen": "analysisMode === \"Transient PI\"",
+              "labelExpression": "Transient"
+            },
+            {
+              "icon": "ListChecks",
+              "label": "Batch nets",
+              "id": "ribbon/pi/power-analyses/batch-nets",
+              "sourceLine": 4004,
+              "handler": "() => openAnalysisSetup(\"Bulk Net Analysis\", \"batch\")",
+              "disabledWhen": "false",
+              "activeWhen": "analysisSetupWorkflow === \"batch\"",
+              "labelExpression": "Batch nets"
+            }
+          ]
+        },
+        {
+          "label": "SOURCES AND LOADS",
+          "dynamic": false,
+          "tools": [
+            {
+              "icon": "ListTree",
+              "label": "Net manager",
+              "id": "ribbon/pi/sources-and-loads/net-manager",
+              "sourceLine": 4004,
+              "handler": "() => setNetManagerOpen(true)",
+              "disabledWhen": "false",
+              "activeWhen": "netManagerOpen",
+              "labelExpression": "Net manager"
+            },
+            {
+              "icon": "PlugZap",
+              "label": "Terminals",
+              "id": "ribbon/pi/sources-and-loads/terminals",
+              "sourceLine": 4004,
+              "handler": "() => openAnalysisSetup()",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "Terminals"
+            },
+            {
+              "icon": "Network",
+              "label": "Power paths",
+              "id": "ribbon/pi/sources-and-loads/power-paths",
+              "sourceLine": 4004,
+              "handler": "() => { setDock(\"Power tree\"); setTopologyEditor(\"pi\"); }",
+              "disabledWhen": "false",
+              "activeWhen": "topologyEditor === \"pi\"",
+              "labelExpression": "Power paths"
+            },
+            {
+              "icon": "Microchip",
+              "label": "SPICE models",
+              "id": "ribbon/pi/sources-and-loads/spice-models",
+              "sourceLine": 4004,
+              "handler": "() => setSpiceOpen(true)",
+              "disabledWhen": "false",
+              "activeWhen": "spiceOpen",
+              "labelExpression": "SPICE models"
+            },
+            {
+              "icon": "Crosshair",
+              "label": "Probes",
+              "id": "ribbon/pi/sources-and-loads/probes",
+              "sourceLine": 4004,
+              "handler": "openProbeTable",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "Probes"
+            }
+          ]
+        },
+        {
+          "label": "CHECK AND RUN",
+          "dynamic": false,
+          "tools": [
+            {
+              "icon": "ShieldCheck",
+              "label": "Validate",
+              "id": "ribbon/pi/check-and-run/validate",
+              "sourceLine": 4004,
+              "handler": "validateDesign",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "Validate"
+            },
+            {
+              "icon": "Play",
+              "label": "Run PI",
+              "id": "ribbon/pi/check-and-run/run-pi",
+              "sourceLine": 4004,
+              "handler": "runAnalysis",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "analysisRunning ? \"Running...\" : \"Run PI\""
+            },
+            {
+              "icon": "ChartArea",
+              "label": "PI results",
+              "id": "ribbon/pi/check-and-run/pi-results",
+              "sourceLine": 4004,
+              "handler": "() => { setResultVisualizerDomain(\"pi\"); setResultVisualizerOpen(true); }",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "PI results"
+            }
+          ]
+        },
+        {
+          "label": "OUTPUT",
+          "dynamic": false,
+          "tools": [
+            {
+              "icon": "FileChartColumn",
+              "label": "PI report",
+              "id": "ribbon/pi/output/pi-report",
+              "sourceLine": 4004,
+              "handler": "generateReport",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "PI report"
+            },
+            {
+              "icon": "Save",
+              "label": "Save results",
+              "id": "ribbon/pi/output/save-results",
+              "sourceLine": 4004,
+              "handler": "exportReport",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "Save results"
+            },
+            {
+              "icon": "FolderOpen",
+              "label": "Load results",
+              "id": "ribbon/pi/output/load-results",
+              "sourceLine": 4004,
+              "handler": "loadResults",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "Load results"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "tab": "HF / SI",
+      "icon": "AudioWaveform",
+      "groups": [
+        {
+          "label": "PROTOCOL WORKSPACES",
+          "dynamic": false,
+          "tools": [
+            {
+              "icon": "Boxes",
+              "label": "Protocol suites",
+              "id": "ribbon/hf-si/protocol-workspaces/protocol-suites",
+              "sourceLine": 4007,
+              "handler": "() => setSiProtocolSuitesOpen(true)",
+              "disabledWhen": "false",
+              "activeWhen": "siProtocolSuitesOpen",
+              "labelExpression": "Protocol suites"
+            },
+            {
+              "icon": "ChartNetwork",
+              "label": "Channel tree",
+              "id": "ribbon/hf-si/protocol-workspaces/channel-tree",
+              "sourceLine": 4007,
+              "handler": "() => setTopologyEditor(\"si\")",
+              "disabledWhen": "false",
+              "activeWhen": "topologyEditor === \"si\"",
+              "labelExpression": "Channel tree"
+            },
+            {
+              "icon": "Omega",
+              "label": "Impedance",
+              "id": "ribbon/hf-si/protocol-workspaces/impedance",
+              "sourceLine": 4007,
+              "handler": "() => openSiWorkbench(\"geometry\", \"impedance\")",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "Impedance"
+            },
+            {
+              "icon": "Magnet",
+              "label": "Coupling risk",
+              "id": "ribbon/hf-si/protocol-workspaces/coupling-risk",
+              "sourceLine": 4007,
+              "handler": "() => openSiWorkbench(\"geometry\", \"crosstalk\")",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "Coupling risk"
+            }
+          ]
+        },
+        {
+          "label": "SIGNAL ANALYSES",
+          "dynamic": false,
+          "tools": [
+            {
+              "icon": "ChartSpline",
+              "label": "S-parameters",
+              "id": "ribbon/hf-si/signal-analyses/s-parameters",
+              "sourceLine": 4008,
+              "handler": "openSelectedSParameters",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "S-parameters"
+            },
+            {
+              "icon": "Split",
+              "label": "NEXT / FEXT",
+              "id": "ribbon/hf-si/signal-analyses/next-fext",
+              "sourceLine": 4008,
+              "handler": "() => openSiWorkbench(\"geometry\", \"crosstalk\")",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "NEXT / FEXT"
+            },
+            {
+              "icon": "Eye",
+              "label": "Eye diagram",
+              "id": "ribbon/hf-si/signal-analyses/eye-diagram",
+              "sourceLine": 4008,
+              "handler": "() => openSiWorkbench(\"geometry\", \"eye\")",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "Eye diagram"
+            },
+            {
+              "icon": "Binary",
+              "label": "PAM4",
+              "id": "ribbon/hf-si/signal-analyses/pam4",
+              "sourceLine": 4008,
+              "handler": "() => openSiWorkbench(\"geometry\", \"pam4\")",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "PAM4"
+            }
+          ]
+        },
+        {
+          "label": "S-PARAMETER SOLVER",
+          "dynamic": false,
+          "tools": [
+            {
+              "icon": "Activity",
+              "label": "Check EMerge",
+              "id": "ribbon/hf-si/s-parameter-solver/check-emerge",
+              "sourceLine": 4009,
+              "handler": "() => void probeEmiEmerge()",
+              "disabledWhen": "!emergeEmiExtension?.trusted || emergeEmiExtension.state === \"disabled\" || emergeEmiBusy",
+              "activeWhen": "false",
+              "labelExpression": "Check EMerge"
+            }
+          ]
+        },
+        {
+          "label": "CHANNEL MODEL",
+          "dynamic": false,
+          "tools": [
+            {
+              "icon": "Layers3",
+              "label": "Stackup",
+              "id": "ribbon/hf-si/channel-model/stackup",
+              "sourceLine": 4010,
+              "handler": "() => setStackupOpen(true)",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "Stackup"
+            },
+            {
+              "icon": "GalleryVertical",
+              "label": "Layer view",
+              "id": "ribbon/hf-si/channel-model/layer-view",
+              "sourceLine": 4010,
+              "handler": "() => setLayersOpen(true)",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "Layer view"
+            },
+            {
+              "icon": "Plug",
+              "label": "Ports",
+              "id": "ribbon/hf-si/channel-model/ports",
+              "sourceLine": 4010,
+              "handler": "() => siSParameterSolver === \"emerge\" && emergeSiAvailable ? openSiEmerge() : openSiWorkbench(\"workflow\", \"ports\")",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "Ports"
+            }
+          ]
+        },
+        {
+          "label": "INTERCHANGE",
+          "dynamic": false,
+          "tools": [
+            {
+              "icon": "FileInput",
+              "label": "Touchstone",
+              "id": "ribbon/hf-si/interchange/touchstone",
+              "sourceLine": 4011,
+              "handler": "() => openSiWorkbench(\"workflow\", \"channel\")",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "Touchstone"
+            },
+            {
+              "icon": "Puzzle",
+              "label": "Suite builder",
+              "id": "ribbon/hf-si/interchange/suite-builder",
+              "sourceLine": 4011,
+              "handler": "() => setSiProtocolSuitesOpen(true)",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "Suite builder"
+            },
+            {
+              "icon": "Cpu",
+              "label": "External engines",
+              "id": "ribbon/hf-si/interchange/external-engines",
+              "sourceLine": 4011,
+              "handler": "() => void openExternalEngineCenter()",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "External engines"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "tab": "EM",
+      "icon": "SatelliteDish",
+      "groups": [
+        {
+          "label": "SCREENING",
+          "dynamic": false,
+          "tools": [
+            {
+              "icon": "Route",
+              "label": "Net domain",
+              "id": "ribbon/em/screening/net-domain",
+              "sourceLine": 4018,
+              "handler": "() => { setRightOpen(true); setEmiSection(\"domain\"); setSelectionFilter(\"net\"); setStatus(\"Select candidate and return nets in the EM setup dock\"); }",
+              "disabledWhen": "false",
+              "activeWhen": "rightOpen && emiSection === \"domain\"",
+              "labelExpression": "Net domain"
+            },
+            {
+              "icon": "ClipboardCheck",
+              "label": "Preflight",
+              "id": "ribbon/em/screening/preflight",
+              "sourceLine": 4018,
+              "handler": "() => { setRightOpen(true); setEmiSection(\"prepass\"); void validateEmi(); }",
+              "disabledWhen": "false",
+              "activeWhen": "Boolean(emiPreflight && !emiPreflight.counts.errors)",
+              "labelExpression": "Preflight"
+            },
+            {
+              "icon": "Radar",
+              "label": "Risk screen",
+              "id": "ribbon/em/screening/risk-screen",
+              "sourceLine": 4018,
+              "handler": "() => { setRightOpen(true); setEmiSection(\"prepass\"); void runEmiScreening(); }",
+              "disabledWhen": "emiBusy",
+              "activeWhen": "Boolean(emiScreening?.screening)",
+              "labelExpression": "emiBusy ? \"Screening\" : \"Risk screen\""
+            }
+          ]
+        },
+        {
+          "label": "EXCITATION",
+          "dynamic": false,
+          "tools": [
+            {
+              "icon": "Plug",
+              "label": "Ports",
+              "id": "ribbon/em/excitation/ports",
+              "sourceLine": 4018,
+              "handler": "() => { setRightOpen(true); setEmiSection(\"excitation\"); setStatus(\"Configure explicit conductor-to-conductor ports in the EM setup dock\"); }",
+              "disabledWhen": "false",
+              "activeWhen": "rightOpen && emiSection === \"excitation\"",
+              "labelExpression": "Ports"
+            },
+            {
+              "icon": "Cable",
+              "label": "Bonds",
+              "id": "ribbon/em/excitation/bonds",
+              "sourceLine": 4018,
+              "handler": "() => setBondManagerOpen(true)",
+              "disabledWhen": "false",
+              "activeWhen": "bondManagerOpen",
+              "labelExpression": "Bonds"
+            },
+            {
+              "icon": "AudioWaveform",
+              "label": "PI transient",
+              "id": "ribbon/em/excitation/pi-transient",
+              "sourceLine": 4018,
+              "handler": "() => openAnalysisSetup(\"Transient PI\")",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "PI transient"
+            },
+            {
+              "icon": "Microchip",
+              "label": "SPICE",
+              "id": "ribbon/em/excitation/spice",
+              "sourceLine": 4018,
+              "handler": "() => setSpiceOpen(true)",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "SPICE"
+            }
+          ]
+        },
+        {
+          "label": "FULL-WAVE",
+          "dynamic": false,
+          "tools": [
+            {
+              "icon": "Grid3X3",
+              "label": "Domain mesh",
+              "id": "ribbon/em/full-wave/domain-mesh",
+              "sourceLine": 4018,
+              "handler": "() => { setRightOpen(true); setEmiSection(\"solver\"); setStatus(\"Configure frequency, boundary, and mesh controls in the EM setup dock\"); }",
+              "disabledWhen": "false",
+              "activeWhen": "rightOpen && emiSection === \"solver\"",
+              "labelExpression": "Domain mesh"
+            },
+            {
+              "icon": "FileCog",
+              "label": "Prepare case",
+              "id": "ribbon/em/full-wave/prepare-case",
+              "sourceLine": 4018,
+              "handler": "() => { setRightOpen(true); setEmiSection(\"solver\"); void prepareEmiCase(); }",
+              "disabledWhen": "emiBusy || !boardData",
+              "activeWhen": "Boolean(externalCase?.caseDir)",
+              "labelExpression": "Prepare case"
+            },
+            {
+              "icon": "Play",
+              "label": "Run solver",
+              "id": "ribbon/em/full-wave/run-solver",
+              "sourceLine": 4018,
+              "handler": "() => void runExternalEngine(\"external.openems\", false)",
+              "disabledWhen": "emiBusy || !emiPreflight?.can_run || !externalCase?.canRun",
+              "activeWhen": "false",
+              "labelExpression": "Run solver"
+            },
+            {
+              "icon": "SatelliteDish",
+              "label": "EMerge",
+              "id": "ribbon/em/full-wave/emerge",
+              "sourceLine": 4018,
+              "handler": "openEmiEmerge",
+              "disabledWhen": "false",
+              "activeWhen": "emergeEmiOpen",
+              "labelExpression": "EMerge"
+            },
+            {
+              "icon": "ServerCog",
+              "label": "Solver manager",
+              "id": "ribbon/em/full-wave/solver-manager",
+              "sourceLine": 4018,
+              "handler": "() => void openExternalEngineCenter()",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "Solver manager"
+            }
+          ]
+        },
+        {
+          "label": "REVIEW",
+          "dynamic": false,
+          "tools": [
+            {
+              "icon": "LayoutDashboard",
+              "label": "Dashboard",
+              "id": "ribbon/em/review/dashboard",
+              "sourceLine": 4018,
+              "handler": "() => { setEmiDashboardOpen(true); if (emergePatterns.length) setEmiChamberOpen(true); }",
+              "disabledWhen": "!emiPreflight && !emiScreening && !emiFieldResult && !emergePatterns.length",
+              "activeWhen": "emiDashboardOpen",
+              "labelExpression": "Dashboard"
+            },
+            {
+              "icon": "ScanLine",
+              "label": "Near field",
+              "id": "ribbon/em/review/near-field",
+              "sourceLine": 4018,
+              "handler": "() => setStatus(\"Near-field visualization requires a completed compatible field result\")",
+              "disabledWhen": "true",
+              "activeWhen": "false",
+              "labelExpression": "Near field"
+            },
+            {
+              "icon": "SatelliteDish",
+              "label": "Far field",
+              "id": "ribbon/em/review/far-field",
+              "sourceLine": 4018,
+              "handler": "() => { setEmiDashboardOpen(true); if (emergePatterns.length) { setEmiChamberOpen(true); setStatus(\"Showing the EMerge radiation pattern in EM\"); } else setStatus(\"Showing the completed openEMS NF2FF radiation result\"); }",
+              "disabledWhen": "!emiFieldResult?.far_field && !emergePatterns.length",
+              "activeWhen": "Boolean(emiFieldResult?.far_field || emergePatterns.length)",
+              "labelExpression": "Far field"
+            },
+            {
+              "icon": "FileChartColumn",
+              "label": "EMI report",
+              "id": "ribbon/em/review/emi-report",
+              "sourceLine": 4018,
+              "handler": "generateReport",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "EMI report"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "tab": "Thermal",
+      "icon": "ThermometerSun",
+      "groups": [
+        {
+          "label": "SIMULATION DOMAIN",
+          "dynamic": false,
+          "tools": [
+            {
+              "icon": "Box",
+              "label": "Bounding volume",
+              "id": "ribbon/thermal/simulation-domain/bounding-volume",
+              "sourceLine": 4020,
+              "handler": "() => setThermalOpen(true)",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "Bounding volume"
+            },
+            {
+              "icon": "Layers3",
+              "label": "Board stack",
+              "id": "ribbon/thermal/simulation-domain/board-stack",
+              "sourceLine": 4020,
+              "handler": "() => setStackupOpen(true)",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "Board stack"
+            },
+            {
+              "icon": "Flame",
+              "label": "Heat sources",
+              "id": "ribbon/thermal/simulation-domain/heat-sources",
+              "sourceLine": 4020,
+              "handler": "() => setThermalOpen(true)",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "Heat sources"
+            },
+            {
+              "icon": "Cable",
+              "label": "Bonds",
+              "id": "ribbon/thermal/simulation-domain/bonds",
+              "sourceLine": 4020,
+              "handler": "() => setBondManagerOpen(true)",
+              "disabledWhen": "false",
+              "activeWhen": "bondManagerOpen",
+              "labelExpression": "Bonds"
+            }
+          ]
+        },
+        {
+          "label": "AIRFLOW",
+          "dynamic": false,
+          "tools": [
+            {
+              "icon": "Wind",
+              "label": "Flow channels",
+              "id": "ribbon/thermal/airflow/flow-channels",
+              "sourceLine": 4020,
+              "handler": "() => setThermalOpen(true)",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "Flow channels"
+            },
+            {
+              "icon": "Fan",
+              "label": "Fan placement",
+              "id": "ribbon/thermal/airflow/fan-placement",
+              "sourceLine": 4020,
+              "handler": "() => setThermalOpen(true)",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "Fan placement"
+            },
+            {
+              "icon": "CloudSun",
+              "label": "Ambient",
+              "id": "ribbon/thermal/airflow/ambient",
+              "sourceLine": 4020,
+              "handler": "() => setThermalOpen(true)",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "Ambient"
+            }
+          ]
+        },
+        {
+          "label": "OPTIONAL CFD",
+          "dynamic": false,
+          "tools": [
+            {
+              "icon": "ListTree",
+              "label": "Scenario",
+              "id": "ribbon/thermal/optional-cfd/scenario",
+              "sourceLine": 4020,
+              "handler": "() => setThermalOpen(true)",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "Scenario"
+            },
+            {
+              "icon": "FileCog",
+              "label": "Prepare case",
+              "id": "ribbon/thermal/optional-cfd/prepare-case",
+              "sourceLine": 4020,
+              "handler": "() => setThermalOpen(true)",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "Prepare case"
+            },
+            {
+              "icon": "SquareTerminal",
+              "label": "Solver console",
+              "id": "ribbon/thermal/optional-cfd/solver-console",
+              "sourceLine": 4020,
+              "handler": "() => setDock(\"Console\")",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "Solver console"
+            }
+          ]
+        },
+        {
+          "label": "THERMAL RESULTS",
+          "dynamic": false,
+          "tools": [
+            {
+              "icon": "ThermometerSun",
+              "label": "Temperature",
+              "id": "ribbon/thermal/thermal-results/temperature",
+              "sourceLine": 4020,
+              "handler": "() => setThermalOpen(true)",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "Temperature"
+            },
+            {
+              "icon": "FileChartColumn",
+              "label": "Report",
+              "id": "ribbon/thermal/thermal-results/report",
+              "sourceLine": 4020,
+              "handler": "generateReport",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "Report"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "tab": "Probes",
+      "icon": "Crosshair",
+      "groups": [
+        {
+          "label": "PROBE TOOLS",
+          "dynamic": false,
+          "tools": [
+            {
+              "icon": "ScanSearch",
+              "label": "Hover probe",
+              "id": "ribbon/probes/probe-tools/hover-probe",
+              "sourceLine": 4022,
+              "handler": "() => setProbeMode(current => { const next = current === \"hover\" ? \"off\" : \"hover\"; setStatus(next === \"hover\" ? \"Hover probe active: move across the board for live measurements\" : \"Hover probe disabled\"); return next; })",
+              "disabledWhen": "false",
+              "activeWhen": "probeMode === \"hover\"",
+              "labelExpression": "Hover probe"
+            },
+            {
+              "icon": "MapPinPlus",
+              "label": "Place probe",
+              "id": "ribbon/probes/probe-tools/place-probe",
+              "sourceLine": 4022,
+              "handler": "() => addProbe(selected)",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "Place probe"
+            },
+            {
+              "icon": "TableProperties",
+              "label": "Probe table",
+              "id": "ribbon/probes/probe-tools/probe-table",
+              "sourceLine": 4022,
+              "handler": "openProbeTable",
+              "disabledWhen": "false",
+              "activeWhen": "dock === \"Probe table\"",
+              "labelExpression": "Probe table"
+            },
+            {
+              "icon": "CopyPlus",
+              "label": "Duplicate",
+              "id": "ribbon/probes/probe-tools/duplicate",
+              "sourceLine": 4022,
+              "handler": "() => selected ? addProbe({ ...selected, id: `${selected.id}-copy`, name: `${selected.name} copy` }) : setStatus(\"Select a probe location before duplicating\")",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "Duplicate"
+            }
+          ]
+        },
+        {
+          "label": "MEASUREMENTS",
+          "dynamic": false,
+          "tools": [
+            {
+              "icon": "Zap",
+              "label": "Voltage",
+              "id": "ribbon/probes/measurements/voltage",
+              "sourceLine": 4022,
+              "handler": "() => { setProbeKind(\"voltage\"); setStatus(\"Voltage probe measurement selected\"); }",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "Voltage"
+            },
+            {
+              "icon": "ArrowRightLeft",
+              "label": "Current",
+              "id": "ribbon/probes/measurements/current",
+              "sourceLine": 4022,
+              "handler": "() => { setProbeKind(\"current\"); setStatus(\"Current-density probe measurement selected\"); }",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "Current"
+            },
+            {
+              "icon": "Omega",
+              "label": "Impedance",
+              "id": "ribbon/probes/measurements/impedance",
+              "sourceLine": 4022,
+              "handler": "() => { setProbeKind(\"impedance\"); setStatus(\"Impedance hover requires an AC or parasitic result\"); }",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "Impedance"
+            }
+          ]
+        },
+        {
+          "label": "COMPARE AND EXPORT",
+          "dynamic": false,
+          "tools": [
+            {
+              "icon": "GitCompareArrows",
+              "label": "Compare",
+              "id": "ribbon/probes/compare-and-export/compare",
+              "sourceLine": 4022,
+              "handler": "openProbeTable",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "Compare"
+            },
+            {
+              "icon": "Layers2",
+              "label": "Cross-layer",
+              "id": "ribbon/probes/compare-and-export/cross-layer",
+              "sourceLine": 4022,
+              "handler": "() => setLayersOpen(true)",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "Cross-layer"
+            },
+            {
+              "icon": "FileSpreadsheet",
+              "label": "Export CSV",
+              "id": "ribbon/probes/compare-and-export/export-csv",
+              "sourceLine": 4022,
+              "handler": "exportProbeCsv",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "Export CSV"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "tab": "Results",
+      "icon": "ChartArea",
+      "groups": [
+        {
+          "label": "RESULT VIEWS",
+          "dynamic": false,
+          "tools": [
+            {
+              "icon": "BadgeAlert",
+              "label": "Issues",
+              "id": "ribbon/results/result-views/issues",
+              "sourceLine": 4024,
+              "handler": "() => setDock(\"Issues\")",
+              "disabledWhen": "false",
+              "activeWhen": "dock === \"Issues\"",
+              "labelExpression": "Issues"
+            },
+            {
+              "icon": "TableProperties",
+              "label": "Probe table",
+              "id": "ribbon/results/result-views/probe-table",
+              "sourceLine": 4024,
+              "handler": "openProbeTable",
+              "disabledWhen": "false",
+              "activeWhen": "dock === \"Probe table\"",
+              "labelExpression": "Probe table"
+            },
+            {
+              "icon": "Workflow",
+              "label": "Power tree",
+              "id": "ribbon/results/result-views/power-tree",
+              "sourceLine": 4024,
+              "handler": "() => setDock(\"Power tree\")",
+              "disabledWhen": "false",
+              "activeWhen": "dock === \"Power tree\"",
+              "labelExpression": "Power tree"
+            },
+            {
+              "icon": "SquareTerminal",
+              "label": "Console",
+              "id": "ribbon/results/result-views/console",
+              "sourceLine": 4024,
+              "handler": "() => setDock(\"Console\")",
+              "disabledWhen": "false",
+              "activeWhen": "dock === \"Console\"",
+              "labelExpression": "Console"
+            }
+          ]
+        },
+        {
+          "label": "VISUALIZATION",
+          "dynamic": false,
+          "tools": [
+            {
+              "icon": "ChartScatter",
+              "label": "Fields",
+              "id": "ribbon/results/visualization/fields",
+              "sourceLine": 4024,
+              "handler": "() => setResultVisualizerOpen(true)",
+              "disabledWhen": "false",
+              "activeWhen": "resultVisualizerOpen",
+              "labelExpression": "Fields"
+            },
+            {
+              "icon": "ChartSpline",
+              "label": "Voltage / current",
+              "id": "ribbon/results/visualization/voltage-current",
+              "sourceLine": 4024,
+              "handler": "() => setResultVisualizerOpen(true)",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "Voltage / current"
+            },
+            {
+              "icon": "Grid3X3",
+              "label": "Mesh",
+              "id": "ribbon/results/visualization/mesh",
+              "sourceLine": 4024,
+              "handler": "() => setResultVisualizerOpen(true)",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "Mesh"
+            },
+            {
+              "icon": "Crosshair",
+              "label": "Probe overlay",
+              "id": "ribbon/results/visualization/probe-overlay",
+              "sourceLine": 4024,
+              "handler": "openProbeTable",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "Probe overlay"
+            }
+          ]
+        },
+        {
+          "label": "REVISION REVIEW",
+          "dynamic": false,
+          "tools": [
+            {
+              "icon": "GitCompareArrows",
+              "label": "Compare",
+              "id": "ribbon/results/revision-review/compare",
+              "sourceLine": 4024,
+              "handler": "() => comparisonInputRef.current?.click()",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "Compare"
+            },
+            {
+              "icon": "BadgeCheck",
+              "label": "Limits",
+              "id": "ribbon/results/revision-review/limits",
+              "sourceLine": 4024,
+              "handler": "() => setRightOpen(true)",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "Limits"
+            },
+            {
+              "icon": "FileChartColumn",
+              "label": "Report",
+              "id": "ribbon/results/revision-review/report",
+              "sourceLine": 4024,
+              "handler": "generateReport",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "Report"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "tab": "Reports",
+      "icon": "FileChartColumn",
+      "groups": [
+        {
+          "label": "REPORT",
+          "dynamic": false,
+          "tools": [
+            {
+              "icon": "BookOpenCheck",
+              "label": "Preview",
+              "id": "ribbon/reports/report/preview",
+              "sourceLine": 4026,
+              "handler": "generateReport",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "Preview"
+            },
+            {
+              "icon": "Printer",
+              "label": "Print / PDF",
+              "id": "ribbon/reports/report/print-pdf",
+              "sourceLine": 4026,
+              "handler": "() => { generateReport(); setStatus(\"Report preview ready; choose Print for printer or PDF output\"); }",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "Print / PDF"
+            },
+            {
+              "icon": "ChartNoAxesCombined",
+              "label": "Analytics",
+              "id": "ribbon/reports/report/analytics",
+              "sourceLine": 4026,
+              "handler": "generateReport",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "Analytics"
+            }
+          ]
+        },
+        {
+          "label": "DATA EXPORT",
+          "dynamic": false,
+          "tools": [
+            {
+              "icon": "FileSpreadsheet",
+              "label": "Probe CSV",
+              "id": "ribbon/reports/data-export/probe-csv",
+              "sourceLine": 4026,
+              "handler": "exportProbeCsv",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "Probe CSV"
+            },
+            {
+              "icon": "FileInput",
+              "label": "Touchstone",
+              "id": "ribbon/reports/data-export/touchstone",
+              "sourceLine": 4026,
+              "handler": "() => openSiWorkbench(\"workflow\", \"channel\")",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "Touchstone"
+            },
+            {
+              "icon": "Microchip",
+              "label": "SPICE",
+              "id": "ribbon/reports/data-export/spice",
+              "sourceLine": 4026,
+              "handler": "() => setSpiceOpen(true)",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "SPICE"
+            }
+          ]
+        },
+        {
+          "label": "CAD AND PACKAGE",
+          "dynamic": false,
+          "tools": [
+            {
+              "icon": "Cuboid",
+              "label": "STEP",
+              "id": "ribbon/reports/cad-and-package/step",
+              "sourceLine": 4026,
+              "handler": "() => void exportStep()",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "STEP"
+            },
+            {
+              "icon": "Save",
+              "label": "Save results",
+              "id": "ribbon/reports/cad-and-package/save-results",
+              "sourceLine": 4026,
+              "handler": "exportReport",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "Save results"
+            },
+            {
+              "icon": "FolderOpen",
+              "label": "Load results",
+              "id": "ribbon/reports/cad-and-package/load-results",
+              "sourceLine": 4026,
+              "handler": "loadResults",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "Load results"
+            },
+            {
+              "icon": "CopyPlus",
+              "label": "Save instance",
+              "id": "ribbon/reports/cad-and-package/save-instance",
+              "sourceLine": 4026,
+              "handler": "saveInstance",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "Save instance"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "tab": "Extensions",
+      "icon": "Puzzle",
+      "groups": [
+        {
+          "label": "BROWSE",
+          "dynamic": false,
+          "tools": [
+            {
+              "icon": "Puzzle",
+              "label": "Extension manager",
+              "id": "ribbon/extensions/browse/extension-manager",
+              "sourceLine": 4028,
+              "handler": "() => void openExtensionManager()",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "Extension manager"
+            },
+            {
+              "icon": "Activity",
+              "label": "Refresh",
+              "id": "ribbon/extensions/browse/refresh",
+              "sourceLine": 4028,
+              "handler": "() => void openExtensionManager()",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "Refresh"
+            }
+          ]
+        },
+        {
+          "label": "SELECT EXTENSION",
+          "dynamic": true,
+          "tools": [
+            {
+              "icon": "Settings2",
+              "label": "Manage",
+              "id": "ribbon/extensions/select-extension/manage",
+              "sourceLine": 4029,
+              "handler": "() => void openExtensionManager(activeToolbarExtension.id)",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "Manage"
+            }
+          ]
+        },
+        {
+          "label": "AVAILABLE CAPABILITIES",
+          "dynamic": true,
+          "tools": []
+        }
+      ]
+    },
+    {
+      "tab": "Settings",
+      "icon": "Settings2",
+      "groups": [
+        {
+          "label": "APPLICATION",
+          "dynamic": false,
+          "tools": [
+            {
+              "icon": "Settings2",
+              "label": "Settings",
+              "id": "ribbon/settings/application/settings",
+              "sourceLine": 4034,
+              "handler": "() => setPreferencesOpen(true)",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "Settings"
+            },
+            {
+              "icon": "SquareTerminal",
+              "label": "Python",
+              "id": "ribbon/settings/application/python",
+              "sourceLine": 4034,
+              "handler": "() => setPythonOpen(true)",
+              "disabledWhen": "false",
+              "activeWhen": "pythonOpen",
+              "labelExpression": "Python"
+            },
+            {
+              "icon": "Puzzle",
+              "label": "Extensions",
+              "id": "ribbon/settings/application/extensions",
+              "sourceLine": 4034,
+              "handler": "() => void openExtensionManager()",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "Extensions"
+            },
+            {
+              "icon": "Cpu",
+              "label": "External engines",
+              "id": "ribbon/settings/application/external-engines",
+              "sourceLine": 4034,
+              "handler": "() => void openExternalEngineCenter()",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "External engines"
+            },
+            {
+              "icon": "PackageSearch",
+              "label": "Dependencies",
+              "id": "ribbon/settings/application/dependencies",
+              "sourceLine": 4034,
+              "handler": "() => void checkDependencies()",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "Dependencies"
+            },
+            {
+              "icon": "BadgeCheck",
+              "label": "Verification",
+              "id": "ribbon/settings/application/verification",
+              "sourceLine": 4034,
+              "handler": "() => setBenchmarkOpen(true)",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "Verification"
+            }
+          ]
+        },
+        {
+          "label": "LOCAL AUTOMATION",
+          "dynamic": false,
+          "tools": [
+            {
+              "icon": "ServerCog",
+              "label": "LLM / MCP",
+              "id": "ribbon/settings/local-automation/llm-mcp",
+              "sourceLine": 4034,
+              "handler": "() => setMcpBridgePanelOpen(true)",
+              "disabledWhen": "!desktopShell",
+              "activeWhen": "mcpBridgePanelOpen",
+              "labelExpression": "LLM / MCP"
+            }
+          ]
+        },
+        {
+          "label": "DESIGN LIBRARIES",
+          "dynamic": false,
+          "tools": [
+            {
+              "icon": "Layers3",
+              "label": "Stackup",
+              "id": "ribbon/settings/design-libraries/stackup",
+              "sourceLine": 4034,
+              "handler": "() => setStackupOpen(true)",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "Stackup"
+            },
+            {
+              "icon": "LibraryBig",
+              "label": "3D library",
+              "id": "ribbon/settings/design-libraries/3d-library",
+              "sourceLine": 4034,
+              "handler": "() => setModelLibraryOpen(true)",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "3D library"
+            },
+            {
+              "icon": "Boxes",
+              "label": "Models",
+              "id": "ribbon/settings/design-libraries/models",
+              "sourceLine": 4034,
+              "handler": "() => setShowModels(!showModels)",
+              "disabledWhen": "false",
+              "activeWhen": "showModels",
+              "labelExpression": "Models"
+            }
+          ]
+        },
+        {
+          "label": "INTERFACE",
+          "dynamic": false,
+          "tools": [
+            {
+              "icon": "Keyboard",
+              "label": "Shortcuts",
+              "id": "ribbon/settings/interface/shortcuts",
+              "sourceLine": 4034,
+              "handler": "() => setShortcutsOpen(true)",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "Shortcuts"
+            },
+            {
+              "icon": "MemoryStick",
+              "label": "Resources",
+              "id": "ribbon/settings/interface/resources",
+              "sourceLine": 4034,
+              "handler": "() => setResourceOpen(true)",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "Resources"
+            },
+            {
+              "icon": "BookOpenCheck",
+              "label": "User guide",
+              "id": "ribbon/settings/interface/user-guide",
+              "sourceLine": 4034,
+              "handler": "() => setHelpOpen(true)",
+              "disabledWhen": "false",
+              "activeWhen": "false",
+              "labelExpression": "User guide"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "menus": [
+    {
+      "label": "File",
+      "items": [
+        {
+          "label": "New project",
+          "icon": "FilePlus",
+          "shortcut": "Ctrl+N",
+          "id": "menu/file/new-project",
+          "sourceLine": 4135,
+          "handler": "() => { newProject(); setMenu(null); }",
+          "disabledWhen": "false",
+          "activeWhen": "false",
+          "labelExpression": "New project"
+        },
+        {
+          "label": "Project manager",
+          "icon": "FileArchive",
+          "id": "menu/file/project-manager",
+          "sourceLine": 4136,
+          "handler": "() => { setProjectManagerOpen(true); setMenu(null); }",
+          "disabledWhen": "false",
+          "activeWhen": "false",
+          "labelExpression": "Project manager"
+        },
+        {
+          "label": "Simulation studies",
+          "icon": "ListTree",
+          "id": "menu/file/simulation-studies",
+          "sourceLine": 4137,
+          "handler": "() => { setStudyManagerOpen(true); setMenu(null); }",
+          "disabledWhen": "false",
+          "activeWhen": "false",
+          "labelExpression": "Simulation studies"
+        },
+        {
+          "label": "Open project",
+          "icon": "FolderOpen",
+          "shortcut": "Ctrl+O",
+          "id": "menu/file/open-project",
+          "sourceLine": 4138,
+          "handler": "() => { void openProject(); setMenu(null); }",
+          "disabledWhen": "false",
+          "activeWhen": "false",
+          "labelExpression": "Open project"
+        },
+        {
+          "label": "Save project",
+          "icon": "Save",
+          "shortcut": "Ctrl+S",
+          "id": "menu/file/save-project",
+          "sourceLine": 4139,
+          "handler": "() => { void saveProject(); setMenu(null); }",
+          "disabledWhen": "false",
+          "activeWhen": "false",
+          "labelExpression": "Save project"
+        },
+        {
+          "label": "Save as",
+          "icon": "Save",
+          "shortcut": "Ctrl+Shift+S",
+          "id": "menu/file/save-as",
+          "sourceLine": 4140,
+          "handler": "() => { void saveProject(projectFileName(projectName), true); setMenu(null); }",
+          "disabledWhen": "false",
+          "activeWhen": "false",
+          "labelExpression": "Save as"
+        },
+        {
+          "label": "Save project copy without results",
+          "icon": "Save",
+          "id": "menu/file/save-project-copy-without-results",
+          "sourceLine": 4141,
+          "handler": "() => { saveProjectWithoutResults(); setMenu(null); }",
+          "disabledWhen": "false",
+          "activeWhen": "false",
+          "labelExpression": "Save project copy without results"
+        },
+        {
+          "label": "Save results file",
+          "icon": "Save",
+          "id": "menu/file/save-results-file",
+          "sourceLine": 4142,
+          "handler": "() => { void exportReport(); setMenu(null); }",
+          "disabledWhen": "false",
+          "activeWhen": "false",
+          "labelExpression": "Save results file"
+        },
+        {
+          "label": "Open results file",
+          "icon": "FolderOpen",
+          "id": "menu/file/open-results-file",
+          "sourceLine": 4143,
+          "handler": "() => { loadResults(); setMenu(null); }",
+          "disabledWhen": "false",
+          "activeWhen": "false",
+          "labelExpression": "Open results file"
+        },
+        {
+          "label": "Import ODB++ archive",
+          "icon": "Upload",
+          "id": "menu/file/import-odb-archive",
+          "sourceLine": 4144,
+          "handler": "() => { void importOdbBoard(); setMenu(null); }",
+          "disabledWhen": "false",
+          "activeWhen": "false",
+          "labelExpression": "Import ODB++ archive"
+        },
+        {
+          "label": "Import ODB++ folder",
+          "icon": "FolderOpen",
+          "id": "menu/file/import-odb-folder",
+          "sourceLine": 4145,
+          "handler": "() => { void importOdbBoard(true); setMenu(null); }",
+          "disabledWhen": "false",
+          "activeWhen": "false",
+          "labelExpression": "Import ODB++ folder"
+        },
+        {
+          "label": "Save instance",
+          "icon": "Copy",
+          "id": "menu/file/save-instance",
+          "sourceLine": 4146,
+          "handler": "() => { saveInstance(); setMenu(null); }",
+          "disabledWhen": "false",
+          "activeWhen": "false",
+          "labelExpression": "Save instance"
+        },
+        {
+          "label": "Preview report",
+          "icon": "FileOutput",
+          "id": "menu/file/preview-report",
+          "sourceLine": 4147,
+          "handler": "() => { generateReport(); setMenu(null); }",
+          "disabledWhen": "false",
+          "activeWhen": "false",
+          "labelExpression": "Preview report"
+        },
+        {
+          "label": "Export STEP",
+          "icon": "CircuitBoard",
+          "id": "menu/file/export-step",
+          "sourceLine": 4148,
+          "handler": "() => { void exportStep(); setMenu(null); }",
+          "disabledWhen": "false",
+          "activeWhen": "false",
+          "labelExpression": "Export STEP"
+        }
+      ]
+    },
+    {
+      "label": "Edit",
+      "items": [
+        {
+          "label": "Undo",
+          "icon": "Undo2",
+          "shortcut": "Ctrl+Z",
+          "id": "menu/edit/undo",
+          "sourceLine": 4151,
+          "handler": "() => { undo(); setMenu(null); }",
+          "disabledWhen": "false",
+          "activeWhen": "false",
+          "labelExpression": "Undo"
+        },
+        {
+          "label": "Redo",
+          "icon": "Redo2",
+          "shortcut": "Ctrl+Y",
+          "id": "menu/edit/redo",
+          "sourceLine": 4152,
+          "handler": "() => { redo(); setMenu(null); }",
+          "disabledWhen": "false",
+          "activeWhen": "false",
+          "labelExpression": "Redo"
+        },
+        {
+          "label": "Copy context",
+          "icon": "Copy",
+          "shortcut": "Ctrl+C",
+          "id": "menu/edit/copy-context",
+          "sourceLine": 4153,
+          "handler": "() => { void copySelection(); setMenu(null); }",
+          "disabledWhen": "false",
+          "activeWhen": "false",
+          "labelExpression": "Copy context"
+        },
+        {
+          "label": "Paste context",
+          "icon": "Clipboard",
+          "shortcut": "Ctrl+V",
+          "id": "menu/edit/paste-context",
+          "sourceLine": 4154,
+          "handler": "() => { void pasteSelection(); setMenu(null); }",
+          "disabledWhen": "false",
+          "activeWhen": "false",
+          "labelExpression": "Paste context"
+        }
+      ]
+    },
+    {
+      "label": "View",
+      "items": [
+        {
+          "label": "Minimize command ribbon",
+          "icon": "PanelTop",
+          "id": "menu/view/minimize-command-ribbon"
+        },
+        {
+          "label": "Layer manager",
+          "icon": "Layers3",
+          "id": "menu/view/layer-manager",
+          "sourceLine": 4158,
+          "handler": "() => { setLayersOpen(true); setMenu(null); }",
+          "disabledWhen": "false",
+          "activeWhen": "false",
+          "labelExpression": "Layer manager"
+        },
+        {
+          "label": "3D board view",
+          "icon": "Eye",
+          "id": "menu/view/3d-board-view",
+          "sourceLine": 4159,
+          "handler": "() => { setViewMode(\"3D\"); setMenu(null); }",
+          "disabledWhen": "false",
+          "activeWhen": "false",
+          "labelExpression": "3D board view"
+        },
+        {
+          "label": "Show net names",
+          "icon": "Route",
+          "id": "menu/view/show-net-names"
+        },
+        {
+          "label": "2D layout view",
+          "icon": "EyeOff",
+          "id": "menu/view/2d-layout-view",
+          "sourceLine": 4161,
+          "handler": "() => { setViewMode(\"2D\"); setMenu(null); }",
+          "disabledWhen": "false",
+          "activeWhen": "false",
+          "labelExpression": "2D layout view"
+        },
+        {
+          "label": "Design navigator",
+          "icon": "PanelLeft",
+          "id": "menu/view/design-navigator",
+          "sourceLine": 4162,
+          "handler": "() => { setLeftOpen(current => !current); setMenu(null); }",
+          "disabledWhen": "false",
+          "activeWhen": "false",
+          "labelExpression": "Design navigator"
+        },
+        {
+          "label": "Analysis panel",
+          "icon": "PanelRight",
+          "id": "menu/view/analysis-panel",
+          "sourceLine": 4163,
+          "handler": "() => { setRightOpen(current => !current); setMenu(null); }",
+          "disabledWhen": "false",
+          "activeWhen": "false",
+          "labelExpression": "Analysis panel"
+        },
+        {
+          "label": "Results and console",
+          "icon": "PanelBottom",
+          "id": "menu/view/results-and-console",
+          "sourceLine": 4164,
+          "handler": "() => { setBottomOpen(current => !current); setMenu(null); }",
+          "disabledWhen": "false",
+          "activeWhen": "false",
+          "labelExpression": "Results and console"
+        }
+      ]
+    },
+    {
+      "label": "Analysis",
+      "items": [
+        {
+          "label": "DC PI setup",
+          "icon": "Gauge",
+          "id": "menu/analysis/dc-pi-setup",
+          "sourceLine": 4167,
+          "handler": "() => { openAnalysisSetup(\"DC IR Drop\"); setMenu(null); }",
+          "disabledWhen": "false",
+          "activeWhen": "false",
+          "labelExpression": "DC PI setup"
+        },
+        {
+          "label": "AC impedance setup",
+          "icon": "Waves",
+          "id": "menu/analysis/ac-impedance-setup",
+          "sourceLine": 4168,
+          "handler": "() => { openAnalysisSetup(\"AC Impedance Sweep\"); setMenu(null); }",
+          "disabledWhen": "false",
+          "activeWhen": "false",
+          "labelExpression": "AC impedance setup"
+        },
+        {
+          "label": "Transient PI setup",
+          "icon": "Activity",
+          "id": "menu/analysis/transient-pi-setup",
+          "sourceLine": 4169,
+          "handler": "() => { openAnalysisSetup(\"Transient PI\"); setMenu(null); }",
+          "disabledWhen": "false",
+          "activeWhen": "false",
+          "labelExpression": "Transient PI setup"
+        },
+        {
+          "label": "EM workspace",
+          "icon": "RadioTower",
+          "id": "menu/analysis/em-workspace",
+          "sourceLine": 4170,
+          "handler": "() => { setTab(\"EM\"); setRightOpen(true); setMenu(null); }",
+          "disabledWhen": "false",
+          "activeWhen": "false",
+          "labelExpression": "EM workspace"
+        },
+        {
+          "label": "SPICE workbench",
+          "icon": "CircuitBoard",
+          "id": "menu/analysis/spice-workbench",
+          "sourceLine": 4171,
+          "handler": "() => { setSpiceOpen(true); setMenu(null); }",
+          "disabledWhen": "false",
+          "activeWhen": "false",
+          "labelExpression": "SPICE workbench"
+        },
+        {
+          "label": "Result visualization",
+          "icon": "BarChart3",
+          "id": "menu/analysis/result-visualization",
+          "sourceLine": 4172,
+          "handler": "() => { setResultVisualizerOpen(true); setMenu(null); }",
+          "disabledWhen": "false",
+          "activeWhen": "false",
+          "labelExpression": "Result visualization"
+        }
+      ]
+    },
+    {
+      "label": "Reports",
+      "items": [
+        {
+          "label": "Engineering report preview",
+          "icon": "BookOpen",
+          "id": "menu/reports/engineering-report-preview",
+          "sourceLine": 4175,
+          "handler": "() => { generateReport(); setMenu(null); }",
+          "disabledWhen": "false",
+          "activeWhen": "false",
+          "labelExpression": "Engineering report preview"
+        },
+        {
+          "label": "Print or export report",
+          "icon": "FileOutput",
+          "id": "menu/reports/print-or-export-report",
+          "sourceLine": 4176,
+          "handler": "() => { generateReport(); setStatus(\"Report preview ready; choose Print or Export HTML\"); setMenu(null); }",
+          "disabledWhen": "false",
+          "activeWhen": "false",
+          "labelExpression": "Print or export report"
+        },
+        {
+          "label": "Export probe table",
+          "icon": "Table2",
+          "id": "menu/reports/export-probe-table",
+          "sourceLine": 4177,
+          "handler": "() => { exportProbeCsv(); setMenu(null); }",
+          "disabledWhen": "false",
+          "activeWhen": "false",
+          "labelExpression": "Export probe table"
+        }
+      ]
+    },
+    {
+      "label": "Project",
+      "items": [
+        {
+          "label": "Validate design",
+          "icon": "ShieldAlert",
+          "id": "menu/project/validate-design",
+          "sourceLine": 4180,
+          "handler": "() => { validateDesign(); setMenu(null); }",
+          "disabledWhen": "false",
+          "activeWhen": "false",
+          "labelExpression": "Validate design"
+        },
+        {
+          "label": "Power tree",
+          "icon": "Network",
+          "id": "menu/project/power-tree",
+          "sourceLine": 4181,
+          "handler": "() => { setTopologyEditor(\"pi\"); setMenu(null); }",
+          "disabledWhen": "false",
+          "activeWhen": "false",
+          "labelExpression": "Power tree"
+        },
+        {
+          "label": "Project and application settings",
+          "icon": "Settings2",
+          "id": "menu/project/project-and-application-settings",
+          "sourceLine": 4182,
+          "handler": "() => { setPreferencesOpen(true); setMenu(null); }",
+          "disabledWhen": "false",
+          "activeWhen": "false",
+          "labelExpression": "Project and application settings"
+        }
+      ]
+    },
+    {
+      "label": "Tools",
+      "items": [
+        {
+          "label": "Python workspace",
+          "icon": "SquareTerminal",
+          "id": "menu/tools/python-workspace",
+          "sourceLine": 4185,
+          "handler": "() => { setPythonOpen(true); setMenu(null); }",
+          "disabledWhen": "false",
+          "activeWhen": "false",
+          "labelExpression": "Python workspace"
+        },
+        {
+          "label": "Solver verification",
+          "icon": "Gauge",
+          "id": "menu/tools/solver-verification",
+          "sourceLine": 4186,
+          "handler": "() => { setBenchmarkOpen(true); setMenu(null); }",
+          "disabledWhen": "false",
+          "activeWhen": "false",
+          "labelExpression": "Solver verification"
+        },
+        {
+          "label": "Dependency status",
+          "icon": "ShieldAlert",
+          "id": "menu/tools/dependency-status",
+          "sourceLine": 4187,
+          "handler": "() => { void checkDependencies(); setMenu(null); }",
+          "disabledWhen": "false",
+          "activeWhen": "false",
+          "labelExpression": "Dependency status"
+        },
+        {
+          "label": "Shortcut manager",
+          "icon": "Keyboard",
+          "id": "menu/tools/shortcut-manager",
+          "sourceLine": 4188,
+          "handler": "() => { setShortcutsOpen(true); setMenu(null); }",
+          "disabledWhen": "false",
+          "activeWhen": "false",
+          "labelExpression": "Shortcut manager"
+        }
+      ]
+    },
+    {
+      "label": "Extensions",
+      "items": [
+        {
+          "label": "Browse and manage extensions",
+          "icon": "Puzzle",
+          "id": "menu/extensions/browse-and-manage-extensions",
+          "sourceLine": 4191,
+          "handler": "() => { void openExtensionManager(); setMenu(null); }",
+          "disabledWhen": "false",
+          "activeWhen": "false",
+          "labelExpression": "Browse and manage extensions"
+        }
+      ]
+    },
+    {
+      "label": "Help",
+      "items": [
+        {
+          "label": "Help and user guide",
+          "icon": "BookOpen",
+          "id": "menu/help/help-and-user-guide",
+          "sourceLine": 4195,
+          "handler": "() => { setHelpOpen(true); setMenu(null); }",
+          "disabledWhen": "false",
+          "activeWhen": "false",
+          "labelExpression": "Help and user guide"
+        },
+        {
+          "label": "Interactive analysis guide",
+          "icon": "Focus",
+          "id": "menu/help/interactive-analysis-guide",
+          "sourceLine": 4196,
+          "handler": "() => { setGuideOpen(true); setMenu(null); }",
+          "disabledWhen": "false",
+          "activeWhen": "false",
+          "labelExpression": "Interactive analysis guide"
+        },
+        {
+          "label": "Accuracy and validation",
+          "icon": "Gauge",
+          "id": "menu/help/accuracy-and-validation",
+          "sourceLine": 4197,
+          "handler": "() => { setBenchmarkOpen(true); setMenu(null); }",
+          "disabledWhen": "false",
+          "activeWhen": "false",
+          "labelExpression": "Accuracy and validation"
+        },
+        {
+          "label": "Report bug",
+          "icon": "BadgeAlert",
+          "id": "menu/help/report-bug",
+          "sourceLine": 4198,
+          "handler": "() => { setMenu(null); void openBugReport(tab).catch(() => setStatus(\"Could not open the bug report. Visit github.com/wayri/SPIKE-Main/issues/new\")); }",
+          "disabledWhen": "false",
+          "activeWhen": "false",
+          "labelExpression": "Report bug"
+        },
+        {
+          "label": "About SPIKE",
+          "icon": "CircleHelp",
+          "id": "menu/help/about-spike",
+          "sourceLine": 4199,
+          "handler": "() => { setAboutOpen(true); setMenu(null); }",
+          "disabledWhen": "false",
+          "activeWhen": "false",
+          "labelExpression": "About SPIKE"
+        }
+      ]
+    }
+  ],
+  "boardView": [
+    {
+      "label": "2D",
+      "icon": "MapPinPlus",
+      "id": "board/2d"
+    },
+    {
+      "label": "3D",
+      "icon": "Cuboid",
+      "id": "board/3d"
+    },
+    {
+      "label": "Layers",
+      "icon": "GalleryVertical",
+      "id": "board/layers"
+    },
+    {
+      "label": "Models",
+      "icon": "Boxes",
+      "id": "board/models"
+    },
+    {
+      "label": "Translucent",
+      "icon": "Blend",
+      "id": "board/translucent"
+    },
+    {
+      "label": "Fit",
+      "icon": "Focus",
+      "id": "board/fit"
+    },
+    {
+      "label": "Top",
+      "icon": "PanelTop",
+      "id": "board/top"
+    },
+    {
+      "label": "Bottom",
+      "icon": "PanelBottom",
+      "id": "board/bottom"
+    },
+    {
+      "label": "Iso",
+      "icon": "Axis3D",
+      "id": "board/iso"
+    }
+  ]
+}

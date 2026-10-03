@@ -2,8 +2,8 @@ import unittest
 
 import pyarrow as pa
 
-from python.spike_core.contracts import DesignIR
-from python.spike_core.design_ir_v2 import DesignIRV2
+from python.spike_core.contracts import SpiDeR
+from python.spike_core.spider_v2 import SpiDeRV2
 from python.spike_core.geometry_arrow import (
     GEOMETRY_ARROW_CONTRACT_V1, GEOMETRY_ARROW_CONTRACT_V2, GEOMETRY_ARROW_CONTRACT_V3,
     GEOMETRY_ARROW_CONTRACT_V4, GeometryArrowError,
@@ -11,7 +11,7 @@ from python.spike_core.geometry_arrow import (
 )
 
 
-def fixture(*, reverse: bool = False, path: bool = False) -> DesignIRV2:
+def fixture(*, reverse: bool = False, path: bool = False) -> SpiDeRV2:
     tracks = [
         {"id": "T2", "net_id": "N1", "layer": "TOP", "start": [1, 0], "end": [2, 0], "width": 0.2},
         {"id": "T1", "net_id": "N1", "layer": "TOP", "start": [0, 0], "end": [1, 0], "width": 0.2},
@@ -25,7 +25,7 @@ def fixture(*, reverse: bool = False, path: bool = False) -> DesignIRV2:
             })
     if reverse:
         tracks.reverse()
-    legacy = DesignIR(
+    legacy = SpiDeR(
         design_id="arrow-fixture",
         name="Arrow fixture",
         source_format="fixture",
@@ -52,7 +52,7 @@ def fixture(*, reverse: bool = False, path: bool = False) -> DesignIRV2:
             }],
         },
     )
-    return DesignIRV2.from_v1(legacy, source_digest="a" * 64)
+    return SpiDeRV2.from_v1(legacy, source_digest="a" * 64)
 
 
 class GeometryArrowTests(unittest.TestCase):
@@ -74,7 +74,7 @@ class GeometryArrowTests(unittest.TestCase):
             validate_geometry_arrow(data[:64], design)
         other = fixture()
         other.design_id = "different-design"
-        with self.assertRaisesRegex(GeometryArrowError, "canonical uncompressed DesignIR projection"):
+        with self.assertRaisesRegex(GeometryArrowError, "canonical uncompressed SpiDeR projection"):
             validate_geometry_arrow(data, other)
 
         reader = pa.ipc.open_file(pa.BufferReader(data))
@@ -84,7 +84,7 @@ class GeometryArrowTests(unittest.TestCase):
                 writer.write_batch(reader.get_batch(batch_index))
         compressed = sink.getvalue().to_pybytes()
         self.assertNotEqual(compressed, data)
-        with self.assertRaisesRegex(GeometryArrowError, "canonical uncompressed DesignIR projection"):
+        with self.assertRaisesRegex(GeometryArrowError, "canonical uncompressed SpiDeR projection"):
             validate_geometry_arrow(compressed, design)
 
     def test_validation_enforces_caller_controlled_ipc_and_row_budgets(self):
@@ -132,7 +132,7 @@ class GeometryArrowTests(unittest.TestCase):
             ],
             "fill_style_id": "SOLID", "fill_property": "FILL",
         }]
-        design = DesignIRV2.from_v1(legacy)
+        design = SpiDeRV2.from_v1(legacy)
         data = build_geometry_arrow(design)
 
         self.assertEqual(geometry_arrow_contract(design), GEOMETRY_ARROW_CONTRACT_V3)
@@ -140,10 +140,10 @@ class GeometryArrowTests(unittest.TestCase):
         zone = next(row for row in rows if row["kind"] == "zone")
         self.assertEqual((zone["fill_style_id"], zone["fill_property"]), ("SOLID", "FILL"))
         self.assertEqual(zone["boundary_rings"][1]["segments"][0]["center_mm"], {"x_mm": 1.5, "y_mm": 1.5})
-        self.assertEqual(data, build_geometry_arrow(DesignIRV2.from_dict(design.to_dict())))
+        self.assertEqual(data, build_geometry_arrow(SpiDeRV2.from_dict(design.to_dict())))
 
     def test_per_layer_land_profiles_use_deterministic_arrow_v4(self):
-        legacy = DesignIR(
+        legacy = SpiDeR(
             design_id="profile-fixture", name="Profile fixture", source_format="ipc-2581",
             layers=[{"id": "L1", "name": "TOP", "type": "copper"}, {"id": "L2", "name": "BOTTOM", "type": "copper"}],
             nets=[{"id": "N1", "name": "VCC"}],
@@ -157,11 +157,11 @@ class GeometryArrowTests(unittest.TestCase):
             }],
             metadata={"source_sha256": "b" * 64, "geometry_solver_ready": False},
         )
-        design = DesignIRV2.from_v1(legacy)
+        design = SpiDeRV2.from_v1(legacy)
         data = build_geometry_arrow(design)
 
         self.assertEqual(geometry_arrow_contract(design), GEOMETRY_ARROW_CONTRACT_V4)
-        self.assertEqual(data, build_geometry_arrow(DesignIRV2.from_dict(design.to_dict())))
+        self.assertEqual(data, build_geometry_arrow(SpiDeRV2.from_dict(design.to_dict())))
         row = validate_geometry_arrow(data, design)[0]
         self.assertEqual(row["land_profiles"][1], {
             "layer_id": design.vias[0].end_layer_id, "use": "regular", "shape": "circle",

@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="440" viewBox="0 0 1120 440" role="img" aria-labelledby="title desc">
+  <title id="title">SPIKE FreeCAD workbench workflow</title>
+  <desc id="desc">KiCad board data enters the SPIKE worker and a linked FreeCAD document. The workbench sends explicit simulation requests to the worker, receives status and results, and returns reviewed assembly placement feedback to SPIKE.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0 0 10 5 0 10Z" fill="#5a6b86"/></marker>
+    <style>
+      .bg{fill:#f7f9fc}.box{fill:#fff;stroke:#c9d3e1;stroke-width:2}.head{font:700 24px system-ui,sans-serif;fill:#183354}.body{font:16px system-ui,sans-serif;fill:#43536a}.small{font:14px system-ui,sans-serif;fill:#596a80}.line{fill:none;stroke:#5a6b86;stroke-width:3;marker-end:url(#arrow)}.feedback{fill:none;stroke:#aa7435;stroke-width:2.5;stroke-dasharray:9 6;marker-end:url(#arrow)}
+    </style>
+  </defs>
+  <rect class="bg" width="1120" height="440" rx="20"/>
+  <text class="head" x="40" y="52">A linked design and an explicit simulation request</text>
+  <rect class="box" x="40" y="110" width="270" height="180" rx="14"/>
+  <text class="head" x="64" y="151">KiCad PCB</text>
+  <text class="body" x="64" y="188">Saved .kicad_pcb</text>
+  <text class="small" x="64" y="216">Parts · nets · footprint data</text>
+  <text class="small" x="64" y="242">Path + source digest</text>
+  <rect class="box" x="425" y="110" width="270" height="180" rx="14"/>
+  <text class="head" x="449" y="151">FreeCAD workbench</text>
+  <text class="body" x="449" y="188">Linked FCStd document</text>
+  <text class="small" x="449" y="216">Reference bounds + markers</text>
+  <text class="small" x="449" y="242">Solver and assembly controls</text>
+  <rect class="box" x="810" y="110" width="270" height="180" rx="14"/>
+  <text class="head" x="834" y="151">SPIKE worker</text>
+  <text class="body" x="834" y="188">DesignIR + solver methods</text>
+  <text class="small" x="834" y="216">Preflight · run · diagnostics</text>
+  <text class="small" x="834" y="242">Actual model status</text>
+  <path class="line" d="M310 169 H413"/><text class="small" x="326" y="154">load / refresh</text>
+  <path class="line" d="M695 169 H798"/><text class="small" x="706" y="154">JSON request</text>
+  <path class="line" d="M810 250 H707"/><text class="small" x="711" y="277">result + status</text>
+  <path class="feedback" d="M560 291 V365 H173 V301"/>
+  <text class="small" x="200" y="357">reviewed assembly feedback through SPIKE</text>
+  <text class="small" x="40" y="413">Board markers are reference geometry. Solver availability and validation are determined by SPIKE.</text>
+</svg>

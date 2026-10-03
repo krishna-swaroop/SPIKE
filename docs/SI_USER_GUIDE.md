@@ -6,7 +6,7 @@ This tutorial starts with the open-source [Marble v1.4.4 board](https://github.c
 
 ## 1. Get the board and inspect the physical path
 
-The local evaluation used Marble v1.4.4, commit `a426777d92c0f22a546d4740b419a3937e0c1f90`, with its KiCad PCB at `design/Marble.kicad_pcb`. That repository is CERN OHL v1.2; its source and license remain with the board author. See the [source record](CERN_MARBLE_EVALUATION_20260920.md). Download a release/source tree from the Marble project if it is not already present; the board file is deliberately outside SPIKE source control.
+The local evaluation used Marble v1.4.4, commit `a426777d92c0f22a546d4740b419a3937e0c1f90`, with its KiCad PCB at `design/Marble.kicad_pcb`. That repository is CERN OHL v1.2; its source and license remain with the board author. See the source record. Download a release/source tree from the Marble project if it is not already present; the board file is deliberately outside SPIKE source control.
 
 1. Start the native desktop using [Development setup](../DEVELOPMENT.md). From this repository, `Set-Location app; npm.cmd run tauri dev` is the Windows development command. A packaged desktop can be launched directly.
 2. Choose **Home -> Import** and select `design/Marble.kicad_pcb`; save the `.spike` project. Check **Home -> Issues / Import Quality** before interpreting geometry.

@@ -6,8 +6,8 @@ from pathlib import Path
 
 from jsonschema import Draft202012Validator
 
-from python.spike_core.design_ir_v2 import DesignIRV2
-from python.spike_core.design_ir_v2_schema import (
+from python.spike_core.spider_v2 import SpiDeRV2
+from python.spike_core.spider_v2_schema import (
     Arc,
     Component,
     CoordinateFrame,
@@ -78,7 +78,7 @@ class SpikesLayoutGeometryHandoffTests(unittest.TestCase):
             source_fill_representation="flat_polygon_path",
             source_fill_provenance_complete=True,
         )
-        return DesignIRV2(
+        return SpiDeRV2(
             design_id="board-1", name="Supported subset",
             source=SourceIdentity(source_format="kicad", source_digest="1" * 64),
             frame=CoordinateFrame(
@@ -179,7 +179,7 @@ class SpikesLayoutGeometryHandoffTests(unittest.TestCase):
                 raw["frame"]["transform"][12] = 0.1
             else:
                 raw["frame"]["parent_frame_id"] = "assembly"
-            design = DesignIRV2.from_dict(raw)
+            design = SpiDeRV2.from_dict(raw)
             with self.subTest(change=change), self.assertRaises(SpikesLayoutAdapterError) as caught:
                 build_designir_layout_handoff(self._without_parent(design), design)
             self.assertEqual(caught.exception.code, "SPIKE-LAYOUT-HANDOFF-0003")
@@ -199,7 +199,7 @@ class SpikesLayoutGeometryHandoffTests(unittest.TestCase):
                              diameter_mm=0.3, owner_kind="none"),
         }
         for collection, item in additions.items():
-            design = DesignIRV2.from_dict(self.candidate.to_dict())
+            design = SpiDeRV2.from_dict(self.candidate.to_dict())
             getattr(design, collection).append(item)
             with self.subTest(collection=collection), self.assertRaises(SpikesLayoutAdapterError) as caught:
                 build_designir_layout_handoff(self._without_parent(design), design)
@@ -229,7 +229,7 @@ class SpikesLayoutGeometryHandoffTests(unittest.TestCase):
         cases.append(("unresolved-zone", zone))
 
         for label, raw in cases:
-            design = DesignIRV2.from_dict(raw)
+            design = SpiDeRV2.from_dict(raw)
             with self.subTest(label=label), self.assertRaises(SpikesLayoutAdapterError) as caught:
                 build_designir_layout_handoff(self._without_parent(design), design)
             self.assertEqual(caught.exception.code, "SPIKE-LAYOUT-HANDOFF-0004")
@@ -237,14 +237,14 @@ class SpikesLayoutGeometryHandoffTests(unittest.TestCase):
     def test_stackup_gap_and_implicit_via_plating_fail_closed(self):
         gap = copy.deepcopy(self.candidate.to_dict())
         gap["layers"][1]["z_mm"] = 0.04
-        design = DesignIRV2.from_dict(gap)
+        design = SpiDeRV2.from_dict(gap)
         with self.assertRaises(SpikesLayoutAdapterError) as caught:
             build_designir_layout_handoff(self._without_parent(design), design)
         self.assertEqual(caught.exception.code, "SPIKE-LAYOUT-HANDOFF-0005")
 
         implicit = copy.deepcopy(self.candidate.to_dict())
         implicit["vias"][0]["plating_mm"] = None
-        design = DesignIRV2.from_dict(implicit)
+        design = SpiDeRV2.from_dict(implicit)
         with self.assertRaises(SpikesLayoutAdapterError) as caught:
             build_designir_layout_handoff(self._without_parent(design), design)
         self.assertEqual(caught.exception.code, "SPIKE-LAYOUT-HANDOFF-0006")

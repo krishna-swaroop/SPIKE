@@ -8,7 +8,7 @@ from python.spike_core.assembly_analysis_scope import (
     validate_case_scope,
     write_case_scope,
 )
-from python.spike_core.contracts import DesignIR
+from python.spike_core.contracts import SpiDeR
 from python.spike_core.service import handle
 
 
@@ -43,7 +43,7 @@ def scope(**overrides):
 
 class AssemblyAnalysisScopeTests(unittest.TestCase):
     def test_active_board_scope_records_every_ignored_entity(self):
-        result = validate_assembly_analysis_scope(scope(), DesignIR(design_id="design-a"))
+        result = validate_assembly_analysis_scope(scope(), SpiDeR(design_id="design-a"))
         self.assertFalse(result["assembly_coupling"])
         self.assertEqual(result["ignored_entities"]["boards"], ["board-b"])
         self.assertEqual(result["ignored_entities"]["harnesses"], ["harness-1"])
@@ -52,14 +52,14 @@ class AssemblyAnalysisScopeTests(unittest.TestCase):
 
     def test_ambiguous_or_coupled_scope_fails_closed(self):
         with self.assertRaises(AssemblyAnalysisScopeError):
-            validate_assembly_analysis_scope(scope(active_board_id="missing"), DesignIR(design_id="design-a"))
+            validate_assembly_analysis_scope(scope(active_board_id="missing"), SpiDeR(design_id="design-a"))
         with self.assertRaises(AssemblyAnalysisScopeError):
-            validate_assembly_analysis_scope(scope(active_design_id="design-b"), DesignIR(design_id="design-a"))
+            validate_assembly_analysis_scope(scope(active_design_id="design-b"), SpiDeR(design_id="design-a"))
         with self.assertRaises(AssemblyAnalysisScopeError):
-            validate_assembly_analysis_scope(scope(mode="assembly_coupled"), DesignIR(design_id="design-a"))
+            validate_assembly_analysis_scope(scope(mode="assembly_coupled"), SpiDeR(design_id="design-a"))
 
     def test_prepared_case_requires_the_exact_bound_scope(self):
-        normalized = validate_assembly_analysis_scope(scope(), DesignIR(design_id="design-a"))
+        normalized = validate_assembly_analysis_scope(scope(), SpiDeR(design_id="design-a"))
         with tempfile.TemporaryDirectory() as directory:
             write_case_scope(directory, normalized)
             self.assertEqual(validate_case_scope(directory, normalized), normalized)

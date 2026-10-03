@@ -1,0 +1,26 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://spike.local/schemas/assembly-electrothermal-request-v1.schema.json",
+  "$comment":"SPDX-License-Identifier: Apache-2.0; Copyright (c) 2026 SigHarmonic. Structural and semantic validation both required. No automatic geometry extraction or universal device coverage.",
+  "title":"SPIKE retained assembly electrothermal request",
+  "type":"object","additionalProperties":false,
+  "required":["contract","geometry","thermal_problem","electrical","heat_sources","iteration","loss_accounting"],
+  "properties":{
+    "contract":{"const":"spike/assembly-electrothermal-request/v1"},
+    "geometry":{"allOf":[{"$ref":"assembly-field-handoff-request-v1.schema.json"},{"properties":{"domain":{"const":"thermal"}}}]},
+    "thermal_problem":{"$ref":"assembly-field-thermal-problem-v1.schema.json"},
+    "loss_accounting":{"const":"explicit_nonoverlapping_losses"},
+    "heat_sources":{"type":"array","maxItems":128,"items":{"$ref":"electrical-heat-source-v1.schema.json"}},
+    "electrical":{"type":"object","additionalProperties":false,"required":["materials","terminals","contacts"],"properties":{
+      "materials":{"type":"array","minItems":1,"maxItems":1024,"items":{"type":"object","additionalProperties":false,"required":["id","conductivity_s_m","temperature_coefficient_per_k","reference_temperature_k","temperature_range_k"],"properties":{
+        "id":{"$ref":"#/$defs/id"},"conductivity_s_m":{"type":"number","minimum":0},"temperature_coefficient_per_k":{"type":"number"},"reference_temperature_k":{"type":"number","exclusiveMinimum":0},"temperature_range_k":{"type":"array","minItems":2,"maxItems":2,"items":{"type":"number","exclusiveMinimum":0}}}}},
+      "terminals":{"type":"array","minItems":1,"maxItems":64,"items":{"type":"object","additionalProperties":false,"required":["id","face","voltage_v"],"properties":{"id":{"$ref":"#/$defs/id"},"face":{"$ref":"#/$defs/endpoint"},"voltage_v":{"type":"number"}}}},
+      "contacts":{"type":"array","maxItems":5000,"items":{"type":"object","additionalProperties":false,"required":["bond_id","face_pairs","electrical_contact_conductance_s_m2"],"properties":{"bond_id":{"$ref":"#/$defs/id"},"electrical_contact_conductance_s_m2":{"type":"number","exclusiveMinimum":0},"face_pairs":{"type":"array","minItems":1,"maxItems":256,"items":{"type":"object","additionalProperties":false,"required":["left","right"],"properties":{"left":{"$ref":"#/$defs/endpoint"},"right":{"$ref":"#/$defs/endpoint"}}}}}}}
+    }},
+    "iteration":{"type":"object","additionalProperties":false,"required":["initial_temperature_k","max_iterations","relaxation","temperature_tolerance_k","power_relative_tolerance"],"properties":{"initial_temperature_k":{"type":"number","exclusiveMinimum":0},"max_iterations":{"type":"integer","minimum":1,"maximum":50},"relaxation":{"type":"number","exclusiveMinimum":0,"maximum":1},"temperature_tolerance_k":{"type":"number","exclusiveMinimum":0},"power_relative_tolerance":{"type":"number","exclusiveMinimum":0}}}
+  },
+  "$defs":{
+    "id":{"type":"string","minLength":1,"maxLength":256,"pattern":"\\S"},
+    "endpoint":{"type":"object","additionalProperties":false,"required":["occurrence_id","face_id"],"properties":{"occurrence_id":{"$ref":"#/$defs/id"},"face_id":{"$ref":"#/$defs/id"}}}
+  }
+}

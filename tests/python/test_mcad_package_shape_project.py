@@ -10,9 +10,9 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from python.spike_core.contracts import DesignIR
-from python.spike_core.design_ir_v2 import DesignIRV2
-from python.spike_core.design_ir_v2_schema import canonical_uuid
+from python.spike_core.contracts import SpiDeR
+from python.spike_core.spider_v2 import SpiDeRV2
+from python.spike_core.spider_v2_schema import canonical_uuid
 from python.spike_core.mcad_package_shape import StepPackageShapeResult
 from python.spike_core.mcad_tessellation import StepTessellationResult
 from python.spike_core.project_package import read_project, write_spike_package
@@ -69,7 +69,7 @@ class McadPackageShapeProjectTests(unittest.TestCase):
             project_path = root / "assembly.spike"
             source_path = root / "case.step"
             source_path.write_bytes(STEP)
-            design = DesignIRV2.from_v1(DesignIR(
+            design = SpiDeRV2.from_v1(SpiDeR(
                 design_id="exact-shape", name="Exact shape", source_format="neutral",
                 layers=[{"id": 0, "name": "F.Cu"}], metadata={"source_sha256": "5" * 64},
             ))

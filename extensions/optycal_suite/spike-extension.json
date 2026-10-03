@@ -1,0 +1,184 @@
+{
+  "contract": "spike/extension/v1",
+  "api_version": 1,
+  "id": "spike.optycal-suite",
+  "name": "Optycal Suite",
+  "version": "0.1.0",
+  "provider": "SPIKE",
+  "description": "Study a distant PEC STEP structure illuminated by a solved EMerge complex antenna pattern using separately installed Optycal physical optics.",
+  "execution": "process",
+  "runtime": "python",
+  "entrypoint": "extension.py",
+  "state": "experimental",
+  "license": "Apache-2.0",
+  "bundled": true,
+  "ui": {
+    "menu_bar": true,
+    "title_bar": true,
+    "menu_items": [
+      "optycal-radiation"
+    ]
+  },
+  "permissions": [
+    "design.read",
+    "results.write"
+  ],
+  "limits": {
+    "timeout_seconds": 2100,
+    "max_result_bytes": 8388608
+  },
+  "contributes": {
+    "applications": [
+      {
+        "id": "optycal-probe",
+        "name": "Check Optycal runtime",
+        "category": "Simulation",
+        "description": "Check separately installed Optycal 0.2.0 and Gmsh without running a study.",
+        "output_contract": "spike/extension-result/v1"
+      },
+      {
+        "id": "optycal-preview",
+        "name": "Preview Optycal Python",
+        "category": "Simulation",
+        "description": "Prepare an EMerge-bound complex source and numerical PEC STEP mesh, then show the exact readable study script.",
+        "output_contract": "spike/extension-result/v1"
+      }
+    ],
+    "analyses": [
+      {
+        "id": "optycal-radiation",
+        "name": "Optycal structure radiation",
+        "description": "Compute approximate one-way PEC scattering and direct/scattered coherent interference from a solved EMerge far-zone source.",
+        "output_contract": "spike/v1",
+        "input_schema": {
+          "type": "object",
+          "required": [
+            "emerge_analysis_result",
+            "frequency_hz",
+            "step_path",
+            "antenna_aperture_mm",
+            "source_phase_assumption"
+          ],
+          "properties": {
+            "emerge_analysis_result": {
+              "type": "object",
+              "description": "Completed full-sphere complex EMerge radiation result bound to the current board."
+            },
+            "frequency_hz": {
+              "type": "number",
+              "minimum": 1000,
+              "maximum": 100000000000000
+            },
+            "step_path": {
+              "type": "string",
+              "minLength": 1
+            },
+            "structure_material": {
+              "type": "string",
+              "enum": [
+                "PEC"
+              ]
+            },
+            "antenna_aperture_mm": {
+              "type": "number",
+              "minimum": 0.001,
+              "maximum": 10000
+            },
+            "source_phase_assumption": {
+              "type": "string",
+              "enum": [
+                "emerge_farfield_coefficient_e_plus_jwt"
+              ]
+            },
+            "antenna_translation_mm": {
+              "type": "array",
+              "minItems": 3,
+              "maxItems": 3,
+              "items": {
+                "type": "number"
+              }
+            },
+            "antenna_rotation_deg": {
+              "type": "array",
+              "minItems": 3,
+              "maxItems": 3,
+              "items": {
+                "type": "number",
+                "minimum": -360,
+                "maximum": 360
+              }
+            },
+            "structure_translation_mm": {
+              "type": "array",
+              "minItems": 3,
+              "maxItems": 3,
+              "items": {
+                "type": "number"
+              }
+            },
+            "structure_rotation_deg": {
+              "type": "array",
+              "minItems": 3,
+              "maxItems": 3,
+              "items": {
+                "type": "number",
+                "minimum": -360,
+                "maximum": 360
+              }
+            },
+            "mesh_size_mm": {
+              "type": "number",
+              "minimum": 0.01,
+              "maximum": 1000
+            },
+            "observation_radius_m": {
+              "type": "number",
+              "minimum": 0.001,
+              "maximum": 1000000
+            },
+            "theta_step_deg": {
+              "type": "integer",
+              "enum": [
+                5,
+                10,
+                15,
+                30
+              ]
+            },
+            "phi_step_deg": {
+              "type": "integer",
+              "enum": [
+                5,
+                10,
+                15,
+                30
+              ]
+            },
+            "python_executable": {
+              "type": "string"
+            },
+            "expected_generated_script_sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "expected_structure_source_sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          }
+        },
+        "workspace_routes": [
+          {
+            "id": "optycal-radiation-workspace",
+            "workspace": "em",
+            "operation": "solve",
+            "label": "Optycal STEP structure interference",
+            "setup_contribution_id": "optycal-radiation",
+            "preview_contribution_id": "optycal-preview",
+            "model_status": "approximate"
+          }
+        ]
+      }
+    ]
+  }
+}

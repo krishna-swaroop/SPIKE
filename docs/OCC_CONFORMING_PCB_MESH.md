@@ -75,7 +75,7 @@ source hashes and per-case artifact digests.
 
 ## Still not general production PCB meshing
 
-The caller supplies typed solids: automatic full DesignIR lowering, arbitrary
+The caller supplies typed solids: automatic full SpiDeR lowering, arbitrary
 STEP/package geometry, bends, CAD healing, imported self-intersection repair,
 high-order curved elements, automatic terminal/wave-port construction, layer
 boundary adaptation and distributed generation are not supplied by this path.

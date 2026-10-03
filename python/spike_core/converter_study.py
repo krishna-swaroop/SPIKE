@@ -15,7 +15,7 @@ import math
 import time
 from typing import Any, Dict, Iterable, List, Sequence
 
-from .contracts import AnalysisSpec, DesignIR
+from .contracts import AnalysisSpec, SpiDeR
 from .ngspice_plugin import NgspicePlugin
 from .peec_spice_export import run_staged_hybrid_cosimulation
 from .spice_workspace import compose_spice_workspace, validate_spice_workspace
@@ -138,7 +138,7 @@ def materialize_converter_workspace(study: Dict[str, Any]) -> Dict[str, Any]:
     return workspace
 
 
-def validate_converter_study(study: Dict[str, Any], design: DesignIR) -> Dict[str, Any]:
+def validate_converter_study(study: Dict[str, Any], design: SpiDeR) -> Dict[str, Any]:
     """Validate converter intent without executing any solver."""
 
     issues: List[Dict[str, str]] = []
@@ -435,7 +435,7 @@ def _thermal_handoff(study: Dict[str, Any], losses: Iterable[Dict[str, Any]]) ->
 
 
 def run_converter_study(
-    design: DesignIR,
+    design: SpiDeR,
     study: Dict[str, Any],
     extraction_result: Dict[str, Any] | None = None,
     *,

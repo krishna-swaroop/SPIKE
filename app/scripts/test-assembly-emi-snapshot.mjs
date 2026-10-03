@@ -1,0 +1,21 @@
+// SPDX-License-Identifier: Apache-2.0
+import assert from "node:assert/strict";
+import * as THREE from "three";
+import { readFileSync, writeFileSync, unlinkSync } from "node:fs";
+import ts from "typescript";
+const target = new URL("./.test-assemblyEmiSnapshot.mjs", import.meta.url);
+writeFileSync(target, ts.transpileModule(readFileSync(new URL("../src/emiChamber.ts", import.meta.url), "utf8"), { compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 } }).outputText);
+const { snapshotEmiDut } = await import(target.href);
+process.on("exit", () => unlinkSync(target));
+const root = new THREE.Group();
+const occurrence = new THREE.Group(); occurrence.matrixAutoUpdate = false;
+occurrence.matrix.makeTranslation(20, 30, 41); occurrence.userData.displayExplodeOffsetMm = 30;
+occurrence.add(new THREE.Mesh(new THREE.BoxGeometry(5,5,1),new THREE.MeshBasicMaterial())); root.add(occurrence);
+const overlay = new THREE.Group(); overlay.userData.presentationOnly = true;
+overlay.add(new THREE.Mesh(new THREE.BoxGeometry(1,1,1),new THREE.MeshBasicMaterial())); occurrence.add(overlay);
+const snapshot = snapshotEmiDut([root],1);
+assert.equal(snapshot.children[0].children[0].matrix.elements[14],11,"presentation explosion must not become DUT placement");
+assert.equal(snapshot.children[0].children[0].children.length,1,"result overlays and snap targets are not DUT geometry");
+assert.equal(occurrence.matrix.elements[14],41,"snapshot must not change the displayed occurrence");
+assert.notEqual(snapshot.children[0].children[0].children[0].geometry,occurrence.children[0].geometry);
+console.log("DUT snapshot excludes presentation overlays and exploded offsets without mutating display geometry");

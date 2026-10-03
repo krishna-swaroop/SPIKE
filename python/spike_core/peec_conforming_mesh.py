@@ -16,7 +16,7 @@ from dataclasses import dataclass
 from math import ceil, isfinite, pi, sqrt
 from typing import Any
 
-from .contracts import AnalysisSpec, DesignIR, ValidationIssue
+from .contracts import AnalysisSpec, SpiDeR, ValidationIssue
 from .conforming_local_refinement import parse_local_copper_regions, refine_local_rectangles
 from .hybrid_mesh import (
     COPPER_CONDUCTIVITY_S_M, HybridMesh, MeshBranch, MeshNode, _Builder,
@@ -103,7 +103,7 @@ def _subdivide_interior_rectangles(rectangles: list[tuple[float, float, float, f
     return result
 
 
-def build_conforming_mesh(design: DesignIR, spec: AnalysisSpec) -> HybridMesh:
+def build_conforming_mesh(design: SpiDeR, spec: AnalysisSpec) -> HybridMesh:
     """Build an admitted approximation or an explicitly failed partial mesh.
 
     Shapely is an optional geometry prerequisite for this experimental route.
@@ -124,7 +124,7 @@ def build_conforming_mesh(design: DesignIR, spec: AnalysisSpec) -> HybridMesh:
     except ImportError:
         return _failure(mesh, "Conforming volume copper requires the optional Shapely geometry backend.")
     if design.units != "mm":
-        return _failure(mesh, "Conforming copper partition requires DesignIR units=mm.")
+        return _failure(mesh, "Conforming copper partition requires SpiDeR units=mm.")
     max_cells = int(spec.mesh.get("max_conforming_cells", 20000))
     max_depth = int(spec.mesh.get("conforming_boundary_depth", 7))
     area_limit = float(spec.mesh.get("conforming_max_omitted_area_fraction", 0.01))

@@ -27,7 +27,7 @@ The result always declares `model_status: experimental`,
 
 ## Admitted geometry
 
-The single-line extractor accepts a DesignIR v2 path only when all of these
+The single-line extractor accepts a SpiDeR v2 path only when all of these
 conditions are explicitly satisfied:
 
 - one unbranched, collinear, open chain of canonical tracks;
@@ -132,7 +132,7 @@ qualification meaning.
 The focused regression corpus currently establishes only bounded software and
 analytical behavior:
 
-- one admitted DesignIR fixture reaches RLGC, two-port S, TDR/TDT, and the
+- one admitted SpiDeR fixture reaches RLGC, two-port S, TDR/TDT, and the
   normalized NRZ result while preserving all experimental labels;
 - a matched lossless analytical line has zero reflection, unit transmission
   magnitude, expected phase delay, and a flat reference-impedance TDR;

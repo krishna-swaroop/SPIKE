@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MIT
 """GUI commands exposed by the SPIKE FreeCAD workbench."""
 
 from __future__ import annotations
@@ -29,6 +30,11 @@ COMMAND_IDS = (
     "SPIKE_ImportCollaborationSession",
     "SPIKE_ExportPlacementFeedback",
     "SPIKE_MeasureClearance",
+    "SPIKE_OpenSolverSuite",
+    "SPIKE_ImportDetailedBoard",
+    "SPIKE_ShowResultField",
+    "SPIKE_ProbeResult",
+    "SPIKE_OpenHelp",
 )
 
 _REGISTERED = False
@@ -195,6 +201,13 @@ def register_commands() -> None:
     Gui.addCommand(COMMAND_IDS[3], ImportSessionCommand())
     Gui.addCommand(COMMAND_IDS[4], ExportFeedbackCommand())
     Gui.addCommand(COMMAND_IDS[5], MeasureClearanceCommand())
+    from .solver_panel import (OpenSolverPanelCommand, ImportDetailedBoardCommand,
+                               ShowResultFieldCommand, ProbeResultCommand, OpenHelpCommand)
+    Gui.addCommand(COMMAND_IDS[6], OpenSolverPanelCommand())
+    Gui.addCommand(COMMAND_IDS[7], ImportDetailedBoardCommand())
+    Gui.addCommand(COMMAND_IDS[8], ShowResultFieldCommand())
+    Gui.addCommand(COMMAND_IDS[9], ProbeResultCommand())
+    Gui.addCommand(COMMAND_IDS[10], OpenHelpCommand())
     _REGISTERED = True
 
 

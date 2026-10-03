@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowRight, Search, X } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
+import { ArrowRight, Search, X } from "./icons";
+import type { LucideIcon } from "./icons";
 
 export type UniversalSearchItem = {
   id: string;

@@ -1,0 +1,6 @@
+SPIKE Board Viewer
+Copyright 2026 Yawar B (wayri) and SPIKE contributors.
+
+Includes original visualization source extracted from SPIKE.
+Extraction provenance is recorded in docs/EXTRACTION.md.
+Third-party libraries retain their own copyright and license notices.

@@ -15,6 +15,12 @@ MAX_SOURCE_FILL_VERTICES_PER_GROUP = 1_048_576
 MAX_SOURCE_ZONE_OUTLINE_PATHS = 256
 MAX_SOURCE_ZONE_OUTLINE_VERTICES_PER_PATH = 65_536
 MAX_SOURCE_ZONE_OUTLINE_VERTICES = 1_048_576
+KIKAKUKA_LAYER_NAME = 'freekicad'
+KIKAKUKA_ANNOTATION_TOLERANCE_MM = 0.1
+KIKAKUKA_LENGTH_FACTORS_MM = {
+    '': 1.0, 'mm': 1.0, 'cm': 10.0, 'um': 0.001,
+    'µm': 0.001, 'μm': 0.001, 'in': 25.4, 'mil': 0.0254,
+}
 
 class KicadParser:
     """
@@ -41,6 +47,7 @@ class KicadParser:
         self.technology = 'rigid'
         self.regions = []
         self.bends = []
+        self.flex_issues = []
         self.board_bbox = {'min_x': 0, 'max_x': 100, 'min_y': 0, 'max_y': 100}
 
         try:
@@ -280,12 +287,151 @@ class KicadParser:
                     'kind': kind, 'outline': [list(point) for point in outline],
                     'source_layer': layer.get('name', ''), 'source': 'kicad-user-layer',
                 })
+        self._append_kikakuka_bends(bends)
         board_area = max((self.board_bbox['max_x'] - self.board_bbox['min_x']) * (self.board_bbox['max_y'] - self.board_bbox['min_y']), 0)
         flex_area = sum(self._polygon_area(region['outline']) for region in explicit if region['kind'] == 'flex')
         has_rigid = any(region['kind'] == 'rigid' for region in explicit)
-        self.technology = 'flex' if flex_area and not has_rigid and board_area and flex_area >= board_area * 0.92 else 'rigid-flex' if flex_area else 'rigid'
+        if flex_area:
+            self.technology = 'flex' if not has_rigid and board_area and flex_area >= board_area * 0.92 else 'rigid-flex'
+        elif bends and any(bend.get('format') == 'kikakuka/freekicad-v1' for bend in bends):
+            self.technology = 'rigid-flex' if has_rigid else 'flex'
+            issue = self._flex_issue(
+                'KIKAKUKA_FLEX_REGION_IMPLICIT', 'info',
+                'FreekiCAD bend lines were imported without explicit SPIKE flex-region geometry; '
+                f'the board is classified as {self.technology} for display metadata only.',
+            )
+            self.flex_issues.append(issue)
+            self.diagnostics.append(issue['message'])
+            if not explicit and board_area:
+                x0, x1 = self.board_bbox['min_x'], self.board_bbox['max_x']
+                y0, y1 = self.board_bbox['min_y'], self.board_bbox['max_y']
+                explicit.append({
+                    'id': 'region:implicit-freekicad-board', 'name': 'FreekiCAD flex board',
+                    'kind': 'flex', 'outline': [[x0, y0], [x1, y0], [x1, y1], [x0, y1], [x0, y0]],
+                    'source_layer': 'Edge.Cuts', 'source': 'implicit-board-outline',
+                    'format': 'kikakuka/freekicad-v1', 'issues': [issue],
+                })
+        else:
+            self.technology = 'rigid'
         self.regions = explicit
         self.bends = bends
+
+    @staticmethod
+    def _flex_issue(code, severity, message):
+        return {'code': code, 'severity': severity, 'message': message}
+
+    @staticmethod
+    def _parse_kikakuka_annotation(text):
+        """Parse the documented FreekiCAD a/r/s bend annotation contract."""
+        number = r'[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?'
+        values = {}
+        matches = list(re.finditer(
+            rf'(?<![A-Za-z0-9_])(?P<key>angle|radius|span|[ars])\s*(?:=|:)?\s*'
+            rf'(?P<value>{number})\s*(?P<unit>deg|mm|cm|um|µm|μm|in|mil)?(?![A-Za-z0-9_])',
+            str(text or ''), re.I,
+        ))
+        for match in matches:
+            key = match.group('key').lower()
+            key = {'angle': 'a', 'radius': 'r', 'span': 's'}.get(key, key)
+            value = float(match.group('value'))
+            if not math.isfinite(value):
+                continue
+            unit = (match.group('unit') or '').lower()
+            if key == 'a':
+                if unit and unit != 'deg':
+                    continue
+            else:
+                if unit == 'deg':
+                    continue
+                value *= KIKAKUKA_LENGTH_FACTORS_MM.get(unit, 1.0)
+                if not math.isfinite(value):
+                    continue
+            values.setdefault(key, value)
+        mentioned = set(re.findall(r'(?<![A-Za-z0-9_])(angle|radius|span|[ars])(?=\s*(?:=|:|[+\-.\d]))', str(text or ''), re.I))
+        mentioned = {{'angle': 'a', 'radius': 'r', 'span': 's'}.get(key.lower(), key.lower()) for key in mentioned}
+        return values, mentioned
+
+    def _append_kikakuka_bends(self, bends):
+        layers = [
+            (layer_id, layer) for layer_id, layer in self.layers.items()
+            if str(layer.get('user_name', '')).strip().lower() == KIKAKUKA_LAYER_NAME
+        ]
+        board_thickness = sum(
+            float(layer.get('thickness', 0)) for layer in self.stackup
+            if isinstance(layer.get('thickness'), (int, float)) and float(layer.get('thickness', 0)) > 0
+        )
+        board_thickness_is_finite = math.isfinite(board_thickness) and board_thickness > 0
+        for layer_id, layer in layers:
+            physical_name = layer.get('name', '')
+            lines = [drawing for drawing in self.drawings if drawing.get('layer') == physical_name and drawing.get('type') == 'line']
+            texts = [drawing for drawing in self.drawings if drawing.get('layer') == physical_name and drawing.get('type') == 'text']
+            assignments = {index: [] for index in range(len(lines))}
+            for text_index, annotation in enumerate(texts):
+                position = annotation.get('pos')
+                candidates = []
+                if position:
+                    for line_index, line in enumerate(lines):
+                        distance = min(math.hypot(position[0] - endpoint[0], position[1] - endpoint[1]) for endpoint in (line['start'], line['end']))
+                        if distance <= KIKAKUKA_ANNOTATION_TOLERANCE_MM + 1e-12:
+                            candidates.append((distance, line_index))
+                if not candidates:
+                    issue = self._flex_issue('KIKAKUKA_ANNOTATION_ORPHAN', 'warning', f'FreekiCAD annotation {annotation.get("text", "")!r} is not within 0.1 mm of a bend-line endpoint.')
+                    self.flex_issues.append(issue)
+                    self.diagnostics.append(issue['message'])
+                    continue
+                candidates.sort(key=lambda value: (value[0], value[1]))
+                distance, line_index = candidates[0]
+                assignments[line_index].append((distance, text_index, annotation, len(candidates) > 1 and abs(candidates[1][0] - distance) <= 1e-12))
+            for line_index, line in enumerate(lines):
+                matches = sorted(assignments[line_index], key=lambda value: (value[0], value[1]))
+                annotation = matches[0][2] if matches else None
+                annotation_text = annotation.get('text', '') if annotation else ''
+                values, mentioned = self._parse_kikakuka_annotation(annotation_text)
+                issues = []
+                if not annotation:
+                    issues.append(self._flex_issue('KIKAKUKA_BEND_ANNOTATION_MISSING', 'info', 'FreekiCAD bend line has no annotation within 0.1 mm; the line remains editable with unset bend parameters.'))
+                if len(matches) > 1:
+                    issues.append(self._flex_issue('KIKAKUKA_BEND_ANNOTATION_CONFLICT', 'warning', 'Multiple FreekiCAD annotations match this bend line; the nearest annotation in source order was used.'))
+                if matches and matches[0][3]:
+                    issues.append(self._flex_issue('KIKAKUKA_BEND_ASSOCIATION_AMBIGUOUS', 'warning', 'The FreekiCAD annotation is equally close to multiple bend lines; the first line in source order was used.'))
+                for key in sorted(mentioned - set(values)):
+                    issues.append(self._flex_issue('KIKAKUKA_BEND_ANNOTATION_MALFORMED', 'warning', f'FreekiCAD annotation contains an invalid {key} value; that parameter remains unset.'))
+                if 'r' in values and 's' in values:
+                    issues.append(self._flex_issue('KIKAKUKA_BEND_RADIUS_PRECEDENCE', 'info', 'Both r and s are present; the explicit radius r takes precedence.'))
+                radius = values.get('r')
+                radius_source = 'r' if radius is not None else None
+                if radius is None and 's' in values:
+                    angle = values.get('a')
+                    if angle is None or abs(angle) <= 1e-12:
+                        issues.append(self._flex_issue('KIKAKUKA_BEND_SPAN_NEEDS_ANGLE', 'warning', 'Bend span s cannot derive a radius without a non-zero angle a.'))
+                    elif not board_thickness_is_finite:
+                        issues.append(self._flex_issue('KIKAKUKA_BEND_SPAN_NEEDS_THICKNESS', 'warning', 'Bend span s is retained, but radius derivation requires a finite, positive explicit board stackup thickness.'))
+                    else:
+                        angle_radians = abs(math.radians(angle))
+                        derived_radius = values['s'] / angle_radians - board_thickness / 2 if angle_radians > 0 and math.isfinite(angle_radians) else math.inf
+                        if math.isfinite(derived_radius):
+                            radius = derived_radius
+                            radius_source = 's'
+                        else:
+                            issues.append(self._flex_issue('KIKAKUKA_BEND_RADIUS_NONFINITE', 'warning', 'Bend span and angle would derive a non-finite radius; span is retained and radius remains unset.'))
+                if radius is not None and radius < 0:
+                    issues.append(self._flex_issue('KIKAKUKA_BEND_RADIUS_NEGATIVE', 'warning', 'Bend radius is negative; the raw value is retained but is not usable as bend geometry. Zero radius is valid.'))
+                bend = {
+                    'id': f'bend:{layer_id}:{line_index}', 'name': f'FreekiCAD bend {line_index + 1}',
+                    'points': [list(line['start']), list(line['end'])], 'source_layer': physical_name,
+                    'source_layer_user_name': layer.get('user_name', ''), 'source': 'kikakuka-freekicad',
+                    'format': 'kikakuka/freekicad-v1', 'source_drawing_id': line.get('id', ''),
+                    'annotation': annotation_text or None,
+                    'annotation_position': list(annotation['pos']) if annotation and annotation.get('pos') else None,
+                    'configured': bool(annotation and ('a' in values or 'r' in values or 's' in values)),
+                    'radius_mm': radius, 'radius_source': radius_source,
+                    'angle_deg': values.get('a'), 'span_mm': values.get('s'), 'issues': issues,
+                }
+                bends.append(bend)
+                for issue in issues:
+                    self.flex_issues.append(issue)
+                    if issue['severity'] == 'warning':
+                        self.diagnostics.append(issue['message'])
 
     def _get_node(self, list_node, key):
         """Find strictly immediate sub-node starting with key"""
@@ -1459,11 +1605,24 @@ class KicadParser:
             layer = layer_n[1].replace('"', '') if layer_n else "Eco1.User"
             width = float(width_n[1]) if width_n else 0.1
             
-            if head == 'gr_line':
+            if head == 'gr_text':
+                at = self._get_node(node, 'at')
+                is_kikakuka_layer = any(
+                    item.get('name') == layer and str(item.get('user_name', '')).strip().lower() == KIKAKUKA_LAYER_NAME
+                    for item in self.layers.values()
+                )
+                if at and len(node) > 1 and is_kikakuka_layer:
+                    self.drawings.append({
+                        'id': self._source_native_id(node) or f'graphic-text-{len(self.drawings)}',
+                        'type': 'text', 'text': str(node[1]).replace('"', ''),
+                        'pos': (float(at[1]), float(at[2])), 'layer': layer,
+                    })
+            elif head == 'gr_line':
                 start = self._get_node(node, 'start')
                 end = self._get_node(node, 'end')
                 if start and end:
                     self.drawings.append({
+                        'id': self._source_native_id(node) or f'graphic-line-{len(self.drawings)}',
                         'type': 'line',
                         'start': (float(start[1]), float(start[2])),
                         'end': (float(end[1]), float(end[2])),
@@ -1500,6 +1659,7 @@ class KicadParser:
                 if start and end:
                     x1, y1, x2, y2 = float(start[1]), float(start[2]), float(end[1]), float(end[2])
                     self.drawings.append({
+                        'id': self._source_native_id(node) or f'graphic-rect-{len(self.drawings)}',
                         'type': 'rect',
                         'points': [(x1, y1), (x2, y1), (x2, y2), (x1, y2), (x1, y1)],
                         'layer': layer, 'width': width,

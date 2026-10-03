@@ -1,0 +1,9 @@
+# Local/generated artifacts; native client sources and assets are tracked.
+/build/
+/build-*/
+/artifacts/
+/reference_screenshots/
+/CMakeUserPresets.json
+__pycache__/
+*.pyc
+*.log

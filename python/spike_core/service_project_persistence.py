@@ -6,8 +6,9 @@ import json
 from pathlib import Path
 from typing import Any
 
-from .design_ir_v2 import DesignIRV2
-from .project_package import ProjectPackageError, _sha256
+from .spider_v2 import SpiDeRV2
+from .project_package import ProjectPackageError, _sha256, read_project
+from .multiboard_identity import migrate_legacy_result_assembly_digest
 from .project_state_artifacts import externalize_result_state, hydrate_result_state, read_verified_artifacts
 from .project_visual_artifacts import prepare_visual_artifacts, read_saved_visual_stage
 
@@ -22,7 +23,7 @@ def project_for_desktop(payload: dict, projected: dict) -> dict:
         source_format = str((canonical.get("source") or {}).get("source_format", ""))
         if source_format not in {"kicad", "kicad_pcb"}:
             snapshot = {"contract": "spike/design-snapshot/v1",
-                        "design": DesignIRV2.from_dict(canonical).to_v1().to_dict(),
+                        "design": SpiDeRV2.from_dict(canonical).to_v1().to_dict(),
                         "canonical_design": canonical, "report": canonical.get("metadata", {}).get("import_report", {})}
             design.update(source_board=json.dumps(snapshot), source_format="spike-normalized",
                           source_file="saved-design.spike-design.json")
@@ -38,6 +39,11 @@ def without_saved_results(payload: dict) -> dict:
 
     def clear_desktop(snapshot: dict) -> None:
         snapshot.pop("results", None)
+        studies = ((snapshot.get("assembly_ir") or {}).get("extensions") or {}).get("spike.multiboard-studies", {})
+        if isinstance(studies, dict):
+            for study in studies.values():
+                if isinstance(study, dict):
+                    study.pop("result", None)
         analysis = snapshot.get("analysis")
         if isinstance(analysis, dict):
             for key in ("latest_result", "active_result", "pdn_review"):
@@ -58,7 +64,19 @@ def without_saved_results(payload: dict) -> dict:
     analyses = clean.get("analyses")
     if isinstance(analyses, dict):
         clear_desktop({"analysis": analyses})
+        field_study = analyses.get("assembly_field_study")
+        if field_study is not None:
+            from .assembly_field_study import import_assembly_field_study, export_assembly_field_study
+            admitted = import_assembly_field_study(field_study)
+            analyses["assembly_field_study"] = export_assembly_field_study(
+                admitted["request"], admitted["problem"], admitted["result"], include_results=False,
+            )
     clean["results"] = {}
+    studies = ((clean.get("assembly_ir") or {}).get("extensions") or {}).get("spike.multiboard-studies", {})
+    if isinstance(studies, dict):
+        for study in studies.values():
+            if isinstance(study, dict):
+                study.pop("result", None)
     extensions = clean.get("extensions")
     if isinstance(extensions, dict) and isinstance(extensions.get("legacy"), dict):
         clear_desktop(extensions["legacy"])
@@ -107,11 +125,40 @@ def read_persistent_artifact(method: str, params: dict) -> dict:
             raise ProjectPackageError("A saved result reference is required.")
         data = read_verified_artifacts(path, [reference], expected_manifest_payload_sha256=digest,
                                        allowed_prefix="state/artifacts/")
-        return {"value": json.loads(data[reference["path"]])}
+        value = json.loads(data[reference["path"]])
+        if isinstance(value, dict) and value.get("contract") in {
+            "spike/multiboard-circuit-result/v1", "spike/multiboard-thermal-result/v1", "spike/multiboard-em-result/v1"
+        }:
+            opened = read_project(path)
+            if opened.manifest.get("manifest_payload_sha256") != digest:
+                raise ProjectPackageError("The package changed during the saved result read; reopen it.")
+            value = migrate_saved_assembly_results(value, opened.payload.get("assembly_ir"))
+        return {"value": value}
     index = params.get("index")
     if not isinstance(index, dict):
         raise ProjectPackageError("A saved visual index is required.")
     return read_saved_visual_stage(path, index, str(params.get("stage", "")), digest)
+
+
+def migrate_saved_assembly_results(value: Any, original_assembly: Any) -> Any:
+    """Upgrade old result identities only from verified, pre-transport metadata."""
+    if not isinstance(original_assembly, dict):
+        return value
+    if isinstance(value, list):
+        return [migrate_saved_assembly_results(item, original_assembly) for item in value]
+    if not isinstance(value, dict):
+        return value
+    if value.get("contract") in {
+        "spike/multiboard-circuit-result/v1", "spike/multiboard-thermal-result/v1", "spike/multiboard-em-result/v1"
+    }:
+        return migrate_legacy_result_assembly_digest(value, original_assembly)
+    updated = {key: migrate_saved_assembly_results(item, original_assembly) for key, item in value.items()}
+    result = updated.get("result")
+    if isinstance(result, dict) and result.get("assembly_identity_migration") and "assembly_digest" in updated:
+        migration = result["assembly_identity_migration"]
+        if updated["assembly_digest"] == migration["from"]:
+            updated["assembly_digest"] = migration["to"]
+    return updated
 
 
 def merge_future_fields(base: Any, updated: Any) -> Any:

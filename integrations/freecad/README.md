@@ -1,8 +1,14 @@
 # SPIKE FreeCAD ECAD/MCAD Workbench
 
 This directory contains an optional external FreeCAD workbench for controlled
-geometry exchange with SPIKE. It does not run PI, SI, thermal, or EMI solvers
-inside FreeCAD. Its current responsibility is limited to:
+geometry exchange and for calling SPIKE's worker from a FreeCAD panel. The
+worker process runs SPIKE simulations; FreeCAD itself supplies the interface
+and reference geometry. Its responsibilities include:
+
+The [complete workbench setup and user guide](SPIKEWorkbench/README.md) includes
+the KiCad link, worker simulation controls, screenshots, and troubleshooting.
+Use its [Git handoff workflow](SPIKEWorkbench/GIT_WORKFLOW.md) when preparing a
+new standalone repository later.
 
 - importing a validated SPIKE primitive geometry exchange JSON file;
 - displaying board, copper, envelope, keepout, hole-reference, mechanical,
@@ -13,17 +19,19 @@ inside FreeCAD. Its current responsibility is limited to:
   board-outline solids;
 - returning reviewed occurrence labels/placements and pairwise solid clearance
   observations to the existing SPIKE assembly.
+- linking a KiCad PCB path and part metadata into a FreeCAD document;
+- preflighting and running SPIKE worker analyses with explicit JSON inputs.
 
 The implementation follows the standard external-workbench layout with
-`Init.py` and `InitGui.py`. It has no Python package dependencies beyond those
-bundled with FreeCAD.
+`Init.py` and `InitGui.py`. Geometry exchange has no Python package dependencies
+beyond FreeCAD. Simulation calls require a separate SPIKE Python environment.
 
 ## Install
 
 1. Close FreeCAD.
 2. Copy the entire `SPIKEWorkbench` directory into the current user's FreeCAD
    `Mod` directory. Do not copy only its contents.
-3. Restart FreeCAD and select **SPIKE ECAD/MCAD** from the workbench selector.
+3. Restart FreeCAD and select **SPIKE** from the workbench selector.
 
 Typical user module locations are:
 
@@ -124,9 +132,11 @@ color properties when `ViewObject` is absent.
 ## Security Boundary
 
 Exchange files are data, not programs. The workbench does not use `eval`,
-`exec`, dynamic imports from exchange data, macros, subprocesses, shell
-commands, network requests, or automatic file-open hooks. It never follows an
-instruction embedded in JSON. Primitive exchange uses fixed `Part` constructors.
+`exec`, dynamic imports from exchange data, macros, shell commands, network
+requests, or automatic file-open hooks. It never follows an instruction
+embedded in exchange JSON. The explicit solver panel launches the configured
+local SPIKE worker as a `QProcess` with fixed module arguments, and sends
+bounded JSON-line requests. Primitive exchange uses fixed `Part` constructors.
 Collaboration sessions additionally use fixed STEP import, outline extrusion and
 solid measurement APIs; they do not open FCStd or macros from exchange payloads.
 
@@ -146,8 +156,8 @@ outside the organization.
   thermal contacts, airflow boundaries, solver meshes, and simulation results
   are outside the primitive exchange contract. Collaboration sessions can use
   physical stackup thickness for a board outline solid and retained part STEP.
-- This workbench does not yet call SPIKE, keep a live link, or perform automatic
-  synchronization. Exchange is explicit and file-based.
+- The KiCad source link watches for changes and requires explicit refresh. It
+  does not synchronize FreeCAD edits into KiCad.
 - A successful import means that the exchange contract and primitive creation
   succeeded. It is not validation of manufacturability, clearances, thermal
   behaviour, structural behaviour, PI, SI, or EMI performance.
@@ -157,9 +167,10 @@ contract version rather than extending version 1 silently.
 
 ## Planned assembly and thermal companion
 
-The [extension development plan](../../docs/FREECAD_ASSEMBLY_THERMAL_EXTENSION_PLAN.md)
+The extension development plan
 extends this foundation toward interactive assembly updates, harness round trips,
 user-selectable equivalent PCB thermal models, FreeCAD-hosted solver preparation
 and execution, and mapped result import into SPIKE. Version 0.2.0 implements
-placement sessions and pairwise solid clearances; structural synchronization,
-harness route editing and thermal execution remain planned.
+placement sessions and pairwise solid clearances. Version 0.3.0 adds a source
+KiCad link and worker calls; structural synchronization, harness route editing,
+and FreeCAD-derived thermal field execution remain planned.

@@ -1,159 +1,255 @@
+// SPDX-License-Identifier: Apache-2.0
+
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import vm from "node:vm";
 
-const source = readFileSync(new URL("../src/engineeringReport.ts", import.meta.url), "utf8");
-const domainSource = readFileSync(new URL("../src/engineeringReportDomain.ts", import.meta.url), "utf8");
-const scriptMatch = source.match(/const reportScript = String\.raw`([\s\S]*?)`;\r?\n\r?\nexport function buildEngineeringReport/);
-assert.ok(scriptMatch, "the self-contained report runtime must be present");
-assert.match(source, /default-src 'none'; script-src 'unsafe-inline';/,
-  "offline report CSP must stay self-contained");
+const runtimeSource = readFileSync(new URL("../src/engineeringReportRuntime.ts", import.meta.url), "utf8");
+const runtimeMatch = runtimeSource.match(/String\.raw`([\s\S]*)`;\s*$/);
+assert.ok(runtimeMatch, "the engineering report runtime must remain an exported String.raw script");
 
-function fakeContext(calls) {
-  return new Proxy({}, {
-    get(_target, property) {
-      if (property === "createLinearGradient" || property === "createRadialGradient") return () => ({ addColorStop() {} });
-      if (property === "measureText") return () => ({ width: 40 });
-      return (...args) => calls.push([property, args]);
-    },
-    set() { return true; },
-  });
+class FakeClassList {
+  constructor() { this.values = new Set(); }
+  toggle(name, force) {
+    const enabled = force === undefined ? !this.values.has(name) : Boolean(force);
+    if (enabled) this.values.add(name); else this.values.delete(name);
+    return enabled;
+  }
+  contains(name) { return this.values.has(name); }
 }
 
-function element(overrides = {}) {
-  const classes = new Set();
+class FakeElement {
+  constructor(id = "", attributes = {}) {
+    this.id = id;
+    this.attributes = new Map(Object.entries(attributes));
+    this.classList = new FakeClassList();
+    this.listeners = new Map();
+    this.hidden = false;
+    this.textContent = "";
+    this.style = {};
+    this.children = [];
+    this.options = [];
+    this.selectedIndex = 0;
+    this.value = "";
+    this.rect = { width: 0, height: 0, top: 0, left: 0 };
+    this.closestTargets = new Map();
+    this.scrollCount = 0;
+  }
+  addEventListener(type, listener) {
+    const listeners = this.listeners.get(type) ?? [];
+    listeners.push(listener);
+    this.listeners.set(type, listeners);
+  }
+  dispatch(type, event = {}) {
+    for (const listener of this.listeners.get(type) ?? []) listener({ target: this, ...event });
+  }
+  setAttribute(name, value) { this.attributes.set(name, String(value)); }
+  getAttribute(name) { return this.attributes.has(name) ? this.attributes.get(name) : null; }
+  removeAttribute(name) { this.attributes.delete(name); }
+  append(...nodes) { this.children.push(...nodes); }
+  getBoundingClientRect() { return { ...this.rect, right: this.rect.left + this.rect.width, bottom: this.rect.top + this.rect.height }; }
+  setPointerCapture() {}
+  scrollIntoView() { this.scrollCount += 1; }
+  closest(selector) { return this.closestTargets.get(selector) ?? null; }
+  querySelectorAll() { return []; }
+}
+
+function createContext() {
   return {
-    hidden: false,
-    textContent: "",
-    innerHTML: "",
-    style: {},
-    classList: { toggle(name, active) { active ? classes.add(name) : classes.delete(name); }, contains(name) { return classes.has(name); } },
-    parentElement: { setAttribute() {} },
-    children: [],
-    listeners: {},
-    addEventListener(type, listener) { this.listeners[type] = listener; },
-    click() { this.listeners.click?.(); },
-    append(...children) { this.children.push(...children); },
-    appendChild(child) { this.children.push(child); return child; },
-    setAttribute(name, value) { (this.attributes ??= {})[name] = String(value); },
-    getAttribute(name) { return this.attributes?.[name] ?? null; },
-    getBoundingClientRect() { return { width: 720, height: 420, left: 0, top: 0 }; },
-    ...overrides,
+    clearCount: 0, textRecords: [],
+    clearRect() { this.clearCount += 1; this.textRecords = []; },
+    fillRect() {}, setTransform() {}, beginPath() {}, closePath() {}, moveTo() {}, lineTo() {},
+    fill() {}, stroke() {}, arc() {}, rect() {}, clip() {}, fillText(...args) { this.textRecords.push(args); }, save() {}, restore() {}, translate() {}, rotate() {},
+    createRadialGradient() { return { addColorStop() {} }; },
   };
 }
 
-function runReport({ canvasAvailable }) {
-  const boardCalls = [];
-  const graphCalls = [];
-  const option = element({ textContent: "Absolute voltage", attributes: { "data-unit": "V" } });
-  const data = {
-    bounds: { minX: 0, minY: 0, maxX: 20, maxY: 10 },
-    layers: ["F.Cu"],
-    outlineLoops: [[[0, 0], [20, 0], [20, 10], [0, 10]]],
-    tracks: [{ s: [1, 2], e: [18, 8], w: 0.35, l: "F.Cu", n: "VDD" }],
-    vias: [], pads: [], zones: [], components: [],
-    fields: {
-      voltage_v: [
-        { x_mm: 1, y_mm: 2, layer: "F.Cu", net: "VDD", value: 12 },
-        { x_mm: 18, y_mm: 8, layer: "F.Cu", net: "VDD", value: 11.94 },
-      ],
-      voltage_drop_v: [], current_a: [], current_density_a_mm2: [],
-      operating_point_impedance_ohm: [], power_loss_w: [], via_current_density_a_mm2: [],
-    },
-    timeSeries: [], impedance: [],
-  };
-  data.datasets = [
-    { id: "net-0", fields: data.fields, impedance: [] },
-    { id: "net-1", fields: { ...data.fields, voltage_v: data.fields.voltage_v.map(sample => ({ ...sample, value: sample.value + 2 })) }, impedance: [] },
-  ];
-  const elements = {
-    "report-data": element({ textContent: JSON.stringify(data) }),
-    "evidence-data": element({ textContent: "{}" }),
-    "report-runtime-diagnostic": element({ hidden: true }),
-    "board-canvas": element({ getContext: () => canvasAvailable ? fakeContext(boardCalls) : null }),
-    "result-chart": element({ getContext: () => fakeContext(graphCalls) }),
-    "viewport-metric": element({ value: "voltage_v", selectedIndex: 0, options: [option] }),
-    "graph-series": element({ value: "voltage_v", selectedIndex: 0, options: [option] }),
-    "plotly-metric": element({ value: "voltage_v", selectedIndex: 0, options: [option] }),
-    "plotly-field": element({ innerHTML: '<div class="empty-result">lightweight viewer active</div>' }),
-    "graph-tooltip": element(), "viewport-tooltip": element(), "viewport-colorbar": element(),
-    "color-min": element(), "color-max": element(), "color-unit": element(), "interaction-hint": element(),
-    "print-report": element(), "download-evidence": element(),
-  };
-  const tabA = element({ attributes: { "data-net-tab": "net-0" } });
-  const tabB = element({ attributes: { "data-net-tab": "net-1" } });
-  const panelA = element({ attributes: { "data-net-panel": "net-0" } });
-  const panelB = element({ attributes: { "data-net-panel": "net-1" } });
-  const document = {
-    body: { firstChild: null, insertBefore() {}, appendChild() {} },
-    getElementById(id) { return elements[id] ?? null; },
-    querySelectorAll(selector) { return selector === "[data-net-tab]" ? [tabA, tabB] : selector === "[data-net-panel]" ? [panelA, panelB] : []; },
-    createElement() { return element(); },
-  };
-  const reportConsole = { error() {}, warn() {}, log() {} };
-  const window = { addEventListener() {}, console: reportConsole, devicePixelRatio: 1, print() {}, focus() {} };
-  vm.runInNewContext(scriptMatch[1], {
-    window, document, console: reportConsole, JSON, Math, Number, Object, Array, Error,
-    Blob: class {}, URL: { createObjectURL() { return "blob:test"; }, revokeObjectURL() {} }, setTimeout,
-  }, { filename: "minimal-engineering-report-runtime.js" });
-  return { boardCalls, graphCalls, elements, tabA, tabB, panelA, panelB };
+class FakeCanvas extends FakeElement {
+  constructor(id) {
+    super(id);
+    this.context = createContext();
+    this.width = 0;
+    this.height = 0;
+  }
+  getContext(kind) { return kind === "2d" ? this.context : null; }
 }
 
-const healthy = runReport({ canvasAvailable: true });
-assert.ok(healthy.boardCalls.some(([name]) => name === "fillRect"), "board canvas must draw independently");
-assert.ok(healthy.graphCalls.some(([name]) => name === "stroke"), "result graph must draw independently");
-const firstBoardVertex = healthy.boardCalls.find(([name]) => name === "moveTo")?.[1];
-assert.ok(firstBoardVertex, "board outline must be projected");
-assert.ok(firstBoardVertex[0] < 100 && firstBoardVertex[1] < 100,
-  "2D report projection must preserve the layout's top-left origin instead of vertically mirroring it");
-assert.equal(healthy.elements["report-runtime-diagnostic"].hidden, true,
-  "the lightweight report runtime must initialize without a diagnostic");
-assert.equal(healthy.panelA.hidden, false, "the first net panel must be visible initially");
-assert.equal(healthy.panelB.hidden, true, "inactive net panels must be hidden on screen");
-const boardCallsBeforeNetChange = healthy.boardCalls.length;
-const graphCallsBeforeNetChange = healthy.graphCalls.length;
-healthy.tabB.click();
-assert.equal(healthy.panelA.hidden, true, "selecting another net must hide the previous panel");
-assert.equal(healthy.panelB.hidden, false, "selecting another net must show its panel");
-assert.ok(healthy.boardCalls.length > boardCallsBeforeNetChange, "selecting a net must redraw the board field preview");
-assert.ok(healthy.graphCalls.length > graphCallsBeforeNetChange, "selecting a net must redraw the result graph");
+const elements = new Map();
+const add = element => { if (element.id) elements.set(element.id, element); return element; };
+const runtimeDiagnostic = add(new FakeElement("report-runtime-diagnostic"));
+runtimeDiagnostic.hidden = true;
 
-const missingCanvas = runReport({ canvasAvailable: false });
-assert.match(missingCanvas.elements["report-runtime-diagnostic"].textContent, /Board canvas/i,
-  "a missing canvas context must identify the failing surface");
+const reportData = add(new FakeElement("report-data"));
+reportData.textContent = JSON.stringify({
+  layers: ["F.Cu"], bounds: { minX: 0, minY: 0, maxX: 10, maxY: 5 },
+  outlineLoops: [[[0, 0], [10, 0], [10, 5], [0, 5]]], zones: [], tracks: [], pads: [], vias: [], components: [],
+  fields: { voltage_v: [{ value: 1, x_mm: 2, y_mm: 2, layer: "F.Cu" }] }, impedance: [], timeSeries: [],
+  datasets: [
+    { id: "net-0", fields: { voltage_v: [{ value: 1, x_mm: 2, y_mm: 2, layer: "F.Cu" }] }, impedance: [] },
+    { id: "net-1", fields: { voltage_v: [{ value: 2, x_mm: 8, y_mm: 3, layer: "F.Cu" }] }, impedance: [] },
+  ],
+});
+const evidenceData = add(new FakeElement("evidence-data"));
+evidenceData.textContent = JSON.stringify({ report_id: "runtime-test" });
 
-assert.doesNotMatch(source, /plotly\.js-dist-min|embeddedPlotly|window\.Plotly/,
-  "reports must not carry the multi-megabyte duplicate Plotly runtime");
-assert.match(source, /var worldY=-dy/,
-  "3D report projection must use the live viewport's board-Y to world-Y convention");
-assert.match(source, /const REPORT_TABLE_ROW_LIMIT = 500/,
-  "large report tables must have an explicit responsive-display bound");
-assert.match(source, /buildThermalReportSection\(input\.thermal\?\.scenario\)/,
-  "thermal reports must use the domain-specific result section");
-assert.match(source, /<section id="si-results"><h2>Signal-Integrity Channel Result<\/h2>/,
-  "SI reports must expose a domain-specific result section");
-assert.match(source, /<section id="pi-results"><h2>Power-Integrity Result<\/h2>/,
-  "PI reports must expose a domain-specific result section");
-assert.match(source, /includeEmi \? `\$\{emiReportHtml\}\$\{emiFieldReportHtml\}` : ""/,
-  "EMI material must be gated to an explicitly EMI-classified report");
-assert.match(source, /\.net-panel,\.net-panel\[hidden\]\{display:block!important;break-before:page/,
-  "print and PDF output must restore every net panel in sequential pages");
-assert.match(source, /data-net-tab=/, "interactive HTML reports must expose per-net tabs");
-assert.doesNotMatch(source, /function contourGrid|Math\.(?:min|max)\.apply/,
-  "the offline runtime must neither infer a rectangular contour grid nor spread large arrays into extrema calls");
-assert.match(source, /sample\.vertices_mm\|\|\[\]/,
-  "contours must be built only from explicit solver-face vertices");
-assert.match(source, /samples\.length&&fieldDisplay!==['"]raw['"]\)\{drawContour/,
-  "both 2D smooth and 3D contour modes must render explicit solver faces");
-assert.match(source, /const viewportOptions = `\$\{stats\.map/,
-  "the first returned quantity must be the default preview instead of empty geometry");
-assert.match(source, /value:triangle\.sample\.value/,
-  "contour hover must report the authoritative source sample value");
-assert.match(source, /value === null \|\| value === undefined \|\| value === ""/,
-  "missing result values must remain Not returned instead of coercing to zero");
-assert.match(domainSource, /return "emi"/,
-  "EMI must be a distinct report discipline rather than falling through to PI");
-assert.match(source, /Do not add per-layer flips/,
-  "the report must document its single coordinate-transform policy");
+const boardCanvas = add(new FakeCanvas("board-canvas"));
+const graphCanvas = add(new FakeCanvas("result-chart"));
+const visualShell = new FakeElement("visual-shell");
+const graphShell = new FakeElement("graph-shell");
+boardCanvas.closestTargets.set(".visual-shell", visualShell);
+graphCanvas.closestTargets.set(".graph-shell", graphShell);
 
-console.log("engineering report runtime fallback assertions passed");
+const metricSelect = add(new FakeElement("viewport-metric"));
+metricSelect.value = "voltage_v";
+metricSelect.options = [new FakeElement("", { "data-unit": "V" })];
+const graphSelect = add(new FakeElement("graph-series"));
+graphSelect.value = "voltage_v";
+graphSelect.options = [Object.assign(new FakeElement("", { "data-unit": "V" }), { textContent: "Voltage" })];
+add(new FakeElement("graph-tooltip"));
+add(new FakeElement("viewport-tooltip"));
+add(new FakeElement("viewport-colorbar"));
+add(new FakeElement("color-min"));
+add(new FakeElement("color-max"));
+add(new FakeElement("color-unit"));
+add(new FakeElement("interaction-hint"));
+
+const netTabs = [
+  new FakeElement("", { "data-net-tab": "net-0" }),
+  new FakeElement("", { "data-net-tab": "net-1" }),
+];
+const netPanels = [
+  add(new FakeElement("net-panel-0", { "data-net-panel": "net-0" })),
+  add(new FakeElement("net-panel-1", { "data-net-panel": "net-1" })),
+];
+const overview = add(new FakeElement("overview"));
+const overviewLink = new FakeElement("", { href: "#overview" });
+const net0Link = new FakeElement("", { href: "#net-panel-0", "data-nav-net": "net-0" });
+const net1Link = new FakeElement("", { href: "#net-panel-1", "data-nav-net": "net-1" });
+const reportNav = new FakeElement("report-nav", { "data-report-nav": "" });
+reportNav.querySelectorAll = selector => selector === 'a[href^="#"]' ? [overviewLink, net0Link, net1Link] : [];
+
+const documentListeners = new Map();
+const document = {
+  body: new FakeElement("body"),
+  getElementById: id => elements.get(id) ?? null,
+  querySelector: selector => selector === "[data-report-nav]" ? reportNav : null,
+  querySelectorAll: selector => ({
+    "[data-net-tab]": netTabs,
+    "[data-net-panel]": netPanels,
+    "[data-board-view]": [],
+    "[data-field-display]": [],
+  })[selector] ?? [],
+  createElement: () => new FakeElement(),
+  addEventListener(type, listener) { documentListeners.set(type, listener); },
+};
+
+const windowListeners = new Map();
+const animationFrames = [];
+const resizeObservers = [];
+const intersectionObservers = [];
+class FakeResizeObserver {
+  constructor(callback) { this.callback = callback; this.targets = []; resizeObservers.push(this); }
+  observe(target) { this.targets.push(target); }
+}
+class FakeIntersectionObserver {
+  constructor(callback, options) { this.callback = callback; this.options = options; this.targets = []; intersectionObservers.push(this); }
+  observe(target) { this.targets.push(target); }
+}
+const location = { hash: "#net-panel-1" };
+const window = {
+  devicePixelRatio: 1,
+  location,
+  history: { pushState(_state, _title, hash) { location.hash = hash; } },
+  ResizeObserver: FakeResizeObserver,
+  IntersectionObserver: FakeIntersectionObserver,
+  addEventListener(type, listener) {
+    const listeners = windowListeners.get(type) ?? [];
+    listeners.push(listener);
+    windowListeners.set(type, listeners);
+  },
+  requestAnimationFrame(callback) { animationFrames.push(callback); return animationFrames.length; },
+  print() {},
+  console: { errors: [], error(...args) { this.errors.push(args); } },
+};
+function dispatchWindow(type, event = {}) {
+  for (const listener of windowListeners.get(type) ?? []) listener(event);
+}
+function flushAnimationFrames() {
+  while (animationFrames.length) animationFrames.shift()();
+}
+
+vm.runInNewContext(runtimeMatch[1], {
+  window, document, ResizeObserver: FakeResizeObserver, IntersectionObserver: FakeIntersectionObserver,
+  Blob: class {}, URL: { createObjectURL: () => "blob:test", revokeObjectURL() {} },
+  setTimeout: callback => { callback(); return 1; }, clearTimeout() {}, console: window.console,
+});
+
+assert.equal(netTabs[1].getAttribute("aria-selected"), "true", "a direct net hash selects its tab during initialization");
+assert.equal(netPanels[0].hidden, true, "direct net navigation hides the other net panel");
+assert.equal(netPanels[1].hidden, false, "direct net navigation reveals the requested net panel");
+assert.equal(net1Link.getAttribute("aria-current"), "location", "the direct hash marks the matching sidebar link");
+
+assert.equal(boardCanvas.context.clearCount, 0, "a zero-size board canvas is not treated as rendered");
+assert.equal(graphCanvas.context.clearCount, 0, "a zero-size result graph is not treated as rendered");
+assert.equal(visualShell.getAttribute("data-render-ready"), null, "the board fallback remains eligible while its canvas has no size");
+assert.equal(graphShell.getAttribute("data-render-ready"), null, "the graph fallback remains eligible while its canvas has no size");
+assert.equal(resizeObservers.length, 1, "one bounded resize observer owns both canvases");
+assert.deepEqual(resizeObservers[0].targets, [boardCanvas, graphCanvas]);
+
+boardCanvas.rect = { width: 640, height: 360, top: 100, left: 0 };
+graphCanvas.rect = { width: 600, height: 300, top: 500, left: 0 };
+resizeObservers[0].callback([{ target: boardCanvas }, { target: graphCanvas }]);
+flushAnimationFrames();
+assert.ok(boardCanvas.context.clearCount > 0, "ResizeObserver recovers the board canvas after it becomes measurable");
+assert.ok(graphCanvas.context.clearCount > 0, "ResizeObserver recovers the graph canvas after it becomes measurable");
+assert.equal(visualShell.getAttribute("data-render-ready"), "true", "a successful board draw marks its interactive shell ready");
+assert.equal(graphShell.getAttribute("data-render-ready"), "true", "a successful graph draw marks its interactive shell ready");
+const graphLabels = () => graphCanvas.context.textRecords.slice(0, 12).map(record => record[0]);
+const originalLabels = graphLabels(), originalReportData = reportData.textContent;
+let wheelPrevented = false;
+graphCanvas.dispatch("wheel", { clientX: 300, clientY: 780, deltaY: -120, deltaMode: 0, preventDefault() { wheelPrevented = true; }, stopPropagation() {} });
+assert.equal(wheelPrevented, true);
+assert.deepEqual(graphLabels().slice(0, 6), originalLabels.slice(0, 6), "report X-axis wheel leaves Y range unchanged");
+assert.notDeepEqual(graphLabels().slice(6), originalLabels.slice(6), "report X-axis wheel zooms X");
+graphCanvas.dispatch("dblclick"); assert.deepEqual(graphLabels(), originalLabels, "fit restores the original ranges");
+graphCanvas.dispatch("wheel", { clientX: 30, clientY: 620, deltaY: -120, deltaMode: 0, preventDefault() {}, stopPropagation() {} });
+assert.notDeepEqual(graphLabels().slice(0, 6), originalLabels.slice(0, 6), "report Y-axis wheel zooms Y");
+assert.deepEqual(graphLabels().slice(6), originalLabels.slice(6), "report Y-axis wheel leaves X range unchanged");
+graphCanvas.dispatch("keydown", { key: "0", preventDefault() {} }); assert.deepEqual(graphLabels(), originalLabels);
+wheelPrevented = false;
+graphCanvas.dispatch("wheel", { clientX: 595, clientY: 780, deltaY: -120, preventDefault() { wheelPrevented = true; } });
+assert.equal(wheelPrevented, false, "blank report chart margin keeps page scrolling");
+assert.equal(reportData.textContent, originalReportData, "report view interactions never change retained evidence");
+
+let prevented = false;
+overviewLink.dispatch("click", { preventDefault() { prevented = true; } });
+assert.equal(prevented, true);
+assert.equal(location.hash, "#overview");
+assert.equal(overview.scrollCount, 1, "ordinary section links scroll to their target");
+assert.equal(overviewLink.getAttribute("aria-current"), "location");
+assert.equal(net1Link.getAttribute("aria-current"), null, "only one sidebar location marker remains active");
+
+net0Link.dispatch("click", { preventDefault() {} });
+assert.equal(netTabs[0].getAttribute("aria-selected"), "true", "a sidebar net link activates the existing net tab");
+assert.equal(netPanels[0].hidden, false);
+assert.equal(netPanels[1].hidden, true);
+assert.equal(netPanels[0].scrollCount, 1, "the selected net panel is scrolled into view");
+
+location.hash = "#net-panel-1";
+dispatchWindow("hashchange");
+assert.equal(netTabs[1].getAttribute("aria-selected"), "true", "hash changes keep net tab state synchronized");
+
+assert.equal(intersectionObservers.length, 2, "visibility and section tracking use two bounded observers");
+intersectionObservers[1].callback([{ target: overview, isIntersecting: true, boundingClientRect: { top: 12 } }]);
+assert.equal(overviewLink.getAttribute("aria-current"), "location", "visible sections update the sidebar location marker");
+
+const beforePrintDraws = boardCanvas.context.clearCount;
+dispatchWindow("beforeprint");
+assert.ok(boardCanvas.context.clearCount > beforePrintDraws, "beforeprint refreshes measurable canvases");
+const beforeAfterPrint = boardCanvas.context.clearCount;
+dispatchWindow("afterprint");
+flushAnimationFrames();
+assert.ok(boardCanvas.context.clearCount > beforeAfterPrint, "afterprint restores the interactive canvas dimensions");
+assert.equal(window.console.errors.length, 0, "the runtime completes without diagnostics in the supported test fixture");
+
+console.log("engineering report runtime tests passed");

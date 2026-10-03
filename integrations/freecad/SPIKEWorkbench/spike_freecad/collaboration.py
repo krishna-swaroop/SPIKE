@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MIT
 """Interactive, file-based assembly collaboration using fixed Part constructors."""
 from __future__ import annotations
 

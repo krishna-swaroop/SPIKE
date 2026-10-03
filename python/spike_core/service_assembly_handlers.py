@@ -8,7 +8,7 @@ from pathlib import Path
 
 from .assembly_analysis_scope import AssemblyAnalysisScopeError, scope_from_params, validate_assembly_analysis_scope, validate_case_scope
 from .assembly_resources import estimate_assembly_resources
-from .contracts import DesignIR
+from .contracts import SpiDeR
 from .multiboard_analysis import MultiboardAnalysisError, plan_multiboard_analysis
 from .multiboard_execution import (
     MultiboardExecutionError,
@@ -19,6 +19,7 @@ from .multiboard_execution import (
 from .service_helpers import error_response, operation_id
 from .harness_authoring import plan_harnesses
 from .harness_pi import run_harness_pi
+from .multiboard_study import prepare_multiboard_study, validate_study_result
 
 
 ASSEMBLY_SCOPED_METHODS = {
@@ -37,7 +38,7 @@ def prepare_analysis_scope(method: str, params: Dict[str, Any], request_id: Any)
     if method not in ASSEMBLY_SCOPED_METHODS:
         return None, None
     try:
-        design = DesignIR(**params["design"]) if params.get("design") else None
+        design = SpiDeR(**params["design"]) if params.get("design") else None
         scope = scope_from_params(params, design)
         if method in {"run_thermal_case", "run_openems_case"}:
             validate_case_scope(params["case_dir"], scope)
@@ -70,10 +71,30 @@ def handle_assembly_request(
         "plan_assembly_harnesses",
         "run_harness_pi",
         "generate_tetrahedral_mesh",
+        "prepare_multiboard_study", "validate_multiboard_study_result",
+        "run_multiboard_circuit", "run_multiboard_thermal", "run_multiboard_em",
+        "linked_assembly_nets",
     }:
         return None
     try:
-        if method == "generate_tetrahedral_mesh":
+        if method == "linked_assembly_nets":
+            from .assembly_linked_nets import linked_assembly_nets
+            result = linked_assembly_nets(params.get("request") or {})
+        elif method == "run_multiboard_circuit":
+            from .multiboard_circuit import run_multiboard_circuit
+            result = run_multiboard_circuit(params.get("request") or {})
+        elif method == "run_multiboard_thermal":
+            from .multiboard_thermal import run_multiboard_thermal
+            result = run_multiboard_thermal(params.get("request") or {})
+        elif method == "run_multiboard_em":
+            from .multiboard_em import run_multiboard_em
+            result = run_multiboard_em(params.get("request") or {})
+        elif method == "prepare_multiboard_study":
+            result = prepare_multiboard_study(params.get("request") or {})
+        elif method == "validate_multiboard_study_result":
+            digest = validate_study_result(params["assembly"], params["domain"], params["request"], params["result"])
+            result = {"assembly_digest": digest, "matches": True}
+        elif method == "generate_tetrahedral_mesh":
             from .gmsh_occ_runtime import run_occ_case
             if set(params) - {"request", "timeout_s", "memory_limit_mb"}:
                 raise ValueError("Unexpected tetrahedral meshing parameters.")
@@ -104,7 +125,7 @@ def handle_assembly_request(
         elif method == "bind_multiboard_coupled_reduced_network":
             result = bind_coupled_reduced_network(params.get("request") or {})
         elif method == "validate_assembly_analysis_scope":
-            design = DesignIR(**params["design"]) if params.get("design") else None
+            design = SpiDeR(**params["design"]) if params.get("design") else None
             result = validate_assembly_analysis_scope(params.get("assembly_scope") or {}, design)
         else:
             result = estimate_assembly_resources(

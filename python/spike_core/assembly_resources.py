@@ -11,7 +11,7 @@ from __future__ import annotations
 import os
 from typing import Any, Dict, Mapping
 
-from .design_ir_v2 import AssemblyIRV1
+from .spider_v2 import AssemblyIRV1
 from .assembly_scale import (
     MAX_ASSEMBLY_PARTS,
     MAX_BOARD_AREA_MM2,

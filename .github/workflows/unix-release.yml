@@ -1,0 +1,93 @@
+name: Linux and macOS packages
+on:
+  workflow_call:
+    inputs:
+      platform:
+        type: string
+        default: all
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: Platforms to build
+        type: choice
+        default: all
+        options: [all, linux, macos]
+permissions:
+  contents: read
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ${{ fromJSON(inputs.platform == 'macos' && '["macos-15","macos-15-intel"]' || inputs.platform == 'linux' && '["ubuntu-24.04"]' || '["ubuntu-24.04","macos-15","macos-15-intel"]') }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 75
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+      CARGO_PROFILE_RELEASE_STRIP: symbols
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        if: runner.os == 'Linux'
+        with:
+          python-version: '3.12'
+      - uses: astral-sh/setup-uv@v6
+        if: runner.os == 'macOS'
+      - name: Standalone Python for macOS
+        if: runner.os == 'macOS'
+        run: |
+          uv python install 3.12
+          uv venv --seed --managed-python --python 3.12 .build-venv
+          echo "$PWD/.build-venv/bin" >> "$GITHUB_PATH"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: app/src-tauri -> target
+      - name: Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build libeigen3-dev libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf flatpak xvfb dbus-x11
+          flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+          flatpak install --user --noninteractive -y flathub org.gnome.Platform//50 org.gnome.Sdk//50
+      - name: macOS dependencies
+        if: runner.os == 'macOS'
+        run: brew install ninja libomp llvm
+      - name: Build and verify worker and desktop
+        shell: bash
+        run: bash scripts/build_unix_release.sh
+      - name: Package and verify installed CLI
+        run: python scripts/package_unix_release.py
+      - name: Linux desktop startup
+        if: runner.os == 'Linux'
+        run: python scripts/smoke_desktop_package.py xvfb-run -a dbus-run-session -- flatpak run --unshare=network org.spike.integrity
+      - name: Linux reinstall and uninstall
+        if: runner.os == 'Linux'
+        run: |
+          flatpak uninstall --user --noninteractive --assumeyes org.spike.integrity
+          flatpak install --user --noninteractive --assumeyes dist-release/*.flatpak
+          python scripts/verify_packaged_cli.py -- flatpak run --unshare=network --command=spike org.spike.integrity
+          flatpak uninstall --user --noninteractive --assumeyes org.spike.integrity
+          if flatpak info --user org.spike.integrity; then exit 1; fi
+      - name: macOS installation and desktop startup
+        if: runner.os == 'macOS'
+        run: |
+          hdiutil attach dist-release/*.dmg -nobrowse -mountpoint "$RUNNER_TEMP/spike-dmg"
+          ditto "$RUNNER_TEMP/spike-dmg/SPIKE.app" "$RUNNER_TEMP/spike-install/SPIKE.app"
+          python scripts/verify_packaged_cli.py -- "$RUNNER_TEMP/spike-install/SPIKE.app/Contents/MacOS/spike"
+          python scripts/smoke_desktop_package.py "$RUNNER_TEMP/spike-install/SPIKE.app/Contents/MacOS/spike-desktop"
+          ditto "$RUNNER_TEMP/spike-dmg/SPIKE.app" "$RUNNER_TEMP/spike-install/SPIKE.app"
+          python scripts/verify_packaged_cli.py -- "$RUNNER_TEMP/spike-install/SPIKE.app/Contents/MacOS/spike"
+          hdiutil detach "$RUNNER_TEMP/spike-dmg"
+          rm -r -- "$RUNNER_TEMP/spike-install/SPIKE.app"
+          test ! -e "$RUNNER_TEMP/spike-install/SPIKE.app"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SPIKE-${{ matrix.os }}
+          path: dist-release/*
+          if-no-files-found: error
+          retention-days: 14

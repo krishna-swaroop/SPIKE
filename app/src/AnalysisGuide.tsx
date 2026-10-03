@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, ArrowRight, CircleHelp, Focus, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, CircleHelp, Focus, X } from "./icons";
 import "./AnalysisGuide.css";
 
 export type GuideDestination = "board-import" | "emerge" | "emerge-emi" | "emerge-em-result" | "pi" | "si" | "emi" | "thermal" | "circuit" | "results";

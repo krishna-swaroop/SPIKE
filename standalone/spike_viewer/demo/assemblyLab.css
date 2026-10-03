@@ -1,0 +1,27 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+.assembly-lab {height:100dvh;min-height:0;display:flex;flex-direction:column;background:#101c25;overflow:hidden;}
+.assembly-link {color:#86d9cd;font-size:12px;overflow-wrap:anywhere;}
+.assembly-toolbar {display:flex;align-items:center;gap:7px;flex-wrap:wrap;padding:8px 12px;border-bottom:1px solid #30434f;flex:none;background:#152630;}
+.assembly-toolbar button[aria-pressed=true] {background:#31594f;color:#baf8e4;border-color:#78bfb0;}
+.assembly-lab input[type=number],.assembly-lab input[type=text],.assembly-panel input:not([type]),.assembly-panel select {background:#0f2029;color:#d4e5e9;border:1px solid #3c5765;border-radius:4px;min-height:34px;padding:6px;max-width:100%;min-width:0;width:100%;}
+.assembly-tree,.assembly-properties {min-width:0;background:transparent;}
+.assembly-panel {padding:14px;border-bottom:1px solid #2f4553;min-width:0;}
+.assembly-panel h2 {font-size:13px;margin:0 0 10px;}.assembly-panel h2:not(:first-child) {margin-top:20px;}
+.assembly-panel>label {display:flex;flex-direction:column;gap:5px;margin:10px 0;font-size:12px;color:#a9c2cd;}
+.assembly-panel>label.inline-check {flex-direction:row;align-items:center;}.assembly-panel button {font-size:12px;padding:6px 9px;}
+.assembly-panel p,.assembly-note {font-size:12px;color:#9bb5c1;line-height:1.6;overflow-wrap:anywhere;}.assembly-note {display:block;}
+.assembly-panel input[type=file] {width:100%;font-size:11px;}.file-import {padding:9px;border:1px dashed #598075;border-radius:6px;color:#b1e8d9!important;}
+.assembly-tree ul {list-style:none;padding:8px;margin:0;}.assembly-tree li {margin:4px 0;}.assembly-tree li button {display:flex;align-items:center;gap:8px;width:100%;text-align:left;padding:9px 7px;font-size:12px;}
+.assembly-tree li span {font-size:10px;letter-spacing:.4px;color:#8db6bc;}.assembly-tree li b {font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;flex:1;}.assembly-tree li small {font-size:10px;color:#a4b8c2;}
+.assembly-tree li button[aria-pressed=true] {background:#284d49;border-color:#75b9a9;color:#c8f1e4;}
+.assembly-centre {height:100%;min-width:0;min-height:0;display:flex;flex-direction:column;}.assembly-canvas {flex:1;min-height:0;position:relative;}
+.assembly-canvas .assembly-viewer {min-height:0;}
+.assembly-status {flex:none;font-size:11px;line-height:1.5;padding:6px 12px;background:#162a33;color:#a9c2cc;overflow:auto;overflow-wrap:anywhere;max-height:72px;}
+.assembly-error {flex:none;margin:0;padding:8px 12px;background:#462f2b;color:#ffc8b5;font-size:12px;overflow:auto;overflow-wrap:anywhere;max-height:90px;}
+.assembly-checks,.assembly-actions {display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0;}.assembly-checks label {display:flex;gap:5px;align-items:center;font-size:12px;min-height:32px;}
+.xyz-fields {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-bottom:9px;}.xyz-fields label {display:flex;flex-direction:column;font-size:11px;gap:3px;}.xyz-fields input {width:100%;}
+.assembly-field-pair {display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0;}.assembly-field-pair label {display:flex;flex-direction:column;gap:6px;min-width:0;font-size:12px;color:#a9c2cd;}
+.assembly-panel fieldset {padding:10px 0;border:0;min-width:0;}.assembly-panel legend {font-size:11px;color:#9ab7c5;}.assembly-panel fieldset button {margin-right:4px;margin-bottom:5px;}
+.assembly-panel dl {font-size:11px;}.assembly-panel dt {color:#91adba;margin-top:8px;}.assembly-panel dd {margin:2px 0;overflow-wrap:anywhere;}.assembly-panel pre {max-height:300px;overflow:auto;font-size:11px;white-space:pre-wrap;overflow-wrap:anywhere;}
+.assembly-lab button:disabled {opacity:.4;cursor:default;}
+@media(max-width:650px),(max-height:600px) {.assembly-panel {padding:12px;}.assembly-panel input[type=number],.assembly-panel input:not([type]),.assembly-panel select,.assembly-panel button {min-height:40px;}.assembly-status {font-size:10px;padding:5px 9px;max-height:48px;}.assembly-error {max-height:64px;}}

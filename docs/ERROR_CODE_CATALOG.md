@@ -55,6 +55,7 @@ entries remain the stable public interface and source line numbers may change.
 | `SPIKE-FE-APP-*` | [`app/src/App.tsx`](../app/src/App.tsx) and the feature component that initiated the operation |
 | `SPIKE-FE-IPC-*` | [`app/src/workerBridge.ts`](../app/src/workerBridge.ts) and [`app/src-tauri/src/lib.rs`](../app/src-tauri/src/lib.rs) |
 | `SPIKE-FE-VIEW-*` | [`app/src/BoardViewport.tsx`](../app/src/BoardViewport.tsx) |
+| `SPIKE-BE-VIEW-*` | [`python/spike_core/assembly_visuals.py`](../python/spike_core/assembly_visuals.py) and [`python/spike_core/models.py`](../python/spike_core/models.py) |
 | `SPIKE-BE-PI-*` | [`python/spike_core/dc_solver.py`](../python/spike_core/dc_solver.py) and [`python/spike_core/hybrid_dc_solver.py`](../python/spike_core/hybrid_dc_solver.py) |
 | `SPIKE-BE-MESH-*` | [`python/spike_core/preflight.py`](../python/spike_core/preflight.py) and [`python/spike_core/hybrid_mesh.py`](../python/spike_core/hybrid_mesh.py) |
 | `SPIKE-BE-SOLVER-*` | The selected solver module under [`python/spike_core`](../python/spike_core) plus the process boundary in [`python/spike_worker.py`](../python/spike_worker.py) |
@@ -87,6 +88,8 @@ issued entry.
 | `SPIKE-FE-IPC-E-0001` | Worker unavailable | Restart the worker or application, then retry. |
 | `SPIKE-FE-IPC-E-0002` | Malformed worker response | Preserve diagnostics and verify component versions. |
 | `SPIKE-FE-VIEW-P-0001` | Viewport performance degraded | Reduce visible detail or use a lower rendering quality preset. |
+| `SPIKE-FE-VIEW-E-0001` | Assembly display model could not be loaded | Reopen the project, repair model assignments in the 3D Model Manager, and retry visual preparation. |
+| `SPIKE-FE-VIEW-E-0002` | WebGL context lost | Close other GPU-heavy applications, lower rendering quality, and reopen the workspace if rendering does not restore. |
 | `SPIKE-FE-PROJECT-E-0001` | Project open failed | Check package path and integrity, then retry. |
 | `SPIKE-FE-SPICE-E-0001` | SPICE assistant input invalid | Correct highlighted model, pin, or analysis fields. |
 
@@ -100,6 +103,7 @@ issued entry.
 | `SPIKE-BE-IMPORT-W-0001` | Import quality warning | Review import-quality diagnostics before analysis. |
 | `SPIKE-BE-IMPORT-E-0001` | Design import failed | Review the source path, format hint, and importer diagnostics, then retry. |
 | `SPIKE-BE-IMPORT-E-0002` | MCAD assembly import failed | Save the project, verify the STEP or glTF artifact and embedded resources, then retry. |
+| `SPIKE-BE-VIEW-E-0001` | Board visual preparation failed | Keep completed stages, review the failed-stage diagnostic, correct its source or local tool issue, and retry that stage. |
 | `SPIKE-BE-MESH-W-0001` | Mesh validity warning | Inspect diagnostics and refine geometry or settings. |
 | `SPIKE-BE-MESH-W-0002` | Copper polygon is unusable | Repair or refill the identified copper zone, re-import it, and inspect the mesh preview. |
 | `SPIKE-BE-MESH-W-0003` | Pad geometry approximated | Inspect the pad and use a polygon-preserving import path when exact geometry is required. |

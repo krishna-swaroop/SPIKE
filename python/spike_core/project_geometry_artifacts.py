@@ -8,7 +8,7 @@ import zipfile
 from pathlib import Path
 from typing import Any, Dict, Mapping
 
-from .design_ir_v2 import DesignIRV2
+from .spider_v2 import SpiDeRV2
 from .geometry_arrow import (
     GEOMETRY_ARROW_CONTRACTS, MAX_GEOMETRY_ARROW_IPC_BYTES, MAX_GEOMETRY_ARROW_ROWS,
     GeometryArrowError, validate_geometry_arrow,
@@ -124,7 +124,7 @@ def read_geometry_arrow_artifact(
             ) or b""
             try:
                 rows = validate_geometry_arrow(
-                    data, DesignIRV2.from_dict(design_raw),
+                    data, SpiDeRV2.from_dict(design_raw),
                     max_ipc_bytes=max_bytes, max_rows=max_rows,
                 )
             except (GeometryArrowError, TypeError, ValueError) as exc:

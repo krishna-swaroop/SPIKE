@@ -1,0 +1,20 @@
+// SPDX-License-Identifier: Apache-2.0
+import assert from "node:assert/strict";
+import { importTestTypescript } from "./import-test-typescript.mjs";
+const { assemblyExplodeOffsets, assemblyDisplayBoards, assemblyDisplayHarnesses } = await importTestTypescript("assemblyDisplayState");
+const matrix = z => [1,0,0,112,0,1,0,67,0,0,1,z,0,0,0,1];
+const boards = [{id:"upper", transform:matrix(11)}, {id:"lower", transform:matrix(0)}];
+const before = structuredClone(boards);
+const offsets = assemblyExplodeOffsets(boards, 25);
+assert.deepEqual(offsets, {lower:0,upper:25});
+assert.equal(assemblyDisplayBoards(boards, {}, offsets)[0].transform[11],36);
+assert.deepEqual(boards,before,"explosion must not change solver/placement geometry");
+assert.deepEqual(assemblyDisplayBoards(boards,{upper:false},offsets).map(x=>x.id),["lower"]);
+const harness = {id:"wire",endpointA:{boardId:"lower",positionMm:[1,2,0]},endpointB:{boardId:"upper",positionMm:[1,2,11]},routeMm:[[1,2,0],[2,3,5],[1,2,11]]};
+const result = assemblyDisplayHarnesses([harness],{},offsets)[0];
+assert.deepEqual(result.endpointB.positionMm,[1,2,36]);
+assert.equal(result.routeMm[1][2],17.5);
+assert.equal(harness.endpointB.positionMm[2],11);
+assert.equal(assemblyDisplayHarnesses([harness],{upper:false},offsets).length,0);
+assert.throws(()=>assemblyExplodeOffsets(boards,NaN));
+console.log("Exploded display offsets, harness endpoints, visibility and physical geometry isolation passed");

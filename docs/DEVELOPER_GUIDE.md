@@ -21,6 +21,32 @@ SPIKE has three executable surfaces:
 The desktop and CLI share Python contracts and solver services. The browser
 preview is useful for UI work but cannot run local workers or native dialogs.
 
+## Python IDE integration
+
+`app/src/PythonWorkspace.tsx` owns the integrated IDE. Its file browser and
+recovery panel are `PythonFileExplorer.tsx` and `PythonRecoveryPanel.tsx`;
+`pythonWorkspaceModel.ts` owns validated session persistence, save snapshots,
+and recovery copies. Preserve edits made while a file save is in progress.
+Browser downloads must leave the buffer unsaved because they cannot confirm
+the destination file was written.
+
+Local recovery uses `spike-python-workspace-backups/v2`, with at most five
+snapshots and a two-million-byte storage bound. Recovery opens an unsaved
+`.recovered.py` copy without a disk path or write authorization. Surface storage
+failures instead of claiming a successful backup. File operations use the
+confined `spike/python-workspace-files/v1` contract in
+`python/spike_core/script_workspace_files.py`; its additive `worktrees` action
+only discovers existing Git checkouts. Selecting one changes the browsing root
+and preserves open buffers.
+
+Run `npm.cmd run test:python-workspace` from `app` and the file/worktree tests
+from the project Python environment:
+`python -m unittest tests.python.test_script_workspace_files tests.python.test_script_workspace_worktrees`.
+The actual IDE can be previewed at `scripts/fixtures/python-ide.html` under the
+Vite server. Browser verification covers layout and editor behavior; it does
+not qualify native dialogs, worker execution, or numerical results. See
+`docs/validation/PYTHON_IDE_UI_20261003.md` for the recorded checks and limits.
+
 ## Repository setup
 
 Create a Python environment and install pinned project dependencies according
@@ -108,7 +134,7 @@ When debugging a hang, record:
 
 ## Adding an importer
 
-1. Define a source adapter that parses one format and returns `DesignIR`.
+1. Define a source adapter that parses one format and returns `SpiDeR`.
 2. Register an `ImporterDescriptor` in a composition module.
 3. Add frontend source dispatch only if browser-side parsing is required.
 4. Add fixtures for units, coordinates, layers, stackup, arcs/polygons, vias,
@@ -124,7 +150,7 @@ add native adapters only for information that interchange standards lose.
 
 1. Implement the SDK contract in `solver_sdk` or a built-in plugin module.
 2. Declare modes, geometry, formulation, frequency, and validation capability.
-3. Consume only `DesignIR` and `AnalysisSpec`.
+3. Consume only `SpiDeR` and `AnalysisSpec`.
 4. Return `AnalysisResult` with provenance, assumptions, model status,
    convergence, and issues.
 5. Add analytical and real-board fixtures with tolerances.
@@ -175,3 +201,7 @@ available solver from CLI and GUI with matching results, produce a report, and
 launch offline on a clean supported machine. Capability text must match
 `docs/SOLVER_STATUS.md`; known limitations are release notes, not hidden tribal
 knowledge.
+
+## Study workspace integration
+
+The version-one study projection adds tags, archives, datasets, case links, and captured history without scheduling solvers. Captures freeze the supplied workspace setup; they do not establish the original solve inputs. Import copies use fresh IDs and preserve dataset links. Project copies without results omit result payloads, references, and solved Optycal sources. Run `npm.cmd run test:studies` and preview `scripts/fixtures/study-manager.html`. See [study workflow](SIMULATION_STUDIES.md) and ADR 0033.

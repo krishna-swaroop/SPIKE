@@ -1,0 +1,17 @@
+{
+  "board": "examples/emerge/antenna_example.kicad_pcb",
+  "parameters": {
+    "signal_net": "RF",
+    "return_net": "GND",
+    "signal_pad_id": "51d0c420-4c7b-4da5-b9ec-001000000011",
+    "return_pad_id": "51d0c420-4c7b-4da5-b9ec-001000000012",
+    "frequency_start_hz": 3400000000,
+    "frequency_stop_hz": 3600000000,
+    "frequency_points": 2,
+    "mesh_resolution_mm": 2.0,
+    "include_dielectric_loss": true,
+    "nearfield_enabled": true,
+    "nearfield_z_mm": 1.0,
+    "nearfield_grid_points": 11
+  }
+}

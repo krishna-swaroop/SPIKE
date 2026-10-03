@@ -1,4 +1,4 @@
-import { AlertTriangle, CheckCircle2, Gauge, Play, X, XCircle } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Gauge, Play, X, XCircle } from "./icons";
 import { useState } from "react";
 import { runLocalWorker } from "./workerBridge";
 

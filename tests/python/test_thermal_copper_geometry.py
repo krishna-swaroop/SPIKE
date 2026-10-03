@@ -5,7 +5,7 @@ import unittest
 
 import numpy as np
 
-from python.spike_core.contracts import DesignIR
+from python.spike_core.contracts import SpiDeR
 from python.spike_core.thermal_copper_geometry import CopperGeometryError, rasterize_copper
 
 
@@ -22,7 +22,7 @@ class CopperGeometryTests(unittest.TestCase):
         zone = {"layer": "F.Cu", "points": [[0, 0], [4, 0], [4, 4], [0, 4]],
                 "holes": [[[1, 1], [3, 1], [3, 3], [1, 3]]],
                 "filled_copper_state": "source_filled", "source_fill_provenance_complete": True}
-        design = DesignIR(zones=[zone])
+        design = SpiDeR(zones=[zone])
         fields, diagnostics = raster(design)
         self.assertAlmostEqual(float(fields["F.Cu"].sum()), 12.0, places=12)
         self.assertEqual(float(fields["F.Cu"][1, 1]), 0.0)
@@ -34,7 +34,7 @@ class CopperGeometryTests(unittest.TestCase):
         self.assertEqual(error.exception.diagnostics[0]["path"], "design.zones[0]")
 
     def test_track_pad_union_and_via_span(self):
-        design = DesignIR(
+        design = SpiDeR(
             tracks=[{"layer": "F.Cu", "start": [0.5, 0.5], "end": [3.5, 0.5], "width": 1.0}],
             pads=[{"layer": "F.Cu", "at": [2, 0.5], "size": [1, 1], "shape": "rect"}],
             vias=[{"layers": ["F.Cu", "B.Cu"], "at": [2, 2], "size": 1.0, "drill": 0.4}],
@@ -57,13 +57,13 @@ class CopperGeometryTests(unittest.TestCase):
                 "filled_copper_state": "source_filled",
                 "source_fill_representation": "flat_polygon_path",
                 "source_fill_provenance_complete": True}
-        fields, _ = raster(DesignIR(pads=[pad], zones=[zone]))
+        fields, _ = raster(SpiDeR(pads=[pad], zones=[zone]))
         self.assertLess(float(fields["F.Cu"].sum()), 1.0)
         self.assertGreater(float(fields["F.Cu"].sum()), 0.7)
         self.assertAlmostEqual(float(fields["B.Cu"].sum()), 8.0, places=12)
 
     def test_fuzzy_conserves_area_and_reveals_neighbor_density(self):
-        design = DesignIR(pads=[{"layer": "F.Cu", "at": [0.5, 0.5],
+        design = SpiDeR(pads=[{"layer": "F.Cu", "at": [0.5, 0.5],
                                  "size": [1, 1], "shape": "rect"}])
         crisp, _ = raster(design)
         fuzzy, diagnostics = raster(design, sigma=0.8)
@@ -75,9 +75,9 @@ class CopperGeometryTests(unittest.TestCase):
         self.assertEqual(diagnostics[-1]["code"], "THERMAL_COPPER_FUZZY")
 
     def test_bad_via_and_unknown_layer_fail_closed(self):
-        for design in (DesignIR(vias=[{"layers": ["F.Cu", "B.Cu"], "at": [2, 2],
+        for design in (SpiDeR(vias=[{"layers": ["F.Cu", "B.Cu"], "at": [2, 2],
                                       "size": 0.4, "drill": 0.5}]),
-                       DesignIR(tracks=[{"layer": "Unknown.Cu", "start": [0, 0],
+                       SpiDeR(tracks=[{"layer": "Unknown.Cu", "start": [0, 0],
                                          "end": [1, 1], "width": 0.2}])):
             with self.subTest(design=design), self.assertRaises(CopperGeometryError):
                 raster(design)

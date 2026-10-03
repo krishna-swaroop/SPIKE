@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
-import { Box, CircuitBoard, FileBox, Link2, Move3d, PackageOpen, ShieldAlert, X } from "lucide-react";
+import { Box, CircuitBoard, FileBox, Link2, Move3d, PackageOpen, ShieldAlert, X } from "./icons";
 import { runNativeProjectWorker, selectNativeMcadFile, type NativeSelectedFile } from "./workerBridge";
 import { buildAssemblyHierarchy, localTransformFromAssembly, partVisualSettings, placementFromTransform, placementPolicySettings, transformFromPlacement, validReparentTargets, type AssemblyDesigns, type AssemblyHierarchyNode, type AssemblyIr, type AssemblyPartVisual, type AssemblyPlacement, type AssemblySection } from "./mcadAssembly";
 import AssemblySemanticsEditor from "./AssemblySemanticsEditor";
 import AssemblyTopologyEditor from "./AssemblyTopologyEditor";
-import AssemblyStructureEditor from "./AssemblyStructureEditor";
 import { packageShapeForPart, type AssemblyPackageShapesIndex, type TopologyReference } from "./assemblyPackageShapes";
 
 type Props = {
+  initialSource?: NativeSelectedFile | null;
   projectPath: string | null;
   projectManifestDigest: string | null;
   assemblyIr: AssemblyIr | null;
@@ -24,12 +24,12 @@ type Props = {
   onStatus: (message: string) => void;
   onClose: () => void;
   onOpenHarnessEditor?: () => void;
+  onOpenAssemblyWorkspace: () => void;
 };
 
 const sourceKind = (file: NativeSelectedFile | null) => file?.fileName.split(".").pop()?.toLowerCase() ?? "";
 const EMPTY_PLACEMENT: AssemblyPlacement = { xMm: 0, yMm: 0, zMm: 0, rxDeg: 0, ryDeg: 0, rzDeg: 0 };
 const PART_TYPES = ["mechanical", "enclosure", "heatsink", "fan", "potting", "fixture"];
-const EMPTY_ASSEMBLY: AssemblyIr = { contract: "spike/assembly-ir/v1", assembly_id: "assembly", name: "Assembly", boards: [], parts: [] };
 
 function HierarchyBranch({ node, selectedPartId, onSelectPart }: { node: AssemblyHierarchyNode; selectedPartId: string; onSelectPart: (partId: string) => void }) {
   const Icon = node.kind === "board" ? CircuitBoard : node.kind === "part" ? PackageOpen : Box;
@@ -41,9 +41,12 @@ function HierarchyBranch({ node, selectedPartId, onSelectPart }: { node: Assembl
   </li>;
 }
 
-export default function McadAttachmentPanel({ projectPath, projectManifestDigest, assemblyIr, assemblyDesigns, assemblyPackageShapes, focusedPartId, focusedTopologyReference, desktopShell, isolatedPartId, section, onIsolatedPart, onSection, onAttached, onStatus, onClose, onOpenHarnessEditor }: Props) {
-  const [source, setSource] = useState<NativeSelectedFile | null>(null);
-  const [name, setName] = useState("");
+export default function McadAttachmentPanel({ initialSource, projectPath, projectManifestDigest, assemblyIr, assemblyPackageShapes, focusedPartId, focusedTopologyReference, desktopShell, isolatedPartId, section, onIsolatedPart, onSection, onAttached, onStatus, onClose, onOpenHarnessEditor, onOpenAssemblyWorkspace }: Props) {
+  const [source, setSource] = useState<NativeSelectedFile | null>(initialSource ?? null);
+  const [name, setName] = useState(initialSource?.fileName.replace(/\.(?:step|stp|gltf|glb)$/i, "") ?? "");
+  useEffect(() => {
+    if (initialSource) { setSource(initialSource); setName(initialSource.fileName.replace(/\.(?:step|stp|gltf|glb)$/i, "")); }
+  }, [initialSource]);
   const [partType, setPartType] = useState("mechanical");
   const [materialId, setMaterialId] = useState("");
   const [selectedPartId, setSelectedPartId] = useState(assemblyIr?.parts[0]?.id ?? "");
@@ -390,7 +393,7 @@ export default function McadAttachmentPanel({ projectPath, projectManifestDigest
           <button className="secondary-btn" onClick={() => onSection({ ...section, enabled: false })}>Clear section</button>
         </section>
         {assemblyIr && <AssemblySemanticsEditor projectPath={projectPath} projectManifestDigest={projectManifestDigest} assemblyIr={assemblyIr} onUpdated={onAttached} onStatus={onStatus} />}
-        <AssemblyStructureEditor projectPath={projectPath} projectManifestDigest={projectManifestDigest} assemblyIr={assemblyIr ?? EMPTY_ASSEMBLY} assemblyDesigns={assemblyDesigns} onUpdated={onAttached} onStatus={onStatus} onOpenHarnessEditor={onOpenHarnessEditor} />
+        <section className="mcad-section" aria-label="Multi-board setup window"><h3>Board instances and harnesses</h3><p>Configure boards, connector links, virtual harnesses and coupled studies in the separate multi-board workspace.</p><button className="secondary-btn" disabled={busy} onClick={onOpenAssemblyWorkspace}><CircuitBoard size={14} /> Open multi-board workspace</button>{onOpenHarnessEditor && <button className="secondary-btn" disabled={busy} onClick={onOpenHarnessEditor}>Open Harness PI editor</button>}</section>
         {assemblyIr && assemblyPackageShapes && <AssemblyTopologyEditor projectPath={projectPath} projectManifestDigest={projectManifestDigest} assemblyIr={assemblyIr} index={assemblyPackageShapes} focusedReference={focusedTopologyReference} onUpdated={onAttached} onStatus={onStatus} />}
       </div>
       <footer><span><Link2 size={13} /> Attachment writes transactionally, then reopens the verified package.</span><button className="secondary-btn" onClick={onClose} disabled={busy}>Cancel</button><button className="run-btn" onClick={() => void attach()} disabled={!canAttach}>{busy ? "Attaching..." : "Attach part"}</button></footer>

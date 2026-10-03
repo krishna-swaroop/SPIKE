@@ -1,6 +1,6 @@
 import unittest
 
-from python.spike_core.contracts import AnalysisSpec, DesignIR
+from python.spike_core.contracts import AnalysisSpec, SpiDeR
 from python.spike_core.pi_path import PI_PATH_CONTRACT
 from python.spike_core.pi_path_circuit import (
     COMPILE_CONTRACT,
@@ -10,8 +10,8 @@ from python.spike_core.pi_path_circuit import (
 from python.spike_core.service import handle
 
 
-def three_net_design() -> DesignIR:
-    return DesignIR(
+def three_net_design() -> SpiDeR:
+    return SpiDeR(
         design_id="three-net-path",
         name="VIN through R1 and R2 to VOUT",
         layers=[{"name": "F.Cu"}],

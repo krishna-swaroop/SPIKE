@@ -1,0 +1,56 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+.assembly-viewer {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 240px;
+  overflow: hidden;
+  background: #0a1118;
+  color: #e8f2f5;
+  font: 12px/1.4 Inter, ui-sans-serif, system-ui, sans-serif;
+}
+
+.assembly-viewer__canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  outline: none;
+}
+
+.assembly-viewer__error,
+.assembly-viewer__notice {
+  position: absolute;
+  z-index: 5;
+  left: 10px;
+  right: 10px;
+  box-sizing: border-box;
+  padding: 8px 10px;
+  border-radius: 5px;
+  background: rgb(8 19 27 / 92%);
+  pointer-events: none;
+}
+
+.assembly-viewer__error {
+  top: 10px;
+  border: 1px solid #df6f6f;
+  color: #ffd7d7;
+}
+
+.assembly-viewer__notice {
+  bottom: 10px;
+  max-width: 520px;
+  border: 1px solid #66828e;
+  color: #bed0d7;
+}
+
+.assembly-viewer__admission-error {
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  padding: 24px;
+  border: 1px solid #df6f6f;
+  color: #ffd7d7;
+  text-align: center;
+}

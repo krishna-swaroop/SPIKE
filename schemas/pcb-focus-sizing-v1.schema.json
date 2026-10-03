@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spike.local/schemas/pcb-focus-sizing-v1.schema.json",
+  "title": "SPIKE PCB net source and manual region sizing v1",
+  "type": "object", "additionalProperties": false,
+  "required": ["contract", "net_names", "source_ids", "fine_size_mm", "coarse_size_mm", "halo_mm", "growth_rate", "regions"],
+  "properties": {
+    "contract": {"const": "spike/pcb-focus-sizing/v1"},
+    "net_names": {"$ref": "#/$defs/selectors"},
+    "source_ids": {"$ref": "#/$defs/selectors"},
+    "fine_size_mm": {"type": "number", "exclusiveMinimum": 0, "maximum": 1000000},
+    "coarse_size_mm": {"type": "number", "exclusiveMinimum": 0, "maximum": 1000000},
+    "halo_mm": {"type": "number", "minimum": 0, "maximum": 1000000},
+    "growth_rate": {"type": "number", "exclusiveMinimum": 0, "maximum": 1},
+    "regions": {"type": "array", "maxItems": 4096, "items": {
+      "type": "object", "additionalProperties": false, "required": ["id", "bounds_mm", "target_size_mm"],
+      "properties": {
+        "id": {"$ref": "#/$defs/identity"},
+        "bounds_mm": {"type": "array", "minItems": 2, "maxItems": 2, "items": {"$ref": "#/$defs/point"}},
+        "target_size_mm": {"type": "number", "exclusiveMinimum": 0, "maximum": 1000000}
+      }
+    }}
+  },
+  "$defs": {
+    "identity": {"type": "string", "minLength": 1, "maxLength": 256},
+    "selectors": {"type": "array", "maxItems": 10000, "uniqueItems": true, "items": {"$ref": "#/$defs/identity"}},
+    "point": {"type": "array", "minItems": 3, "maxItems": 3, "items": {"type": "number", "minimum": -1000000, "maximum": 1000000}}
+  }
+}

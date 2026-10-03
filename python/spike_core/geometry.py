@@ -4,14 +4,14 @@ from __future__ import annotations
 
 from typing import Any, Dict
 
-from .contracts import DesignIR
+from .contracts import SpiDeR
 
 
 def _net_name(item: Dict[str, Any]) -> str:
     return str(item.get("net_name") or item.get("net") or "")
 
 
-def extract_net_geometry(design: DesignIR, net_name: str) -> Dict[str, Any]:
+def extract_net_geometry(design: SpiDeR, net_name: str) -> Dict[str, Any]:
     if not net_name:
         raise ValueError("A net name is required.")
 

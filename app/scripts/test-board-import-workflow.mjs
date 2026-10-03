@@ -72,12 +72,16 @@ const partial = harness(async request => request.params.stage === 'layout' ? { o
 await partial.hook.prepare(board(), 'partial.kicad_pcb', '(kicad_pcb)', 'C:/boards/partial.kicad_pcb');
 assert.equal(partial.applied.length, 2, 'layer failure must not block the 3D stages');
 assert.equal(partial.states[0].problems.length, 1);
-assert.equal(partial.states[0].problems[0].references.length, 8);
+assert.equal(partial.states[1], false, 'partial imports retain diagnostics without covering the viewport automatically');
+partial.hook.show();
+assert.equal(partial.states[1], true, 'import details remain available on demand');
+assert.equal(partial.states[0].problems[0].references.length, 2, "only actually unresolved references need repair, not the six resolved embedded models");
 await partial.hook.locate(missing);
 assert.equal(partial.calls.length, 4, 'a model selection must rerun only the component stage');
 assert.equal(partial.calls.at(-1).params.model_overrides[missing], 'C:/models/replacement.step');
 assert.equal(partial.states[0].problems.length, 0);
 assert.equal(partial.states[0].warnings.length, 1, 'model recovery must retain unrelated layer failures');
+assert.equal(partial.states[1], true, 'a user-opened repair panel remains open while unresolved warnings exist');
 assert.equal(partial.revoked.length, 2, 'replaced component and manifest URLs must be released');
 
 let release;
@@ -104,4 +108,16 @@ releaseCancellations.forEach(resolve => resolve()); await stopping; releaseOld()
 assert.equal(race.states[0].fileName, 'new.kicad_pcb');
 assert.equal(race.states[0].stage, 'ready', 'old cancellation must not stop a new import');
 assert.equal(race.applied.length, 3);
+const resolvedEmbedded = harness(async request => response(request, request.params.stage === 'components' ? {missing_references: [], unresolved_model_paths: [missing]} : {}));
+await resolvedEmbedded.hook.prepare(board(), 'embedded.kicad_pcb', '', 'C:/boards/embedded.kicad_pcb');
+assert.equal(resolvedEmbedded.states[0].problems.length, 0, 'resolved embedded assignments must not trigger Locate model rows');
+const componentReplacement = harness();
+await componentReplacement.hook.prepare(board(), 'retained.kicad_pcb', '(kicad_pcb)', 'C:/boards/original.kicad_pcb');
+await componentReplacement.hook.prepareComponents(board(), 'retained.kicad_pcb', '(kicad_pcb)', { F1: 'C:/models/resistor.step' });
+assert.equal(componentReplacement.calls.length, 4, 'applying a replacement must rerun only components');
+assert.equal(componentReplacement.calls.at(-1).params.source_board, '(kicad_pcb)', 'replacement exports use retained source, preserving the original file');
+assert.deepEqual(componentReplacement.calls.at(-1).params.component_model_overrides, { F1: 'C:/models/resistor.step' });
+const failedReplacement = harness(request => Promise.resolve(response(request, { missing_references: ['F1'] })));
+await assert.rejects(failedReplacement.hook.prepareComponents(board(), 'retained.kicad_pcb', '(kicad_pcb)', { F1: 'C:/models/broken.step' }), /could not be converted/);
+await assert.rejects(componentReplacement.hook.prepareComponents(board(), 'other.json', '{}', {}), /retained KiCad/);
 console.log('staged import, native-copper recovery, grouped model repair, partial failure and cancellation checks passed');

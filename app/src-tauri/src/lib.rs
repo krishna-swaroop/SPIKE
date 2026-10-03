@@ -17,6 +17,7 @@ mod gpu_metrics;
 mod mcp_bridge;
 mod package_trust;
 mod project_trust_binding;
+mod webview_policy;
 
 #[cfg(target_os = "windows")]
 use std::os::windows::process::CommandExt;
@@ -36,6 +37,7 @@ struct WorkerExecutionState(Arc<Mutex<Option<ActiveWorker>>>);
 struct ResidentWorkerState(Arc<Mutex<Option<ResidentWorker>>>);
 
 const MAX_TEXT_FILE_BYTES: u64 = 256 * 1024 * 1024;
+const MAX_SOURCE_TEXT_FILE_BYTES: u64 = 64 * 1024 * 1024;
 // ZIP64 projects are passed by approved path and verified in bounded chunks by
 // the worker. Their on-disk size is independent of JSON/text IPC limits.
 const MAX_PROJECT_FILE_BYTES: u64 = 16 * 1024 * 1024 * 1024;
@@ -43,6 +45,52 @@ const MAX_MCAD_FILE_BYTES: u64 = 2 * 1024 * 1024 * 1024;
 const MAX_WORKER_REQUEST_BYTES: usize = 256 * 1024 * 1024;
 const MAX_WORKER_STDOUT_BYTES: usize = 256 * 1024 * 1024;
 const MAX_WORKER_STDERR_BYTES: usize = 4 * 1024 * 1024;
+
+const WORKBENCH_FILE_FILTERS: [(&str, &[&str]); 5] = [
+    (
+        "All supported SPIKE sources",
+        &[
+            "spike",
+            "json",
+            "kicad_pcb",
+            "zip",
+            "tgz",
+            "tar",
+            "gz",
+            "odb",
+            "odb++",
+            "ipc",
+            "ipc2581",
+            "xml",
+            "csv",
+            "tsv",
+            "step",
+            "stp",
+            "glb",
+            "gltf",
+        ],
+    ),
+    ("SPIKE projects and results", &["spike", "json"]),
+    (
+        "PCB sources",
+        &[
+            "kicad_pcb",
+            "zip",
+            "tgz",
+            "tar",
+            "gz",
+            "odb",
+            "odb++",
+            "ipc",
+            "ipc2581",
+            "xml",
+        ],
+    ),
+    ("Harness sources", &["json", "csv", "tsv"]),
+    ("MCAD sources", &["step", "stp", "glb", "gltf"]),
+];
+
+const ARCHIVE_FILE_EXTENSIONS: &[&str] = &["spike", "zip", "tgz", "tar", "gz", "odb", "odb++"];
 
 #[derive(Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -95,7 +143,7 @@ impl Drop for ActiveWorkerGuard {
     }
 }
 
-#[derive(Serialize)]
+#[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 struct OpenedTextFile {
     path: String,
@@ -176,6 +224,7 @@ fn is_heavy_worker_method(method: &str) -> bool {
             | "read_project_model_artifacts"
             | "read_project_state_artifact"
             | "read_project_visual_bundle"
+            | "prepare_assembly_design_visual_bundle"
             | "read_project_package_shape_selector_previews"
             | "tessellate_mcad_part_in_project"
             | "preview_mesh"
@@ -187,6 +236,16 @@ fn is_heavy_worker_method(method: &str) -> bool {
             | "run_python_script"
             | "run_pi_path_native_mna"
             | "run_harness_pi"
+            | "run_multiboard_circuit"
+            | "run_multiboard_thermal"
+            | "run_multiboard_em"
+            | "prepare_assembly_field_handoff"
+            | "run_assembly_field_thermal"
+            | "derive_assembly_view_factors"
+            | "import_assembly_field_study"
+            | "export_assembly_field_study"
+            | "read_assembly_field_study_in_project"
+            | "save_assembly_field_study_in_project"
             | "generate_tetrahedral_mesh"
             | "run_preflighted_analysis"
             | "run_si_protocol_test_suite"
@@ -569,32 +628,36 @@ fn project_worker_paths(request: &serde_json::Value) -> Result<Vec<PathBuf>, Str
         .get("params")
         .and_then(serde_json::Value::as_object)
         .ok_or("Project worker operations require approved path parameters")?;
-    let required_fields: &[&str] = if matches!(
-        worker_method(request),
-        "attach_mcad_part_to_project" | "import_into_assembly_project"
-    ) {
-        &["project_path", "source_path"]
-    } else if worker_method(request) == "prepare_visual_bundle" {
-        &["board_path"]
-    } else if matches!(
-        worker_method(request),
-        "export_mcad_session"
-            | "preview_mcad_feedback"
-            | "apply_mcad_feedback"
-            | "update_mcad_part_in_project"
-            | "reparent_mcad_part_in_project"
-            | "tessellate_mcad_part_in_project"
-            | "extract_mcad_package_shape_in_project"
-            | "generate_mcad_selector_preview_in_project"
-            | "update_assembly_semantics_in_project"
-            | "update_assembly_topology_setup_in_project"
-            | "apply_assembly_geometric_constraint_in_project"
-            | "update_assembly_structure_in_project"
-    ) {
-        &["project_path"]
-    } else {
-        &["path"]
-    };
+    let required_fields: &[&str] =
+        if matches!(worker_method(request), "attach_mcad_part_to_project") {
+            &["project_path", "source_path"]
+        } else if worker_method(request) == "import_into_assembly_project" {
+            &["project_path"]
+        } else if worker_method(request) == "prepare_visual_bundle" {
+            &["board_path"]
+        } else if matches!(
+            worker_method(request),
+            "export_mcad_session"
+                | "preview_mcad_feedback"
+                | "apply_mcad_feedback"
+                | "update_mcad_part_in_project"
+                | "reparent_mcad_part_in_project"
+                | "tessellate_mcad_part_in_project"
+                | "extract_mcad_package_shape_in_project"
+                | "generate_mcad_selector_preview_in_project"
+                | "update_assembly_semantics_in_project"
+                | "update_assembly_topology_setup_in_project"
+                | "apply_assembly_geometric_constraint_in_project"
+                | "update_assembly_structure_in_project"
+                | "save_multiboard_study_in_project"
+                | "read_assembly_field_study_in_project"
+                | "save_assembly_field_study_in_project"
+                | "prepare_assembly_design_visual_bundle"
+        ) {
+            &["project_path"]
+        } else {
+            &["path"]
+        };
     let mut paths = required_fields
         .iter()
         .map(|field| {
@@ -606,6 +669,28 @@ fn project_worker_paths(request: &serde_json::Value) -> Result<Vec<PathBuf>, Str
                 .ok_or_else(|| format!("Project worker operation requires approved {field}"))
         })
         .collect::<Result<Vec<_>, _>>()?;
+    if worker_method(request) == "import_into_assembly_project" {
+        if let Some(sources) = params.get("source_paths") {
+            let sources = sources
+                .as_array()
+                .filter(|items| !items.is_empty() && items.len() <= 30)
+                .ok_or("Assembly import requires 1 through 30 source_paths")?;
+            for source in sources {
+                let path = source
+                    .as_str()
+                    .filter(|value| !value.trim().is_empty())
+                    .ok_or("Assembly source_paths must contain non-empty paths")?;
+                paths.push(normalized_request_path(path));
+            }
+        } else {
+            let source = params
+                .get("source_path")
+                .and_then(serde_json::Value::as_str)
+                .filter(|value| !value.trim().is_empty())
+                .ok_or("Assembly import requires source_path or source_paths")?;
+            paths.push(normalized_request_path(source));
+        }
+    }
     if worker_method(request) == "write_project_package" {
         if let Some(base_path) = params
             .get("base_package_path")
@@ -648,6 +733,119 @@ fn dialog_for_kind(kind: &str, save: bool) -> rfd::FileDialog {
         ("script", _) => dialog.add_filter("Python script", &["py"]),
         _ => dialog.add_filter("Text file", &["txt", "json"]),
     }
+}
+
+fn workbench_file_dialog() -> rfd::FileDialog {
+    WORKBENCH_FILE_FILTERS.iter().fold(
+        rfd::FileDialog::new().set_title("Open or import into SPIKE"),
+        |dialog, (name, extensions)| dialog.add_filter(*name, *extensions),
+    )
+}
+
+fn read_approved_source_path(
+    requested_path: &Path,
+    approved_paths: &HashSet<PathBuf>,
+    max_bytes: u64,
+) -> Result<OpenedTextFile, String> {
+    let canonical = requested_path
+        .canonicalize()
+        .map_err(|error| format!("Unable to resolve source file: {error}"))?;
+    if !approved_paths.contains(&canonical) {
+        return Err("The source path was not selected by SPIKE".to_string());
+    }
+    if canonical
+        .extension()
+        .and_then(OsStr::to_str)
+        .is_some_and(|extension| {
+            ARCHIVE_FILE_EXTENSIONS
+                .iter()
+                .any(|archive| extension.eq_ignore_ascii_case(archive))
+        })
+    {
+        return Err("Archive and project package sources cannot be read as text".to_string());
+    }
+    let file = fs::File::open(&canonical)
+        .map_err(|error| format!("Unable to open source file: {error}"))?;
+    let metadata = file
+        .metadata()
+        .map_err(|error| format!("Unable to inspect source file: {error}"))?;
+    if !metadata.is_file() {
+        return Err("The source path is not a regular file".to_string());
+    }
+    if metadata.len() > max_bytes {
+        return Err(format!(
+            "Source file is larger than the {} MiB text-read limit",
+            max_bytes / (1024 * 1024)
+        ));
+    }
+    let mut bytes = Vec::with_capacity(metadata.len() as usize);
+    file.take(max_bytes + 1)
+        .read_to_end(&mut bytes)
+        .map_err(|error| format!("Unable to read source file: {error}"))?;
+    if bytes.len() as u64 > max_bytes {
+        return Err(format!(
+            "Source file is larger than the {} MiB text-read limit",
+            max_bytes / (1024 * 1024)
+        ));
+    }
+    let contents = String::from_utf8(bytes)
+        .map_err(|_| "The selected source file is not valid UTF-8 text".to_string())?;
+    Ok(OpenedTextFile {
+        file_name: canonical
+            .file_name()
+            .and_then(OsStr::to_str)
+            .unwrap_or("source")
+            .to_string(),
+        path: canonical.to_string_lossy().into_owned(),
+        contents,
+    })
+}
+
+#[tauri::command]
+fn select_workbench_file(
+    state: tauri::State<'_, ApprovedFileState>,
+) -> Result<Option<SelectedFile>, String> {
+    let Some(path) = workbench_file_dialog().pick_file() else {
+        return Ok(None);
+    };
+    let metadata = fs::metadata(&path)
+        .map_err(|error| format!("Unable to inspect {}: {error}", path.display()))?;
+    if !metadata.is_file() {
+        return Err("The selected workbench source is not a regular file".to_string());
+    }
+    if path
+        .extension()
+        .and_then(OsStr::to_str)
+        .is_some_and(|extension| extension.eq_ignore_ascii_case("spike"))
+        && metadata.len() > MAX_PROJECT_FILE_BYTES
+    {
+        return Err(format!(
+            "{} is larger than the 16 GiB desktop project limit",
+            path.display()
+        ));
+    }
+    let approved = register_approved_path(&state, &path)?;
+    Ok(Some(SelectedFile {
+        file_name: approved
+            .file_name()
+            .and_then(OsStr::to_str)
+            .unwrap_or("source")
+            .to_string(),
+        path: approved.to_string_lossy().into_owned(),
+    }))
+}
+
+#[tauri::command]
+fn read_approved_source_file(
+    path: String,
+    state: tauri::State<'_, ApprovedFileState>,
+) -> Result<OpenedTextFile, String> {
+    let approved = state
+        .0
+        .lock()
+        .map_err(|_| "Approved file state is unavailable".to_string())?
+        .clone();
+    read_approved_source_path(Path::new(&path), &approved, MAX_SOURCE_TEXT_FILE_BYTES)
 }
 
 #[tauri::command]
@@ -787,6 +985,52 @@ fn select_mcad_file(
 }
 
 #[tauri::command]
+fn select_assembly_sources(
+    state: tauri::State<'_, ApprovedFileState>,
+) -> Result<Option<Vec<SelectedFile>>, String> {
+    let Some(selected) = rfd::FileDialog::new()
+        .add_filter(
+            "Assembly boards or exchange",
+            &["kicad_pcb", "ipc2581", "spikeassembly"],
+        )
+        .pick_files()
+    else {
+        return Ok(None);
+    };
+    if selected.is_empty() || selected.len() > 30 {
+        return Err("Choose 1 through 30 assembly sources".to_string());
+    }
+    let mut files = Vec::with_capacity(selected.len());
+    for path in selected {
+        let extension = path.extension().and_then(OsStr::to_str).unwrap_or("");
+        if !["kicad_pcb", "ipc2581", "spikeassembly"]
+            .iter()
+            .any(|allowed| extension.eq_ignore_ascii_case(allowed))
+        {
+            return Err("Assembly sources must be KiCad boards, IPC-2581 files, or .spikeassembly exchanges".to_string());
+        }
+        let metadata = fs::metadata(&path)
+            .map_err(|error| format!("Unable to inspect {}: {error}", path.display()))?;
+        if !metadata.is_file() || metadata.len() == 0 || metadata.len() > MAX_MCAD_FILE_BYTES {
+            return Err(format!(
+                "{} is empty or larger than the 2 GiB source limit",
+                path.display()
+            ));
+        }
+        let approved = register_approved_path(&state, &path)?;
+        files.push(SelectedFile {
+            file_name: approved
+                .file_name()
+                .and_then(OsStr::to_str)
+                .unwrap_or("board")
+                .to_string(),
+            path: approved.to_string_lossy().into_owned(),
+        });
+    }
+    Ok(Some(files))
+}
+
+#[tauri::command]
 fn select_import_file(
     kind: String,
     directory: bool,
@@ -794,14 +1038,30 @@ fn select_import_file(
 ) -> Result<Option<SelectedFile>, String> {
     let dialog = match kind.as_str() {
         "board" => rfd::FileDialog::new().add_filter(
-            "CAD board job",
-            &["zip", "tgz", "tar", "gz", "odb", "odb++", "ipc2581"],
+            "PCB source (KiCad, normalized JSON, IPC/XML, or ODB++)",
+            &[
+                "kicad_pcb",
+                "json",
+                "xml",
+                "ipc",
+                "ipc2581",
+                "zip",
+                "tgz",
+                "tar",
+                "gz",
+                "odb",
+                "odb++",
+            ],
         ),
         "harness" => {
             rfd::FileDialog::new().add_filter("Harness connection list", &["json", "csv", "tsv"])
         }
         "extension" => rfd::FileDialog::new()
             .add_filter("SPIKE extension package", &["zip", "spike-extension"]),
+        "structure" => rfd::FileDialog::new().add_filter("STEP structure", &["step", "stp"]),
+        "script" => rfd::FileDialog::new()
+            .set_title("Open Python workspace folder")
+            .add_filter("Python script", &["py"]),
         _ => return Err("Unknown import source kind".to_string()),
     };
     let selected = if directory {
@@ -1542,6 +1802,7 @@ pub fn run() {
     }
     let pending_project = startup_project.map(|(_, selected)| selected);
     tauri::Builder::default()
+        .on_page_load(|webview, _| webview_policy::apply(webview))
         .plugin(tauri_plugin_opener::init())
         .manage(ResourceState(Mutex::new(ResourceSampler {
             system: System::new(),
@@ -1565,10 +1826,13 @@ pub fn run() {
             cancel_worker,
             resource_snapshot,
             open_text_file,
+            select_workbench_file,
+            read_approved_source_file,
             select_project_file,
             read_approved_result_file,
             take_startup_project,
             select_mcad_file,
+            select_assembly_sources,
             select_import_file,
             select_project_save_path,
             save_text_file,
@@ -1614,6 +1878,85 @@ mod tests {
         let path = directory.join(name);
         fs::write(&path, contents).unwrap();
         path
+    }
+
+    #[test]
+    fn workbench_dialog_filters_cover_supported_source_families() {
+        assert_eq!(WORKBENCH_FILE_FILTERS[0].0, "All supported SPIKE sources");
+        assert_eq!(
+            WORKBENCH_FILE_FILTERS[0].1,
+            [
+                "spike",
+                "json",
+                "kicad_pcb",
+                "zip",
+                "tgz",
+                "tar",
+                "gz",
+                "odb",
+                "odb++",
+                "ipc",
+                "ipc2581",
+                "xml",
+                "csv",
+                "tsv",
+                "step",
+                "stp",
+                "glb",
+                "gltf",
+            ]
+        );
+        assert_eq!(WORKBENCH_FILE_FILTERS[1].1, ["spike", "json"]);
+        assert!(WORKBENCH_FILE_FILTERS[2].1.contains(&"kicad_pcb"));
+        assert!(WORKBENCH_FILE_FILTERS[2].1.contains(&"ipc"));
+        assert!(WORKBENCH_FILE_FILTERS[2].1.contains(&"xml"));
+        assert!(WORKBENCH_FILE_FILTERS[2].1.contains(&"odb++"));
+        assert_eq!(WORKBENCH_FILE_FILTERS[3].1, ["json", "csv", "tsv"]);
+        assert_eq!(WORKBENCH_FILE_FILTERS[4].1, ["step", "stp", "glb", "gltf"]);
+    }
+
+    #[test]
+    fn approved_source_read_requires_exact_file_grant_and_utf8_within_limit() {
+        let approved_path = temporary_startup_project("approved.kicad_pcb", b"(kicad_pcb)");
+        let sibling_path = approved_path.with_file_name("other.kicad_pcb");
+        fs::write(&sibling_path, b"other").unwrap();
+        let approved_canonical = approved_path.canonicalize().unwrap();
+        let approved = HashSet::from([approved_canonical.clone()]);
+
+        let opened = read_approved_source_path(&approved_path, &approved, 64)
+            .expect("approved UTF-8 source");
+        assert_eq!(opened.path, approved_canonical.to_string_lossy());
+        assert_eq!(opened.contents, "(kicad_pcb)");
+        assert!(read_approved_source_path(&sibling_path, &approved, 64)
+            .unwrap_err()
+            .contains("not selected"));
+
+        fs::write(&approved_path, [0xff, 0xfe]).unwrap();
+        assert!(read_approved_source_path(&approved_path, &approved, 64)
+            .unwrap_err()
+            .contains("UTF-8"));
+        fs::remove_dir_all(approved_path.parent().unwrap()).unwrap();
+    }
+
+    #[test]
+    fn approved_source_read_enforces_byte_cap_and_rejects_archives() {
+        assert!(ARCHIVE_FILE_EXTENSIONS.contains(&"spike"));
+        assert!(ARCHIVE_FILE_EXTENSIONS.contains(&"odb++"));
+        let oversized = temporary_startup_project("oversized.json", b"12345");
+        let oversized_canonical = oversized.canonicalize().unwrap();
+        let approved = HashSet::from([oversized_canonical]);
+        assert!(read_approved_source_path(&oversized, &approved, 4)
+            .unwrap_err()
+            .contains("text-read limit"));
+
+        let archive = oversized.with_file_name("source.zip");
+        fs::write(&archive, b"PK\x03\x04").unwrap();
+        let archive_canonical = archive.canonicalize().unwrap();
+        let approved_archive = HashSet::from([archive_canonical]);
+        assert!(read_approved_source_path(&archive, &approved_archive, 64)
+            .unwrap_err()
+            .contains("cannot be read as text"));
+        fs::remove_dir_all(oversized.parent().unwrap()).unwrap();
     }
 
     #[test]
@@ -1810,6 +2153,21 @@ mod tests {
         assert!(project_worker_paths(&missing_source)
             .unwrap_err()
             .contains("source_path"));
+        let batch = json!({
+            "method": "import_into_assembly_project",
+            "params": { "project_path": "fixture.spike", "source_paths": ["first.kicad_pcb", "second.ipc2581"] }
+        });
+        assert_eq!(project_worker_paths(&batch).unwrap().len(), 3);
+        let empty_batch = json!({
+            "method": "import_into_assembly_project",
+            "params": { "project_path": "fixture.spike", "source_paths": [] }
+        });
+        assert!(project_worker_paths(&empty_batch).is_err());
+        let single_assembly = json!({
+            "method": "import_into_assembly_project",
+            "params": { "project_path": "fixture.spike", "source_path": "first.kicad_pcb" }
+        });
+        assert_eq!(project_worker_paths(&single_assembly).unwrap().len(), 2);
         let ordinary = json!({
             "method": "read_project_package",
             "params": { "path": "fixture.spike" }
@@ -1865,6 +2223,11 @@ mod tests {
             "params": { "project_path": "fixture.spike" }
         });
         assert_eq!(project_worker_paths(&assembly_structure).unwrap().len(), 1);
+        for method in ["read_assembly_field_study_in_project", "save_assembly_field_study_in_project"] {
+            let request = json!({"method": method, "params": {"project_path": "fixture.spike"}});
+            assert_eq!(project_worker_paths(&request).unwrap().len(), 1);
+            assert!(is_heavy_worker_method(method));
+        }
         for method in [
             "export_mcad_session",
             "preview_mcad_feedback",

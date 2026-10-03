@@ -1,0 +1,43 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+.assembly-layout-viewport {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  padding-bottom: var(--ui-viewport-footer-height, 31px);
+  min-width: 0;
+  background: #0c141b;
+}
+.assembly-layout-controls {
+  grid-row: 2;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 2px 8px;
+  background: #101e27;
+  border-top: 1px solid #2b414b;
+}
+.assembly-layout-controls select,
+.assembly-layout-controls button {
+  box-sizing: border-box;
+  height: 26px;
+  margin: 0;
+  padding: 2px 8px;
+  border: 1px solid #45606b;
+  border-radius: 3px;
+  color: #d9ebef;
+  background: #182b35;
+  font: 12px/1.3 system-ui, sans-serif;
+}
+.assembly-layout-controls select {
+  flex: 0 1 420px;
+  min-width: 0;
+  max-width: calc(100% - 124px);
+  text-overflow: ellipsis;
+}
+.assembly-layout-controls button { flex: 0 0 auto; min-width: 48px; }
+.assembly-layout-controls button:disabled { cursor: default; opacity: .48; }
+.assembly-layout-controls :focus-visible { outline: 2px solid #6ee7ff; outline-offset: 2px; }
+.assembly-layout-drawing { grid-row: 1; min-height: 0; display: block; cursor: grab; touch-action: none; user-select: none; }

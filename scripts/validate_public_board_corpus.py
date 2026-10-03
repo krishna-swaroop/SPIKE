@@ -16,7 +16,7 @@ BASE = ROOT / "build/public-board-corpus"
 
 def check(case, output):
     from python.spike_core.service_project_handlers import handle_project_request
-    from python.spike_core.design_ir_v2 import DesignIRV2
+    from python.spike_core.spider_v2 import SpiDeRV2
     from python.spike_core.geometry_arrow import canonical_geometry_rows
     from python.spike_core.source_package import source_identity
     path = ROOT / case["local_path"]
@@ -48,8 +48,8 @@ def check(case, output):
         saved = output / "roundtrip.spike"
         request("write_project_package", {"path": str(saved), "snapshot": snapshot, "generate_geometry_tables": True})
         opened = request("read_project_package", {"path": str(saved)})
-        original_rows = canonical_geometry_rows(DesignIRV2.from_dict(d))
-        reopened_rows = canonical_geometry_rows(DesignIRV2.from_dict(opened["canonical"]["design_ir"]))
+        original_rows = canonical_geometry_rows(SpiDeRV2.from_dict(d))
+        reopened_rows = canonical_geometry_rows(SpiDeRV2.from_dict(opened["canonical"]["design_ir"]))
         if original_rows != reopened_rows: raise ValueError("Canonical copper geometry changed across project round trip")
         if opened["project"]["design"]["source_board"] != snapshot_text:
             raise ValueError("Source board text changed across project round trip")

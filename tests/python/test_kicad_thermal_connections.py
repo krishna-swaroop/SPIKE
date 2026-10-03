@@ -8,7 +8,7 @@ from jsonschema import Draft202012Validator, ValidationError
 from referencing import Registry, Resource
 
 from python.core.board_parser import KicadParser
-from python.spike_core.design_ir_v2 import DesignIRV2
+from python.spike_core.spider_v2 import SpiDeRV2
 from python.spike_core.kicad_importer import import_kicad_design
 
 
@@ -64,8 +64,8 @@ class KicadThermalConnectionRetentionTests(unittest.TestCase):
         self.assertEqual(pad["pad_kind"], "smd")
         self.assertEqual(pad["thermal_spoke_angle_deg"], 45.0)
 
-        typed = DesignIRV2.from_v1(import_kicad_design(str(path)))
-        restored = DesignIRV2.from_dict(typed.to_dict())
+        typed = SpiDeRV2.from_v1(import_kicad_design(str(path)))
+        restored = SpiDeRV2.from_dict(typed.to_dict())
         self.assertEqual(restored.zones[0].zone_connection_default, "tht_thermal")
         self.assertEqual(restored.components[0].zone_connection_override, "thermal")
         self.assertEqual(restored.pads[0].zone_connection_override, "tht_thermal")
@@ -101,19 +101,19 @@ class KicadThermalConnectionRetentionTests(unittest.TestCase):
         self.assertFalse(parser.pads[0]["thermal_settings_valid"])
         self.assertGreaterEqual(len(parser.diagnostics), 4)
 
-        typed = DesignIRV2.from_v1(import_kicad_design(str(self.fixture())))
+        typed = SpiDeRV2.from_v1(import_kicad_design(str(self.fixture())))
         broken = typed.to_dict()
         broken["pads"][0]["zone_connection_override"] = "future_mode"
         with self.assertRaisesRegex(ValueError, "override"):
-            DesignIRV2.from_dict(broken)
+            SpiDeRV2.from_dict(broken)
         broken = typed.to_dict()
         broken["zones"][0]["thermal_gap_mm"] = -0.01
         with self.assertRaisesRegex(ValueError, "dimensions"):
-            DesignIRV2.from_dict(broken)
+            SpiDeRV2.from_dict(broken)
         broken = typed.to_dict()
         broken["zones"][0]["thermal_topology_eligible"] = True
         with self.assertRaisesRegex(ValueError, "not yet eligible"):
-            DesignIRV2.from_dict(broken)
+            SpiDeRV2.from_dict(broken)
 
     def test_source_filled_components_retain_layer_group_and_order_independent_snapshot(self):
         def board(polygons: str) -> Path:

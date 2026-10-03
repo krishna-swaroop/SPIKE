@@ -2,9 +2,10 @@ import { useEffect, useState } from "react";
 import type { BoardImportProgress } from "./boardImportProgress";
 import "./boardImportPanel.css";
 
-export default function BoardImportPanel({ progress, onHide, onCancel, onLocate, onRetry }: {
+export default function BoardImportPanel({ progress, onHide, onCancel, onLocate, onRetry, embedded = false }: {
   progress: BoardImportProgress; onHide: () => void; onCancel: () => void;
   onLocate: (source: string) => void; onRetry: () => void;
+  embedded?: boolean;
 }) {
   const [now, setNow] = useState(Date.now());
   useEffect(() => {
@@ -13,7 +14,7 @@ export default function BoardImportPanel({ progress, onHide, onCancel, onLocate,
     return () => window.clearInterval(timer);
   }, [progress.busy]);
   const elapsed = Math.max(0, Math.floor((now - progress.startedAt) / 1000));
-  return <aside className="board-import-panel" aria-label="Board import" aria-busy={progress.busy}>
+  return <aside className={`board-import-panel${embedded ? " embedded" : ""}`} aria-label="Board import" aria-busy={progress.busy}>
     <header><div><small>BOARD IMPORT</small><strong>{progress.fileName}</strong></div><button onClick={onHide} aria-label="Hide import progress">×</button></header>
     <p role="status">{progress.label}</p>
     <progress max={100} value={progress.percent} aria-label="Completed import stages" />

@@ -2,7 +2,8 @@
 <!-- Copyright (c) 2026 SigHarmonic -->
 # ADR 0026: Direct connector mates in multi-board assemblies
 
-Status: implemented topology contract; coupled physics remains blocked.
+Status: implemented topology contract. ADR 0027 adds experimental reduced
+coupled execution; general field qualification remains open.
 
 ## Context
 

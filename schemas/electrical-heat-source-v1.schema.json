@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spike.local/schemas/electrical-heat-source-v1.schema.json",
+  "title": "SPIKE supplied electrical heat source",
+  "description": "Original Apache-2.0 contract; Copyright 2026 SigHarmonic. Runtime additionally checks all numbers finite, array alignment, strictly increasing grids, distribution sum within absolute 1e-12 without normalization, unique targets, nonnegative power throughout waveform intervals and table temperature coverage. Hashes and device conditions are caller declarations, not verified evidence.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract", "id", "model", "distribution", "provenance"],
+  "properties": {
+    "contract": {"const": "spike/electrical-heat-source/v1"},
+    "id": {"$ref": "#/$defs/id"},
+    "model": {"oneOf": [{"$ref": "#/$defs/waveform"}, {"$ref": "#/$defs/spectral"}, {"$ref": "#/$defs/semiconductor"}]},
+    "distribution": {"type": "array", "minItems": 1, "maxItems": 5000, "items": {
+      "type": "object", "additionalProperties": false, "required": ["occurrence_id", "cell_id", "weight"],
+      "properties": {"occurrence_id": {"$ref": "#/$defs/id"}, "cell_id": {"$ref": "#/$defs/id"}, "weight": {"type": "number", "minimum": 0}}
+    }},
+    "provenance": {
+      "type": "object", "additionalProperties": false, "required": ["source_sha256", "description"],
+      "properties": {"source_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}, "description": {"$ref": "#/$defs/description"}}
+    }
+  },
+  "$defs": {
+    "id": {"type": "string", "minLength": 1, "maxLength": 256, "pattern": "\\S"},
+    "description": {"type": "string", "minLength": 1, "maxLength": 4096, "pattern": "\\S"},
+    "nonnegativeArray": {"type": "array", "minItems": 1, "maxItems": 100000, "items": {"type": "number", "minimum": 0}},
+    "tableColumn": {"allOf": [{"$ref": "#/$defs/nonnegativeArray"}], "minItems": 2},
+    "signedWaveform": {"type": "array", "minItems": 2, "maxItems": 100000, "items": {"type": "number"}},
+    "waveform": {
+      "type": "object", "additionalProperties": false,
+      "required": ["kind", "time_s", "voltage_v", "current_a", "energy_policy"],
+      "description": "Piecewise-linear voltage and current, exactly integrated quadratic terminal power. Dissipative-only declaration excludes stored-energy current unless separately de-embedded. No unsampled switching events are inferred.",
+      "properties": {
+        "kind": {"const": "terminal_waveform"},
+        "time_s": {"$ref": "#/$defs/tableColumn"},
+        "voltage_v": {"$ref": "#/$defs/signedWaveform"},
+        "current_a": {"$ref": "#/$defs/signedWaveform"},
+        "energy_policy": {"const": "dissipative_terminal_power"}
+      }
+    },
+    "spectral": {
+      "type": "object", "additionalProperties": false,
+      "required": ["kind", "frequency_hz", "rms_current_a", "resistance_ohm"],
+      "description": "Distinct orthogonal frequency RMS currents, including explicit DC RMS equal to its absolute value; sum Irms squared R is steady average power only, not unresolved transient power.",
+      "properties": {
+        "kind": {"const": "spectral_resistive"},
+        "frequency_hz": {"$ref": "#/$defs/nonnegativeArray"},
+        "rms_current_a": {"$ref": "#/$defs/nonnegativeArray"},
+        "resistance_ohm": {"$ref": "#/$defs/nonnegativeArray"}
+      }
+    },
+    "semiconductor": {
+      "type": "object", "additionalProperties": false,
+      "required": ["kind", "temperature_k", "conduction_power_w", "turn_on_energy_j", "turn_off_energy_j", "reverse_recovery_energy_j", "switching_frequency_hz", "conditions", "energy_terms_nonoverlapping"],
+      "description": "Supplied loss data at declared electrical conditions, linearly interpolated within temperature coverage only. Eon must exclude separately supplied Err. No device model or accuracy claim is verified.",
+      "properties": {
+        "kind": {"const": "semiconductor_loss_table"},
+        "temperature_k": {"$ref": "#/$defs/tableColumn"},
+        "conduction_power_w": {"$ref": "#/$defs/tableColumn"},
+        "turn_on_energy_j": {"$ref": "#/$defs/tableColumn"},
+        "turn_off_energy_j": {"$ref": "#/$defs/tableColumn"},
+        "reverse_recovery_energy_j": {"$ref": "#/$defs/tableColumn"},
+        "switching_frequency_hz": {"type": "number", "minimum": 0},
+        "conditions": {"$ref": "#/$defs/description"},
+        "energy_terms_nonoverlapping": {"const": true}
+      }
+    }
+  }
+}

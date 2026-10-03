@@ -9,8 +9,8 @@ from pathlib import Path
 from unittest.mock import patch
 
 from python.spike_core.assembly_package_shapes import selector_inventory_sha256
-from python.spike_core.contracts import DesignIR
-from python.spike_core.design_ir_v2 import DesignIRV2
+from python.spike_core.contracts import SpiDeR
+from python.spike_core.spider_v2 import SpiDeRV2
 from python.spike_core.mcad_selector_preview import SelectorPreviewResult
 from python.spike_core.project_package import read_project, write_spike_package
 from python.spike_core.service_project_handlers import handle_project_request
@@ -21,7 +21,7 @@ class McadSelectorPreviewProjectTests(unittest.TestCase):
     def test_preview_generation_is_manifest_bound_transactional_and_replaceable(self):
         assembly, models, index, model_artifacts, shape_artifacts = package_shape_fixtures.AssemblyPackageShapeTests().fixture()
         shape = index["shapes"][0]
-        design = DesignIRV2.from_v1(DesignIR(
+        design = SpiDeRV2.from_v1(SpiDeR(
             design_id="selector-preview", name="Selector preview", source_format="neutral",
             layers=[{"id": 0, "name": "F.Cu"}], metadata={"source_sha256": "9" * 64},
         ))

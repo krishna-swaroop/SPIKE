@@ -32,13 +32,13 @@ COPPER_CONDUCTIVITY_S_PER_M = 5.8e7
 
 
 def _build_slice() -> dict:
-    from python.spike_core.design_ir_v2 import DesignIRV2
+    from python.spike_core.spider_v2 import SpiDeRV2
     from python.spike_core.kicad_importer import import_kicad_design
 
     digest = hashlib.sha256(SOURCE.read_bytes()).hexdigest()
     if digest != SOURCE_SHA256:
         raise ValueError("ESP32 source board changed; review the selected SI path and reference zone.")
-    source = DesignIRV2.from_v1(import_kicad_design(str(SOURCE)))
+    source = SpiDeRV2.from_v1(import_kicad_design(str(SOURCE)))
     nets = {net.name: net for net in source.nets}
     signal = nets.get(SIGNAL_NET)
     reference = nets.get(REFERENCE_NET)

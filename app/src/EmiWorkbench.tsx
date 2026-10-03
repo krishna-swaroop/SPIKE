@@ -1,5 +1,6 @@
 import { validEmiFarField } from "./emiFieldData";
 import { EmiFieldPlots } from "./EmiFieldPlots";
+import PlotlyChart from "./PlotlyChart";
 import WorkflowSchematic from "./WorkflowSchematic";
 import { emiSchematic } from "./workflowSchematics";
 import { defaultEmiChamber, normalizeEmiChamber, type EmiChamberSetup } from "./emiChamber";
@@ -7,7 +8,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   AlertTriangle, CheckCircle2, CircuitBoard, Gauge, Layers3, Network, Play, Plus,
   RadioTower, Search, ShieldAlert, SlidersHorizontal, Trash2, Waves, X,
-} from "lucide-react";
+} from "./icons";
 import type { ParsedBoard } from "./boardParser";
 import type { BoardObject } from "./BoardViewport";
 import { previewViewportTarget } from "./BoardViewport";
@@ -497,12 +498,12 @@ export function EmiDashboard({ embedded = false, preflight, screening, fieldResu
   ] : [];
   const maximum = cutSamples.reduce((current, sample) => Math.max(current, sample.value), 0);
   const maximumDb = maximum > 0 ? 10 * Math.log10(maximum) : 0;
-  const polarPoints = cutSamples.map(sample => {
-    const sampleDb = sample.value > 0 ? 10 * Math.log10(sample.value) : maximumDb - 40;
-    const radius = 16 + 76 * Math.max(0, Math.min(1, (sampleDb - (maximumDb - 40)) / 40));
-    const angle = sample.angle * Math.PI / 180;
-    return `${140 + radius * Math.sin(angle)},${108 - radius * Math.cos(angle)}`;
-  }).join(" ");
+  const polarDb = cutSamples.map(sample => sample.value > 0 ? 10 * Math.log10(sample.value) : maximumDb - 40);
+  const polarData: Record<string, unknown>[] = [{ type: "scatterpolar", mode: "lines+markers", name: "Directivity",
+    theta: cutSamples.map(sample => sample.angle), r: polarDb, connectgaps: false, marker: { size: 4 },
+    hovertemplate: "%{theta:.3f}°<br>%{r:.4f} dBi<extra></extra>" }];
+  const polarLayout: Record<string, unknown> = { margin: { t: 24, r: 28, b: 24, l: 28 }, showlegend: false,
+    polar: { angularaxis: { direction: "clockwise", rotation: 90, title: { text: "Angle (deg)" } }, radialaxis: { title: { text: "Directivity (dBi)" }, range: [maximumDb - 40, maximumDb] } } };
   const maximumLinear = farField?.directivity.maximum_linear[activeFrequencyIndex] ?? maximum;
   const maximumDirectivityDb = maximumLinear > 0 ? 10 * Math.log10(maximumLinear) : null;
   const radiatedPower = farField?.radiated_power.total_w[activeFrequencyIndex] ?? null;
@@ -519,7 +520,7 @@ export function EmiDashboard({ embedded = false, preflight, screening, fieldResu
       <section><h3>Pre-pass ranking</h3>{ranking.length ? <div className="emi-ranking"><header><span>Priority</span><span>Net</span><span>Score</span><span>Evidence</span></header>{ranking.map((row, index) => <div key={row.net} onMouseEnter={() => previewViewportTarget({ kind: "net", net: row.net, label: row.net })} onMouseLeave={() => previewViewportTarget(null)}><b>{index + 1}</b><span>{row.net}</span><strong>{row.score.toFixed(1)}</strong><small>{row.reasons.join(", ") || "equal supplied metrics"}<br />{row.geometry.routed_length_mm?.toFixed(2) ?? "0"} mm · {row.geometry.vias ?? 0} vias · {row.geometry.layers?.length ?? 0} layers</small></div>)}</div> : <div className="emi-empty"><Gauge size={24} /><b>No screening record</b><p>Supply defensible electrical pre-pass metrics, then run screening. Geometry is not substituted for missing electrical behavior.</p><button onClick={onScreen}>Run screening</button></div>}</section>
       <section className="emi-field-review"><h3>NF2FF far-field result</h3>{farField ? <>
         <div className="emi-field-toolbar"><label>Frequency<select value={activeFrequencyIndex} onChange={event => setFrequencyIndex(Number(event.target.value))}>{farField.frequencies_hz.map((value, index) => <option key={`${value}-${index}`} value={index}>{value >= 1e9 ? `${(value / 1e9).toFixed(4)} GHz` : `${(value / 1e6).toFixed(3)} MHz`}</option>)}</select></label><span className={`emi-field-validity ${farField.validation_status}`}>{farField.validation_status.replace(/_/g, " ")}</span></div>
-        <div className="emi-polar-result"><svg viewBox="0 0 280 216" role="img" aria-label="Directivity polar cut at phi zero and 180 degrees"><g className="polar-grid"><circle cx="140" cy="108" r="92" /><circle cx="140" cy="108" r="69" /><circle cx="140" cy="108" r="46" /><circle cx="140" cy="108" r="23" /><line x1="48" y1="108" x2="232" y2="108" /><line x1="140" y1="16" x2="140" y2="200" /></g>{polarPoints && <polyline className="polar-trace" points={polarPoints} />}</svg><div className="emi-field-metrics"><article><small>Peak directivity</small><b>{maximumDirectivityDb === null ? "-" : `${maximumDirectivityDb.toFixed(3)} dBi`}</b><span>{maximumLinear.toPrecision(6)} linear</span></article><article><small>Radiated power</small><b>{radiatedPower === null ? "-" : `${radiatedPower.toExponential(5)} W`}</b><span>NF2FF integration</span></article><article><small>Angular samples</small><b>{thetaCount * phiCount}</b><span>{thetaCount} theta x {phiCount} phi</span></article><article><small>Observation radius</small><b>{farField.radius_m.toPrecision(5)} m</b><span>phase center {farField.center_mm.map(value => value.toFixed(2)).join(", ")} mm</span></article></div></div>
+        <div className="emi-polar-result"><div className="emi-polar-chart"><PlotlyChart title="Directivity polar cut at phi zero and 180 degrees" data={polarData} layout={polarLayout} revision={`emi-polar:${farField.frequencies_hz[activeFrequencyIndex]}:${cutSamples.length}`} /></div><div className="emi-field-metrics"><article><small>Peak directivity</small><b>{maximumDirectivityDb === null ? "-" : `${maximumDirectivityDb.toFixed(3)} dBi`}</b><span>{maximumLinear.toPrecision(6)} linear</span></article><article><small>Radiated power</small><b>{radiatedPower === null ? "-" : `${radiatedPower.toExponential(5)} W`}</b><span>NF2FF integration</span></article><article><small>Angular samples</small><b>{thetaCount * phiCount}</b><span>{thetaCount} theta x {phiCount} phi</span></article><article><small>Observation radius</small><b>{farField.radius_m.toPrecision(5)} m</b><span>phase center {farField.center_mm.map(value => value.toFixed(2)).join(", ")} mm</span></article></div></div>
         <EmiFieldPlots field={farField} frequencyIndex={activeFrequencyIndex} onFrequency={setFrequencyIndex} />
         <div className="emi-field-boundary"><ShieldAlert size={14} /><span><b>Validity boundary</b>This is a computed openEMS NF2FF result. The adapter has a reference-validated patch fixture, but this board result remains {farField.validation_status.replace(/_/g, " ")} until mesh convergence and independent correlation are attached.</span></div>
       </> : <div className="emi-empty"><RadioTower size={24} /><b>No NF2FF result loaded</b><p>Request far field, define a valid explicit port, prepare the case, and run openEMS. SPIKE will retain the structured field result here.</p></div>}</section>

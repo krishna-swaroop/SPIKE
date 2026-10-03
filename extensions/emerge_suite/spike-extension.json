@@ -3,36 +3,588 @@
   "api_version": 1,
   "id": "spike.emerge-suite",
   "name": "EMerge Suite",
-  "version": "0.1.0",
+  "version": "0.4.0",
   "provider": "SPIKE",
-  "description": "Build a two-layer imported-board FEM case and run optional EMerge SI or radiation analysis.",
+  "description": "Build an explicit multilayer imported-board or retained native-Gerber FEM case and run EMerge SI or radiation analysis.",
   "execution": "process",
   "runtime": "python",
   "entrypoint": "extension.py",
   "state": "experimental",
   "license": "Apache-2.0",
   "bundled": true,
-  "ui": {"menu_bar": true, "title_bar": true, "menu_items": ["emerge-si", "emerge-radiation"]},
-  "permissions": ["design.read", "results.write"],
-  "limits": {"timeout_seconds": 3600, "max_result_bytes": 8388608},
+  "ui": {
+    "menu_bar": true,
+    "title_bar": true,
+    "menu_items": [
+      "emerge-si",
+      "emerge-radiation"
+    ]
+  },
+  "permissions": [
+    "design.read",
+    "results.write",
+    "filesystem.workspace"
+  ],
+  "limits": {
+    "timeout_seconds": 3600,
+    "max_result_bytes": 8388608
+  },
   "contributes": {
     "applications": [
-      {"id": "emerge-probe", "name": "Check EMerge runtime", "category": "Simulation", "description": "Detect the selected EMerge Python runtime and report runnable adapter capabilities.", "output_contract": "spike/extension-result/v1"}
+      {
+        "id": "emerge-probe",
+        "name": "Check EMerge runtime",
+        "category": "Simulation",
+        "description": "Detect the selected EMerge Python runtime and report runnable adapter capabilities.",
+        "output_contract": "spike/extension-result/v1"
+      },
+      {
+        "id": "emerge-gerber-import",
+        "name": "Import native EMerge Gerber source",
+        "category": "Simulation",
+        "description": "Validate and retain a bounded Gerber stackup package for EMerge FileBasedPCB without converting it to KiCad or inferred polygons.",
+        "output_contract": "spike/extension-result/v1",
+        "input_schema": {
+          "type": "object",
+          "required": ["source"],
+          "additionalProperties": false,
+          "properties": {
+            "source": {
+              "type": "object",
+              "description": "spike/emerge-gerber-source/v1 package with retained layer content, dielectric gaps and manual ports"
+            },
+            "python_executable": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      {
+        "id": "emerge-preview",
+        "name": "Preview generated Python",
+        "category": "Simulation",
+        "description": "Prepare the GUI case and show the exact readable Python source without solving.",
+        "output_contract": "spike/extension-result/v1"
+      },
+      {
+        "id": "emerge-mesh-preview",
+        "name": "Preview EMerge PCB mesh Python",
+        "category": "Mesh",
+        "description": "Prepare the selected-net PCB mesh case and exact readable script without generating a mesh or solving.",
+        "output_contract": "spike/extension-result/v1",
+        "input_schema": {
+          "type": "object",
+          "required": [
+            "signal_net",
+            "return_net",
+            "frequency_start_hz",
+            "frequency_stop_hz",
+            "frequency_points",
+            "mesh_resolution_mm"
+          ],
+          "properties": {
+            "signal_net": {
+              "type": "string"
+            },
+            "return_net": {
+              "type": "string"
+            },
+            "signal_pad_id": {
+              "type": "string"
+            },
+            "return_pad_id": {
+              "type": "string"
+            },
+            "frequency_start_hz": {
+              "type": "number"
+            },
+            "frequency_stop_hz": {
+              "type": "number"
+            },
+            "frequency_points": {
+              "type": "integer"
+            },
+            "mesh_resolution_mm": {
+              "type": "number"
+            },
+            "receive_signal_pad_id": {
+              "type": "string"
+            },
+            "receive_return_pad_id": {
+              "type": "string"
+            },
+            "python_executable": {
+              "type": "string"
+            },
+            "surrounding_geometry": {
+              "type": "object",
+              "description": "Bounded spike/emerge-surroundings/v1 dielectric boxes"
+            },
+            "geometry_backend": {
+              "type": "string",
+              "enum": [
+                "emerge",
+                "emcad"
+              ],
+              "description": "Optional same-net, same-layer EMCAD copper union"
+            },
+            "additional_signal_nets": {
+              "type": "array",
+              "maxItems": 3,
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "description": "Additional coupled conductors; requires explicit port_pairs."
+            },
+            "port_pairs": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 8,
+              "items": {
+                "type": "object",
+                "required": [
+                  "signal_net",
+                  "signal_pad_id",
+                  "return_pad_id"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "signal_net": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "signal_pad_id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "return_pad_id": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              },
+              "description": "Ordered port mapping P1 onwards; existing aligned pads on adjacent copper layers using the common return net."
+            }
+          },
+          "anyOf": [
+            {
+              "required": [
+                "signal_pad_id",
+                "return_pad_id"
+              ]
+            },
+            {
+              "required": [
+                "port_pairs"
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": "emerge-mesh",
+        "name": "EMerge PCB tetrahedral mesh",
+        "category": "Mesh",
+        "description": "Generate a bounded design-bound selected-net PCB and air-region tetrahedral mesh, stopping before a field solve.",
+        "output_contract": "spike/emerge-mesh/v1",
+        "input_schema": {
+          "type": "object",
+          "required": [
+            "signal_net",
+            "return_net",
+            "frequency_start_hz",
+            "frequency_stop_hz",
+            "frequency_points",
+            "mesh_resolution_mm"
+          ],
+          "properties": {
+            "signal_net": {
+              "type": "string"
+            },
+            "return_net": {
+              "type": "string"
+            },
+            "signal_pad_id": {
+              "type": "string"
+            },
+            "return_pad_id": {
+              "type": "string"
+            },
+            "frequency_start_hz": {
+              "type": "number"
+            },
+            "frequency_stop_hz": {
+              "type": "number"
+            },
+            "frequency_points": {
+              "type": "integer"
+            },
+            "mesh_resolution_mm": {
+              "type": "number"
+            },
+            "receive_signal_pad_id": {
+              "type": "string"
+            },
+            "receive_return_pad_id": {
+              "type": "string"
+            },
+            "python_executable": {
+              "type": "string"
+            },
+            "surrounding_geometry": {
+              "type": "object",
+              "description": "Bounded spike/emerge-surroundings/v1 dielectric boxes"
+            },
+            "geometry_backend": {
+              "type": "string",
+              "enum": [
+                "emerge",
+                "emcad"
+              ],
+              "description": "Optional same-net, same-layer EMCAD copper union"
+            },
+            "additional_signal_nets": {
+              "type": "array",
+              "maxItems": 3,
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "description": "Additional coupled conductors; requires explicit port_pairs."
+            },
+            "port_pairs": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 8,
+              "items": {
+                "type": "object",
+                "required": [
+                  "signal_net",
+                  "signal_pad_id",
+                  "return_pad_id"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "signal_net": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "signal_pad_id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "return_pad_id": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              },
+              "description": "Ordered port mapping P1 onwards; existing aligned pads on adjacent copper layers using the common return net."
+            }
+          },
+          "anyOf": [
+            {
+              "required": [
+                "signal_pad_id",
+                "return_pad_id"
+              ]
+            },
+            {
+              "required": [
+                "port_pairs"
+              ]
+            }
+          ]
+        },
+        "workspace_routes": [
+          {
+            "id": "emerge-pcb-mesh",
+            "workspace": "mesh",
+            "operation": "mesh",
+            "label": "EMerge PCB tetra mesh",
+            "setup_contribution_id": "emerge-mesh",
+            "preview_contribution_id": "emerge-mesh-preview",
+            "mesh_kind": "tetrahedral",
+            "model_status": "unvalidated",
+            "compatible_solver_ids": [
+              "spike.emerge-suite"
+            ]
+          }
+        ]
+      }
+    ],
+    "importers": [
+      {
+        "id": "emerge-gerber-design",
+        "name": "EMerge native Gerber package",
+        "source_formats": ["emerge-gerber"],
+        "extensions": [".spike-gerber.json"],
+        "accepts_directories": false,
+        "output_contract": "spike/v1",
+        "input_schema": {
+          "type": "object",
+          "properties": {},
+          "additionalProperties": false
+        }
+      }
     ],
     "analyses": [
       {
         "id": "emerge-radiation",
         "name": "EMerge radiation pattern",
-        "description": "Run a supported two-layer board model and import far-field angular cuts; no compliance claim.",
+        "description": "Run a supported multilayer board model and import far-field angular cuts; no compliance claim.",
         "output_contract": "spike/v1",
-        "input_schema": {"type": "object", "required": ["signal_net", "return_net", "signal_pad_id", "return_pad_id", "frequency_start_hz", "frequency_stop_hz", "frequency_points", "mesh_resolution_mm"], "properties": {"signal_net": {"type": "string"}, "return_net": {"type": "string"}, "signal_pad_id": {"type": "string"}, "return_pad_id": {"type": "string"}, "frequency_start_hz": {"type": "number"}, "frequency_stop_hz": {"type": "number"}, "frequency_points": {"type": "integer"}, "mesh_resolution_mm": {"type": "number"}, "receive_signal_pad_id": {"type": "string"}, "receive_return_pad_id": {"type": "string"}, "python_executable": {"type": "string"}, "surrounding_geometry": {"type": "object", "description": "Bounded spike/emerge-surroundings/v1 dielectric boxes"}}}
+        "input_schema": {
+          "type": "object",
+          "required": [
+            "signal_net",
+            "return_net",
+            "frequency_start_hz",
+            "frequency_stop_hz",
+            "frequency_points",
+            "mesh_resolution_mm"
+          ],
+          "properties": {
+            "signal_net": {
+              "type": "string"
+            },
+            "return_net": {
+              "type": "string"
+            },
+            "signal_pad_id": {
+              "type": "string"
+            },
+            "return_pad_id": {
+              "type": "string"
+            },
+            "frequency_start_hz": {
+              "type": "number"
+            },
+            "frequency_stop_hz": {
+              "type": "number"
+            },
+            "frequency_points": {
+              "type": "integer"
+            },
+            "mesh_resolution_mm": {
+              "type": "number"
+            },
+            "receive_signal_pad_id": {
+              "type": "string"
+            },
+            "receive_return_pad_id": {
+              "type": "string"
+            },
+            "python_executable": {
+              "type": "string"
+            },
+            "surrounding_geometry": {
+              "type": "object",
+              "description": "Bounded spike/emerge-surroundings/v1 dielectric boxes"
+            },
+            "geometry_backend": {
+              "type": "string",
+              "enum": [
+                "emerge",
+                "emcad"
+              ],
+              "description": "Optional same-net, same-layer EMCAD copper union"
+            },
+            "additional_signal_nets": {
+              "type": "array",
+              "maxItems": 3,
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "description": "Additional coupled conductors; requires explicit port_pairs."
+            },
+            "port_pairs": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 8,
+              "items": {
+                "type": "object",
+                "required": [
+                  "signal_net",
+                  "signal_pad_id",
+                  "return_pad_id"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "signal_net": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "signal_pad_id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "return_pad_id": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              },
+              "description": "Ordered port mapping P1 onwards; existing aligned pads on adjacent copper layers using the common return net."
+            }
+          },
+          "anyOf": [
+            {
+              "required": [
+                "signal_pad_id",
+                "return_pad_id"
+              ]
+            },
+            {
+              "required": [
+                "port_pairs"
+              ]
+            }
+          ]
+        },
+        "workspace_routes": [
+          {
+            "id": "emerge-radiation-workspace",
+            "workspace": "em",
+            "operation": "solve",
+            "label": "EMerge full-wave radiation",
+            "setup_contribution_id": "emerge-radiation",
+            "preview_contribution_id": "emerge-preview",
+            "model_status": "unvalidated"
+          }
+        ]
       },
       {
         "id": "emerge-si",
         "name": "EMerge SI port sweep",
-        "description": "Run a supported two-layer board model and import solved frequency-domain S-parameters.",
+        "description": "Run a supported multilayer board model and import solved frequency-domain S-parameters.",
         "output_contract": "spike/v1",
-        "input_schema": {"type": "object", "required": ["signal_net", "return_net", "signal_pad_id", "return_pad_id", "frequency_start_hz", "frequency_stop_hz", "frequency_points", "mesh_resolution_mm"], "properties": {"signal_net": {"type": "string"}, "return_net": {"type": "string"}, "signal_pad_id": {"type": "string"}, "return_pad_id": {"type": "string"}, "frequency_start_hz": {"type": "number"}, "frequency_stop_hz": {"type": "number"}, "frequency_points": {"type": "integer"}, "mesh_resolution_mm": {"type": "number"}, "receive_signal_pad_id": {"type": "string"}, "receive_return_pad_id": {"type": "string"}, "python_executable": {"type": "string"}, "surrounding_geometry": {"type": "object", "description": "Bounded spike/emerge-surroundings/v1 dielectric boxes"}}}
+        "input_schema": {
+          "type": "object",
+          "required": [
+            "signal_net",
+            "return_net",
+            "frequency_start_hz",
+            "frequency_stop_hz",
+            "frequency_points",
+            "mesh_resolution_mm"
+          ],
+          "properties": {
+            "signal_net": {
+              "type": "string"
+            },
+            "return_net": {
+              "type": "string"
+            },
+            "signal_pad_id": {
+              "type": "string"
+            },
+            "return_pad_id": {
+              "type": "string"
+            },
+            "frequency_start_hz": {
+              "type": "number"
+            },
+            "frequency_stop_hz": {
+              "type": "number"
+            },
+            "frequency_points": {
+              "type": "integer"
+            },
+            "mesh_resolution_mm": {
+              "type": "number"
+            },
+            "receive_signal_pad_id": {
+              "type": "string"
+            },
+            "receive_return_pad_id": {
+              "type": "string"
+            },
+            "python_executable": {
+              "type": "string"
+            },
+            "surrounding_geometry": {
+              "type": "object",
+              "description": "Bounded spike/emerge-surroundings/v1 dielectric boxes"
+            },
+            "geometry_backend": {
+              "type": "string",
+              "enum": [
+                "emerge",
+                "emcad"
+              ],
+              "description": "Optional same-net, same-layer EMCAD copper union"
+            },
+            "additional_signal_nets": {
+              "type": "array",
+              "maxItems": 3,
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "description": "Additional coupled conductors; requires explicit port_pairs."
+            },
+            "port_pairs": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 8,
+              "items": {
+                "type": "object",
+                "required": [
+                  "signal_net",
+                  "signal_pad_id",
+                  "return_pad_id"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "signal_net": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "signal_pad_id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "return_pad_id": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              },
+              "description": "Ordered port mapping P1 onwards; existing aligned pads on adjacent copper layers using the common return net."
+            }
+          },
+          "anyOf": [
+            {
+              "required": [
+                "signal_pad_id",
+                "return_pad_id"
+              ]
+            },
+            {
+              "required": [
+                "port_pairs"
+              ]
+            }
+          ]
+        },
+        "workspace_routes": [
+          {
+            "id": "emerge-si-workspace",
+            "workspace": "si",
+            "operation": "solve",
+            "label": "EMerge S-parameters",
+            "setup_contribution_id": "emerge-si",
+            "preview_contribution_id": "emerge-preview",
+            "model_status": "unvalidated"
+          }
+        ]
       }
     ]
   }

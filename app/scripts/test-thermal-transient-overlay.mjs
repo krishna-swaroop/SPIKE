@@ -5,6 +5,7 @@ import { resolve } from "node:path";
 import { createRequire } from "node:module";
 import { renderToStaticMarkup } from "react-dom/server";
 import ts from "typescript";
+import loadDataTable from "./load-data-table.mjs";
 
 const appRoot = resolve(import.meta.dirname, "..");
 const source = readFileSync(resolve(appRoot, "src", "ThermalTransientOverlay.tsx"), "utf8");
@@ -21,6 +22,7 @@ const dependencies = {
   "react/jsx-runtime": require("react/jsx-runtime"),
   "./numericRange": { numericExtent: values => ({ minimum: Math.min(...values), maximum: Math.max(...values) }) },
   "./thermalResultFields": { thermalFieldColor: (value, minimum, maximum) => value === minimum ? [0, 0, 1] : value === maximum ? [1, 0, 0] : [0.5, 0.5, 0.5] },
+  "./DataTable": { default: loadDataTable(), __esModule: true },
 };
 new Function("require", "module", "exports", compiled)(name => dependencies[name] ?? require(name), module, module.exports);
 const Overlay = module.exports.default;

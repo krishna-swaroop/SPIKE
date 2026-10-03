@@ -10,15 +10,20 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from python.spike_core.contracts import AnalysisSpec, DesignIR
+from python.spike_core.contracts import AnalysisSpec, SpiDeR
 from extensions.openems_suite.engine import (
     _validate_openems_case,
     prepare_openems_case,
     run_openems_case,
 )
+from extensions.openems_suite.openems_adapter_source import OPENEMS_DRIVER
+from extensions.openems_suite.workspace_results import mesh_envelope, solve_envelope
+from python.spike_core.extension_analysis_results import design_binding
+import hashlib
 
 
-MODES = {"openems-pi": "pi", "openems-si": "si"}
+MODES = {"openems-pi": "pi", "openems-si": "si", "openems-em": "emi"}
+SOLVE_MODES = {"openems-pi-solve": "pi", "openems-si-solve": "si", "openems-em-solve": "emi"}
 
 
 def _mapping(value: object, label: str) -> dict:
@@ -28,7 +33,7 @@ def _mapping(value: object, label: str) -> dict:
 
 
 def _em_workflow(contribution: str, context: dict) -> dict:
-    design = DesignIR(**_mapping(context.get("design"), "design"))
+    design = SpiDeR(**_mapping(context.get("design"), "design"))
     parameters = _mapping(context.get("parameters"), "parameters")
     analysis = _mapping(parameters.get("analysis"), "analysis")
     if not analysis.get("net_names") or not isinstance(analysis["net_names"], list):
@@ -57,6 +62,8 @@ def execute(request: dict) -> dict:
         raise ValueError("Unsupported extension request contract.")
     contribution = request.get("contribution_id")
     context = _mapping(request.get("context"), "context")
+    if contribution in {*SOLVE_MODES, "openems-mesh", "openems-preview"}:
+        return _workspace_workflow(request)
     if contribution in MODES:
         data = _em_workflow(contribution, context)
     else:
@@ -65,6 +72,38 @@ def execute(request: dict) -> dict:
             "status": "completed" if data["status"] in {"completed", "ready_to_run"} else "completed_with_warnings",
             "title": "OpenEMS Suite: " + str(contribution).removeprefix("openems-").upper(),
             "data": data}
+
+
+def _workspace_workflow(request):
+    context = request["context"]
+    parameters = _mapping(context.get("parameters"), "parameters")
+    analysis = _mapping(parameters.get("analysis"), "analysis")
+    if not isinstance(analysis.get("net_names"), list) or not analysis["net_names"]:
+        raise ValueError("analysis.net_names must select one or more complete nets.")
+    contribution = request["contribution_id"]
+    if contribution != "openems-preview" and context.get("design_binding") != design_binding(context.get("design")):
+        raise ValueError("OpenEMS mesh/solve requires the current host design binding before execution.")
+    mode = SOLVE_MODES.get(contribution, analysis.get("mode", "emi"))
+    if mode not in {"pi", "si", "emi"}:
+        raise ValueError("OpenEMS mode must be pi, si or emi.")
+    spec = AnalysisSpec(**{**analysis, "mode":mode, "solver_id":"external.openems"})
+    if contribution in SOLVE_MODES and len(spec.options.get("ports",[]))**2*spec.frequency_points > 250000:
+        raise ValueError("OpenEMS network exchange exceeds the 250000-entry matrix bound; reduce ports or sweep points.")
+    options = _mapping(parameters.get("engine_options", {}), "engine_options")
+    prepared = prepare_openems_case(SpiDeR(**_mapping(context.get("design"), "design")), spec, options=options)
+    if contribution == "openems-preview":
+        return {"contract":"spike/extension-result/v1", "status":"completed_with_warnings", "title":"Prepared OpenEMS adapter and authenticated case (not executed)",
+            "data":{"case":prepared,"script":OPENEMS_DRIVER,"adapter_source_sha256":hashlib.sha256(OPENEMS_DRIVER.encode()).hexdigest(),
+                "preview_scope":"trusted adapter body only; execution adds authenticated case and fresh run context, whose full digest is recorded after execution", "solved":False}}
+    if "case_dir" not in prepared:
+        raw = {"status":"blocked", "case":prepared}
+    else:
+        raw = run_openems_case(prepared["case_dir"], setup_only=contribution == "openems-mesh", timeout_seconds=3300)
+    required = "setup_completed" if contribution == "openems-mesh" else "completed"
+    if raw.get("status") != required:
+        return {"contract":"spike/extension-result/v1", "status":"failed", "title":"OpenEMS execution unavailable or blocked",
+            "data":{"status":raw.get("status","failed"), "case":prepared, "result":raw, "solved":False}}
+    return mesh_envelope(request, raw) if contribution == "openems-mesh" else solve_envelope(request, raw, spec, options)
 
 
 def main() -> None:

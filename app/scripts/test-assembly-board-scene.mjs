@@ -1,0 +1,96 @@
+import assert from "node:assert/strict";
+import { readFileSync, writeFileSync, unlinkSync } from "node:fs";
+import ts from "typescript";
+
+const generated = ["assemblyBoardScene", "assemblyCopperBatches", "assemblyImportedBatches", "boardParser", "numericRange", "boardSurfaceMaterials", "componentSceneIndex"];
+try {
+  for (const name of generated) {
+    let source = readFileSync(new URL(`../src/${name}.ts`, import.meta.url), "utf8");
+    let output = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 } }).outputText;
+    output = output.replaceAll('"./assemblyCopperBatches"', '"./.test-assemblyCopperBatches.mjs"').replaceAll('"./boardParser"', '"./.test-boardParser.mjs"').replaceAll('"./numericRange"', '"./.test-numericRange.mjs"').replaceAll('"./harnessVisualization"', '"./.test-harnessVisualization.mjs"');
+    for (const dependency of ["boardSurfaceMaterials", "componentSceneIndex", "assemblyImportedBatches"]) output = output.replaceAll(`"./${dependency}"`, `"./.test-${dependency}.mjs"`);
+    writeFileSync(new URL(`./.test-${name}.mjs`, import.meta.url), output);
+  }
+  const THREE = await import("three");
+  const { boardInstanceScene, mountKiCadScenes } = await import(`./.test-assemblyBoardScene.mjs?${Date.now()}`);
+  const board = { id: "occ-7", name: "Board", designId: "design", active: true, widthMm: 20, heightMm: 10, localCenterMm: [20, 15, 0], transform: [1, 0, 0, 100, 0, 1, 0, 200, 0, 0, 1, 30, 0, 0, 0, 1], thicknessMm: 2, netIdsByName: { GND: "net-uuid-1" } };
+  const source = {
+    width: 20, height: 10, bounds: { minX: 10, minY: 10, maxX: 30, maxY: 20 },
+    outlineLoops: [[[10, 10], [30, 10], [30, 20], [10, 20], [10, 10]], [[18, 13], [22, 13], [22, 17], [18, 17], [18, 13]]],
+    tracks: [{ id: "t1", start: [12, 12], end: [28, 12], width: 1.2, layer: "F.Cu", net: "GND" }],
+    vias: [{ id: "v1", at: [15, 15], size: 1, drill: .4, layers: ["F.Cu", "B.Cu"], net: "1" }],
+    pads: [{ id: "p1", name: "1", at: [25, 15], width: 2, height: 1, rotation: 0, shape: "rect", drill: 0, layers: ["F.Cu"], layer: "F.Cu", net: "1", ref: "U1" }],
+    components: [{ id: "c1", ref: "U1", value: "IC", library: "x", at: [25, 15], width: 4, height: 3, rotation: 0, layer: "F.Cu", modelOffset: [0, 0, 0], modelScale: [1, 1, 1], modelRotation: [0, 0, 0] }],
+    zones: [{ id: "z1", points: [[11, 11], [14, 11], [14, 14]], holes: [], layer: "B.Cu", net: "1" }],
+    drawings: [{ id: "d1", type: "line", points: [[11, 19], [29, 19]], layer: "F.SilkS", width: .2 }],
+    layers: ["F.Cu", "B.Cu"], layerDefinitions: [{ id: 0, name: "F.Cu", kind: "signal" }, { id: 31, name: "B.Cu", kind: "signal" }], stackup: [], nets: { "1": "GND" }, boardModelIncludesCopper: true,
+  };
+  const result = boardInstanceScene(board, false, ["net-uuid-1"], { source, showSmd: true });
+  let substrate;
+  result.group.traverse(object => { if (object.userData.sourceObjectId === "board-substrate") substrate = object; });
+  assert.equal(substrate.geometry.parameters.shapes.holes.length, 1, "inner outline must cut a board hole");
+  const track = result.pickables.find(x => x.userData.sourceObjectId === "t1");
+  track.geometry.computeBoundingBox();
+  assert.ok(Math.abs(track.geometry.boundingBox.max.y - track.geometry.boundingBox.min.y - 1.2) < 1e-6, "track mesh retains imported width");
+  assert.equal(track.userData.boardOccurrenceId, "occ-7");
+  assert.equal(track.userData.canonicalNetId, "net-uuid-1");
+  assert.equal(result.pickables.find(x => x.userData.sceneKind === "copper-pad").userData.canonicalNetId, "net-uuid-1", "numeric parser nets resolve through the canonical name mapping");
+  assert.equal(track.position.x, 0, "board feature coordinates are centered locally");
+  assert.equal(result.group.userData.boardLocalCenterMm, board.localCenterMm, "placement pivot remains available to the viewport");
+  assert.ok(result.pickables.some(x => x.userData.sceneKind === "component-placeholder"));
+  const boardModel = new THREE.Group(), modelMesh = new THREE.Mesh(new THREE.BoxGeometry(.02, .0016, .01), new THREE.MeshBasicMaterial()); boardModel.add(modelMesh);
+  const componentModel = new THREE.Group();
+  const componentRoot = new THREE.Group(); componentRoot.name = "U1_body";
+  const componentMesh = new THREE.Mesh(new THREE.BoxGeometry(.001, .002, .003), new THREE.MeshBasicMaterial());
+  componentRoot.add(componentMesh); componentModel.add(componentRoot);
+  mountKiCadScenes(result, board, source, boardModel, componentModel);
+  assert.equal(boardModel.scale.x, 1, "normalization preserves imported root transforms");
+  assert.equal(boardModel.rotation.x, 0, "normalization preserves imported root orientation");
+  const boardFrame = boardModel.parent;
+  const componentFrame = componentModel.parent;
+  assert.equal(boardFrame.userData.kiCadSceneKind, "board", "baked board roots remain distinguishable for layer visibility");
+  assert.equal(componentFrame.userData.kiCadSceneKind, "components", "component roots remain independently visible");
+  const realGlb = readFileSync(new URL("../public/demo/models/ebrake1_board.glb", import.meta.url));
+  const jsonLength = realGlb.readUInt32LE(12);
+  const glbJson = JSON.parse(realGlb.subarray(20, 20 + jsonLength).toString("utf8"));
+  const realPosition = glbJson.accessors.find(accessor => accessor.type === "VEC3" && accessor.min)?.min;
+  assert.ok(realPosition, "checked-in KiCad GLB must expose position bounds");
+  const sourcePoint = new THREE.Vector3(...realPosition);
+  const boardLocal = sourcePoint.clone().applyMatrix4(boardFrame.matrix);
+  const normalViewport = new THREE.Vector3(
+    sourcePoint.x * 1000 - board.localCenterMm[0],
+    board.localCenterMm[1] - sourcePoint.z * 1000,
+    sourcePoint.y * 1000 - board.localCenterMm[2],
+  );
+  const assemblyViewport = boardLocal.clone(); assemblyViewport.y *= -1;
+  assert.deepEqual(assemblyViewport.toArray().map(value => Math.round(value * 1e9) / 1e9), normalViewport.toArray().map(value => Math.round(value * 1e9) / 1e9), "normal and assembly views map an actual KiCad GLB mesh bound identically");
+  assert.equal(track.visible, true, "linked net overlay remains visible over authoritative copper");
+  assert.ok(result.pickables.includes(modelMesh), "authoritative geometry participates in occurrence picking");
+  assert.equal(componentMesh.userData.componentRef, "U1", "component identity is inherited by unnamed GLB mesh descendants");
+  assert.equal(componentMesh.userData.sceneKind, "component-model");
+  assert.equal(result.group.children.find(x => x.userData.sceneKind === "component-placeholder")?.visible, false, "only resolved component placeholders are hidden");
+  const denseSource = { ...source, tracks: Array.from({length: 1000}, (_, i) => ({...source.tracks[0], id: `dense-${i}`, start: [12, 10 + i / 100], end: [28, 10 + i / 100]})) };
+  const dense = boardInstanceScene(board, false, [], {source: denseSource});
+  const stats = dense.group.children[0].userData.copperDrawCalls;
+  assert.equal(stats.before, 1004);
+  assert.equal(stats.after, 5, "1000 same-net tracks are one rendering batch, all other categories retained");
+  assert.equal(dense.pickables.filter(mesh => mesh.userData.sceneKind === "copper-track").length, 1000, "every exact source pick survives batching");
+  dense.group.updateMatrixWorld(true);
+  const proxy = dense.pickables.find(mesh => mesh.userData.sourceObjectId === "dense-0");
+  assert.equal(proxy.material.visible, false, "source proxies do not submit draw calls");
+  const ray = new THREE.Raycaster(new THREE.Vector3(120, 210, 40), new THREE.Vector3(0, 0, -1));
+  ray.layers.enable(31);
+  assert.ok(ray.intersectObject(proxy).length, "nonrendered exact proxy remains raycastable after world placement");
+  let trackBatch;
+  dense.group.traverse(mesh => { if(mesh.userData.assemblyCopperBatch && mesh.userData.sceneKind === "copper-track") trackBatch = mesh; });
+  assert.equal(trackBatch.userData.sourceObjectCount, 1000);
+  assert.equal(trackBatch.userData.canonicalNetId, "net-uuid-1");
+  trackBatch.geometry.computeBoundingBox();
+  assert.ok(trackBatch.geometry.boundingBox.min.x < -8 && trackBatch.geometry.boundingBox.max.x > 8, "all imported track widths and positions enter batch geometry");
+  console.log(`Copper batching: ${stats.before} -> ${stats.after} draw calls; 1000 exact track picks preserved.`);
+  const implementation = readFileSync(new URL("../src/assemblyBoardScene.ts", import.meta.url), "utf8");
+  assert.doesNotMatch(implementation, /tracks\.slice\s*\(/, "assembly tracks must not be truncated");
+  console.log("Assembly board complete-scene assertions passed.");
+} finally {
+  for (const name of generated) { try { unlinkSync(new URL(`./.test-${name}.mjs`, import.meta.url)); } catch {} }
+}

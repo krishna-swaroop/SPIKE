@@ -13,7 +13,7 @@ from typing import Any, Dict, List, Sequence, Tuple
 
 import numpy as np
 
-from .contracts import AnalysisSpec, DesignIR, ValidationIssue
+from .contracts import AnalysisSpec, SpiDeR, ValidationIssue
 
 
 EPSILON_0_F_M = 8.8541878128e-12
@@ -65,7 +65,7 @@ def estimate_line_capacitance_per_m(
 
 
 def stackup_profile(
-    design: DesignIR,
+    design: SpiDeR,
 ) -> Tuple[Dict[str, float], List[Tuple[float, float, float, float | None]]]:
     """Return copper center Z values and dielectric intervals in millimetres."""
 
@@ -122,7 +122,7 @@ def dielectric_between(
     return epsilon_r, covered, loss_tangent
 
 
-def _geometry_layers_for_net(design: DesignIR, net: str) -> set[str]:
+def _geometry_layers_for_net(design: SpiDeR, net: str) -> set[str]:
     layers: set[str] = set()
     for collection in (design.tracks, design.pads, design.zones):
         for item in collection:
@@ -263,7 +263,7 @@ def _polygon_strictly_contains(container: Sequence[Tuple[float, float]],
     )
 
 
-def _planar_owner_areas(design: DesignIR) -> Tuple[Dict[Tuple[str, str], float],
+def _planar_owner_areas(design: SpiDeR) -> Tuple[Dict[Tuple[str, str], float],
                                                Dict[Tuple[str, str], List[Tuple[float, float]]],
                                                set[Tuple[str, str]], int]:
     """Admit unique source copper area, failing closed on ambiguous unions.
@@ -349,7 +349,7 @@ def _planar_owner_areas(design: DesignIR) -> Tuple[Dict[Tuple[str, str], float],
     return areas, polygons, ambiguous, len(polygons)
 
 
-def _reference_covers_planar_owner(design: DesignIR, owner_polygon: Sequence[Tuple[float, float]],
+def _reference_covers_planar_owner(design: SpiDeR, owner_polygon: Sequence[Tuple[float, float]],
                                    return_net: str, reference_layer: str) -> bool:
     """Admit an explicit parallel-plate area only under one full return zone."""
     for zone in design.zones:
@@ -371,7 +371,7 @@ def _reference_covers_planar_owner(design: DesignIR, owner_polygon: Sequence[Tup
 
 
 def _reference_overlaps_branch(
-    design: DesignIR,
+    design: SpiDeR,
     return_net: str,
     layer: str,
     branch: Any,
@@ -412,7 +412,7 @@ def _reference_overlaps_branch(
 
 
 def estimate_branch_capacitance(
-    design: DesignIR,
+    design: SpiDeR,
     spec: AnalysisSpec,
     branches: Sequence[Any],
 ) -> Tuple[np.ndarray, np.ndarray, Dict[str, Any]]:

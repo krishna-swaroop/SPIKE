@@ -6,7 +6,7 @@ from dataclasses import dataclass
 import math
 from typing import Any, Dict, Iterable, Mapping, Sequence
 
-from .design_ir_v2 import DesignIRV2
+from .spider_v2 import SpiDeRV2
 
 
 CONTRACT = "spike/pcb-via-transition-geometry/v1"
@@ -43,7 +43,7 @@ class AntipadSpec:
 
 
 def _source_contained_reference_patch(
-    design: DesignIRV2, via: Any, antipad: AntipadSpec,
+    design: SpiDeRV2, via: Any, antipad: AntipadSpec,
 ) -> None:
     """Admit a local circular patch only when a convex source zone contains it."""
     matches = [item for item in design.zones if item.id == antipad.reference_zone_id]
@@ -78,7 +78,7 @@ def _source_contained_reference_patch(
         raise ViaTransitionGeometryError("Reference-zone outline must be convex and contain the local patch.")
 
 
-def _copper_layers(design: DesignIRV2) -> list[Any]:
+def _copper_layers(design: SpiDeRV2) -> list[Any]:
     layers = sorted((item for item in design.layers if item.layer_type == "copper"), key=lambda item: item.order)
     if len(layers) < 2 or len({item.id for item in layers}) != len(layers) or len({item.order for item in layers}) != len(layers):
         raise ViaTransitionGeometryError("Via transitions require uniquely ordered canonical copper layers.")
@@ -94,7 +94,7 @@ def _copper_layers(design: DesignIRV2) -> list[Any]:
     return layers
 
 
-def _span(design: DesignIRV2, via: Any) -> tuple[list[Any], int, int]:
+def _span(design: SpiDeRV2, via: Any) -> tuple[list[Any], int, int]:
     layers = _copper_layers(design)
     indexes = {item.id: index for index, item in enumerate(layers)}
     if via.start_layer_id not in indexes or via.end_layer_id not in indexes:
@@ -150,7 +150,7 @@ def _refinement(values: Iterable[float]) -> list[float]:
 
 
 def build_via_transition_geometry(
-    design: DesignIRV2, *, via_id: str, antipads: Sequence[AntipadSpec | Mapping[str, Any]],
+    design: SpiDeRV2, *, via_id: str, antipads: Sequence[AntipadSpec | Mapping[str, Any]],
     refinement_sizes_mm: Sequence[float] = (0.2, 0.1, 0.05),
 ) -> Dict[str, Any]:
     """Build exact analytic circular facts; no capacitance or SI result is inferred."""

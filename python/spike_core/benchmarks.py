@@ -8,7 +8,7 @@ from typing import Any, Dict, Iterable, List, Sequence
 
 import numpy as np
 
-from .contracts import AnalysisSpec, DesignIR
+from .contracts import AnalysisSpec, SpiDeR
 from .field_circuit_cosim import (
     FIELD_RESULT_CONTRACT,
     REQUEST_CONTRACT as FIELD_CIRCUIT_REQUEST_CONTRACT,
@@ -124,7 +124,7 @@ def _port_resistance(mesh: HybridMesh, source: Dict[str, Any], sink: Dict[str, A
 
 
 def _trace_benchmark() -> Benchmark:
-    design = DesignIR(
+    design = SpiDeR(
         name="analytical straight trace",
         layers=[{"name": "F.Cu"}],
         stackup=[{"name": "F.Cu", "type": "copper", "thickness": 0.035}],
@@ -154,7 +154,7 @@ def _trace_benchmark() -> Benchmark:
 
 
 def _via_benchmark() -> Benchmark:
-    design = DesignIR(
+    design = SpiDeR(
         name="analytical plated via",
         layers=[{"name": "F.Cu"}, {"name": "B.Cu"}],
         stackup=_stackup(),
@@ -187,7 +187,7 @@ def _via_benchmark() -> Benchmark:
 
 
 def _zone_mesh(cell_mm: float) -> HybridMesh:
-    design = DesignIR(
+    design = SpiDeR(
         name="square sheet",
         layers=[{"name": "F.Cu"}],
         stackup=[{"name": "F.Cu", "type": "copper", "thickness": 0.035}],
@@ -237,8 +237,8 @@ def _zone_convergence_benchmark() -> Benchmark:
     )
 
 
-def hybrid_fixture() -> tuple[DesignIR, AnalysisSpec]:
-    design = DesignIR(
+def hybrid_fixture() -> tuple[SpiDeR, AnalysisSpec]:
+    design = SpiDeR(
         name="trace-zone-pad-via fixture",
         layers=[{"name": "F.Cu"}, {"name": "B.Cu"}],
         stackup=_stackup(),
@@ -324,7 +324,7 @@ def _native_trace_inductance_benchmark() -> Benchmark:
             "Native PEEC extension is not installed.",
         )
     length_mm, width_mm, thickness_mm = 20.0, 1.0, 0.035
-    design = DesignIR(
+    design = SpiDeR(
         name="native straight trace",
         layers=[{"name": "F.Cu"}],
         stackup=[{"name": "F.Cu", "type": "copper", "thickness": thickness_mm}],
@@ -424,7 +424,7 @@ def _native_ac_loss_benchmark() -> Benchmark:
             "ohm",
             "Native PEEC extension is not installed.",
         )
-    design = DesignIR(
+    design = SpiDeR(
         name="AC loss fixture",
         layers=[{"name": "F.Cu"}],
         stackup=[{"name": "F.Cu", "type": "copper", "thickness": 0.035}],
@@ -515,7 +515,7 @@ def _geometry_peec_transient_benchmark() -> Benchmark:
             "geometry_peec_transient_constant_current_reference", "skipped",
             None, None, None, None, "volt", "Native PEEC extension is not installed.",
         )
-    design = DesignIR(
+    design = SpiDeR(
         name="geometry transient constant-current fixture",
         layers=[{"name": "F.Cu"}],
         nets=[{"id": 1, "name": "VCC"}],
@@ -564,7 +564,7 @@ def _geometry_peec_transient_benchmark() -> Benchmark:
 
 
 def _field_circuit_cosimulation_benchmark() -> Benchmark:
-    design = DesignIR(
+    design = SpiDeR(
         design_id="field-circuit-reference",
         components=[{"id": "v1", "reference": "V1"}, {"id": "r1", "reference": "R1"}],
         pads=[

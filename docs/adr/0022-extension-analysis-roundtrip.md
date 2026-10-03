@@ -6,7 +6,7 @@
 
 ## Context
 
-Process extensions could inspect DesignIR and return arbitrary structured data,
+Process extensions could inspect SpiDeR and return arbitrary structured data,
 but their analysis results did not enter the normal visual, project, or report
 workflow. An external adapter also needed a safe way to identify the exact
 board snapshot on which it ran.
@@ -15,7 +15,7 @@ board snapshot on which it ran.
 
 An extension declares an `analyses` contribution with `output_contract:
 "spike/v1"` and `design.read` plus `results.write`. The host passes normalized
-DesignIR and a canonical JSON SHA-256 binding. The extension returns a
+SpiDeR and a canonical JSON SHA-256 binding. The extension returns a
 `spike/v1` AnalysisResult inside `data.analysis_result`, including matching
 board provenance, solver identity, explicit model status, and optional
 `spike/result-visualization/v1` fields. The worker admits only completed,

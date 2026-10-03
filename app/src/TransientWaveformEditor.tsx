@@ -1,4 +1,5 @@
-import { Activity, Minus, Repeat2, Spline, Waves } from "lucide-react";
+import { Activity, Minus, Repeat2, Spline, Waves } from "./icons";
+import PlotlyChart from "./PlotlyChart";
 import {
   formatEngineering, sampleWaveform, TransientWaveformDefinition, TransientWaveformKind,
   tryParseSpiceNumber, validateWaveform,
@@ -40,19 +41,14 @@ function WaveformPlot({ value, stopTimeS, unit }: { value: EditableTerminalWavef
   const min = extent.minimum;
   const max = extent.maximum;
   const span = Math.max(max - min, Math.abs(max) * .05, 1e-12);
-  const path = samples.map((sample, index) => {
-    const x = 8 + 224 * sample.timeS / stop;
-    const y = 60 - 48 * (sample.value - min) / span;
-    return `${index ? "L" : "M"}${x.toFixed(2)} ${y.toFixed(2)}`;
-  }).join(" ");
   return <div className={`waveform-plot ${issues.length ? "invalid" : ""}`}>
-    <svg viewBox="0 0 240 70" role="img" aria-label={`${value.profile} waveform preview`}>
-      <path className="wave-grid" d="M8 12H232 M8 36H232 M8 60H232 M8 12V60 M120 12V60 M232 12V60" />
-      {!issues.length && <path className="wave-line" d={path} />}
-    </svg>
-    <span className="wave-y-max">{issues.length ? "INVALID" : formatEngineering(max, unit)}</span>
-    <span className="wave-y-min">{issues.length ? issues[0] : formatEngineering(min, unit)}</span>
-    <span className="wave-time">0 <b>{formatEngineering(stop, "s")}</b></span>
+    {!issues.length && <PlotlyChart title={`${value.profile} waveform preview`} revision={`waveform:${value.profile}:${stopTimeS}:${JSON.stringify(samples)}`}
+      data={[{ type: "scatter", mode: "lines", name: value.profile, x: samples.map(sample => sample.timeS), y: samples.map(sample => sample.value), connectgaps: false,
+        line: { color: "#57d1bf", width: 2 }, hovertemplate: `%{x:.6g} s<br>%{y:.6g} ${unit}<extra></extra>` }]}
+      layout={{ margin: { l: 54, r: 12, t: 12, b: 42 }, showlegend: false, xaxis: { title: "Time (s)", range: [0, stop] }, yaxis: { title: unit, range: [min - span * .05, max + span * .05] } }} />}
+    {!!issues.length && <><span className="wave-y-max">INVALID</span>
+      <span className="wave-y-min">{issues[0]}</span>
+      <span className="wave-time">0 <b>{formatEngineering(stop, "s")}</b></span></>}
   </div>;
 }
 

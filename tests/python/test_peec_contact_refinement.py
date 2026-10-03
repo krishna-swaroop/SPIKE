@@ -4,7 +4,7 @@
 
 import unittest
 
-from python.spike_core.contracts import AnalysisSpec, DesignIR
+from python.spike_core.contracts import AnalysisSpec, SpiDeR
 from python.spike_core.peec_conforming_mesh import build_conforming_mesh
 from python.spike_core.peec_conforming_dc import assemble_conforming_dc, solve_conforming_dc
 
@@ -15,7 +15,7 @@ except ImportError:
 
 
 def _sheet(h, max_cells=20000):
-    design = DesignIR(layers=[{"name": "F.Cu"}],
+    design = SpiDeR(layers=[{"name": "F.Cu"}],
         stackup=[{"name": "F.Cu", "type": "copper", "thickness": 0.035}],
         zones=[{"id": "sheet", "net_name": "N", "layer": "F.Cu",
                 "points": [[0, 0], [2, 0], [2, 1], [0, 1]]}],

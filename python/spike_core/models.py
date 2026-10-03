@@ -20,10 +20,16 @@ import tempfile
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Dict, Iterable, List
 
-
 MODEL_SUFFIXES = {".step", ".stp", ".wrl", ".vrml", ".glb", ".gltf"}
 MAX_VISUAL_BUNDLE_SOURCE_BYTES = 64 * 1024 * 1024
 MAX_VISUAL_BUNDLE_ARTIFACT_BYTES = 96 * 1024 * 1024
+
+
+def automatic_component_model_overrides(
+    source: str, additional_roots: Iterable[str | Path] = (),
+) -> Dict[str, str]:
+    from .model_resolver_staging import automatic_component_model_overrides as resolve_components
+    return resolve_components(source, additional_roots)
 
 
 def model_library_roots(additional_roots: Iterable[str | Path] = ()) -> List[Path]:
@@ -77,46 +83,28 @@ def search_model_library(
     limit: int = 200,
     additional_roots: Iterable[str | Path] = (),
 ) -> Dict[str, Any]:
-    roots = model_library_roots(additional_roots)
-    normalized_query = query.strip().lower()
-    bounded_limit = max(1, min(int(limit), 1000))
+    from .model_library import library_status, search_library
+
+    indexed = search_library(query, limit, additional_roots)
     entries = []
-    truncated = False
-    for root in roots:
-        try:
-            paths = root.rglob("*")
-            for path in paths:
-                if not path.is_file() or path.suffix.lower() not in MODEL_SUFFIXES:
-                    continue
-                relative = path.relative_to(root)
-                searchable = f"{path.stem} {relative}".lower()
-                if normalized_query and normalized_query not in searchable:
-                    continue
-                entries.append({
-                    "id": f"{root.name}:{relative.as_posix()}",
-                    "name": path.stem,
-                    "path": str(path),
-                    "relative_path": relative.as_posix(),
-                    "format": path.suffix.lower().lstrip("."),
-                    "source": "kicad" if "kicad" in str(root).lower() else "user",
-                    "root": str(root),
-                })
-                if len(entries) >= bounded_limit:
-                    truncated = True
-                    break
-        except (OSError, PermissionError):
-            continue
-        if truncated:
-            break
+    for item in indexed["entries"]:
+        entry = dict(item)
+        relative = str(entry.get("relative_path", ""))
+        root = str(entry.get("root", ""))
+        entry["id"] = f"{Path(root).name}:{relative}"
+        entry["source"] = "kicad" if "kicad" in root.lower() else "user"
+        entries.append(entry)
+    status = library_status(additional_roots=additional_roots)
     return {
         "contract": "spike/model-library/v1",
         "offline": True,
-        "roots": [str(root) for root in roots],
+        "roots": [str(item["root"]) for item in status["roots"]],
         "query": query,
         "count": len(entries),
-        "truncated": truncated,
+        "truncated": bool(indexed["truncated"]),
         "formats": sorted(suffix.lstrip(".") for suffix in MODEL_SUFFIXES),
         "models": entries,
+        "index": status,
     }
 
 
@@ -228,6 +216,16 @@ def _missing_model_references(processes: Iterable[subprocess.CompletedProcess[st
     return sorted(set(re.findall(r"Could not add 3D model for ([A-Za-z0-9_.-]+)\.", log)))
 
 
+def _kicad_failure_details(processes: Iterable[subprocess.CompletedProcess[str]]) -> str:
+    """Retain bounded native diagnostics, with board load failures first."""
+    lines = [line.strip() for process in processes for line in
+             re.sub(r"\x1b\[[0-9;]*m", "", process.stderr + "\n" + process.stdout).splitlines()
+             if line.strip()]
+    preferred = [line for line in lines if "Failed to load board" in line]
+    detail = "\n".join(dict.fromkeys(preferred or lines[-8:]))[:2000]
+    return f" Native diagnostic: {detail}" if detail else ""
+
+
 def _board_layers(board: Path) -> List[str]:
     source = board.read_text(encoding="utf-8", errors="replace")
     layers = re.findall(
@@ -244,102 +242,15 @@ def _copper_layers(board: Path) -> List[str]:
     return [layer for layer in _board_layers(board) if layer.endswith(".Cu")]
 
 
-def _stage_resolved_model_references(board: Path, output_dir: Path, model_overrides: Dict[str, str] | None = None,
-                                     resolution: Dict[str, Any] | None = None) -> tuple[Path, List[Dict[str, str]]]:
-    output_dir.mkdir(parents=True, exist_ok=True)
-    source = board.read_text(encoding="utf-8", errors="replace")
-    roots = model_library_roots((board.parent,))
-    filename_cache: Dict[str, List[Path]] = {}
-    resolution_cache: Dict[str, Path | None] = {}
-    filename_index: Dict[str, Dict[str, tuple[Path, str]]] | None = None
-    substitutions: List[Dict[str, str]] = []
-
-    def candidates_for(reference: str) -> List[Path]:
-        normalized = reference.replace("\\", "/")
-        candidates: List[Path] = []
-        if normalized.startswith("${KIPRJMOD}/"):
-            candidates.append(board.parent / normalized.removeprefix("${KIPRJMOD}/"))
-        variable = re.match(r"^\$\{(KICAD\d+_3DMODEL_DIR|KICAD3DMOD)\}/(.+)$", normalized, re.IGNORECASE)
-        if variable:
-            configured = os.environ.get(variable.group(1))
-            if configured:
-                candidates.append(Path(configured) / variable.group(2))
-            candidates.extend(root / variable.group(2) for root in roots if root.name.lower() == "3dmodels")
-        third_party = re.match(r"^\$\{(KICAD(\d+)_3RD_PARTY)\}/(.+)$", normalized)
-        if third_party:
-            configured = os.environ.get(third_party.group(1))
-            if configured:
-                candidates.append(Path(configured) / third_party.group(3))
-            version = f"{third_party.group(2)}.0"
-            candidates.append(Path.home() / "Documents" / "KiCad" / version / "3rdparty" / third_party.group(3))
-        expanded = os.path.expandvars(reference)
-        if "$" not in expanded:
-            path = Path(expanded).expanduser()
-            candidates.append(path if path.is_absolute() else board.parent / path)
-        return candidates
-
-    def unique_filename_match(filename: str) -> Path | None:
-        nonlocal filename_index
-        key = filename.lower()
-        if key not in filename_cache:
-            # Walk each library once, not once per distinct missing package on
-            # a dense board. Keep ambiguous basenames unresolved.
-            if filename_index is None:
-                filename_index = {}
-                for root in roots:
-                    try:
-                        for match in root.rglob("*"):
-                            if match.suffix.lower() not in MODEL_SUFFIXES or not match.is_file():
-                                continue
-                            resolved = match.resolve()
-                            filename_index.setdefault(match.name.lower(), {})[os.path.normcase(str(resolved))] = (
-                                resolved, match.relative_to(root).as_posix().lower(),
-                            )
-                    except (OSError, PermissionError):
-                        continue
-            values = list(filename_index.get(key, {}).values())
-            if len({relative for _, relative in values}) == 1:
-                filename_cache[key] = [values[0][0]] if values else []
-            else:
-                filename_cache[key] = [path for path, _ in values]
-        matches = filename_cache[key]
-        return matches[0] if len(matches) == 1 else None
-
-    def replace(match: re.Match[str]) -> str:
-        reference = match.group(2)
-        if reference not in resolution_cache:
-            candidates = candidates_for(reference)
-            # Recent KiCad installs can contain only STEP assets for a legacy
-            # VRML reference. Resolve across versions before invoking KiCad.
-            if Path(reference).suffix.lower() in {".wrl", ".vrml"}:
-                candidates = [candidate.with_suffix(suffix) for candidate in candidates for suffix in (".step", ".stp")] + candidates
-            if reference in (model_overrides or {}):
-                replacement = Path(model_overrides[reference]).resolve()
-                if replacement.suffix.lower() not in {".step", ".stp", ".wrl", ".vrml"} or not replacement.is_file():
-                    raise ValueError("Choose a readable STEP or VRML replacement model.")
-                candidates.insert(0, replacement)
-            resolved = next((candidate.resolve() for candidate in candidates if candidate.is_file()), None)
-            if resolved is None:
-                resolved = unique_filename_match(Path(reference.replace("\\", "/")).name)
-            resolution_cache[reference] = resolved
-        resolved = resolution_cache[reference]
-        if resolved is None:
-            return match.group(0)
-        resolved_reference = resolved.as_posix()
-        if resolved_reference == reference:
-            return match.group(0)
-        substitutions.append({"source": reference, "resolved": resolved_reference})
-        return f'{match.group(1)}{resolved_reference}{match.group(3)}'
-
-    staged_source = re.sub(r'(\(model\s+")([^"]+)(")', replace, source)
-    if resolution is not None:
-        resolution["unresolved_model_paths"] = [reference for reference, path in resolution_cache.items() if path is None]
-    if not substitutions:
-        return board, []
-    staged_board = output_dir / f".{board.stem}.spike-export.kicad_pcb"
-    staged_board.write_text(staged_source, encoding="utf-8")
-    return staged_board, substitutions
-
+def _stage_resolved_model_references(
+    board: Path,
+    output_dir: Path,
+    model_overrides: Dict[str, str] | None = None,
+    resolution: Dict[str, Any] | None = None,
+    component_model_overrides: Dict[str, str] | None = None,
+) -> tuple[Path, List[Dict[str, str]]]:
+    from .model_resolver_staging import stage
+    return stage(board, output_dir, model_overrides, resolution, component_model_overrides)
 
 def export_kicad_scene(board_path: str | Path, output_path: str | Path, timeout_seconds: int = 180) -> Dict[str, Any]:
     board = Path(board_path).expanduser().resolve()
@@ -375,7 +286,7 @@ def export_kicad_scene(board_path: str | Path, output_path: str | Path, timeout_
     missing_references = _missing_model_references([process])
     valid = _valid_glb(output)
     if not valid:
-        raise RuntimeError(f"KiCad did not create a valid GLB scene (exit code {process.returncode}).")
+        raise RuntimeError(f"KiCad did not create a valid GLB scene (exit code {process.returncode})." + _kicad_failure_details([process]))
     return {
         "contract": "spike/scene-manifest/v1",
         "status": "ready_with_warnings" if missing_references else "ready",
@@ -408,6 +319,7 @@ def export_kicad_visual_bundle(
     stage: str = "all",
     lightweight_board: bool = False,
     model_overrides: Dict[str, str] | None = None,
+    component_model_overrides: Dict[str, str] | None = None,
 ) -> Dict[str, Any]:
     if stage not in {"all", "layout", "board", "components"}:
         raise ValueError("Unknown visual import stage.")
@@ -424,8 +336,13 @@ def export_kicad_visual_bundle(
 
     output_dir.mkdir(parents=True, exist_ok=True)
     resolution: Dict[str, Any] = {}
-    export_board, model_substitutions = (_stage_resolved_model_references(board, output_dir, model_overrides, resolution)
+    export_board, model_substitutions = (_stage_resolved_model_references(
+        board, output_dir, model_overrides, resolution, component_model_overrides,
+    )
                                        if stage in {"all", "components"} else (board, []))
+    from .kicad_visual_staging import stage_undefined_graphics
+    model_board = export_board
+    export_board, visual_repairs = stage_undefined_graphics(export_board, output_dir)
     stem = board.stem
     board_scene = output_dir / f"{stem}_board.glb"
     component_scene = output_dir / f"{stem}_components.glb"
@@ -465,7 +382,7 @@ def export_kicad_visual_bundle(
     invalid = [Path(path).name for path in scenes.values() if not _valid_glb(Path(path))]
     if invalid:
         codes = ", ".join(str(process.returncode) for process in scene_processes)
-        raise RuntimeError(f"KiCad did not create valid split GLB scenes: {', '.join(invalid)} (exit codes {codes}).")
+        raise RuntimeError(f"KiCad did not create valid split GLB scenes: {', '.join(invalid)} (exit codes {codes})." + _kicad_failure_details(scene_processes))
 
     layout_dir = output_dir / "layout"
     layer_files: Dict[str, str] = {}
@@ -479,7 +396,7 @@ def export_kicad_visual_bundle(
         batch = _run_kicad([
             capability["path"], "pcb", "export", "svg", "--mode-multi",
             "--exclude-drawing-sheet", "--fit-page-to-board", "--drill-shape-opt", "2",
-            "--layers", ",".join(layers), "--output", str(layout_dir), str(board),
+            "--layers", ",".join(layers), "--output", str(layout_dir), str(export_board),
         ], timeout_seconds)
         layout_processes.append(batch)
         aliases = dict(re.findall(
@@ -495,7 +412,7 @@ def export_kicad_visual_bundle(
             # canonical names; fall back to an explicit single plot when a
             # custom alias has platform-specific filename sanitization.
             for label in (aliases.get(layer, defaults.get(layer, layer)), layer):
-                candidate = layout_dir / f"{stem}-{label.replace('.', '_')}.svg"
+                candidate = layout_dir / f"{export_board.stem}-{label.replace('.', '_')}.svg"
                 if not candidate.resolve().is_relative_to(layout_dir.resolve()):
                     continue
                 if batch.returncode == 0 and candidate.is_file():
@@ -512,7 +429,7 @@ def export_kicad_visual_bundle(
                 str(export_board),
             ], timeout_seconds)
             if process.returncode != 0 or not layer_file.is_file():
-                raise RuntimeError(f"KiCad did not create the {layer} layout SVG (exit code {process.returncode}).")
+                raise RuntimeError(f"KiCad did not create the {layer} layout SVG (exit code {process.returncode})." + _kicad_failure_details([process]))
             return layer, layer_file, process
 
         # Bound concurrent KiCad board loads; preserve explicit canonical layer
@@ -531,10 +448,12 @@ def export_kicad_visual_bundle(
 
     if export_board != board:
         export_board.unlink(missing_ok=True)
+    if model_board != board and model_board != export_board:
+        model_board.unlink(missing_ok=True)
     missing_references = _missing_model_references(scene_processes)
     return {
         "contract": "spike/visual-bundle/v1",
-        "status": "ready_with_warnings" if missing_references else "ready",
+        "status": "ready_with_warnings" if missing_references or visual_repairs else "ready",
         "offline": True,
         "source": board.name,
         "scenes": scenes,
@@ -551,6 +470,7 @@ def export_kicad_visual_bundle(
         },
         "quality": {
             **resolution,
+            "visual_source_repairs": visual_repairs,
             "board_includes_copper": not lightweight_board,
             "missing_model_count": len(missing_references),
             "missing_references": missing_references,

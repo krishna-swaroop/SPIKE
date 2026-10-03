@@ -15,4 +15,12 @@
 .board-import-panel button:disabled { opacity: .5; cursor: wait; }
 .board-import-panel footer { margin-top: 16px; justify-content: flex-end; flex-wrap: wrap; }
 .board-import-warning { color: #ffd894; overflow-wrap: anywhere; }
-.board-import-status { position: fixed; right: 20px; bottom: 42px; z-index: 1000; max-width: 70vw; }
+.board-import-status { position: static; flex: 0 1 190px; min-width: 0; max-width: 190px; height: 24px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 2px 7px; font: 10px/1.3 system-ui, sans-serif; }
+.board-import-panel.embedded { position: static; width: auto; max-height: none; min-width: 0; padding: 8px; border-radius: 3px; box-shadow: none; font: 11px/1.4 system-ui, sans-serif; }
+.board-import-panel.embedded :is(header, footer, .board-import-progress-caption) { gap: 6px; flex-wrap: wrap; }
+.board-import-panel.embedded :is(button, h3) { font: 11px/1.4 system-ui, sans-serif; }
+.board-import-panel.embedded button { min-height: 26px; padding: 3px 7px; }
+.board-import-panel.embedded progress { height: 6px; }
+.board-import-panel.embedded p { margin-block: 6px; }
+.board-import-panel.embedded section { margin-top: 8px; padding-top: 4px; }
+.board-import-panel.embedded footer { margin-top: 8px; }

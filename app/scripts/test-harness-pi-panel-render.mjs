@@ -4,6 +4,8 @@ import { createRequire } from "node:module";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import ts from "typescript";
+import loadDataTable from "./load-data-table.mjs";
+import loadIdentityInput from "./load-identity-input.mjs";
 
 const require = createRequire(import.meta.url);
 const source = readFileSync(new URL("../src/HarnessPiPanel.tsx", import.meta.url), "utf8");
@@ -22,6 +24,8 @@ function loadPanel(result = null) {
       useState: initial => [initial === null ? result : typeof initial === "function" ? initial() : initial, () => {}],
     };
     if (name === "./workerBridge") return { cancelLocalWorker() {}, cancelLocalWorkerCleanup() {}, runLocalWorker() {} };
+    if (name === "./DataTable") return { default: loadDataTable(), __esModule: true };
+    if (name === "./TableIdentityInput") return { default: loadIdentityInput(React), __esModule: true };
     return require(name);
   }, uiModule, uiModule.exports);
   return uiModule.exports.default;

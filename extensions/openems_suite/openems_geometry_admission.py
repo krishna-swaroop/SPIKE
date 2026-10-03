@@ -11,13 +11,13 @@ from __future__ import annotations
 import hashlib
 import json
 
-from python.spike_core.contracts import AnalysisSpec, DesignIR
+from python.spike_core.contracts import AnalysisSpec, SpiDeR
 from .openems_adapter_source import pad_polygon
 
 
-def screen_geometry(design: DesignIR, spec: AnalysisSpec) -> dict:
-    if not isinstance(design, DesignIR) or not isinstance(spec, AnalysisSpec):
-        raise TypeError("typed DesignIR and AnalysisSpec required")
+def screen_geometry(design: SpiDeR, spec: AnalysisSpec) -> dict:
+    if not isinstance(design, SpiDeR) or not isinstance(spec, AnalysisSpec):
+        raise TypeError("typed SpiDeR and AnalysisSpec required")
     # This string is only digest input, never a control artifact. Preserve nonfinite
     # tokens so existing semantic preflight returns its stable errors for bad input.
     payload = json.dumps({"design": design.to_dict(), "spec": spec.to_dict()},
@@ -80,6 +80,6 @@ def screen_geometry(design: DesignIR, spec: AnalysisSpec) -> dict:
                             "No solver execution or independent/measured qualification"]}
 
 
-def verify_screen_binding(screen: dict, design: DesignIR, spec: AnalysisSpec) -> None:
+def verify_screen_binding(screen: dict, design: SpiDeR, spec: AnalysisSpec) -> None:
     if screen != screen_geometry(design, spec):
         raise ValueError("Geometry screen is stale or tampered")

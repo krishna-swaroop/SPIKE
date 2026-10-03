@@ -99,7 +99,7 @@ correlation remain false or pending.
 Retrieved 2026-08-28. Published contracts remain additive: geometry v1 covers
 the complete convex straight-edged subset, v2 admits one concave straight-edge
 outer ring with proper source cutouts on the exact 1 nm grid, and v3 admits
-DesignIR circular arcs through a fixed provenance-bound flattening policy.
+SpiDeR circular arcs through a fixed provenance-bound flattening policy.
 V3's sagitta equation and grid-snap allowance were independently derived from
 circle geometry; its output is explicitly a bounded approximation rather than
 exact curved copper or a conservative copper envelope.

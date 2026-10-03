@@ -12,7 +12,7 @@ import math
 import re
 from typing import Any, Dict, List
 
-from .contracts import DesignIR
+from .contracts import SpiDeR
 
 
 PI_PATH_CONTRACT = "spike/pi-path/v1"
@@ -58,7 +58,7 @@ def _resistance(model: Dict[str, Any]) -> tuple[float | None, str]:
     return (value, "transition.model.value") if math.isfinite(value) and value >= 0 else (None, "")
 
 
-def _component_resistance(design: DesignIR, reference: str) -> tuple[float | None, str]:
+def _component_resistance(design: SpiDeR, reference: str) -> tuple[float | None, str]:
     """Read only explicit imported component resistance metadata.
 
     This is deliberately conservative: a missing or ambiguous model remains a
@@ -88,7 +88,7 @@ def _component_resistance(design: DesignIR, reference: str) -> tuple[float | Non
     return None, ""
 
 
-def validate_pi_path(path: Dict[str, Any], design: DesignIR, mode: str = "dc") -> Dict[str, Any]:
+def validate_pi_path(path: Dict[str, Any], design: SpiDeR, mode: str = "dc") -> Dict[str, Any]:
     """Validate copper continuity and every explicit component transition."""
 
     issues: List[Dict[str, str]] = []

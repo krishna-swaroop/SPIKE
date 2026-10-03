@@ -13,7 +13,7 @@ times. They may crash, hang, emit untrusted logs, or produce results that cannot
 be compared directly with SPIKE.
 
 A direct UI-to-executable call would couple presentation code to engine details
-and bypass DesignIR, solver validity, process isolation, and reproducibility.
+and bypass SpiDeR, solver validity, process isolation, and reproducibility.
 Loading arbitrary project-provided scripts would also create an unacceptable
 execution boundary.
 
@@ -26,7 +26,7 @@ Python worker. Each adapter must:
   without downloading anything;
 - publish an engine descriptor whose capabilities are limited to implemented
   adapter behavior, with explicit state/action gates;
-- validate DesignIR and AnalysisSpec before writing a case;
+- validate SpiDeR and AnalysisSpec before writing a case;
 - create a UUID-named private per-user job directory by default, with versioned
   job, geometry, object-map, artifact, result, and log contracts;
 - authenticate execution-relevant job metadata and normalized geometry with a
@@ -76,7 +76,7 @@ These commands use the worker contracts and the same preflight gates.
 - Engine failures remain outside the React/WebView process and are bounded by
   the worker and adapter watchdogs.
 - Cases can be inspected, archived, reproduced, and executed independently.
-- Object maps preserve traceability from engine entities to DesignIR objects.
+- Object maps preserve traceability from engine entities to SpiDeR objects.
 - Engine and adapter licensing can be reviewed independently from SPIKE core.
 - External agreement does not automatically establish independent truth.
 - Geometry translation and result normalization must be validated per engine.

@@ -5,6 +5,7 @@ import { parseDesignSourceOffThread } from '../src/boardImport';
 import { materializeVisualBundle } from '../src/boardVisualBundles';
 import type { ParsedBoard } from '../src/boardParser';
 import '../src/styles.css';
+import '../src/buttonStandard.css';
 
 const noop = () => {};
 const opacity = {};

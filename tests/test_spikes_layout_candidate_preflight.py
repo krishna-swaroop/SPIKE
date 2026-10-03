@@ -2,8 +2,8 @@
 import copy
 import unittest
 
-from python.spike_core.contracts import DesignIR
-from python.spike_core.design_ir_v2 import DesignIRV2
+from python.spike_core.contracts import SpiDeR
+from python.spike_core.spider_v2 import SpiDeRV2
 from python.spike_core.spikes_layout_adapter import (
     SpikesLayoutAdapterError,
     design_ir_artifact_identity,
@@ -13,7 +13,7 @@ from python.spike_core.spikes_layout_adapter import (
 
 class SpikesLayoutCandidatePreflightTests(unittest.TestCase):
     def setUp(self):
-        legacy = DesignIR(
+        legacy = SpiDeR(
             design_id="board-native-id",
             name="Layout candidate",
             source_format="kicad",
@@ -29,10 +29,10 @@ class SpikesLayoutCandidatePreflightTests(unittest.TestCase):
             }],
             metadata={"source_sha256": "1" * 64},
         )
-        self.parent = DesignIRV2.from_v1(legacy)
+        self.parent = SpiDeRV2.from_v1(legacy)
         candidate_raw = copy.deepcopy(self.parent.to_dict())
         candidate_raw["tracks"][0]["end_mm"] = [12.0, 0.0]
-        self.candidate = DesignIRV2.from_dict(candidate_raw)
+        self.candidate = SpiDeRV2.from_dict(candidate_raw)
         self.track_id = self.candidate.tracks[0].id
         self.component_id = self.candidate.components[0].id
         self.request = self._request("autorouter", self.track_id)
@@ -134,7 +134,7 @@ class SpikesLayoutCandidatePreflightTests(unittest.TestCase):
     def test_invalid_net_or_layer_reference_fails_closed(self):
         broken_raw = copy.deepcopy(self.candidate.to_dict())
         broken_raw["tracks"][0]["net_id"] = "missing-net"
-        broken = DesignIRV2.from_dict(broken_raw)
+        broken = SpiDeRV2.from_dict(broken_raw)
         request = copy.deepcopy(self.request)
         request["candidate"] = self._artifact(broken)
 
@@ -145,7 +145,7 @@ class SpikesLayoutCandidatePreflightTests(unittest.TestCase):
     def test_canonical_entity_identity_cannot_change_across_lineage(self):
         changed_raw = copy.deepcopy(self.candidate.to_dict())
         changed_raw["tracks"][0]["id"] = "substituted-track-id"
-        substituted = DesignIRV2.from_dict(changed_raw)
+        substituted = SpiDeRV2.from_dict(changed_raw)
         request = copy.deepcopy(self.request)
         request["candidate"] = self._artifact(substituted)
         request["changed_entity_ids"] = [self.track_id, "substituted-track-id"]
@@ -158,7 +158,7 @@ class SpikesLayoutCandidatePreflightTests(unittest.TestCase):
     def test_source_identity_and_coordinate_frame_cannot_drift(self):
         source_drift_raw = copy.deepcopy(self.candidate.to_dict())
         source_drift_raw["source"]["source_digest"] = "2" * 64
-        source_drift = DesignIRV2.from_dict(source_drift_raw)
+        source_drift = SpiDeRV2.from_dict(source_drift_raw)
         request = copy.deepcopy(self.request)
         request["candidate"] = self._artifact(source_drift)
         with self.assertRaises(SpikesLayoutAdapterError) as caught:
@@ -167,7 +167,7 @@ class SpikesLayoutCandidatePreflightTests(unittest.TestCase):
 
         frame_drift_raw = copy.deepcopy(self.candidate.to_dict())
         frame_drift_raw["frame"]["frame_id"] = "shifted-board"
-        frame_drift = DesignIRV2.from_dict(frame_drift_raw)
+        frame_drift = SpiDeRV2.from_dict(frame_drift_raw)
         request = copy.deepcopy(self.request)
         request["candidate"] = self._artifact(frame_drift)
         request["requirements"][0]["scope"]["frame"] = "shifted-board"

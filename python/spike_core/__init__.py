@@ -4,8 +4,12 @@ __version__ = "0.3.0"
 
 from .capabilities import capabilities
 from .capability_ledger import native_capability_ledger
-from .contracts import AnalysisResult, AnalysisSpec, DesignIR, ValidationIssue
-from .design_ir_v2 import AssemblyIRV1, DesignIRV2
+from .contracts import AnalysisResult, AnalysisSpec, SpiDeR, ValidationIssue
+from .spider_v2 import AssemblyIRV1, SpiDeRV2
+
+# External DesignIR compatibility names; internal code uses SpiDeR.
+DesignIR = SpiDeR
+DesignIRV2 = SpiDeRV2
 from .assembly_resources import estimate_assembly_resources
 from .extensions import ExtensionManifest, ExtensionRegistry
 from .native_solver_contracts import NativeSolveRequest, NativeSolveResult, NativeSolverDescriptor
@@ -38,10 +42,12 @@ from .spikes_layout_geometry_handoff import (
 )
 
 __all__ = [
-    "AnalysisResult",
-    "AnalysisSpec",
     "DesignIR",
     "DesignIRV2",
+    "AnalysisResult",
+    "AnalysisSpec",
+    "SpiDeR",
+    "SpiDeRV2",
     "AssemblyIRV1",
     "estimate_assembly_resources",
     "ValidationIssue",

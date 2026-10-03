@@ -11,8 +11,8 @@ from jsonschema import Draft202012Validator
 from referencing import Registry, Resource
 
 from python.core.board_parser import KicadParser
-from python.spike_core.contracts import AnalysisSpec, DesignIR
-from python.spike_core.design_ir_v2 import DesignIRV2
+from python.spike_core.contracts import AnalysisSpec, SpiDeR
+from python.spike_core.spider_v2 import SpiDeRV2
 from python.spike_core.hybrid_mesh import build_hybrid_mesh
 from python.spike_core.kicad_importer import import_kicad_design
 from python.spike_core.mesh_ownership import audit_dc_conductor_volume_ownership
@@ -91,8 +91,8 @@ class CompositeCustomPadUnionTests(unittest.TestCase):
     def test_composite_curve_evidence_round_trips_and_mesh_is_owned(self):
         path = self.write("\n".join((_UPPER_CIRCLE, _LOWER_CIRCLE, _RIGHT_POLYGON)))
         imported = import_kicad_design(str(path))
-        typed = DesignIRV2.from_v1(imported)
-        restored = DesignIRV2.from_dict(typed.to_dict())
+        typed = SpiDeRV2.from_v1(imported)
+        restored = SpiDeRV2.from_dict(typed.to_dict())
         geometry = restored.pads[0].custom_geometry
         self.assertEqual(geometry["curve_approximation"]["source_circle_count"], 2)
         self.assertLessEqual(geometry["curve_approximation"]["maximum_sagitta_mm"], 0.001)
@@ -108,7 +108,7 @@ class CompositeCustomPadUnionTests(unittest.TestCase):
         )
 
         pad = restored.to_v1().pads[0]
-        design = DesignIR(
+        design = SpiDeR(
             layers=[{"name": "F.Cu"}], nets=[{"id": 1, "name": "VCC"}], pads=[pad],
         )
         spec = AnalysisSpec(

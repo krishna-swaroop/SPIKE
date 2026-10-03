@@ -13,8 +13,8 @@ from .project_package import (
     ProjectPackageError, manifest_signature_payload, read_project, read_visual_model_artifacts,
     write_spike_package,
 )
-from .design_ir_v2 import AssemblyIRV1, DesignIRV2
-from .design_ir_v2_schema import CoordinateFrame, ModelReference, canonical_uuid, content_digest
+from .spider_v2 import AssemblyIRV1, SpiDeRV2
+from .spider_v2_schema import CoordinateFrame, ModelReference, canonical_uuid, content_digest
 from .assembly_frames import validate_rigid_transform
 from .assembly_package_shapes import (
     ASSEMBLY_PACKAGE_SHAPES_V1, PACKAGE_SHAPE_KERNEL_V1, model_transform_sha256,
@@ -31,17 +31,30 @@ from .service_project import (
 )
 from .service_project_topology import update_assembly_topology_setup
 from .service_project_assembly import handle_assembly_project_request
+from .service_project_assembly_field import handle_assembly_field_project_request
 from .service_project_mcad_placement import handle_mcad_placement_project_request
 from .service_project_selector_preview import generate_mcad_selector_preview_in_project, read_mcad_selector_previews
 from .normalized_source_codec import compact_normalized_source_for_open
-from .service_project_persistence import project_for_desktop, prepare_persistent_state, read_persistent_artifact, without_saved_results
+from .service_project_persistence import project_for_desktop, prepare_persistent_state, read_persistent_artifact, without_saved_results, migrate_saved_assembly_results
 from .project_state_artifacts import hydrate_result_state
+from .assembly_visuals import prepare_assembly_design_visual_bundle
 
 
 def handle_project_request(
     method: Any, params: Dict[str, Any], *, request_id: Any, application_version: str,
 ) -> Dict[str, Any] | None:
     """Handle project persistence and import requests, or return ``None``."""
+    field_response = handle_assembly_field_project_request(method, params, request_id=request_id, application_version=application_version)
+    if field_response is not None:
+        return field_response
+    if method == "prepare_assembly_design_visual_bundle":
+        try:
+            return {"ok": True, "result": prepare_assembly_design_visual_bundle(params)}
+        except (OSError, ValueError, TypeError, ProjectPackageError) as exc:
+            return error_response(
+                "SPIKE-BE-PACKAGE-E-0001", str(exc), error_type=type(exc).__name__,
+                operation_id=operation_id(request_id),
+            )
     if method in {"read_project_state_artifact", "read_project_visual_bundle"}:
         try:
             return {"ok": True, "result": read_persistent_artifact(method, params)}
@@ -87,6 +100,8 @@ def handle_project_request(
                 digest = str(opened.manifest.get("manifest_payload_sha256", ""))
                 projected = hydrate_result_state(projected, path, digest)
                 canonical_payload = hydrate_result_state(canonical_payload, path, digest)
+                projected = migrate_saved_assembly_results(projected, opened.payload.get("assembly_ir"))
+                canonical_payload = migrate_saved_assembly_results(canonical_payload, opened.payload.get("assembly_ir"))
             elif params.get("defer_artifacts"):
                 canonical_payload = {"design_ir": opened.payload.get("design_ir")}
             projected_design = projected.get("design") if isinstance(projected.get("design"), dict) else {}
@@ -611,7 +626,7 @@ def handle_project_request(
             if method == "import_design_v2":
                 result = import_design(path, str(params.get("format_hint", "")), with_report=True, options=params.get("options"))
                 if params.get("include_snapshot"):
-                    legacy_design = DesignIRV2.from_dict(result["design"]).to_v1().to_dict()
+                    legacy_design = SpiDeRV2.from_dict(result["design"]).to_v1().to_dict()
                     if params.get("snapshot_only"):
                         # Keep canonical v2 authoritative for persistence, but
                         # avoid serializing large ODB provenance/geometry three

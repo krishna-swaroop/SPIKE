@@ -1,4 +1,4 @@
-import { Gauge, Globe2, MonitorCog, Ruler, ShieldCheck, SlidersHorizontal, UserRound, X } from "lucide-react";
+import { Gauge, Globe2, MonitorCog, Ruler, ShieldCheck, SlidersHorizontal, UserRound, X } from "./icons";
 import { useEffect, useState } from "react";
 import { AppSettings, LANGUAGE_NAMES } from "./appSettings";
 

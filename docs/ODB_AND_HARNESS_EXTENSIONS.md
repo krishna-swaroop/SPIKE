@@ -2,23 +2,34 @@
 
 Status: engineering preview. These extensions are not a claim of native-file
 support for every ECAD vendor, or production qualification against their exports.
-They use SPIKE's normal DesignIR, import-report and isolated extension process
+They use SPIKE's normal SpiDeR, import-report and isolated extension process
 contracts. No proprietary CAD SDK or third-party JavaScript is loaded in the UI.
 
 ## Using the desktop
 
 Use **File → Import ODB++ archive** for ZIP, TAR, TGZ, TAR.GZ, or ODB archives,
-or **File → Import ODB++ folder** for an extracted job. The Extension Manager
-route remains available for explicit importer options. Jobs containing several
-steps require a step name in the extension/import options, for example
-`{"step": "pcb"}`. Panel step repeats are reported as unsupported; selecting a
+or **File → Import ODB++ folder** for an extracted job. **Open file or project**
+also recognizes these archives, KiCad boards, IPC-2581, normalized designs,
+harness JSON/CSV/TSV, and STEP/glTF models. **Import project / CAD** is available
+in the File menu and Project manager, alongside the Import toolbar action.
+Generic JSON is routed by its document contract; unknown JSON requires an
+explicit format choice in Import. Saved SPIKE packages retain their signed
+manifest verification and artifact checks.
+
+In the import dialog, use **Read job steps** to inspect a bounded ODB++ archive
+or directory without loading its geometry. Select the board step, then choose
+**Prepare import** to review coverage and diagnostics before **Apply import**.
+Jobs containing several steps require an explicit step. Cancelled or failed
+preparation leaves the current project intact; late worker replies are ignored.
+Applying a board prompts for unsaved changes and starts a new project. Panel
+step repeats are reported as unsupported; selecting a
 board step avoids accidentally treating a panel as one board.
 
 The imported board opens in the regular viewport. Copper holes are displayed as
 holes. Circular arcs are tessellated for display only; the exact records are
 passed to the PI dialog and other solver workflows. The extension result shows
-the import-quality report. A `.spike` save retains the normalized source,
-canonical DesignIR, vendor metadata, model asset bytes and harness document.
+the import-quality report in the import dialog. A `.spike` save retains the normalized source,
+canonical SpiDeR, vendor metadata, model asset bytes and harness document.
 The normalized snapshot is not the original compressed ODB archive: retain the
 original export separately. Its digest and original path remain provenance.
 
@@ -26,6 +37,13 @@ Open **Harness Engineering** to import a connection list, create a document,
 edit wire nets and lengths, check connectivity, compile an electrical fragment,
 or export JSON. Connection definitions and arbitrary properties can be edited
 in the document editor. Run validation after edits and save the project.
+The native import dialog also accepts harness documents and connection lists.
+CSV/TSV imports expose the delimiter and five required column mappings; blank
+mappings use the canonical column names. Applying replaces the project's
+harness document and opens the editor. STEP/STP/GLB/glTF selections open the
+existing assembly attachment tool with the selected source retained; the
+project must be saved before attaching it. Browser import remains limited to
+KiCad text boards and normalized snapshots.
 
 ## Command line and process API
 
@@ -37,7 +55,7 @@ Worker `load_design` and `import_design_v2` accept `path`, `format_hint`, and an
 `options` object containing `step`. `import_design_v2` with `include_snapshot`
 returns a display snapshot as well as the typed design and quality report.
 The desktop also sends `snapshot_only: true`. That response retains canonical
-DesignIR and returns each large ODB collection once so real jobs fit the bounded
+SpiDeR and returns each large ODB collection once so real jobs fit the bounded
 JSON-lines transport. Consumers must honor
 `canonical_design.metadata.transport_projection`: canonical zones replace an
 omitted duplicate `design.zones`, and canonical metadata is authoritative for

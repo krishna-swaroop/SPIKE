@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AlertTriangle, CheckCircle2, Download, Play, Upload, X } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Download, Play, Upload, X } from "./icons";
 import { checkNetwork, parseTouchstone, TouchstoneData, trace } from "./sparameters";
 import { numericExtent } from "./numericRange";
 import type { AssemblyDesigns } from "./mcadAssembly";
 import { cancelLocalWorker, isDesktopShell, runSiProtocolTestSuite, runSiUniformChannel } from "./workerBridge";
 import SiChannelResultPanel from "./SiChannelResultPanel";
 import SiWorkflowWorkbench from "./SiWorkflowWorkbench";
+import PlotlyChart from "./PlotlyChart";
 import type { SiProtocolSuite } from "./siProtocolSuites";
 
 type Props = {
@@ -320,24 +321,12 @@ export default function SParameterWorkbench({ assemblyDesigns, canonicalDesign, 
     }
   };
 
-  const chart = useMemo(() => {
-    if (points.length < 2) return "";
-    const width = 720;
-    const height = 220;
-    const xValues = points.map(point => Math.log10(Math.max(point.frequencyHz, 1e-30)));
-    const yValues = points.map(point => point.magnitudeDb);
-    const xExtent = numericExtent(xValues);
-    const yExtent = numericExtent(yValues);
-    const minX = xExtent.minimum;
-    const maxX = xExtent.maximum;
-    const minY = yExtent.minimum;
-    const maxY = yExtent.maximum;
-    return points.map((point, index) => {
-      const x = 12 + (xValues[index] - minX) / Math.max(maxX - minX, 1) * (width - 24);
-      const y = 12 + (maxY - point.magnitudeDb) / Math.max(maxY - minY, 1) * (height - 24);
-      return `${x.toFixed(2)},${y.toFixed(2)}`;
-    }).join(" ");
-  }, [points]);
+  const chartData: Record<string, unknown>[] = [{ type: "scatter", mode: "lines+markers", name: `S${destination + 1}${source + 1}`,
+    x: points.map(point => point.frequencyHz), y: points.map(point => point.magnitudeDb), connectgaps: false,
+    marker: { size: 4 }, line: { width: 1.7 }, hovertemplate: "%{x:.8g} Hz<br>%{y:.5f} dB<extra></extra>" }];
+  const chartLayout: Record<string, unknown> = { margin: { t: 16, r: 20, b: 52, l: 64 }, showlegend: false,
+    xaxis: { title: "Frequency (Hz)", type: "log" }, yaxis: { title: "Magnitude (dB)" },
+    ...(selected ? { shapes: [{ type: "line", x0: selected.frequencyHz, x1: selected.frequencyHz, y0: 0, y1: 1, xref: "x", yref: "paper", line: { color: "#ffbd69", width: 1, dash: "dot" } }] } : {}) };
 
   return <div className="modal-backdrop"><section className="modal sparam-workbench" role="dialog" aria-modal="true" aria-label="S-parameter workbench">
     <header><div><span className="eyebrow">HF / SI NETWORK ANALYSIS</span><h2>S-parameter workbench</h2></div><button className="icon-btn" onClick={onClose} title="Close"><X size={17} /></button></header>
@@ -346,7 +335,7 @@ export default function SParameterWorkbench({ assemblyDesigns, canonicalDesign, 
     {!workflowView && <>
     {!desktop && <p className="si-note">Geometry and protocol execution requires the SPIKE desktop app. Browser preview supports configuration and network inspection.</p>}
     <div className="sparam-commandbar"><b>{initialFocus === "crosstalk" ? "NEXT / FEXT · select an aggressor and separate victim net" : initialFocus === "pam4" ? "PAM4 channel and eye" : initialFocus === "eye" ? "NRZ channel and eye" : initialFocus === "impedance" ? "Channel impedance and TDR" : suite ? `${suite.name} preset · geometry channel` : "Geometry-derived channel"} · experimental, not signoff/compliance qualified</b></div>
-    {!activeDesign ? <div className="sparam-error"><AlertTriangle size={16} /> Blocked: this project has no canonical active DesignIR v2 record. Save or reopen a canonical project design before running geometry-derived SI.</div> : <>
+    {!activeDesign ? <div className="sparam-error"><AlertTriangle size={16} /> Blocked: this project has no canonical active SpiDeR v2 record. Save or reopen a canonical project design before running geometry-derived SI.</div> : <>
       <div className="sparam-body">
         <aside>
           <h3>Canonical geometry</h3>
@@ -436,11 +425,7 @@ export default function SParameterWorkbench({ assemblyDesigns, canonicalDesign, 
         </aside>
         <main>
           <div className="sparam-plot-heading"><div><span className="eyebrow">SELECTED TRACE</span><h3>S{destination + 1}{source + 1} magnitude</h3></div>{selected && <div><b>{selected.magnitudeDb.toFixed(3)} dB</b><span>{(selected.frequencyHz / 1e6).toPrecision(5)} MHz</span></div>}</div>
-          <svg className="sparam-chart" viewBox="0 0 720 220" preserveAspectRatio="none" aria-label={`S${destination + 1}${source + 1} magnitude plot`}>
-            <line x1="12" y1="208" x2="708" y2="208" />
-            <line x1="12" y1="12" x2="12" y2="208" />
-            <polyline points={chart} />
-          </svg>
+          <div className="sparam-chart"><PlotlyChart title={`S${destination + 1}${source + 1} magnitude plot`} data={chartData} layout={chartLayout} revision={`sparam:${destination}:${source}:${points.length}`} onPointClick={(point: { pointNumber: number; curveNumber: number }) => { if (point.curveNumber === 0) setSample(point.pointNumber); }} /></div>
           <input className="sparam-slider" type="range" min={0} max={Math.max(0, points.length - 1)} value={Math.min(sample, Math.max(0, points.length - 1))} onChange={event => setSample(Number(event.target.value))} />
           {selected && <div className="sparam-readout">
             <div><span>Magnitude</span><b>{selected.magnitude.toPrecision(7)}</b></div>

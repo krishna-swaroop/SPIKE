@@ -25,6 +25,8 @@ pub fn is_targeted_project_read(method: &str) -> bool {
             | "read_project_package_shape_selector_previews"
             | "read_project_state_artifact"
             | "read_project_visual_bundle"
+            | "read_assembly_field_study_in_project"
+            | "prepare_assembly_design_visual_bundle"
             | "export_mcad_session"
             | "preview_mcad_feedback"
             | "apply_mcad_feedback"
@@ -190,7 +192,12 @@ mod tests {
 
     #[test]
     fn saved_results_and_visuals_require_native_open_identity() {
-        for method in ["read_project_state_artifact", "read_project_visual_bundle"] {
+        for method in [
+            "read_project_state_artifact",
+            "read_project_visual_bundle",
+            "read_assembly_field_study_in_project",
+            "prepare_assembly_design_visual_bundle",
+        ] {
             assert!(is_targeted_project_read(method));
             let state = ProjectManifestState::new();
             let path = PathBuf::from("saved.spike");

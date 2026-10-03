@@ -26,6 +26,16 @@ const COMMANDS: &[&str] = &[
     "add_study_case",
     "activate_study_case",
     "open_run_controls",
+    "analysis_context",
+    "analysis_describe",
+    "analysis_prepare",
+    "analysis_patch",
+    "analysis_preflight",
+    "analysis_run",
+    "analysis_job",
+    "analysis_evidence",
+    "analysis_view_result",
+    "analysis_generate_report",
 ];
 
 type Pending = Arc<Mutex<Option<(String, mpsc::Sender<Value>)>>>;
@@ -511,6 +521,25 @@ mod tests {
             assert!(parse_request(&serde_json::to_vec(&request).unwrap(), "secret").is_err());
         }
         assert!(parse_request(b"POST / HTTP/1.1", "secret").is_err());
+    }
+
+    #[test]
+    fn analysis_commands_are_explicitly_allowlisted() {
+        for command in COMMANDS
+            .iter()
+            .filter(|command| command.starts_with("analysis_"))
+        {
+            let request =
+                json!({"token":"secret", "requestId":"analysis", "command":command, "args":{}});
+            assert!(parse_request(&serde_json::to_vec(&request).unwrap(), "secret").is_ok());
+        }
+        assert_eq!(
+            COMMANDS
+                .iter()
+                .filter(|command| command.starts_with("analysis_"))
+                .count(),
+            10
+        );
     }
 
     #[test]

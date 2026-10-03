@@ -20,7 +20,7 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Dict, Iterable, List
 
-from python.spike_core.contracts import AnalysisSpec, DesignIR
+from python.spike_core.contracts import AnalysisSpec, SpiDeR
 from .openems_adapter_source import OPENEMS_DRIVER
 from .openems_geometry_admission import screen_geometry
 from .pcb_entity_ports import validate_entity_port_binding
@@ -347,7 +347,7 @@ def _number(value: Any, default: float = float("nan")) -> float:
         return default
 
 
-def _validate_openems_case(design: DesignIR, spec: AnalysisSpec, options: Dict[str, Any] | None = None) -> Dict[str, Any]:
+def _validate_openems_case(design: SpiDeR, spec: AnalysisSpec, options: Dict[str, Any] | None = None) -> Dict[str, Any]:
     errors: List[Dict[str, str]] = validate_entity_port_binding(design, spec)
     warnings: List[Dict[str, str]] = []
     options = options or {}
@@ -403,7 +403,7 @@ def _validate_openems_case(design: DesignIR, spec: AnalysisSpec, options: Dict[s
         for layer in layers:
             name = str(layer or "")
             # KiCad pads also list mask and paste, which are not conductors.
-            # Via spans may arrive as tuples after DesignIR normalization.
+            # Via spans may arrive as tuples after SpiDeR normalization.
             if name.endswith(".Cu") and name != "*.Cu" and name not in copper_names:
                 unmapped_layers.add(name)
     if design.stackup and unmapped_layers:
@@ -512,7 +512,7 @@ def _validate_openems_case(design: DesignIR, spec: AnalysisSpec, options: Dict[s
     }
 
 
-def _object_map(design: DesignIR) -> Dict[str, Any]:
+def _object_map(design: SpiDeR) -> Dict[str, Any]:
     entities = []
     for kind, values in (
         ("track", design.tracks), ("zone", design.zones), ("via", design.vias),
@@ -548,6 +548,9 @@ def _adapter_source_sha256() -> str:
 
 
 def _default_job_base() -> Path:
+    configured_state = os.environ.get("SPIKE_STATE_HOME", "").strip()
+    if configured_state:
+        return Path(configured_state).expanduser() / "jobs" / "openems"
     if os.name == "nt" and os.environ.get("LOCALAPPDATA"):
         return Path(os.environ["LOCALAPPDATA"]) / "SPIKE" / "jobs" / "openems"
     if sys.platform == "darwin":
@@ -568,7 +571,7 @@ def _job_root(output_dir: str | Path | None) -> Path:
 
 
 def prepare_openems_case(
-    design: DesignIR,
+    design: SpiDeR,
     spec: AnalysisSpec,
     output_dir: str | Path | None = None,
     options: Dict[str, Any] | None = None,
@@ -635,7 +638,7 @@ def prepare_openems_case(
     }
 
 
-def _case_inputs(job: Dict[str, Any], geometry: Dict[str, Any]) -> tuple[DesignIR, AnalysisSpec]:
+def _case_inputs(job: Dict[str, Any], geometry: Dict[str, Any]) -> tuple[SpiDeR, AnalysisSpec]:
     if geometry.get("contract") != "spike/solver-geometry/v1":
         raise ValueError("The prepared case has an unsupported geometry contract.")
     analysis = job.get("analysis")
@@ -647,7 +650,7 @@ def _case_inputs(job: Dict[str, Any], geometry: Dict[str, Any]) -> tuple[DesignI
         spec = AnalysisSpec(**analysis)
     except TypeError as exc:
         raise ValueError(f"The prepared analysis definition is invalid: {exc}") from exc
-    design = DesignIR(
+    design = SpiDeR(
         design_id=str(geometry.get("design_id", "")),
         units=str(geometry.get("units", "")),
         layers=list(assembly.get("layers", [])),
@@ -816,6 +819,10 @@ def run_openems_case(
         "python_executable_sha256": _sha256(Path(python_executable)),
         "duration_s": duration,
         "job_id": job.get("job_id"),
+        "case_sha256": job.get("integrity", {}).get("payload_sha256"),
+        "generated_script_sha256": hashlib.sha256(source).hexdigest(),
+        "adapter_source_sha256": _adapter_source_sha256(),
+        "script_hash_scope": "complete trusted isolated-stdin execution snapshot, including authenticated case and run context",
         "isolated_python": True,
         "log_truncated": process["log_truncated"],
     }

@@ -5,6 +5,9 @@
     "spike/solver-plugin-probe/v1": "solver-plugin-probe-v1.schema.json",
     "spike/solver-plugin-probe-result/v1": "solver-plugin-probe-result-v1.schema.json",
     "spike/solver-mesh/v1": "solver-mesh-v1.schema.json",
+    "spike/pcb-volume-model/v1": "pcb-volume-model-v1.schema.json",
+    "spike/pcb-focus-sizing/v1": "pcb-focus-sizing-v1.schema.json",
+    "spike/pcb-volume-mesh-request/v1": "pcb-volume-mesh-request-v1.schema.json",
     "spike/solver-plugin-job/v1": "solver-plugin-job-v1.schema.json",
     "spike/solver-plugin-result/v1": "solver-plugin-result-v1.schema.json",
     "spike/designir-layout-handoff/v1-supported-planar-subset": "designir-layout-handoff-v1.schema.json",
@@ -57,6 +60,8 @@
     "spike/pcb-via-transition-mesh/v1": "pcb-via-transition-mesh-v1.schema.json",
     "spike/windows-notice-evidence-index/v1": "windows-notice-evidence-index-v1.schema.json",
     "spike/windows-notice-review-packet/v1": "windows-notice-review-packet-v1.schema.json",
-    "spike/wave1-clean-machine-harness/v2": "wave1-clean-machine-harness-v2.schema.json"
+    "spike/wave1-clean-machine-harness/v2": "wave1-clean-machine-harness-v2.schema.json",
+    "spike/ac-pi-request/v1": "ac-pi-request-v1.schema.json",
+    "spike/ac-pi-result/v1": "ac-pi-result-v1.schema.json"
   }
 }

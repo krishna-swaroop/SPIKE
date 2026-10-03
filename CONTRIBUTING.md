@@ -104,7 +104,7 @@ tests. Dependency and license manifests must be updated for the actual package.
 
 ## Design rules
 
-- Depend on `DesignIR`, `AnalysisSpec`, and `AnalysisResult`, not EDA formats.
+- Depend on `SpiDeR`, `AnalysisSpec`, and `AnalysisResult`, not EDA formats.
 - Extend importer and solver registries instead of adding central format or
   solver switch statements.
 - Keep transport, application services, numerical kernels, and presentation

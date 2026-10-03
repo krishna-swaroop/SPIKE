@@ -33,13 +33,13 @@ does not download, install, compile, or update sparseLizard.
 
 | File | Purpose |
 | --- | --- |
-| `geometry.json` | `spike/solver-geometry/v1` DesignIR-derived conductor, stackup, material, and selected-net handoff. |
+| `geometry.json` | `spike/solver-geometry/v1` SpiDeR-derived conductor, stackup, material, and selected-net handoff. |
 | `mesh.json` | `spike/sparselizard-mesh/v1` topology-preserving conductor cells, branches, vias, pads, zones, nets, and mesh-quality metadata. |
 | `case.json` | `spike/sparselizard-case/v1` request, physics/formulation, materials, terminals, exact frequency grid, reviewed ports, output contract, and SHA-256 bindings. |
 
 The case requires two through 64 differential ports. The first is the reviewed
 observation port and the rest are reviewed candidate ports. Every terminal must
-identify an existing DesignIR object, object type, and matching net. A port that
+identify an existing SpiDeR object, object type, and matching net. A port that
 is not explicitly reviewed is blocked before a solver process can start.
 
 The adapter invocation is fixed:

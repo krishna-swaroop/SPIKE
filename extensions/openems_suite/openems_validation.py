@@ -8,7 +8,7 @@ import re
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Sequence
 
-from python.spike_core.contracts import AnalysisSpec, DesignIR
+from python.spike_core.contracts import AnalysisSpec, SpiDeR
 
 
 DEFAULT_CELL_LIMIT = 25_000_000
@@ -207,7 +207,7 @@ def _selected(values: Iterable[Dict[str, Any]], nets: set[str]) -> Iterable[Dict
     )
 
 
-def _stackup_elevations(design: DesignIR) -> Dict[str, float]:
+def _stackup_elevations(design: SpiDeR) -> Dict[str, float]:
     z = 0.0
     elevations: Dict[str, float] = {}
     for layer in design.stackup:
@@ -249,7 +249,7 @@ def _inside_polygon(point: tuple[float, float], polygon: Sequence[tuple[float, f
 
 
 def _conductor_hits(
-    design: DesignIR,
+    design: SpiDeR,
     nets: set[str],
     endpoint: Sequence[float],
     tolerance: float,
@@ -280,7 +280,7 @@ def _conductor_hits(
                 hits.add(str(zone.get("net_name") or zone.get("net") or ""))
     for pad in _selected(design.pads, nets):
         # Match the actual adapter contour; unsupported shapes must never supply
-        # a fictitious port contact. Coordinates use DesignIR's world XY frame.
+        # a fictitious port contact. Coordinates use SpiDeR's world XY frame.
         from .openems_adapter_source import pad_polygon
         try:
             polygon = pad_polygon(pad)
@@ -319,7 +319,7 @@ def _conductor_hits(
 
 
 def validate_port_geometry(
-    design: DesignIR,
+    design: SpiDeR,
     spec: AnalysisSpec,
     ports: Sequence[Dict[str, Any]],
     mesh_resolution_mm: float,
@@ -344,7 +344,7 @@ def validate_port_geometry(
 
 
 def validate_physics_and_resources(
-    design: DesignIR,
+    design: SpiDeR,
     spec: AnalysisSpec,
     options: Dict[str, Any],
 ) -> Dict[str, Any]:

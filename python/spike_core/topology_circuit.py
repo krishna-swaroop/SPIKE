@@ -20,7 +20,7 @@ import re
 from copy import deepcopy
 from typing import Any, Dict, Iterable, List, Tuple
 
-from .contracts import AnalysisSpec, DesignIR
+from .contracts import AnalysisSpec, SpiDeR
 
 
 TOPOLOGY_CONTRACT = "spike/topology/v1"
@@ -137,7 +137,7 @@ def _pins(model: Dict[str, Any]) -> Any:
     return model.get("pins", model.get("pin_mappings", model.get("pinMappings")))
 
 
-def _component_refs(design: DesignIR) -> set[str]:
+def _component_refs(design: SpiDeR) -> set[str]:
     return {
         _text(item.get("reference") or item.get("ref"))
         for item in design.components
@@ -145,7 +145,7 @@ def _component_refs(design: DesignIR) -> set[str]:
     }
 
 
-def _pad_index(design: DesignIR) -> Dict[str, Dict[str, Any]]:
+def _pad_index(design: SpiDeR) -> Dict[str, Dict[str, Any]]:
     return {_text(pad.get("id")): pad for pad in design.pads if _text(pad.get("id"))}
 
 
@@ -227,7 +227,7 @@ def _power_cycles(node_by_id: Dict[str, Dict[str, Any]], edges: Iterable[Dict[st
     return any(visit(node_id) for node_id in node_by_id)
 
 
-def validate_topology_circuit(topology: Dict[str, Any], design: DesignIR) -> Dict[str, Any]:
+def validate_topology_circuit(topology: Dict[str, Any], design: SpiDeR) -> Dict[str, Any]:
     """Validate a PI graph and report exactly what can be handed to a circuit path."""
     issues, warnings, node_by_id, edges = _validate_common(topology)
     pads = _pad_index(design)
@@ -339,7 +339,7 @@ def validate_topology_circuit(topology: Dict[str, Any], design: DesignIR) -> Dic
     }
 
 
-def bridge_topology_to_analysis_spec(topology: Dict[str, Any], design: DesignIR, spec: AnalysisSpec) -> Dict[str, Any]:
+def bridge_topology_to_analysis_spec(topology: Dict[str, Any], design: SpiDeR, spec: AnalysisSpec) -> Dict[str, Any]:
     """Attach a validated passive power-path handoff to ``AnalysisSpec.options``.
 
     The original spec is copied.  The bridge never changes ``solver_id`` or

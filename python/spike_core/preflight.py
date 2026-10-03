@@ -5,7 +5,7 @@ from __future__ import annotations
 from math import ceil, hypot
 from typing import Any, Dict, Iterable, List, Tuple
 
-from .contracts import AnalysisSpec, DesignIR, ValidationIssue
+from .contracts import AnalysisSpec, SpiDeR, ValidationIssue
 from .layers import copper_stack_profile
 from .meshing import build_mesh
 
@@ -45,7 +45,7 @@ def _distance_to_segment(point: Point, start: Point, end: Point) -> float:
     return hypot(point[0] - start[0] - ratio * dx, point[1] - start[1] - ratio * dy)
 
 
-def _terminal_on_copper(design: DesignIR, terminal: Dict[str, Any], requested: set[str]) -> bool:
+def _terminal_on_copper(design: SpiDeR, terminal: Dict[str, Any], requested: set[str]) -> bool:
     raw_position = terminal.get("position_mm") or terminal.get("at")
     if raw_position is None:
         return False
@@ -96,7 +96,7 @@ def _terminal_on_copper(design: DesignIR, terminal: Dict[str, Any], requested: s
     return False
 
 
-def _layer_z(design: DesignIR) -> Dict[str, float]:
+def _layer_z(design: SpiDeR) -> Dict[str, float]:
     return copper_stack_profile(design)[1]
 
 
@@ -128,13 +128,13 @@ def _track_cells(track: Dict[str, Any], target: float, z: float, index: int) -> 
         }
 
 
-def build_mesh_preview(design: DesignIR, spec: AnalysisSpec) -> Dict[str, Any]:
+def build_mesh_preview(design: SpiDeR, spec: AnalysisSpec) -> Dict[str, Any]:
     """Build the versioned mesh representation used by preview and plugins."""
 
     return build_mesh(design, spec)
 
 
-def preflight_analysis(design: DesignIR, spec: AnalysisSpec, solver_catalog: List[Dict[str, Any]]) -> Dict[str, Any]:
+def preflight_analysis(design: SpiDeR, spec: AnalysisSpec, solver_catalog: List[Dict[str, Any]]) -> Dict[str, Any]:
     issues: List[ValidationIssue] = []
     from .importers import import_analysis_blockers
     issues.extend(ValidationIssue("IMPORT_NOT_SOLVER_READY", "error", reason) for reason in import_analysis_blockers(design, spec.mode))
@@ -157,7 +157,7 @@ def preflight_analysis(design: DesignIR, spec: AnalysisSpec, solver_catalog: Lis
     if not requested:
         issues.append(ValidationIssue("NET_SELECTION_REQUIRED", "error", "Select at least one analysis net."))
     if missing_nets:
-        issues.append(ValidationIssue("NET_NOT_FOUND", "error", f"Selected nets are not present in DesignIR: {', '.join(missing_nets)}."))
+        issues.append(ValidationIssue("NET_NOT_FOUND", "error", f"Selected nets are not present in SpiDeR: {', '.join(missing_nets)}."))
 
     selected_geometry = [
         item for collection in (design.tracks, design.vias, design.pads, design.zones)

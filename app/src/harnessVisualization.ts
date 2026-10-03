@@ -34,6 +34,7 @@ export type HarnessVisualizationProjection = {
 };
 
 export type VirtualBoardVisual = {
+  netIdsByName?: Record<string, string>;
   id: string;
   name: string;
   designId: string;
@@ -42,6 +43,7 @@ export type VirtualBoardVisual = {
   heightMm: number;
   localCenterMm: readonly [number, number, number];
   transform: number[];
+  thicknessMm?: number;
 };
 
 export type VirtualBoardProjection = {
@@ -164,7 +166,7 @@ function retainedBoardEnvelope(design: Record<string, unknown>): { widthMm: numb
   return null;
 }
 
-/** Build at most one constant-size proxy per retained board; dense features are never scanned. */
+/** Project occurrence transforms and bounds; full geometry is rendered from retained designs. */
 export function buildVirtualBoardVisualization(assembly: AssemblyIr | null, designs: AssemblyDesigns | null): VirtualBoardProjection {
   if (!assembly || !designs) return { visuals: [], unresolvedBoardIds: (assembly?.boards ?? []).map(board => text(board.id)) };
   const designIndex = new Map(designs.designs.map(design => [design.design_id, design]));
@@ -181,7 +183,8 @@ export function buildVirtualBoardVisualization(assembly: AssemblyIr | null, desi
       if (id) unresolvedBoardIds.push(id);
       continue;
     }
-    visuals.push({ id, name: text(rawBoard.name) || id, designId, active: designId === designs.active_design_id, widthMm: envelope.widthMm, heightMm: envelope.heightMm, localCenterMm: envelope.center, transform });
+    const netIdsByName = Object.fromEntries((Array.isArray(design?.nets) ? design.nets : []).map((net: any) => [net.name, net.id]));
+    visuals.push({ netIdsByName, id, name: text(rawBoard.name) || id, designId, active: designId === designs.active_design_id && !visuals.some(board => board.active), widthMm: envelope.widthMm, heightMm: envelope.heightMm, localCenterMm: envelope.center, transform });
   }
   return { visuals, unresolvedBoardIds };
 }

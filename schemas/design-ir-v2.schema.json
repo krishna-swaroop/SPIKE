@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://spike.local/schemas/design-ir-v2.schema.json",
-  "title": "SPIKE DesignIR v2",
+  "title": "SPIKE SpiDeR v2",
   "type": "object",
   "required": ["contract", "design_id", "name", "source", "frame", "materials", "layers", "nets", "tracks", "arcs", "zones", "pads", "vias", "castellations", "pins", "components", "component_bonds", "connectors", "regions", "bends", "models", "constraints", "variants", "simulation_models", "issues", "vendor_extensions", "metadata"],
   "properties": {

@@ -27,12 +27,12 @@ def validate_design_source_artifacts(
         if not artifact_uri:
             continue
         if not artifact_uri.startswith("package:sources/") or "\\" in artifact_uri:
-            raise error_type("DesignIR source artifacts must use a safe package:sources URI.")
+            raise error_type("SpiDeR source artifacts must use a safe package:sources URI.")
         member_path = safe_member_path(artifact_uri.removeprefix("package:"))
         expected_digest = str(source.get("source_digest", ""))
         if re.fullmatch(r"[0-9a-f]{64}", expected_digest) is None:
-            raise error_type("DesignIR source artifacts require a canonical SHA-256 digest.")
+            raise error_type("SpiDeR source artifacts require a canonical SHA-256 digest.")
         if member_digests.get(member_path) != expected_digest:
             raise error_type(
-                f"DesignIR source artifact is missing or does not match its digest: {member_path}"
+                f"SpiDeR source artifact is missing or does not match its digest: {member_path}"
             )

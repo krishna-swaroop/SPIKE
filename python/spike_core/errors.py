@@ -203,6 +203,8 @@ _CATALOG_ENTRIES = (
         retryable=True,
         user_action="Reduce visible detail or select a lower rendering quality preset.",
     ),
+    _metadata("SPIKE-FE-VIEW-E-0001", "Assembly display model could not be loaded", "A board or visual-stage display model could not be loaded; retained procedural geometry remains usable.", recoverable=True, retryable=True, user_action="Reopen the project, repair model assignments in the 3D Model Manager, and retry visual preparation."),
+    _metadata("SPIKE-FE-VIEW-E-0002", "WebGL context lost", "The renderer suspended drawing after its WebGL context was lost and will resume if restoration succeeds.", recoverable=True, retryable=True, user_action="Close other GPU-heavy applications, lower rendering quality, and reopen the workspace if rendering does not restore."),
     _metadata(
         "SPIKE-FE-PROJECT-E-0001",
         "Project open failed",
@@ -267,6 +269,7 @@ _CATALOG_ENTRIES = (
         retryable=True,
         user_action="Save the project, verify the MCAD file and embedded resources, then retry the import.",
     ),
+    _metadata("SPIKE-BE-VIEW-E-0001", "Board visual preparation failed", "A board layout, board scene, or component scene could not be prepared.", recoverable=True, retryable=True, user_action="Keep the completed visual stages, review the failed stage diagnostic, correct its source or local tool issue, and retry that stage."),
     _metadata(
         "SPIKE-BE-MESH-W-0001",
         "Mesh validity warning",
@@ -325,7 +328,7 @@ _CATALOG_ENTRIES = (
     _metadata("SPIKE-BE-MESH-E-0009", "Native reference plane antipad handoff was rejected", "A complete source-bound reference-plane antipad mesh failed the strict native geometry admission boundary.", recoverable=True, retryable=True, user_action="Rebuild and validate the complete reference-plane geometry and mesh before native handoff."),
     _metadata("SPIKE-BE-MESH-E-0010", "Reference plane antipad mesh quality gate failed", "A native-admitted complete reference-plane mesh failed exact discrete-geometry quality or bounded domain-convergence policy.", recoverable=True, retryable=True, user_action="Inspect per-level geometry discrepancies, clearance, and conditioning, then refine or repair the source plane."),
     _metadata("SPIKE-BE-MESH-E-0011", "General reference plane topology is invalid", "A concave source plane, source cutout, or explicit antipad failed exact-grid topology, separation, identity, or resource admission.", recoverable=True, retryable=True, user_action="Repair touching, crossing, nested, off-grid, or unsupported curved source boundaries before meshing."),
-    _metadata("SPIKE-BE-MESH-E-0012", "Bounded curve plane topology is invalid", "A DesignIR line or circular-arc boundary failed deterministic flattening, grid, curve-envelope separation, topology, identity, or resource admission.", recoverable=True, retryable=True, user_action="Repair the source curve or increase physical separation; fixed production geometry limits are not silently relaxed."),
+    _metadata("SPIKE-BE-MESH-E-0012", "Bounded curve plane topology is invalid", "A SpiDeR line or circular-arc boundary failed deterministic flattening, grid, curve-envelope separation, topology, identity, or resource admission.", recoverable=True, retryable=True, user_action="Repair the source curve or increase physical separation; fixed production geometry limits are not silently relaxed."),
     _metadata("SPIKE-BE-MESH-E-0013", "General reference plane mesh is invalid", "A generalized exact-grid plane mesh failed constraint, cutout, antipad, extrusion, cancellation, resource, or closed-topology admission.", recoverable=True, retryable=True, user_action="Repair the source constraints or use an admitted bounded tessellation and resource policy before native handoff."),
     _metadata("SPIKE-BE-MESH-E-0014", "Native generalized plane handoff was rejected", "A generalized source-bound plane mesh failed native digest, loop, surface-role, ownership, resource, or closed-orientation admission.", recoverable=True, retryable=True, user_action="Regenerate the generalized mesh and repair incomplete loops or provenance before native handoff."),
     _metadata("SPIKE-BE-MESH-E-0015", "Generalized plane mesh quality gate failed", "A generalized native-admitted plane failed deterministic antipad geometry convergence, conditioning, cancellation, or resource policy.", recoverable=True, retryable=True, user_action="Inspect the refinement series and repair source constraints or conditioning before field qualification."),

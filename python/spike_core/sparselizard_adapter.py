@@ -18,7 +18,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Sequence
 
-from .contracts import AnalysisResult, AnalysisSpec, DesignIR, ValidationIssue
+from .contracts import AnalysisResult, AnalysisSpec, SpiDeR, ValidationIssue
 from .external_pi_result_validation import validate_external_pi_multiport
 from .hybrid_mesh import build_hybrid_mesh
 from .openems_case_integrity import load_strict_json
@@ -156,7 +156,7 @@ def _frequency_grid(spec: AnalysisSpec) -> List[float]:
     return [start * ratio**index for index in range(points)]
 
 
-def _object_index(design: DesignIR) -> Dict[str, Dict[str, Any]]:
+def _object_index(design: SpiDeR) -> Dict[str, Dict[str, Any]]:
     indexed: Dict[str, Dict[str, Any]] = {}
     for object_type, collection in (
         ("trace", design.tracks), ("via", design.vias), ("pad", design.pads),
@@ -186,19 +186,19 @@ def _terminal(
         raise SparseLizardAdapterError(f"{label} requires object_id, object_type, and net.")
     known = objects.get(object_id)
     if known is None:
-        raise SparseLizardAdapterError(f"{label} references unknown DesignIR object {object_id!r}.")
+        raise SparseLizardAdapterError(f"{label} references unknown SpiDeR object {object_id!r}.")
     if known["object_type"] != object_type:
-        raise SparseLizardAdapterError(f"{label} object type does not match DesignIR.")
+        raise SparseLizardAdapterError(f"{label} object type does not match SpiDeR.")
     known_net = str(known["object"].get("net_name") or known["object"].get("net") or "").strip()
     if known_net and known_net != net:
-        raise SparseLizardAdapterError(f"{label} net does not match DesignIR.")
+        raise SparseLizardAdapterError(f"{label} net does not match SpiDeR.")
     normalized = {"object_id": object_id, "object_type": object_type, "net": net}
     if isinstance(raw.get("layers"), list):
         normalized["layers"] = [str(layer) for layer in raw["layers"] if str(layer)]
     return normalized
 
 
-def _reviewed_ports(raw_ports: Any, design: DesignIR) -> List[Dict[str, Any]]:
+def _reviewed_ports(raw_ports: Any, design: SpiDeR) -> List[Dict[str, Any]]:
     if not isinstance(raw_ports, list) or not 2 <= len(raw_ports) <= 64:
         raise SparseLizardAdapterError("SparseLizard PI cases require 2 through 64 reviewed differential ports.")
     objects = _object_index(design)
@@ -245,7 +245,7 @@ def _analysis_kind(spec: AnalysisSpec) -> str:
     raise SparseLizardAdapterError(f"SparseLizard does not define a PCB translation for analysis mode {spec.mode!r}.")
 
 
-def _mesh_payload(design: DesignIR, spec: AnalysisSpec) -> Dict[str, Any]:
+def _mesh_payload(design: SpiDeR, spec: AnalysisSpec) -> Dict[str, Any]:
     if _analysis_kind(spec) == "dc_conduction":
         try:
             return build_dc_fem_geometry(design, spec)
@@ -293,7 +293,7 @@ def _mesh_payload(design: DesignIR, spec: AnalysisSpec) -> Dict[str, Any]:
     }
 
 
-def _materials_payload(design: DesignIR) -> List[Dict[str, Any]]:
+def _materials_payload(design: SpiDeR) -> List[Dict[str, Any]]:
     materials: List[Dict[str, Any]] = []
     for index, raw in enumerate(design.stackup or design.layers):
         if not isinstance(raw, dict):
@@ -341,7 +341,7 @@ def _terminal_payload(spec: AnalysisSpec) -> Dict[str, Any]:
 
 
 def prepare_sparselizard_case(
-    design: DesignIR,
+    design: SpiDeR,
     spec: AnalysisSpec,
     destination: str | Path,
     *,

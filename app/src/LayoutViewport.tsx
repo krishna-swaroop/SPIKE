@@ -166,6 +166,7 @@ type Props = {
   selectedId: string | null;
   selectedPosition?: Point;
   selectedNet?: string | null;
+  highlightedNets?: readonly string[];
   hoverPreview?: ViewportHoverTarget | null;
   isolatedNet?: string | null;
   analysisResult?: SolverResultBundle | null;
@@ -248,7 +249,7 @@ function trackCoveredByZones(track: ParsedBoard["tracks"][number], zones: Parsed
   return coverage >= 5;
 }
 
-function LayoutViewport({ board, visibleLayers, layerOpacity, showVias = true, showNetNames = false, selectedId, selectedPosition, selectedNet = null, hoverPreview = null, isolatedNet = null, analysisResult = null, resultVisualization, analysisNets = [], probes = [], showProbes = true, hoverProbeEnabled = false, onHoverProbe, terminalMarkers = [], thermalScenario = null, thermalVisibility = { volume: true, heatSources: true, airflow: true, hardware: true }, translucentScene = false, showAxes = true, cameraCommand, viewportRestore = null, onViewChange, selectionBlink = true, selectionFilter, onSelect, onContextMenu }: Props) {
+function LayoutViewport({ board, visibleLayers, layerOpacity, showVias = true, showNetNames = false, selectedId, selectedPosition, selectedNet = null, highlightedNets = [], hoverPreview = null, isolatedNet = null, analysisResult = null, resultVisualization, analysisNets = [], probes = [], showProbes = true, hoverProbeEnabled = false, onHoverProbe, terminalMarkers = [], thermalScenario = null, thermalVisibility = { volume: true, heatSources: true, airflow: true, hardware: true }, translucentScene = false, showAxes = true, cameraCommand, viewportRestore = null, onViewChange, selectionBlink = true, selectionFilter, onSelect, onContextMenu }: Props) {
   const svgRef = useRef<SVGSVGElement>(null);
   const dragRef = useRef({ x: 0, y: 0, moved: false });
   const draggingRef = useRef(false);
@@ -705,14 +706,20 @@ function LayoutViewport({ board, visibleLayers, layerOpacity, showVias = true, s
     const [x, y] = toLayout(point);
     return `${index ? "L" : "M"}${x},${y}`;
   }).join(" ") + " Z").join(" "), [board, projectionKey]);
-  const highlightedNet = isolatedNet ?? selectedNet;
+  const highlightedNetNames = useMemo(() => isolatedNet
+    ? [isolatedNet]
+    : [...new Set([...(selectedNet ? [selectedNet] : []), ...highlightedNets].filter(Boolean))],
+  [isolatedNet, selectedNet, highlightedNets]);
+  const highlightedNetKey = highlightedNetNames.join("\u0001");
+  const highlightedNetSet = useMemo(() => new Set(highlightedNetNames), [highlightedNetKey]);
+  const hasHighlightedNets = highlightedNetNames.length > 0;
   const resultFieldActive = solverResultOverlayActive(analysisResult, resultVisualization);
   const netSets = useMemo(() => ({
-    tracks: highlightedNet ? board.tracks.filter(item => item.net === highlightedNet && visibleLayers[item.layer] !== false) : [],
-    zones: highlightedNet ? board.zones.filter(item => item.net === highlightedNet && visibleLayers[item.layer] !== false) : [],
-    vias: highlightedNet ? board.vias.filter(item => item.net === highlightedNet && showVias && (viasOnlyActive || viaCopperLayers(item.layers).some(layer => visibleLayers[layer] !== false))) : [],
-    pads: highlightedNet ? board.pads.filter(item => item.net === highlightedNet && resolveBoardCopperLayers(availableCopperLayers, item.layers).some(layer => visibleLayers[layer] !== false)) : [],
-  }), [board, highlightedNet, visibleLayers, showVias, viasOnlyActive]);
+    tracks: hasHighlightedNets ? board.tracks.filter(item => item.net && highlightedNetSet.has(item.net) && visibleLayers[item.layer] !== false) : [],
+    zones: hasHighlightedNets ? board.zones.filter(item => item.net && highlightedNetSet.has(item.net) && visibleLayers[item.layer] !== false) : [],
+    vias: hasHighlightedNets ? board.vias.filter(item => item.net && highlightedNetSet.has(item.net) && showVias && (viasOnlyActive || viaCopperLayers(item.layers).some(layer => visibleLayers[layer] !== false))) : [],
+    pads: hasHighlightedNets ? board.pads.filter(item => item.net && highlightedNetSet.has(item.net) && resolveBoardCopperLayers(availableCopperLayers, item.layers).some(layer => visibleLayers[layer] !== false)) : [],
+  }), [board, highlightedNetKey, visibleLayers, showVias, viasOnlyActive]);
   const netTracks = netSets.tracks;
   const netZones = netSets.zones;
   const netVias = netSets.vias;
@@ -734,7 +741,7 @@ function LayoutViewport({ board, visibleLayers, layerOpacity, showVias = true, s
   const previewObjectVia = hoverPreview?.kind === "object" && hoverPreview.type === "via" ? board.vias.find(item => item.id === hoverPreview.id) : undefined;
   const previewObjectTrack = hoverPreview?.kind === "object" && hoverPreview.type === "trace" ? board.tracks.find(item => item.id === hoverPreview.id) : undefined;
   const netColor = isolatedNet ? "#5be6d7" : "#55e5d5";
-  const netFocusActive = Boolean(highlightedNet && !isolatedNet && !resultFieldActive);
+  const netFocusActive = Boolean(hasHighlightedNets && !isolatedNet && !resultFieldActive);
   const layerMatches = (layer: string) => activeCopperLayer === "All" || layer === activeCopperLayer;
   const displayedNets = useMemo(() => {
     const zones = netZones.filter(item => activeCopperLayer === "All" || item.layer === activeCopperLayer);
@@ -955,10 +962,10 @@ function LayoutViewport({ board, visibleLayers, layerOpacity, showVias = true, s
     : null), [resultsOnlyScene, isolatedNet, activeCopperLayer, drawableLayers, board, visibleLayers, layerOpacity, netFocusActive, translucentScene, resultVisualization, nativeLayerGeometry, copperLayerColors, projectionKey, failedLayerUrls, showVias, compositeCopper]);
 
   const netHighlightOverlay = useMemo(() => {
-    if (resultsOnlyScene || activeCopperLayer === "Overview" || !highlightedNet || resultFieldActive) return null;
+    if (resultsOnlyScene || activeCopperLayer === "Overview" || !hasHighlightedNets || resultFieldActive) return null;
     return <g className={selectionPulseClass} pointerEvents="none">
       {displayedNetZones.length > 0 && <path
-        key={`highlight-zones-${highlightedNet}-${activeCopperLayer}`}
+        key={`highlight-zones-${highlightedNetKey}-${activeCopperLayer}`}
         d={displayedNets.zonePathValue}
         fill={selectedZoneActive ? "#ffc04f" : netColor}
         fillOpacity={isolatedNet ? 0.28 : selectedZoneActive ? 0.42 : 0.055}
@@ -990,7 +997,7 @@ function LayoutViewport({ board, visibleLayers, layerOpacity, showVias = true, s
         </g>;
       })}
     </g>;
-  }, [resultsOnlyScene, activeCopperLayer, highlightedNet, resultFieldActive, selectionPulseClass, displayedNets, displayedNetZones, displayedNetTracks, displayedNetPads, displayedNetVias, selectedZoneActive, netColor, isolatedNet, selectedId, netFocusActive, projectionKey]);
+  }, [resultsOnlyScene, activeCopperLayer, highlightedNetKey, resultFieldActive, selectionPulseClass, displayedNets, displayedNetZones, displayedNetTracks, displayedNetPads, displayedNetVias, selectedZoneActive, netColor, isolatedNet, selectedId, netFocusActive, projectionKey]);
 
   const meshCellsOverlay = useMemo(() => {
     if (activeCopperLayer === "Overview" || resultModeKey !== "mesh") return null;
@@ -1083,7 +1090,7 @@ function LayoutViewport({ board, visibleLayers, layerOpacity, showVias = true, s
     return <line key={`result-vector-${sample.element_id ?? index}`} x1={point[0]} y1={point[1]} x2={point[0] + sample.vector[0] / norm * vectorLength} y2={point[1] + sample.vector[1] / norm * vectorLength} stroke="#f7d15e" strokeWidth={Math.max(view.width * 0.00045, 0.055)} markerEnd="url(#result-vector-arrow)" vectorEffect="non-scaling-stroke" opacity="0.9" pointerEvents="none" />;
   })), [resultVisualization?.showVectors, resultVisualization?.vectorScale, resultVectors, resultVectorMaximum, resultCellSize, view.width, projectionKey]);
 
-  return <div className={`layout-viewport ${dragging ? "dragging" : ""} ${isolatedNet ? "net-isolated" : ""} ${netFocusActive ? "net-focused" : ""} ${activeCopperLayer === "Overview" ? "overview-active" : ""}`} data-highlighted-net={highlightedNet ?? ""}>
+  return <div className={`layout-viewport ${dragging ? "dragging" : ""} ${isolatedNet ? "net-isolated" : ""} ${netFocusActive ? "net-focused" : ""} ${activeCopperLayer === "Overview" ? "overview-active" : ""}`} data-highlighted-net={highlightedNetNames.join(" ")}>
     <svg
       ref={svgRef}
       viewBox={`${view.x} ${view.y} ${view.width} ${view.height}`}
@@ -1392,12 +1399,12 @@ function LayoutViewport({ board, visibleLayers, layerOpacity, showVias = true, s
                 y={sourceViewBox[1]}
                 width={sourceViewBox[2]}
                 height={sourceViewBox[3]}
-                opacity={highlightedNet && !resultFieldActive ? selectedZone && layerZones.length ? 0.22 : 0.34 : 1}
+                opacity={hasHighlightedNets && !resultFieldActive ? selectedZone && layerZones.length ? 0.22 : 0.34 : 1}
                 style={{
-                  filter: highlightedNet && !resultFieldActive ? "grayscale(.9) saturate(.2) brightness(.66) contrast(.8)" : undefined,
+                  filter: hasHighlightedNets && !resultFieldActive ? "grayscale(.9) saturate(.2) brightness(.66) contrast(.8)" : undefined,
                 }}
-              /> : renderNativeLayer(layer, `overview-native-${layer}`, highlightedNet && !resultFieldActive ? selectedZone && layerZones.length ? 0.22 : 0.34 : 0.9))}
-              {!resultsOnlyScene && highlightedNet && !resultFieldActive && <g className={selectionPulseClass} pointerEvents="none">
+              /> : renderNativeLayer(layer, `overview-native-${layer}`, hasHighlightedNets && !resultFieldActive ? selectedZone && layerZones.length ? 0.22 : 0.34 : 0.9))}
+              {!resultsOnlyScene && hasHighlightedNets && !resultFieldActive && <g className={selectionPulseClass} pointerEvents="none">
               {layerZones.length > 0 && <path d={zonePath(layerZones)} fill={selectedZone ? "#ffc04f" : netColor} fillOpacity={selectedZone ? 0.5 : 0.16} fillRule="nonzero" stroke="none" />}
               {layerTracks.map(track => {
                 const start = toLayout(track.start);
@@ -1434,7 +1441,7 @@ function LayoutViewport({ board, visibleLayers, layerOpacity, showVias = true, s
               })}
             </svg>
           </div>
-          {(highlightedNet || overviewResultSamples.length > 0) && <small>{overviewResultSamples.length > 0 ? `${overviewResultSamples.length} result samples` : `${featureCount} selected features`}</small>}
+          {(hasHighlightedNets || overviewResultSamples.length > 0) && <small>{overviewResultSamples.length > 0 ? `${overviewResultSamples.length} result samples` : `${featureCount} selected features`}</small>}
         </button>;
       })}
     </div>}

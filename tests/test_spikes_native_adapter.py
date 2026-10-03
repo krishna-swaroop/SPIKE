@@ -3,7 +3,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from python.spike_core.contracts import AnalysisSpec, DesignIR
+from python.spike_core.contracts import AnalysisSpec, SpiDeR
 from python.spike_core.spikes_native_adapter import (
     SpikesNativeAdapterError,
     capability_manifest,
@@ -16,7 +16,7 @@ from python.spike_core.spikes_native_adapter import (
 
 class SpikesNativeAdapterTests(unittest.TestCase):
     def setUp(self):
-        self.design = DesignIR(design_id="design-1")
+        self.design = SpiDeR(design_id="design-1")
         self.spec = AnalysisSpec(
             analysis_id="analysis-1",
             options={"native_study": {"type": "stationary"}},

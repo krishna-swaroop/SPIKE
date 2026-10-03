@@ -23,7 +23,7 @@ from .assembly_scale import (
     MAX_NETS_PER_BOARD,
     design_scale,
 )
-from .design_ir_v2 import AssemblyIRV1
+from .spider_v2 import AssemblyIRV1
 from .harness_authoring import validate_harness_connections
 
 
@@ -270,7 +270,7 @@ def plan_multiboard_analysis(raw: Mapping[str, Any]) -> Dict[str, Any]:
         }[domain]
         issues.append({
             "code": "MULTIBOARD_COUPLED_SOLVER_NOT_QUALIFIED", "severity": "error",
-            "message": f"The assembly graph is retained, but no qualified {domain.upper()} adapter currently solves {missing_physics} effects.",
+            "message": f"This graph-only plan has no explicit reduced models for {missing_physics} effects. Use Coupled multi-board analysis to run experimental circuit, RC thermal, or magnetic-loop models; general field coupling remains unqualified.",
         })
     admitted = bool(boards) and not any(issue["severity"] == "error" for issue in issues)
     result: Dict[str, Any] = {

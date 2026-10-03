@@ -61,7 +61,7 @@ def theta_cut(field: object, faces: object, frequency_hz: float,
                              - ez * math.sin(angle)))
         e_phi.append(_pair(-ex * math.sin(phi[index]) + ey * math.cos(phi[index])))
     return {"frequency_hz": float(frequency_hz), "angles_deg": list(angles_deg),
-            "e_theta_v_m": e_theta, "e_phi_v_m": e_phi}
+            "phi_deg": float(phi_deg), "e_theta_v_m": e_theta, "e_phi_v_m": e_phi}
 
 
 def sphere_pattern(field: object, faces: object, frequency_hz: float,
@@ -85,3 +85,26 @@ def sphere_pattern(field: object, faces: object, frequency_hz: float,
             "phi_deg": list(phi_deg),
             "e_theta_v_m": [_pair(value) for value in e_theta],
             "e_phi_v_m": [_pair(value) for value in e_phi]}
+
+
+def nearfield_plane(field: object, frequency_hz: float, bounds_mm: list[float],
+                    z_mm: float, grid_points: int) -> dict:
+    """Interpolate actual solved complex E/H on an XY plane, in SI units.
+
+    EMerge marks coordinates outside its tetrahedral domain with NaN. Such
+    samples are explicitly invalid rather than replaced with inferred zeros.
+    """
+    import numpy as np
+
+    xs = np.linspace(bounds_mm[0], bounds_mm[2], grid_points)
+    ys = np.linspace(bounds_mm[1], bounds_mm[3], grid_points)
+    coordinates = [[float(x), float(y), float(z_mm)] for y in ys for x in xs]
+    xyz = np.asarray(coordinates) * 0.001
+    solved = field.interpolate(xyz[:, 0], xyz[:, 1], xyz[:, 2], usenan=True)
+    electric = np.stack([solved.Ex, solved.Ey, solved.Ez], axis=1)
+    magnetic = np.stack([solved.Hx, solved.Hy, solved.Hz], axis=1)
+    valid = np.all(np.isfinite(electric), axis=1) & np.all(np.isfinite(magnetic), axis=1)
+    return {"frequency_hz": float(frequency_hz), "grid_shape": [grid_points, grid_points],
+            "coordinates_mm": coordinates, "valid": [bool(value) for value in valid],
+            "e_v_m": [[_pair(value) for value in row] if okay else None for row, okay in zip(electric, valid)],
+            "h_a_m": [[_pair(value) for value in row] if okay else None for row, okay in zip(magnetic, valid)]}

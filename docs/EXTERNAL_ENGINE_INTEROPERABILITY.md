@@ -34,7 +34,7 @@ separate version-bound property and is not a compliance claim.
 ## Adapter workflow
 
 ```text
-DesignIR + AnalysisSpec
+SpiDeR + AnalysisSpec
   -> engine discovery and capability state
   -> adapter-specific preflight
   -> normalized solver geometry and object map
@@ -90,7 +90,7 @@ logs/
 `job.json` records the engine descriptor, complete `AnalysisSpec`, options,
 preflight result, job ID, and versioned file map. `artifacts.json` records the
 adapter version, byte size, and SHA-256 digest of prepared input artifacts.
-`object-map.json` maps tracks, zones, vias, pads, and components back to DesignIR
+`object-map.json` maps tracks, zones, vias, pads, and components back to SpiDeR
 IDs and records the XY/+Z coordinate convention, millimetre source units, and
 scale to metres.
 

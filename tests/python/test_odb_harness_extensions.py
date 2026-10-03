@@ -11,8 +11,8 @@ import unittest
 from unittest.mock import patch
 import zipfile
 
-from python.spike_core.contracts import DesignIR
-from python.spike_core.design_ir_v2 import DesignIRV2
+from python.spike_core.contracts import SpiDeR
+from python.spike_core.spider_v2 import SpiDeRV2
 from python.spike_core.extensions import ExtensionRegistry
 from python.spike_core.harness import analyze_harness, compile_harness, compile_multiboard_harness, export_harness, import_harness, validate_harness
 from python.spike_core.importers import ImportPolicy, ImporterRegistry
@@ -250,7 +250,7 @@ class OdbImportTests(unittest.TestCase):
                 {"path": str(path), "include_snapshot": True, "snapshot_only": True},
                 request_id="compact-import", application_version="test",
             )
-            expected_zones = DesignIRV2.from_v1(import_odb_design(str(path))).to_v1().zones
+            expected_zones = SpiDeRV2.from_v1(import_odb_design(str(path))).to_v1().zones
         self.assertTrue(imported["ok"], imported)
         self.assertEqual(set(imported["result"]), {"snapshot"})
         self.assertIn("design", imported["result"]["snapshot"])
@@ -281,8 +281,8 @@ class OdbImportTests(unittest.TestCase):
         self.assertEqual(design.metadata["board_bounds_mm"], [0, 0, 10, 5])
         self.assertEqual(len(design.components[0]["properties"]), 3)
         self.assertEqual(design.components[0]["rotation"], -90)
-        typed = DesignIRV2.from_v1(design)
-        restored = DesignIRV2.from_dict(typed.to_dict()).to_v1()
+        typed = SpiDeRV2.from_v1(design)
+        restored = SpiDeRV2.from_dict(typed.to_dict()).to_v1()
         self.assertEqual(restored.components[0]["properties"], design.components[0]["properties"])
         self.assertEqual(len(typed.zones), 1)
         self.assertEqual(len(typed.pins), 1)
@@ -298,7 +298,7 @@ class OdbImportTests(unittest.TestCase):
         self.assertTrue(all("odb_package" not in c for c in design.components))
         # Snapshot size remains proportional to occurrences rather than to the
         # full package record body multiplied by occurrences.
-        payload = json.dumps(DesignIRV2.from_v1(design).to_dict())
+        payload = json.dumps(SpiDeRV2.from_v1(design).to_dict())
         self.assertEqual(payload.count("PACKAGE_RECORD_SENTINEL"), 1)
 
     def test_directory_zip_tar_gzip_and_inner_gzip(self):
@@ -379,7 +379,7 @@ class OdbImportTests(unittest.TestCase):
             "models": [{"path": "models/j1.step", "transform": [1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1]}]}]})
         with tempfile.TemporaryDirectory() as tmp:
             design = import_odb_design(str(write_board(tmp, files)))
-        typed = DesignIRV2.from_v1(design)
+        typed = SpiDeRV2.from_v1(design)
         self.assertEqual(len(typed.models), 1)
         self.assertTrue(design.metadata["odb_model_assets"])
 

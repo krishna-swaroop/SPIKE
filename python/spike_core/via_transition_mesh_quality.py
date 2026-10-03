@@ -5,7 +5,7 @@ from __future__ import annotations
 import math
 from typing import Any, Dict, Mapping, Sequence
 
-from .design_ir_v2_schema import content_digest
+from .spider_v2_schema import content_digest
 from .via_transition_geometry import CONTRACT as GEOMETRY_CONTRACT
 from .via_transition_mesh import (
     CONTRACT as MESH_CONTRACT,

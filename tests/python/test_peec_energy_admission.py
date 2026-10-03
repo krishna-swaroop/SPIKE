@@ -8,7 +8,7 @@ from unittest.mock import patch
 
 import numpy as np
 
-from python.spike_core.contracts import AnalysisSpec, DesignIR, ValidationIssue
+from python.spike_core.contracts import AnalysisSpec, SpiDeR, ValidationIssue
 from python.spike_core.hybrid_mesh import HybridMesh, MeshBranch, MeshNode
 from python.spike_core.peec_plugin import solve_peec_2_5d, native_available
 from python.spike_core.peec_network import solve_linear_system
@@ -18,7 +18,7 @@ from python.spike_core.peec_volume_support import ZoneBasisSupportError
 class PEECEnergyAdmissionTests(unittest.TestCase):
     @unittest.skipUnless(native_available(), 'Native PEEC required')
     def test_loop_error_invalidates_an_otherwise_usable_port(self):
-        design = DesignIR(layers=[{'name': 'F.Cu'}], nets=[{'id': 1, 'name': 'VCC'}],
+        design = SpiDeR(layers=[{'name': 'F.Cu'}], nets=[{'id': 1, 'name': 'VCC'}],
             tracks=[{'id': 'rail', 'start': [0, 0], 'end': [4, 0], 'width': 1,
                      'layer': 'F.Cu', 'net_name': 'VCC'}])
         spec = AnalysisSpec(mode='ac', net_names=['VCC'], frequency_start_hz=1e3,
@@ -63,7 +63,7 @@ class PEECEnergyAdmissionTests(unittest.TestCase):
             'python.spike_core.peec_volume_adapter.extract_volume_matrices',
             side_effect=ValueError('volume backend unavailable')) as retry, patch(
             'python.spike_core.peec_plugin._solve_port') as solve:
-            result = solve_peec_2_5d(DesignIR(), AnalysisSpec(mode='ac'))
+            result = solve_peec_2_5d(SpiDeR(), AnalysisSpec(mode='ac'))
         retry.assert_called_once()
         solve.assert_not_called()
         self.assertEqual(result.status, 'failed')
@@ -83,7 +83,7 @@ class PEECEnergyAdmissionTests(unittest.TestCase):
             'python.spike_core.peec_plugin.build_hybrid_mesh', return_value=mesh), patch(
             'python.spike_core.peec_plugin._make_native_solver', return_value=(solver, None)), patch(
             'python.spike_core.peec_volume_adapter.extract_volume_matrices') as disabled_retry:
-            disabled = solve_peec_2_5d(DesignIR(), AnalysisSpec(
+            disabled = solve_peec_2_5d(SpiDeR(), AnalysisSpec(
                 mode='ac', options={'peec_volume_extraction': 'disabled'}))
         disabled_retry.assert_not_called()
         self.assertIn('PEEC_INDUCTANCE_NONPASSIVE', {issue.code for issue in disabled.issues})
@@ -99,7 +99,7 @@ class PEECEnergyAdmissionTests(unittest.TestCase):
             'python.spike_core.peec_plugin._make_native_solver', return_value=(solver, None)), patch(
             'python.spike_core.peec_plugin.extract_volume_matrices',
             side_effect=ValueError('native finite-volume PEEC backend is unavailable')):
-            result = solve_peec_2_5d(DesignIR(), spec)
+            result = solve_peec_2_5d(SpiDeR(), spec)
         self.assertEqual(result.status, 'failed')
         self.assertIn('PEEC_VOLUME_EXTRACTION_FAILED', {issue.code for issue in result.issues})
         self.assertEqual(result.provenance['failure_stage'], 'volume_matrix_extraction')
@@ -120,7 +120,7 @@ class PEECEnergyAdmissionTests(unittest.TestCase):
             'python.spike_core.peec_plugin.build_hybrid_mesh', return_value=mesh), patch(
             'python.spike_core.peec_plugin._make_native_solver', return_value=(solver, None)), patch(
             'python.spike_core.peec_plugin.extract_volume_matrices', side_effect=failure):
-            result = solve_peec_2_5d(DesignIR(), spec)
+            result = solve_peec_2_5d(SpiDeR(), spec)
         self.assertEqual(result.status, 'failed')
         self.assertIn('PEEC_ZONE_BASIS_OUTSIDE_COPPER', {issue.code for issue in result.issues})
         self.assertEqual(result.provenance['zone_basis_support'], report)

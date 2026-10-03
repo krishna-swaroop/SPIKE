@@ -27,7 +27,7 @@ positions are point references, not physical package geometry.
 FreeCAD can access new worker methods without duplicating solver code, but
 method-specific setup remains documented by the SPIKE contracts. The user's
 Python environment must contain SPIKE runtime dependencies. FreeCAD edits do
-not mutate KiCad or silently change electrical DesignIR. Approved mechanical
+not mutate KiCad or silently change electrical SpiDeR. Approved mechanical
 changes still use the reviewed collaboration contract. A future result mapper
 needs its own identity and geometry contract; this panel does not infer fields
 or validation from CAD solids.

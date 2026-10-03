@@ -3,7 +3,7 @@ import unittest
 from pathlib import Path
 
 from python.core.board_parser import KicadParser
-from python.spike_core.design_ir_v2 import DesignIRV2
+from python.spike_core.spider_v2 import SpiDeRV2
 from python.spike_core.kicad_importer import import_kicad_design
 
 
@@ -102,7 +102,7 @@ class KicadParserStabilityTests(unittest.TestCase):
         self.assertEqual(parser.pads[0]["id"], "pad-uuid")
 
         legacy = import_kicad_design(str(path))
-        normalized = DesignIRV2.from_v1(legacy)
+        normalized = SpiDeRV2.from_v1(legacy)
         self.assertEqual(normalized.tracks[0].source_id, "track-uuid")
         self.assertEqual(normalized.vias[0].source_id, "via-tstamp")
         self.assertEqual(normalized.pads[0].source_id, "pad-uuid")
@@ -154,8 +154,8 @@ class KicadParserStabilityTests(unittest.TestCase):
         self.assertEqual(parser.pads[0]["custom_geometry"], expected)
         self.assertFalse(parser.diagnostics)
 
-        normalized = DesignIRV2.from_v1(import_kicad_design(str(path)))
-        restored = DesignIRV2.from_dict(normalized.to_dict())
+        normalized = SpiDeRV2.from_v1(import_kicad_design(str(path)))
+        restored = SpiDeRV2.from_dict(normalized.to_dict())
         self.assertEqual(restored.pads[0].custom_geometry, expected)
         self.assertEqual(restored.to_v1().pads[0]["custom_geometry"], expected)
 
@@ -179,7 +179,7 @@ class KicadParserStabilityTests(unittest.TestCase):
         self.assertEqual(geometry["curve_approximation"]["method"], "inscribed_equal_angle_v1")
         self.assertLessEqual(geometry["curve_approximation"]["maximum_sagitta_mm"], 0.001)
         self.assertTrue(geometry["curve_approximation"]["conservative_source_containment"])
-        restored = DesignIRV2.from_v1(import_kicad_design(str(path)))
+        restored = SpiDeRV2.from_v1(import_kicad_design(str(path)))
         self.assertEqual(restored.to_v1().pads[0]["custom_geometry"], geometry)
 
     def test_rect_anchor_is_exactly_unioned_with_one_filled_polygon(self):
@@ -205,7 +205,7 @@ class KicadParserStabilityTests(unittest.TestCase):
             [[-1.0, -1.0], [0.0, -1.0], [0.0, -2.0], [2.0, -2.0],
              [2.0, 2.0], [0.0, 2.0], [0.0, 1.0], [-1.0, 1.0]],
         )
-        restored = DesignIRV2.from_v1(import_kicad_design(str(path)))
+        restored = SpiDeRV2.from_v1(import_kicad_design(str(path)))
         self.assertEqual(restored.to_v1().pads[0]["custom_geometry"], geometry)
 
 if __name__ == "__main__":

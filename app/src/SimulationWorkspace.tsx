@@ -1,4 +1,4 @@
-import { Boxes, Cable, Cpu, Grid3X3, Layers3, Play, ShieldAlert, SlidersHorizontal, SquareTerminal, Waves } from "lucide-react";
+import { Boxes, Cable, Cpu, Grid3X3, Layers3, Play, ShieldAlert, SlidersHorizontal, SquareTerminal, Waves } from "./icons";
 import type { SimulationDomain, SimulationWorkspaceTab } from "./sharedSimulationWorkspace";
 import { simulationDomainLabel } from "./sharedSimulationWorkspace";
 

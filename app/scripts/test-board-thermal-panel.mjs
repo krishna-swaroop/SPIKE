@@ -6,6 +6,7 @@ import { createRequire } from "node:module";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import ts from "typescript";
+import loadDataTable from "./load-data-table.mjs";
 
 const appRoot = resolve(import.meta.dirname, "..");
 const source = readFileSync(resolve(appRoot, "src", "BoardThermalPanel.tsx"), "utf8");
@@ -14,6 +15,12 @@ const compiled = ts.transpileModule(source, { compilerOptions: {
 } }).outputText;
 const module = { exports: {} };
 const require = createRequire(import.meta.url);
+const PlotlyChart = ({ title, data, layout, revision }) => React.createElement("div", {
+  "data-plot-title": title,
+  "data-plot-data": JSON.stringify(data),
+  "data-plot-layout": JSON.stringify(layout),
+  "data-plot-revision": revision,
+});
 const dependencies = {
   react: React,
   "react/jsx-runtime": require("react/jsx-runtime"),
@@ -25,6 +32,8 @@ const dependencies = {
   }) },
   "./numericRange": { numericExtent: values => ({ minimum: Math.min(...values), maximum: Math.max(...values) }) },
   "./workerBridge": { runLocalWorker: async () => { throw new Error("not used by static render"); } },
+  "./DataTable": { default: loadDataTable(), __esModule: true },
+  "./PlotlyChart": { default: PlotlyChart, __esModule: true },
 };
 new Function("require", "module", "exports", compiled)(name => dependencies[name] ?? require(name), module, module.exports);
 const BoardThermalPanel = module.exports.default;
@@ -56,14 +65,16 @@ function render(savedRequest, savedResult) {
   }));
 }
 const complete = render(request, result);
-assert.match(complete, /Board temperature grid, 2 by 1 cells, 30\.00 to 40\.00 degrees Celsius/);
-assert.equal((complete.match(/<rect /g) ?? []).length, 2, "one drawn cell per returned temperature");
+assert.match(complete, /data-plot-title="Board temperature grid"/);
+assert.match(complete, /&quot;x&quot;:\[0,10\]/);
+assert.match(complete, /&quot;y&quot;:\[0\]/);
+assert.match(complete, /&quot;z&quot;:\[\[30,40\]\]/, "heatmap retains every returned x-fast temperature sample");
 assert.match(complete, /Junction °C/);
 assert.match(complete, /30\.30/);
 assert.match(complete, /30\.50/);
 assert.match(complete, /uniform 2D sheet/);
 assert.match(complete, /Smooth displayed temperature colors/);
-assert.match(complete, /feGaussianBlur stdDeviation="0.55"/);
+assert.match(complete, /&quot;zsmooth&quot;:&quot;best&quot;/);
 assert.match(complete, /Temperature layer/);
 assert.match(complete, /Horizontal X temperature profile/);
 assert.match(complete, /Through stack Z temperature profile/);
@@ -74,7 +85,7 @@ assert.match(complete, /pad heat paths[\s\S]*0\.0500/);
 assert.match(complete, /value="pads" selected=""/);
 assert.doesNotMatch(complete, /U1 contact_size_mm" type="number"[^>]*value="2"/);
 const invalid = render(request, { ...result, grid: { ...result.grid, temperatures_c: [30] } });
-assert.doesNotMatch(invalid, /Board temperature grid, 2 by 1 cells/);
+assert.doesNotMatch(invalid, /data-plot-title="Board temperature grid"/);
 assert.doesNotMatch(invalid, /Junction °C/);
 const fresh = render(undefined, undefined);
 assert.doesNotMatch(fresh, /Board temperature grid/);
@@ -156,7 +167,9 @@ assert.equal(workerRequest.params.request.board.fuzzy_sigma_mm, 0.4);
 assert.equal("conductivity_w_mk" in workerRequest.params.request.board, false);
 const layer = findNode(mount(layeredBoard, design, layeredRequest), node => node.type === "select" && node.props["aria-label"] === "Temperature layer");
 layer.props.onChange({ target: { value: "0" } });
-assert.match(renderToStaticMarkup(mount(layeredBoard, design, layeredRequest)), /F\.Cu temperature grid, 2 by 1 cells, 31\.00 to 41\.00 degrees Celsius/);
+const layeredMarkup = renderToStaticMarkup(mount(layeredBoard, design, layeredRequest));
+assert.match(layeredMarkup, /data-plot-title="F\.Cu temperature grid"/);
+assert.match(layeredMarkup, /&quot;z&quot;:\[\[31,41\]\]/);
 findNode(mount(layeredBoard, design, layeredRequest), node => node.type === "input" && node.props["aria-label"] === "Show copper coverage").props.onChange({ target: { checked: true } });
 assert.match(renderToStaticMarkup(mount(layeredBoard, design, layeredRequest)), /White overlay indicates copper coverage/);
 states.length = 0;

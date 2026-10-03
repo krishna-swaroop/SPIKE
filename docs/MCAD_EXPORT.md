@@ -12,9 +12,14 @@ writing. Use **Load assembly JSON** to open the
 
 The existing KiCad-native STEP command remains available. The new extension accepts
 explicit CAD-neutral mechanical assemblies, and can project board dielectric layers
-and harness routing envelopes from the active project. It refuses incomplete
-automatic projections unless **Allow export with the omissions listed in the preview**
-is selected. The omission report stays in the exported bundle.
+and harness routing envelopes from the active project. When the project contains
+AssemblyIR, the extension projects every board occurrence from the complete retained
+`assembly_designs` set. Repeated occurrences can share one retained source design,
+but each board and generated layer keeps its own occurrence-qualified ID, label,
+parent-relative rigid placement and STEP/FCStd/BREP/manifest record. A missing
+retained design fails projection instead of falling back to the active board. It
+refuses incomplete automatic projections unless **Allow export with the omissions
+listed in the preview** is selected. The omission report stays in the exported bundle.
 
 ## Export contents
 
@@ -71,8 +76,13 @@ using source XY coordinates and stackup order in positive Z, beginning at the to
 of the represented stack. Copper/process layers with thickness contribute to the
 stack height, but their patterned solids are omitted. Print/paste layers without
 thickness are omitted and explicitly reported. Pad/via drill subtraction, copper,
-automatic component-model placement, flex folding and automatic multiboard AssemblyIR
-projection remain unimplemented. Supply explicit named objects for those bodies.
+automatic component-model solid placement and flex folding remain unimplemented.
+Component occurrence IDs, names, declared placements and retained model references
+are preserved in collaboration metadata for every board occurrence, with a separate
+missing-solid diagnostic for each occurrence. AssemblyIR parts without supplied solid
+geometry are likewise reported; hierarchy containers needed by placed boards retain
+their IDs and transforms. Supply explicit named objects or embedded STEP bodies for
+physical component and mechanical-part geometry.
 This coordinate convention is recorded and must be reconciled with the receiving
 system's board datum.
 
@@ -116,8 +126,13 @@ manually qualified for this new workflow.
 
 Tests in `tests/python/test_mcad_export.py` cover transformed nested groups,
 same-name/different-ID cells, cutouts, exact arcs, embedded multi-solid STEP assets,
-material/property retention, missing geometry, invalid frames/units, digest checks,
-limits, cancellation and the isolated extension process. Rust tests cover artifact
+material/property retention, repeated AssemblyIR board occurrences sharing retained
+source, independent translations/rotations, occurrence removal, missing geometry,
+invalid frames/units, digest checks, limits, cancellation and the isolated extension
+process. The optional FreeCAD check compares the complete projected object inventory
+across source JSON, manifest, BREP members, FCStd and reimported STEP. Collaboration
+session tests require every repeated occurrence ID to survive feedback and reject
+occurrence removal. Rust tests cover artifact
 encoding, digest and filename validation. Public ECC83 source also produced a
 verified partial dielectric export with its omissions retained.
 

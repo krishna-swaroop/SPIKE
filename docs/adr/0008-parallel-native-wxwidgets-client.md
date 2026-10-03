@@ -24,7 +24,7 @@ process or reuse the frozen Python UI.
 The Tauri application remains supported and unchanged. The native client is
 an engineering preview until Windows packaging, full project round-trip and
 interaction acceptance, and DC/AC/transient qualification pass. Both clients invoke the same isolated
-Python worker and share DesignIR, AnalysisSpec, AnalysisResult, and `.spike`
+Python worker and share SpiDeR, AnalysisSpec, AnalysisResult, and `.spike`
 package authority.
 
 Plotly is embedded only in generated offline HTML reports. Matplotlib remains
@@ -32,7 +32,7 @@ worker-side for static publication figures; the native UI process embeds
 neither Python nor Matplotlib. VTK renders through a wxGLCanvas-owned context so
 wxWidgets, rather than VTK, owns the Win32 window and OpenGL lifetime.
 
-The 0.2.5 native workspaces preserve AssemblyIR and retained DesignIR sets,
+The 0.2.5 native workspaces preserve AssemblyIR and retained SpiDeR sets,
 perform resource admission, plan independent multi-board PI/SI work, execute
 explicit sequential SI batches, and expose current SI and thermal contracts.
 Coupled multi-board solving stays fail-closed: harness compilation and reduced

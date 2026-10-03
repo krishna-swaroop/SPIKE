@@ -1,9 +1,10 @@
+# SPDX-License-Identifier: MIT
 """Constants shared by the SPIKE FreeCAD workbench."""
 
 import os
 
 
-WORKBENCH_VERSION = "0.2.0"
+WORKBENCH_VERSION = "0.3.0"
 GEOMETRY_CONTRACT = "spike/ecad-mcad-geometry/v1"
 MECHANICAL_CONTRACT = "spike/ecad-mcad-mechanical/v1"
 SCHEMA_VERSION = 1

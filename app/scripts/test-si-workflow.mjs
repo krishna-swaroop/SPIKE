@@ -4,9 +4,10 @@ import ts from "typescript";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { createRequire } from "node:module";
+import loadDataTable from "./load-data-table.mjs";
 
 const workflowUi = readFileSync(new URL("../src/SiWorkflowWorkbench.tsx", import.meta.url), "utf8");
-assert.match(workflowUi, /<table className="si-endpoint-table">/);
+assert.match(workflowUi, /<DataTable label="Signal integrity endpoints" className="si-endpoint-table">/);
 assert.match(workflowUi, /<th scope="col">Port<\/th>/);
 assert.match(workflowUi, /Bound IBIS values override matching editable parameters/);
 
@@ -25,11 +26,12 @@ new Function("require", "module", "exports", uiCode)(name => {
   if (name === "./workerBridge") return { isDesktopShell: () => true };
   if (name === "./siWorkflowCatalog.json") return catalog;
   if (name === "./SiWorkflowPlots") return { __esModule: true, default: () => null, SiPlot: () => null };
+  if (name === "./DataTable") return { default: loadDataTable(), __esModule: true };
   return require(name);
 }, uiModule, uiModule.exports);
 const tree = uiModule.exports.default({ design: null, onStatus() {} });
 const html = renderToStaticMarkup(tree);
-assert.equal((html.match(/class="si-endpoint-table"/g) ?? []).length, 2, 'source and receiver groups both use tables');
+assert.equal((html.match(/class="spike-table si-endpoint-table"/g) ?? []).length, 2, 'source and receiver groups both use shared tables');
 assert.match(html, /Primary source/);
 assert.match(html, /Receiver 1/);
 assert.ok(!html.includes('class="si-endpoint"'), 'legacy cards must not remain');
@@ -54,6 +56,7 @@ function mountWorkflow({ desktop = true, setup = catalog.defaults, worker } = {}
     if (name === "./workerBridge") return { isDesktopShell: () => desktop, runLocalWorker: worker };
     if (name === "./siWorkflowCatalog.json") return { ...catalog, defaults: request };
     if (name === "./SiWorkflowPlots") return { __esModule: true, default: () => null, SiPlot: () => null };
+    if (name === "./DataTable") return { default: loadDataTable(), __esModule: true };
     return require(name);
   }, module, module.exports);
   const render = () => { cursor = 0; return module.exports.default({ design: null, onStatus: s => statuses.push(s) }); };

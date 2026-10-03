@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
+import { reportPlotAttributes } from "./reportPlotInteraction";
 // Copyright (c) 2026 SigHarmonic
+import { formatReportDocument } from "./reportPresentation";
 export type SiChartPoint = Readonly<{ x: number; y: number }>;
 export type SiChartSeries = Readonly<{
   id: string;
@@ -444,9 +446,9 @@ export function siTickLabel(value: number): string {
   return Math.abs(value) >= 1e4 || Math.abs(value) < 1e-3 ? value.toExponential(2) : Number(value.toPrecision(4)).toString();
 }
 
-function svgChart(title: string, xLabel: string, yLabel: string, series: readonly SiChartSeries[]): string {
+function svgChart(sectionId: string, title: string, xLabel: string, yLabel: string, series: readonly SiChartSeries[]): string {
   const visible = series.filter(item => item.points.length > 0);
-  if (!visible.length) return `<section><h2>${escapeHtml(title)}</h2><p class="empty">No retained samples.</p></section>`;
+  if (!visible.length) return `<section id="${sectionId}"><h2>${escapeHtml(title)}</h2><p class="empty">No retained samples.</p></section>`;
   const projected = projectSiSeries(visible);
   const extent = siPlotExtent(visible)!;
   const ticks = [0, .5, 1].map(fraction => {
@@ -464,7 +466,7 @@ function svgChart(title: string, xLabel: string, yLabel: string, series: readonl
   const legend = projected.map((item, index) =>
     `<span><i style="background:${palette[index % palette.length]}"></i>${escapeHtml(item.label)}</span>`,
   ).join("");
-  return `<section><h2>${escapeHtml(title)}</h2><div class="legend">${legend}</div><svg viewBox="0 0 760 270" role="img" aria-label="${escapeHtml(title)}"><line class="axis" x1="26" y1="234" x2="734" y2="234"/><line class="axis" x1="26" y1="26" x2="26" y2="234"/>${lines}${ticks}<text x="380" y="266">${escapeHtml(xLabel)}</text><text x="8" y="130">${escapeHtml(yLabel)}</text></svg></section>`;
+  return `<section id="${sectionId}"><h2>${escapeHtml(title)}</h2><div class="legend">${legend}</div><svg ${reportPlotAttributes({ frame: [26, 26, 734, 234], x: [extent.xMin, extent.xMax], y: [extent.yMin, extent.yMax] })} viewBox="0 0 760 270" role="img" aria-label="${escapeHtml(title)}"><line class="axis" x1="26" y1="234" x2="734" y2="234"/><line class="axis" x1="26" y1="26" x2="26" y2="234"/><g data-plot-traces>${lines}</g><g data-plot-ticks>${ticks}</g><text x="380" y="266">${escapeHtml(xLabel)}</text><text x="8" y="130">${escapeHtml(yLabel)}</text></svg></section>`;
 }
 
 /**
@@ -473,31 +475,54 @@ function svgChart(title: string, xLabel: string, yLabel: string, series: readonl
  * the same left-to-right and low-to-high conventions as the normalized data.
  */
 export function buildSiChannelHtmlReport(value: unknown): string {
+  const result = object(value);
   const charts = normalizeSiChannelResult(value);
   const crosstalk = [charts.nextDb, charts.fextDb].filter((item): item is SiChartSeries => item !== null);
   const eye = charts.eye.slice(0, 96);
-  const portOrder = charts.portOrder.length ? charts.portOrder.join(" → ") : "Worker-declared numeric port order";
-  return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>SPIKE experimental SI channel report</title><style>
+  const portOrder = charts.portOrder.length ? charts.portOrder.join(" → ") : "Unavailable in returned result";
+  const setup = Object.keys(object(result.setup)).length ? object(result.setup) : object(object(result.summary).setup);
+  const provenance = object(result.provenance);
+  const issues = Array.isArray(result.issues) ? result.issues : [];
+  const metadataRows = (metadata: Record<string, unknown>) => Object.entries(metadata).map(([key, item]) => `<tr><th>${escapeHtml(key)}</th><td>${escapeHtml(item == null ? "Unavailable in returned result" : typeof item === "object" ? JSON.stringify(item) : item)}</td></tr>`).join("") || '<tr><th>Status</th><td>Unavailable in returned result</td></tr>';
+  const issueRows = issues.map(issue => {
+    const record = object(issue);
+    return `<li>${escapeHtml(record.message ?? record.code ?? issue)}</li>`;
+  }).join("") || "<li>No additional issues recorded.</li>";
+  const reportId = String(result.analysis_id ?? result.request_id ?? "Unavailable in returned result");
+  const projectName = String(result.project_name ?? provenance.project_name ?? "Unavailable in returned result");
+  const generatedAt = String(result.generated_at ?? provenance.generated_at ?? "Unavailable in returned result");
+  const document = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>SPIKE experimental SI channel report</title><style>
 body{margin:0;padding:28px;background:#07111d;color:#e5eef8;font:14px system-ui,sans-serif}header,section{max-width:1120px;margin:0 auto 22px;padding:20px;background:#0d1b2a;border:1px solid #26394d;border-radius:10px}h1,h2{margin:0 0 10px}.warning{color:#fde68a}.meta{color:#9fb3c8}.legend{display:flex;gap:12px;flex-wrap:wrap;margin:8px 0}.legend span{display:flex;align-items:center;gap:5px;font-size:12px}.legend i{width:14px;height:3px}svg{display:block;width:100%;height:280px;background:#081522}.axis{stroke:#789;stroke-width:1}polyline{fill:none;stroke-width:1.5;vector-effect:non-scaling-stroke}text{fill:#9fb3c8;font-size:10px;text-anchor:middle}.empty{color:#9fb3c8}@media print{body{background:white;color:#111}header,section{break-inside:avoid;background:white;border-color:#bbb}svg{background:white}}
-</style></head><body><header><h1>Geometry-derived SI channel</h1><p class="warning"><b>Experimental — not production/signoff qualified and not protocol-compliance evidence.</b></p><p class="meta">Ports: ${escapeHtml(portOrder)} · Compliance: ${escapeHtml(charts.complianceStatus)}</p></header>
-${svgChart("S-parameter magnitude", "Frequency (Hz)", "dB", charts.sMagnitudeDb)}
-${svgChart("S-parameter phase", "Frequency (Hz)", "deg", charts.sPhaseDeg)}
-${svgChart("TDR impedance", "Time (s)", "ohm", [charts.tdrImpedanceOhm])}
-${svgChart("TDR reflection", "Time (s)", "rho", [charts.tdrReflection])}
-${svgChart("TDT transmitted step", "Time (s)", "normalized", [charts.tdtNormalizedStep])}
-${svgChart("NEXT / FEXT (display floor −160 dB)", "Frequency (Hz)", "dB", floorSiDb(crosstalk))}
-${svgChart("NEXT / FEXT linear magnitude", "Frequency (Hz)", "power-wave ratio", charts.crosstalkLinear)}
-${svgChart("Loaded victim/source voltage transfer (floor −160 dB)", "Frequency (Hz)", "dB V/V", floorSiDb(charts.loadedCrosstalkDb))}
-${svgChart("Loaded victim/source voltage transfer", "Frequency (Hz)", "V/V", charts.loadedCrosstalkLinear)}
-${svgChart("Victim voltage", "Time (s)", "V", charts.crosstalkVoltage)}
-${svgChart("Loaded driving-point resistance", "Frequency (Hz)", "ohm", charts.impedanceReal)}
-${svgChart("Loaded driving-point reactance", "Frequency (Hz)", "ohm", charts.impedanceImag)}
-${svgChart("Loaded driving-point impedance magnitude", "Frequency (Hz)", "ohm", charts.impedanceMagnitude)}
-<section><h2>Sampled resonance candidates</h2><p>Other ports terminated: ${escapeHtml(charts.impedanceTermination)}. Selected driving-port load is excluded. Masked poles are gaps. Candidates are not fitted poles, Q estimates or qualified physical resonances.</p><ul>${charts.impedanceCandidates.map(candidate => `<li>${escapeHtml(candidate.port)}: ${escapeHtml(candidate.kind)}; ${escapeHtml(candidate.frequencyHz ?? "bracket only")} Hz; bracket ${escapeHtml(candidate.bracketHz.join(" – "))} Hz</li>`).join("")}</ul><p>${charts.impedanceCandidateTruncated ? "Candidate output was truncated by the worker." : "Finite frequency spacing can miss narrow resonances."}</p></section>
-${svgChart("Normalized NRZ eye", "Unit interval", "normalized amplitude", eye)}
-${svgChart("PAM4 eye height by sampling phase", "Unit interval", "normalized amplitude", charts.pam4EyeHeights)}
-${svgChart("PAM4 BER proxies by sampling phase", "Unit interval", "BER proxy", charts.pam4BerProxies)}
-<section><h2>Qualification boundary</h2><p>This report preserves the worker's retained sample order and declared port mapping. It does not add de-embedding, extrapolation, receiver/package models, jitter/noise statistics, protocol masks, or certification.</p></section></body></html>`;
+</style></head><body><section id="si-overview"><h2>Channel overview</h2><p class="warning"><b>Experimental — not production/signoff qualified and not protocol-compliance evidence.</b></p><p class="meta">Ports: ${escapeHtml(portOrder)} · Compliance: ${escapeHtml(charts.complianceStatus)}</p></section>
+<section id="si-setup"><h2>Analysis setup</h2><table>${metadataRows(setup)}</table></section>
+${svgChart("si-s-magnitude", "S-parameter magnitude", "Frequency (Hz)", "dB", charts.sMagnitudeDb)}
+${svgChart("si-s-phase", "S-parameter phase", "Frequency (Hz)", "deg", charts.sPhaseDeg)}
+${svgChart("si-tdr-impedance", "TDR impedance", "Time (s)", "ohm", [charts.tdrImpedanceOhm])}
+${svgChart("si-tdr-reflection", "TDR reflection", "Time (s)", "rho", [charts.tdrReflection])}
+${svgChart("si-tdt-step", "TDT transmitted step", "Time (s)", "normalized", [charts.tdtNormalizedStep])}
+${svgChart("si-next-fext-db", "NEXT / FEXT (display floor −160 dB)", "Frequency (Hz)", "dB", floorSiDb(crosstalk))}
+${svgChart("si-next-fext-linear", "NEXT / FEXT linear magnitude", "Frequency (Hz)", "power-wave ratio", charts.crosstalkLinear)}
+${svgChart("si-loaded-transfer-db", "Loaded victim/source voltage transfer (floor −160 dB)", "Frequency (Hz)", "dB V/V", floorSiDb(charts.loadedCrosstalkDb))}
+${svgChart("si-loaded-transfer-linear", "Loaded victim/source voltage transfer", "Frequency (Hz)", "V/V", charts.loadedCrosstalkLinear)}
+${svgChart("si-victim-voltage", "Victim voltage", "Time (s)", "V", charts.crosstalkVoltage)}
+${svgChart("si-impedance-resistance", "Loaded driving-point resistance", "Frequency (Hz)", "ohm", charts.impedanceReal)}
+${svgChart("si-impedance-reactance", "Loaded driving-point reactance", "Frequency (Hz)", "ohm", charts.impedanceImag)}
+${svgChart("si-impedance-magnitude", "Loaded driving-point impedance magnitude", "Frequency (Hz)", "ohm", charts.impedanceMagnitude)}
+<section id="si-resonance-candidates"><h2>Sampled resonance candidates</h2><p>Other ports terminated: ${escapeHtml(charts.impedanceTermination)}. Selected driving-port load is excluded. Masked poles are gaps. Candidates are not fitted poles, Q estimates or qualified physical resonances.</p><ul>${charts.impedanceCandidates.map(candidate => `<li>${escapeHtml(candidate.port)}: ${escapeHtml(candidate.kind)}; ${escapeHtml(candidate.frequencyHz ?? "bracket only")} Hz; bracket ${escapeHtml(candidate.bracketHz.join(" – "))} Hz</li>`).join("")}</ul><p>${charts.impedanceCandidateTruncated ? "Candidate output was truncated by the worker." : "Finite frequency spacing can miss narrow resonances."}</p></section>
+${svgChart("si-nrz-eye", "Normalized NRZ eye", "Unit interval", "normalized amplitude", eye)}
+${svgChart("si-pam4-eye", "PAM4 eye height by sampling phase", "Unit interval", "normalized amplitude", charts.pam4EyeHeights)}
+${svgChart("si-pam4-ber", "PAM4 BER proxies by sampling phase", "Unit interval", "BER proxy", charts.pam4BerProxies)}
+<section id="si-provenance"><h2>Provenance</h2><table>${metadataRows(provenance)}</table></section>
+<section id="si-issues"><h2>Reported issues</h2><ul>${issueRows}</ul></section>
+<section id="si-qualification"><h2>Qualification boundary</h2><p>This report preserves the worker's retained sample order and declared port mapping. It does not add de-embedding, extrapolation, receiver/package models, jitter/noise statistics, protocol masks, or certification.</p></section></body></html>`;
+  return formatReportDocument(document, {
+    title: "Geometry-derived SI channel",
+    projectName,
+    reportId,
+    generatedAt,
+    opening: "Review the returned analysis setup and qualification boundary before using the retained channel plots.",
+    closing: "Retain this report with the source result when recording an engineering decision.",
+  });
 }
 
 export const EMPTY_SI_SERIES = emptySeries;

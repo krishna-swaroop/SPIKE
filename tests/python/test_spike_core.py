@@ -9,7 +9,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from python.spike_core.capabilities import capabilities
-from python.spike_core.contracts import AnalysisSpec, DesignIR
+from python.spike_core.contracts import AnalysisSpec, SpiDeR
 from python.spike_core.extensions import ExtensionManifest, ExtensionRegistry
 from python.spike_core.kicad_importer import _resolve_model_reference
 from python.spike_core.service import handle, validate_design
@@ -60,7 +60,7 @@ class SpikeCoreContractTests(unittest.TestCase):
         self.assertEqual(data["analyses"]["spice_export"]["state"], "integration_pending")
 
     def test_empty_design_is_not_reported_as_valid(self):
-        result = validate_design(DesignIR())
+        result = validate_design(SpiDeR())
         self.assertFalse(result["valid"])
         self.assertTrue(any(item["code"] == "NO_CONDUCTIVE_GEOMETRY" for item in result["issues"]))
 
@@ -71,7 +71,7 @@ class SpikeCoreContractTests(unittest.TestCase):
         self.assertEqual(response["result"]["model_status"], "unsupported")
 
     def test_dc_solver_reports_a_routed_copper_voltage_drop(self):
-        design = DesignIR(
+        design = SpiDeR(
             name="two-segment fixture",
             source_path="fixture.kicad_pcb",
             layers=[{"name": "F.Cu"}, {"name": "B.Cu"}],
@@ -121,7 +121,7 @@ class SpikeCoreContractTests(unittest.TestCase):
                 self.assertGreaterEqual(len(sample["vertices_mm"]), 3)
 
     def test_preflighted_analysis_keeps_validation_and_solve_in_one_transaction(self):
-        design = DesignIR(
+        design = SpiDeR(
             name="transaction fixture",
             layers=[{"name": "F.Cu"}, {"name": "B.Cu"}],
             nets=[{"id": "1", "name": "VCC"}],
@@ -141,7 +141,7 @@ class SpikeCoreContractTests(unittest.TestCase):
         self.assertEqual(response["result"]["analysis_result"]["status"], "completed")
 
     def test_dc_solver_supports_multiple_sink_points(self):
-        design = DesignIR(
+        design = SpiDeR(
             name="branched multi-sink fixture",
             source_path="fixture.kicad_pcb",
             layers=[{"name": "F.Cu"}],
@@ -172,7 +172,7 @@ class SpikeCoreContractTests(unittest.TestCase):
         self.assertEqual(currents, [0.4, 0.6])
 
     def test_dc_solver_connects_tracks_through_a_pad(self):
-        design = DesignIR(
+        design = SpiDeR(
             layers=[{"name": "F.Cu"}],
             tracks=[
                 {"start": (0, 0), "end": (4, 0), "width": 1, "layer": "F.Cu", "net_name": "VCC"},
@@ -195,7 +195,7 @@ class SpikeCoreContractTests(unittest.TestCase):
         self.assertTrue(any(edge["kind"] == "pad" for edge in response["result"]["fields"]["edge_results"]))
 
     def test_dc_solver_models_zone_current_spreading(self):
-        design = DesignIR(
+        design = SpiDeR(
             layers=[{"name": "F.Cu"}],
             zones=[{"points": [(0, 0), (10, 0), (10, 2), (0, 2)], "layer": "F.Cu", "net_name": "VCC"}],
             stackup=[{"name": "F.Cu", "type": "copper", "thickness": 0.035}],
@@ -240,7 +240,7 @@ class SpikeCoreContractTests(unittest.TestCase):
                 "layer": "B.Cu",
                 "net_name": "VCC",
             })
-        design = DesignIR(
+        design = SpiDeR(
             name="large stitched result-admission fixture",
             source_path="fixture.kicad_pcb",
             layers=[{"name": "F.Cu"}, {"name": "B.Cu"}],
@@ -287,7 +287,7 @@ class SpikeCoreContractTests(unittest.TestCase):
                 self.assertIn(sample["element_id"], mesh_ids)
 
     def test_dc_solver_applies_explicit_package_and_contact_resistance(self):
-        design = DesignIR(
+        design = SpiDeR(
             layers=[{"name": "F.Cu"}],
             tracks=[{"start": (0, 0), "end": (10, 0), "width": 1, "layer": "F.Cu", "net_name": "VCC"}],
             stackup=[{"name": "F.Cu", "type": "copper", "thickness": 0.035}],
@@ -328,7 +328,7 @@ class SpikeCoreContractTests(unittest.TestCase):
         self.assertIn("external.fasthenry", catalog)
 
     def test_explicit_incompatible_solver_is_blocked(self):
-        design = DesignIR(tracks=[{"start": [0, 0], "end": [1, 0], "width": 1, "layer": "F.Cu", "net_name": "VCC"}])
+        design = SpiDeR(tracks=[{"start": [0, 0], "end": [1, 0], "width": 1, "layer": "F.Cu", "net_name": "VCC"}])
         response = handle({
             "method": "run_analysis",
             "params": {
@@ -425,7 +425,7 @@ class SpikeCoreContractTests(unittest.TestCase):
             ".end\n"
         )
         result = NgspicePlugin().run(
-            DesignIR(design_id="ngspice-rc", name="ngspice RC fixture"),
+            SpiDeR(design_id="ngspice-rc", name="ngspice RC fixture"),
             AnalysisSpec(
                 analysis_id="ngspice-rc",
                 mode="transient",
@@ -459,7 +459,7 @@ class SpikeCoreContractTests(unittest.TestCase):
             self.assertEqual(result["models"][0]["path"], str(model))
 
     def test_complete_net_geometry_includes_all_conductor_types(self):
-        design = DesignIR(
+        design = SpiDeR(
             design_id="geometry-fixture",
             layers=[{"name": "F.Cu"}, {"name": "B.Cu"}],
             tracks=[{"id": "t1", "net_name": "VCC", "layer": "F.Cu"}],
@@ -482,7 +482,7 @@ class SpikeCoreContractTests(unittest.TestCase):
         self.assertEqual([item["name"] for item in response["result"]["layers"]], ["F.Cu", "B.Cu"])
 
     def test_solver_geometry_handoff_contains_materials_ports_and_complete_nets(self):
-        design = DesignIR(
+        design = SpiDeR(
             design_id="handoff",
             layers=[{"name": "F.Cu"}],
             tracks=[{"id": "t1", "net_name": "VCC", "layer": "F.Cu"}],
@@ -708,7 +708,8 @@ class SpikeCoreContractTests(unittest.TestCase):
         self.assertEqual(response["result"], expected)
         prepare.assert_called_once()
 
-    def test_model_reference_staging_resolves_project_and_unique_library_assets(self):
+    def test_model_reference_staging_requires_confirmed_library_alias_and_preserves_project_asset(self):
+        from python.spike_core import model_library
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             board = root / "fixture.kicad_pcb"
@@ -725,14 +726,29 @@ class SpikeCoreContractTests(unittest.TestCase):
                 encoding="utf-8",
             )
 
-            with patch("python.spike_core.models.model_library_roots", return_value=[root / "library", root]):
-                staged, substitutions = _stage_resolved_model_references(board, root / "output")
+            original = board.read_bytes()
+            with patch("python.spike_core.models.model_library_roots", return_value=[root / "library"]), \
+                    patch.object(model_library, "_index_path", return_value=root / "index.sqlite3"), \
+                    patch.object(model_library, "_roots", return_value=[root / "library"]):
+                resolution = {}
+                staged, substitutions = _stage_resolved_model_references(board, root / "output", resolution=resolution)
+                self.assertEqual(staged, board)
+                self.assertEqual(substitutions, [])
+                candidate = model_library.resolve_model("${OLD_LIBRARY}/resistor.step")
+                self.assertIsNone(candidate["automatic_path"])
+                self.assertEqual(candidate["status"], "candidates")
+                self.assertEqual([item["path"] for item in candidate["candidates"]], [str(library_model)])
+                self.assertEqual(resolution["unresolved_model_paths"], ["${OLD_LIBRARY}/resistor.step", "${OLD_LIBRARY}/missing.step"])
+                model_library.register_alias("${OLD_LIBRARY}/resistor.step", path=library_model, confirmed=True)
+                staged, substitutions = _stage_resolved_model_references(board, root / "output", resolution=resolution)
 
             staged_source = staged.read_text(encoding="utf-8")
             self.assertEqual(len(substitutions), 2)
             self.assertIn(local_model.as_posix(), staged_source)
             self.assertIn(library_model.as_posix(), staged_source)
             self.assertIn("${OLD_LIBRARY}/missing.step", staged_source)
+            self.assertEqual(resolution["unresolved_model_paths"], ["${OLD_LIBRARY}/missing.step"])
+            self.assertEqual(board.read_bytes(), original)
 
     def test_model_reference_staging_resolves_kicad_third_party_variable(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -756,6 +772,7 @@ class SpikeCoreContractTests(unittest.TestCase):
             self.assertIn(model.as_posix(), staged.read_text(encoding="utf-8"))
 
     def test_legacy_vrml_reference_uses_installed_step_without_vrml_file(self):
+        from python.spike_core import model_library
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             library = root / "3dmodels"
@@ -764,12 +781,15 @@ class SpikeCoreContractTests(unittest.TestCase):
             model.write_bytes(b"STEP")
             board = root / "fixture.kicad_pcb"
             board.write_text('(kicad_pcb (model "${KICAD8_3DMODEL_DIR}/Package.3dshapes/part.wrl"))')
-            with patch("python.spike_core.models.model_library_roots", return_value=[library]):
+            with patch("python.spike_core.models.model_library_roots", return_value=[library]), \
+                    patch.object(model_library, "_index_path", return_value=root / "index.sqlite3"), \
+                    patch.object(model_library, "_roots", return_value=[library]):
                 staged, substitutions = _stage_resolved_model_references(board, root / "output")
             self.assertEqual(len(substitutions), 1)
             self.assertIn(model.as_posix(), staged.read_text())
 
-    def test_large_board_missing_model_lookup_walks_library_only_once(self):
+    def test_large_board_missing_model_lookup_indexes_once_and_reuses_warm_cache(self):
+        from python.spike_core import model_library
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             library = root / "library"
@@ -778,13 +798,19 @@ class SpikeCoreContractTests(unittest.TestCase):
             board.write_text('(kicad_pcb ' + ' '.join(
                 f'(model "${{OLD_LIBRARY}}/missing-{i % 200}.step")' for i in range(2000)
             ) + ')')
-            with patch("python.spike_core.models.model_library_roots", return_value=[library]), patch.object(
-                Path, "rglob", return_value=iter([]),
-            ) as walk:
-                staged, substitutions = _stage_resolved_model_references(board, root / "output")
+            with patch("python.spike_core.models.model_library_roots", return_value=[library]), \
+                    patch.object(model_library, "_index_path", return_value=root / "index.sqlite3"), \
+                    patch.object(model_library, "_roots", return_value=[library]), \
+                    patch.object(model_library, "_scan_root", wraps=model_library._scan_root) as scan, \
+                    patch("python.spike_core.model_resolver_staging.resolve_model", wraps=model_library.resolve_model) as resolve:
+                for _ in range(2):
+                    resolution = {}
+                    staged, substitutions = _stage_resolved_model_references(board, root / "output", resolution=resolution)
+                    self.assertEqual(len(resolution["unresolved_model_paths"]), 200)
+                    scan.assert_called_once_with(library)
+                self.assertEqual(resolve.call_count, 400)
             self.assertEqual(staged, board)
             self.assertEqual(substitutions, [])
-            walk.assert_called_once_with("*")
 
     def test_worker_protocol_returns_json_line(self):
         root = Path(__file__).parents[2]
@@ -819,7 +845,7 @@ class SpikeCoreContractTests(unittest.TestCase):
         diagnostics = registry.discover([root / "extensions"], trusted_roots=[root / "extensions"])
         self.assertTrue(any(item["id"] == "spike.example.net-inventory" and item["status"] == "loaded" for item in diagnostics))
         result = registry.invoke("spike.example.net-inventory", "summarize-nets", {
-            "design": DesignIR(
+            "design": SpiDeR(
                 layers=[{"name": "F.Cu"}],
                 nets=[{"id": "1", "name": "VCC"}],
                 tracks=[{"net_name": "VCC"}],

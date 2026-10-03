@@ -1,0 +1,85 @@
+name: Build and release SPIKE
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: Publish the checked packages as a GitHub release
+        type: boolean
+        default: false
+      tag:
+        description: Release tag (leave empty to use the app version)
+        type: string
+        default: ''
+permissions:
+  contents: read
+concurrency:
+  group: spike-release
+  cancel-in-progress: false
+jobs:
+  preflight:
+    runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      tag: ${{ steps.version.outputs.tag }}
+      commit: ${{ steps.version.outputs.commit }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Architecture and publication checks
+        run: |
+          python scripts/check_architecture.py
+          python -m unittest discover -s tests/python -p test_release_automation.py -v
+      - name: Check version and release target
+        id: version
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_type == 'tag' && github.ref_name || inputs.tag }}
+          RELEASE_PUBLISH: ${{ github.event_name == 'push' || inputs.publish }}
+        run: python scripts/release_automation.py check
+  windows:
+    needs: preflight
+    uses: ./.github/workflows/windows-release.yml
+  unix:
+    needs: preflight
+    uses: ./.github/workflows/unix-release.yml
+  verify:
+    needs: [preflight, windows, unix]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: SPIKE-*
+          path: dist-release
+          merge-multiple: true
+      - name: Verify complete package set and checksums
+        run: python scripts/release_automation.py verify
+  publish:
+    needs: [preflight, verify]
+    if: github.event_name == 'push' || inputs.publish
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: SPIKE-*
+          path: dist-release
+          merge-multiple: true
+      - name: Verify checksums and publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ needs.preflight.outputs.tag }}
+          RELEASE_COMMIT: ${{ needs.preflight.outputs.commit }}
+        run: python scripts/release_automation.py publish

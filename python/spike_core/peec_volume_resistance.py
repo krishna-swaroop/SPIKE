@@ -16,7 +16,7 @@ from typing import Sequence
 
 import numpy as np
 
-from .contracts import DesignIR
+from .contracts import SpiDeR
 from .hybrid_mesh import MeshBranch
 from .peec_magnetic_geometry import describe_magnetic_cross_section
 
@@ -32,7 +32,7 @@ class _Basis:
     annulus: tuple[float, float, float, float] | None = None
 
 
-def _basis(design: DesignIR, branch: MeshBranch) -> _Basis:
+def _basis(design: SpiDeR, branch: MeshBranch) -> _Basis:
     section = describe_magnetic_cross_section(design, branch)
     x0, y0, z0 = branch.start_mm
     x1, y1, z1 = branch.end_mm
@@ -112,7 +112,7 @@ def _shared_volume_mm3(first: _Basis, second: _Basis) -> float:
 
 
 def assemble_overlap_resistance(
-    design: DesignIR, branches: Sequence[MeshBranch]
+    design: SpiDeR, branches: Sequence[MeshBranch]
 ) -> tuple[np.ndarray, dict[str, float | int]]:
     """Return symmetric ohmic matrix in ohms, with no energy repair or clamps."""
     bases = [_basis(design, branch) for branch in branches]

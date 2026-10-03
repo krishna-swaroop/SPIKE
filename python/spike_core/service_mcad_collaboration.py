@@ -7,8 +7,8 @@ import math
 from uuid import uuid4
 
 from .assembly_frames import IDENTITY, enforce_placement_policy
-from .design_ir_v2 import DesignIRV2
-from .design_ir_v2_schema import CoordinateFrame
+from .spider_v2 import SpiDeRV2
+from .spider_v2_schema import CoordinateFrame
 from .mcad_export_design import _convert_rings, _rings_from_drawings
 from .mcad_session_contract import SESSION, FEEDBACK, MAX_BYTES, digest, loads, validate
 from .project_model_artifacts import read_step_model_artifact
@@ -27,7 +27,7 @@ def _identity(payload, assembly):
 
 
 def _board_geometry(design):
-    design = DesignIRV2.from_dict(design).to_v1().to_dict()
+    design = SpiDeRV2.from_dict(design).to_v1().to_dict()
     meta = design.get("metadata", {})
     rings = _convert_rings(meta["board_outline_rings"]) if meta.get("board_outline_rings") else _rings_from_drawings(meta.get("board_outline_drawings", []))
     heights = [layer.get("thickness_mm", layer.get("thickness")) for layer in design.get("stackup", [])]
@@ -129,21 +129,45 @@ def _archive_results(payload, before_assembly):
     history.append({"assembly_ir": before_assembly, "results": copy.deepcopy(payload.get("results")),
                     "analyses": copy.deepcopy(payload.get("analyses")),
                     "desktop_state": {k: copy.deepcopy(legacy[k]) for k in ("analysis", "results", "thermal", "emi", "spice") if k in legacy}})
-    payload["results"] = {}
-    # These are saved result-bearing state trees. Preserve setup fields; clear
-    # known active results/history so old fields cannot reappear on reload.
-    def clear(value):
-        if isinstance(value, dict):
-            for key in list(value):
-                if key in {"latest_result", "active_result", "latest_channel_result", "field_result", "screening", "result"}:
-                    value[key] = None
-                elif key == "result_history": value[key] = []
-                else: clear(value[key])
-        elif isinstance(value, list):
-            for child in value: clear(child)
-    clear(payload.get("analyses"))
-    for key in ("analysis", "thermal", "emi", "spice"): clear(legacy.get(key))
-    if "results" in legacy: legacy["results"] = {}
+    # Use the shared result-free projection so self-digested field studies are
+    # re-exported with a null result instead of being mutated in place.
+    from .service_project_persistence import without_saved_results
+    cleaned = without_saved_results(payload)
+
+    # Preserve the prior MCAD contract for saved state trees: result slots that
+    # existed before invalidation remain present with a null value.  The shared
+    # projection removes several of these keys, so restore only their cleared
+    # shape without descending into the self-digested field-study envelope.
+    result_fields = {
+        "latest_result", "active_result", "latest_channel_result",
+        "field_result", "screening", "result",
+    }
+
+    def restore_cleared_shape(before, after):
+        if not isinstance(before, dict) or not isinstance(after, dict):
+            return
+        if before.get("contract") == "spike/assembly-field-study-file/v1":
+            return
+        for key, value in before.items():
+            if key in result_fields:
+                after[key] = None
+            elif key == "result_history":
+                after[key] = []
+            elif key in after:
+                if isinstance(value, dict):
+                    restore_cleared_shape(value, after[key])
+                elif isinstance(value, list) and isinstance(after[key], list):
+                    for old_item, new_item in zip(value, after[key]):
+                        restore_cleared_shape(old_item, new_item)
+
+    restore_cleared_shape(payload.get("analyses"), cleaned.get("analyses"))
+    old_legacy = (payload.get("extensions") or {}).get("legacy")
+    new_legacy = (cleaned.get("extensions") or {}).get("legacy")
+    if isinstance(old_legacy, dict) and isinstance(new_legacy, dict):
+        for key in ("analysis", "thermal", "emi", "spice"):
+            restore_cleared_shape(old_legacy.get(key), new_legacy.get(key))
+    payload.clear()
+    payload.update(cleaned)
 
 
 def apply_mcad_feedback(params, *, application_version):

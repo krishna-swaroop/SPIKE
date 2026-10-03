@@ -11,6 +11,26 @@ over this workflow guidance. For executable capability limits, read
 
 ## Start a DC PI review
 
+On smaller laptop windows, the title and command bars use compact sizing.
+Use the arrows or scrollbar on a crowded command row to reach more controls;
+Tab reveals focused controls automatically. Focus the command row itself to
+use Arrow Left/Right, Home, and End. **Minimize** keeps the ribbon collapsed
+until **Expand** is selected. Open dock contents remain scrollable in short
+windows, and the navigator/inspector can be reopened after automatic collapse.
+
+In the PI terminal editor, choose **Table** to compare and edit records in the
+shared grid, or **Cards** for the responsive record layout. Both views use the
+same terminals and retain Add, Pick exact point, and Use current selection.
+Identifier fields apply edits with Enter or when leaving the field; Escape
+cancels a draft. Blank and duplicate IDs stay uncommitted with an inline error.
+
+For boards that affect each other, use **MCAD assembly -> Board instances and
+harnesses -> Coupled multi-board analysis**. Enter reduced board circuits and
+connector properties for PI/SI, thermal nodes and contacts for heat sharing,
+or loop/mutual-inductance models for EM screening. Run, review diagnostics,
+then save setups with results or export/open standalone study files. Follow
+[the coupled study sequence](MULTIBOARD_COUPLED_ANALYSIS.md) for exact limits.
+
 1. Start the native desktop. The browser preview does not provide the local
    worker or native file dialogs.
 2. Choose **File -> New project** or **Open project**.
@@ -46,7 +66,8 @@ retain their existing behavior.
 1. Switch to 2D for layer-focused inspection or 3D for stackup/model context.
 2. Set the selection filter before selecting. Confirm the inspector's object
    ID, layer, connected net, and coordinate before using a terminal/probe anchor.
-3. Choose **View -> Show net names** to switch to 2D and label visible copper,
+3. Choose **View -> Show net names** to label visible copper in 2D or show the
+   interactive net viewer in 3D,
    or use **Layer manager -> Scene -> Net names**. Labels on fine traces appear
    as you zoom in. This visibility setting is saved with the project.
 4. In 2D, drag to pan and wheel to zoom. In 3D, left drag orbits, middle/right
@@ -55,6 +76,15 @@ retain their existing behavior.
    use the context menu for equivalent or task-specific actions.
 6. Cross-check the selected net or component in Design Navigator before using
    it as an analysis anchor.
+
+The floating **Board nets** viewer has a **Hide net viewer** button; its compact
+header has **Show net viewer** to expand it again. Search by net name, connector
+pin (for example `J1.2`), or layer and click a row to select/highlight the net.
+Search covers the complete net inventory; longer lists load in groups of 100.
+In an assembly, click a board in either viewport first. The viewer title and
+occurrence ID identify that board, and only its nets are listed. Clicking a net
+may highlight other boards through explicit saved connector mappings. Equal net
+names alone do not connect boards. Selecting another board clears the search.
 
 ![Marble layers in the SPIKE 2D viewport](../app/public/help/marble-layout-layers.png)
 
@@ -90,14 +120,46 @@ entities. A selected proxy for a different design cannot be solved from the
 active view.
 For SI across several boards, use explicit board jobs in the SI multi-board
 workflow; a viewport selection does not create a coupled channel.
-In MCAD assembly, add a second board instance to expose the **Link Manager**.
-Use **Stacked board connector mates** for direct headers and **Harnesses**
-for cabled links. Give each mate two `board::connector`
+In MCAD assembly, select multiple board files through **Import boards /
+external assemblies**. The import commits all files together and places native
+boards apart for initial review. A second board exposes the **Link Manager**.
+Use its **Connector graph** to discover ports, select two board connectors,
+review suggested physical pin pairs, then add a direct mate or preview and add
+a virtual cable harness. Use **Stacked board connector mates** for direct
+headers and **Harnesses** for cabled links. Give each mate two `board::connector`
 endpoints and explicit pin pairs. Review connector and return models in the
 solver workflow; board proximity alone does not connect them. Choose **Save
 boards and links**, then save the `.spike` project with results or export a
 separate result-free project copy. **Save results file** writes a standalone
 `.spike-results.json` file that **Open project** can load directly.
+
+## Work with editable data tables
+
+Read each row along its alternating background band. Column titles sit in the
+stronger header band. Pencils and solid underlines indicate direct entry;
+tinted controls with chevrons open dropdowns. Locks and dashed underlines mark
+read-only or unavailable fields. Plain values are display-only. Separate buttons
+run actions; red-toned removal buttons change the list. Table colors follow
+**Settings > Interface > Theme**. **Follow system** selects the OS light/dark
+table palette; **High contrast** strengthens text and control boundaries.
+
+1. Use **Find rows** to enter one or more terms. Every term must occur in the
+   displayed row values; selected option labels are searchable too.
+2. Choose **Compact** when you need denser rows. This changes only the mounted
+   table's presentation.
+3. Use the page controls for tables longer than 100 row groups. An expanded
+   detail row stays with its main record.
+4. Use Tab and Shift+Tab for normal focus order. In a single-line input, Enter
+   and Shift+Enter move through the same editable column. Alt+Arrow moves
+   between editable cells; disabled and read-only controls are skipped.
+5. Keep normal Arrow behavior inside controls. Enter in a select or textarea
+   also keeps its native behavior.
+6. Review workflow validation, units, and save/run actions before using edits.
+   The table tools do not sort, reorder, bulk-paste, validate, or save records.
+
+Search keeps the focused row mounted until focus leaves the table. Use **Clear**
+to restore every source row. Some workflows, such as Component Bonds, provide
+their own source filter instead of the shared table search.
 
 ## Add and inspect probes
 
@@ -149,13 +211,26 @@ pin mapping, or ngspice handoff.
 
 1. Save the project and confirm the selected result has the intended settings,
    warnings, status, and probes.
-2. Choose **Reports -> Engineering** to open the integrated preview.
-3. Review definition, source/load table, stackup, analytics, fields, warnings,
-   solver version, result status, and saved run details.
+2. Choose **Reports -> Engineering** to open a separate movable report window.
+   Keep working in the board viewport while reviewing the report. Regenerating
+   a report updates and restores the existing preview window. Close the report
+   window when finished; this leaves the main workbench open.
+3. Use **Report contents** in the HTML sidebar to jump to setup, results,
+   figures, warnings and traceability. Under **Per-Net Result Review**, choose
+   a net name to select and open its record. On a narrow window, collapse the
+   contents panel to give the report more room.
+   Review definition, source/load table, stackup, analytics, fields, warnings,
+   solver version, result status, and saved run details. Saved study setup is
+   shown separately from executed solver provenance; missing settings remain
+   marked as unavailable.
 4. If the banner says **ANALYSIS NOT RUN**, use the document only as a setup
    and design record; return to the analysis workflow for numerical output.
 5. Use **Print** for the operating-system print/PDF route or **Export HTML**
-   for an interactive self-contained report.
+   for an interactive self-contained report. Print output includes a cover,
+   linked table of contents, opening scope, every net sequentially, setup,
+   static board/curve figures, and conclusions. The print layout requests A4
+   landscape for wide engineering tables. Check the print preview when using
+   a different paper size or WebView version.
 6. Open the exported artifact offline and confirm that values, units, warnings,
    model status, and run details match the preview.
 7. For `SPIKE-BE-REPORT-E-0001`, follow
@@ -238,6 +313,13 @@ linear residual does not establish physical validity. The help article includes
 the pinned board revision/hash. Raw evaluation inputs/results are not bundled
 with help, and no separate candidate screenshot is used as a main-UI picture.
 The historical Marble screenshots show Home / PI / HF-SI / EMI / Thermal tabs. The current workspace places Mesh and Solve directly after Home, followed by PI, HF / SI, EM, Thermal, Probes, Results, Reports, and Settings. Follow command names and workflow prerequisites rather than relying on historical tab positions.
+
+## Navigate result graphs
+
+For result-graph navigation and direct image/data copy and comparison paste,
+follow [the shared plotting guide](PLOT_INTERFACES.md). Ordinary wheel movement
+scrolls the panel; Ctrl+wheel zooms the graph. Pasted comparisons change the
+view only and do not become solver results.
 
 ## Operate SPIKE with a local LLM
 

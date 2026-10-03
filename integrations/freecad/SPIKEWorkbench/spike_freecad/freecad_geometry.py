@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MIT
 """FreeCAD geometry creation and envelope export helpers."""
 
 from __future__ import annotations

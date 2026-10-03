@@ -7,8 +7,8 @@ from typing import Any, Dict, Mapping, Sequence
 
 from python import spike_peec_native as native
 
-from .design_ir_v2 import DesignIRV2
-from .design_ir_v2_schema import content_digest
+from .spider_v2 import SpiDeRV2
+from .spider_v2_schema import content_digest
 from .via_transition_geometry import CONTRACT as VIA_GEOMETRY_CONTRACT
 
 
@@ -70,7 +70,7 @@ def _ring_mm(ring: Any) -> list[list[float]]:
 
 
 def build_reference_plane_antipad_geometry_v2(
-    design: DesignIRV2, *, via_geometry: Mapping[str, Any]
+    design: SpiDeRV2, *, via_geometry: Mapping[str, Any]
 ) -> Dict[str, Any]:
     if via_geometry.get("contract") != VIA_GEOMETRY_CONTRACT or via_geometry.get("design_id") != design.design_id:
         raise ReferencePlaneAntipadGeometryV2Error("General plane topology requires matching via geometry v1.")
@@ -155,7 +155,7 @@ def build_reference_plane_antipad_geometry_v2(
 
 
 def validate_reference_plane_antipad_geometry_v2(
-    report: Mapping[str, Any], *, design: DesignIRV2, via_geometry: Mapping[str, Any]
+    report: Mapping[str, Any], *, design: SpiDeRV2, via_geometry: Mapping[str, Any]
 ) -> Dict[str, Any]:
     regenerated = build_reference_plane_antipad_geometry_v2(design, via_geometry=via_geometry)
     if dict(report) != regenerated:

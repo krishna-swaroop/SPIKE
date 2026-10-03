@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
-import { CircleDot, ListTree, MousePointer2, Network, Play, Plus, Search, Trash2, Waypoints, X } from "lucide-react";
+import { ListTree, MousePointer2, Network, Play, Plus, Search, Trash2, Waypoints, X } from "./icons";
 import type { ParsedBoard } from "./boardParser";
 import { previewViewportTarget } from "./BoardViewport";
 import type { BoardObject } from "./BoardViewport";
 import { resolveBoardCopperLayers } from "./copperLayerSelection";
+import NetCatalog from "./NetCatalog";
 
 type NetRole = "source" | "return" | "series" | "unassigned";
 type LoopExtractionSetup = {
@@ -215,25 +216,14 @@ export default function NetManager({
           <div className="net-manager-guidance"><Network size={16} /><p>A copper net is one connected conductor name. Open the <b>Power Tree</b> to visualize and edit the ordered source-to-load series diagram, including components that bridge these net segments.</p></div>
         </aside>
 
-        {view === "nets" ? <div className="net-catalog">
-          <div className="net-table header"><span>Net</span><span>Role</span><span>Layers</span><span>Tracks</span><span>Vias</span><span>Pads</span><span>Zones</span><span>Parts</span></div>
-          <div className="net-table-scroll">
-            {filtered.map(net => {
-              const item = metrics.get(net)!;
-              return <div key={net} className={`net-table row ${activeNet === net ? "active" : ""}`} onClick={() => selectRow(net)} onMouseEnter={() => previewViewportTarget({ kind: "net", net, label: net })} onMouseLeave={() => previewViewportTarget(null)}>
-                <span className="net-name"><CircleDot size={13} /><b title={net}>{net}</b></span>
-                <select value={roleFor(net)} onClick={event => event.stopPropagation()} onChange={event => assignRole(net, event.target.value as NetRole)} aria-label={`Role for ${net}`}>
+        {view === "nets" ? <NetCatalog rows={filtered.map(net => ({ id: net, name: net, metrics: metrics.get(net)! }))} activeId={activeNet} onSelect={selectRow}
+          onPreview={net => previewViewportTarget(net === null ? null : { kind: "net", net, label: net })}
+          role={net => <select value={roleFor(net)} onClick={event => event.stopPropagation()} onChange={event => assignRole(net, event.target.value as NetRole)} aria-label={`Role for ${net}`}>
                   <option value="unassigned">Unassigned</option>
                   <option value="source">Source</option>
                   <option value="return">Return</option>
                   <option value="series">Series segment</option>
-                </select>
-                <span>{item.layers}</span><span>{item.tracks}</span><span>{item.vias}</span><span>{item.pads}</span><span>{item.zones}</span><span>{item.parts}</span>
-              </div>;
-            })}
-            {!filtered.length && <div className="net-manager-empty">No imported net matches this filter.</div>}
-          </div>
-        </div> : <div className="loop-editor">
+                </select>}/> : <div className="loop-editor">
           {activeLoop ? <>
             <div className="loop-editor-heading"><div><b>PAD-TO-PAD LOOP EXTRACTION</b><small>Forward current travels source to load; return current travels load side back to source side.</small></div><button onClick={() => { const next = loopExtractions.filter(item => item.id !== activeLoop.id); setLoopExtractions(next); setActiveLoopId(next[0]?.id ?? ""); }} title="Delete loop"><Trash2 size={15} /></button></div>
             <label className="loop-name">Name<input aria-label="Loop name" value={activeLoop.name} onChange={event => patchLoop({ name: event.target.value })} /></label>

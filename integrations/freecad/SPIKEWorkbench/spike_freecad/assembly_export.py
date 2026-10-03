@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MIT
 """Export placed FreeCAD parts as portable SPIKE assembly exchange archives."""
 from __future__ import annotations
 

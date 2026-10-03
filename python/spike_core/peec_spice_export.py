@@ -10,7 +10,7 @@ from __future__ import annotations
 from copy import deepcopy
 from typing import Any, Dict, Iterable, List
 
-from .contracts import AnalysisSpec, DesignIR, ValidationIssue
+from .contracts import AnalysisSpec, SpiDeR, ValidationIssue
 from .ngspice_plugin import NgspicePlugin
 from .spice_workspace import SPICE_WORKSPACE_CONTRACT, compose_spice_workspace
 
@@ -223,7 +223,7 @@ def import_peec_rlcg(
 
 
 def run_staged_hybrid_cosimulation(
-    design: DesignIR,
+    design: SpiDeR,
     extraction_result: Dict[str, Any],
     workspace: Dict[str, Any],
     mappings: Iterable[Dict[str, Any]],

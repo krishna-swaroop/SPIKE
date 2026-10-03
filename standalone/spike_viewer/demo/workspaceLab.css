@@ -1,0 +1,55 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+.docked-lab {height:100dvh;min-height:0;overflow:hidden;display:flex;flex-direction:column;}
+.docked-lab .lab-header {padding:10px 16px;gap:12px;flex:none;min-width:0;}
+.docked-lab .lab-header>div:not(.brand-mark) {min-width:0;}
+.docked-lab .lab-header h1 {font-size:21px;white-space:nowrap;}
+.docked-lab .lab-header p {margin:3px 0 0;}
+.docked-lab .brand-mark {width:36px;height:36px;font-size:20px;flex:none;}
+.dock-workspace-slot {flex:1;min-height:0;min-width:0;position:relative;}
+.essential-toolbar {display:flex;align-items:center;gap:6px;padding:7px 12px;flex:none;min-width:0;}
+.essential-toolbar button {min-height:36px;white-space:nowrap;padding:6px 11px;}
+.history-controls {display:flex;gap:5px;}
+.selected-occurrence {margin-left:auto;min-width:0;max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#93b8bd;font-size:11px;}
+.docked-lab .viewport-column {height:100%;min-height:0;}
+.docked-lab .viewer-slot {flex:1;min-height:0;height:auto;}
+.docked-lab .board-caption {padding:6px 12px;font-size:10px;}
+.docked-lab .timeline {padding:8px 12px;gap:8px;font-size:11px;min-width:0;}
+.docked-lab .timeline input {min-width:35px;}
+.docked-lab .layer-panel,.docked-lab .inspector {padding:14px;border:0;max-height:none;overflow:visible;}
+.docked-lab .inspector dl {display:block;}
+.docked-lab .inspector dt {margin-top:11px;}.docked-lab .inspector dd {margin:2px 0 0;}
+.docked-lab .interaction-help,.docked-lab .binding-note {display:block;}
+.docked-lab .inspector .pick-value {font-size:23px;}
+.viewer-settings {padding:14px;}
+.viewer-settings>label {display:flex;gap:8px;align-items:center;margin:12px 0;font-size:12px;}
+.viewer-settings>label:has(select) {flex-direction:column;align-items:stretch;}
+.viewer-settings>p {font-size:12px;color:#9cb3bf;line-height:1.6;}
+.viewer-settings .panel-buttons {display:flex;flex-wrap:wrap;gap:8px;margin:12px 0;}
+.docked-lab .data-editor {max-height:calc(100dvh - 24px);min-height:0;padding:16px;}
+.docked-lab .data-editor textarea {min-height:80px;flex:1;}
+.docked-lab .data-editor footer {flex:none;}
+@media(max-width:650px),(max-height:600px) {
+  .docked-lab .lab-header {padding:7px 10px;gap:8px;}
+  .docked-lab .lab-header h1 {font-size:18px;}
+  .docked-lab .lab-header p,.docked-lab .version,.docked-lab .selected-occurrence {display:none;}
+  .docked-lab .brand-mark {width:30px;height:30px;font-size:17px;}
+  .essential-toolbar {padding:5px 8px;gap:5px;flex-wrap:wrap;}
+  .essential-toolbar button {min-height:40px;padding:6px 9px;font-size:12px;}
+  .docked-lab .history-controls {margin-left:auto;}
+  .docked-lab .board-caption {padding:4px 8px;}
+  .docked-lab .board-caption>span {display:none;}
+  .docked-lab .timeline {padding:6px 8px;gap:5px;}
+  .docked-lab .timeline>span {display:none;}
+  .docked-lab .layer-panel,.docked-lab .inspector {padding:12px;}
+  .docked-lab .editor-backdrop {padding:8px;}
+  .docked-lab .data-editor {max-height:calc(100dvh - 16px);padding:12px;}
+  .docked-lab .data-editor p {font-size:11px;margin:8px 0;}
+  .docked-lab .data-editor button {min-height:40px;}
+  .viewer-settings button,.viewer-settings select {min-height:40px;}
+}
+@media(max-height:480px) {
+  .docked-lab .lab-header {padding:4px 8px;}
+  .docked-lab .lab-header h1 {font-size:15px;}
+  .docked-lab .brand-mark {display:none;}
+  .docked-lab .board-caption {display:none;}
+}

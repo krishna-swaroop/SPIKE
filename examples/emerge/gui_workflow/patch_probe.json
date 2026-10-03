@@ -1,0 +1,15 @@
+{
+  "sample_kind": "solver_angular_grid_point",
+  "frequency_hz": 3000000000.0,
+  "theta_deg": 0.0,
+  "phi_deg": 15.0,
+  "relative_amplitude_db": 0.0,
+  "e_theta_v_m": [
+    -1.1117133099499052,
+    6.051516513857456
+  ],
+  "e_phi_v_m": [
+    0.28255098715328403,
+    -1.5856361939080308
+  ]
+}

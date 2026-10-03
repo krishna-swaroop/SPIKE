@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MIT
 """Strict JSON contracts for SPIKE ECAD/MCAD exchange.
 
 This module deliberately has no FreeCAD dependency. It parses JSON as inert

@@ -13,6 +13,7 @@ describes which analyses are available and what their results mean.
 | Run signal analysis | [SI user guide](SI_USER_GUIDE.md) · [SI workflow](SI_WORKFLOW.md) |
 | Explore board temperature | [Thermal user guide](THERMAL_USER_GUIDE.md) · [Thermal workflow](THERMAL_WORKFLOW.md) |
 | Explore antenna and EM results | [EM workflow](EMI_WORKFLOW.md) · [EMerge example](VIRTUAL_EMI_EMERGE_TUTORIAL.md) |
+| Mesh a complete planar PCB with local refinement | [Focused volume meshes](PCB_FOCUSED_VOLUME_MESHING.md) |
 | Work through examples | [Tutorial atlas](CAPABILITY_TUTORIAL_ATLAS.md) · [ESP32 example](../examples/esp32/README.md) |
 | Connect a local language model | [Local LLM and MCP](LOCAL_LLM_MCP.md) |
 | Diagnose an error | [Troubleshooting](../TROUBLESHOOTING.md) · [Error codes](ERROR_CODE_CATALOG.md) |

@@ -6,6 +6,8 @@
   "permissions": ["filesystem.workspace"],
   "limits": {"timeout_seconds": 300, "max_result_bytes": 268435456},
   "contributes": {
+    "commands": [{"id": "odb-inspect", "name": "Inspect ODB++ source", "output_contract": "spike/odb-source-inspection/v1",
+      "input_schema": {"type": "object", "properties": {}, "additionalProperties": false}}],
     "importers": [{"id": "odb-design", "name": "ODB++ Design", "source_formats": ["odb++", "odb", "odbpp"],
       "extensions": [".odb", ".odb++", ".zip", ".tgz", ".tar", ".tar.gz"], "accepts_directories": true, "output_contract": "spike/v1",
       "input_schema": {"type": "object", "properties": {"step": {"type": "string"}}, "additionalProperties": false}}],

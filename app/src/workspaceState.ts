@@ -1,5 +1,5 @@
 export type ViewMode = "2D" | "3D";
-export type DockTabId = "Issues" | "Probe table" | "Power tree" | "Console";
+export type DockTabId = "Issues" | "Probe table" | "Power tree" | "Console" | "Notifications";
 export type Vector3Tuple = [number, number, number];
 
 export type Viewport3DCameraState = {
@@ -40,7 +40,7 @@ export type ViewportRestoreCommand = {
   twoD?: Viewport2DState;
 };
 
-const dockTabs = new Set<DockTabId>(["Issues", "Probe table", "Power tree", "Console"]);
+const dockTabs = new Set<DockTabId>(["Issues", "Probe table", "Power tree", "Console", "Notifications"]);
 const finite = (value: unknown): value is number => typeof value === "number" && Number.isFinite(value);
 const clamp = (value: unknown, fallback: number, minimum: number, maximum: number) =>
   Math.max(minimum, Math.min(maximum, finite(value) ? value : fallback));

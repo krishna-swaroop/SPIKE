@@ -7,11 +7,13 @@ import argparse
 import contextlib
 import io
 import json
+import os
+import sys
 import traceback
 from pathlib import Path
 from typing import Any
 
-from .automation import SpikeAutomation
+from .script_api import SpikeScriptAPI, bind_spike_module
 
 
 MAX_OUTPUT = 1_000_000
@@ -38,111 +40,31 @@ class _CappedText(io.TextIOBase):
         return "".join(self.parts) + ("\n[output truncated]" if self.truncated else "")
 
 
-class SpikeScriptAPI:
-    """Small script facade; worker calls still pass through normal admission."""
-
-    def __init__(self, context: dict[str, Any]) -> None:
-        self.design = context.get("design")
-        self.results = context.get("results")
-        self._binding = context.get("design_binding")
-        self._trusted_extension_ids = context.get("trusted_extension_ids", [])
-        self._automation: SpikeAutomation | None = None
-        self._published: dict[str, Any] | None = None
-
-    def _worker(self) -> SpikeAutomation:
-        if self._automation is None:
-            self._automation = SpikeAutomation()
-            from . import service
-            for extension_id in self._trusted_extension_ids:
-                service._extension_registry.trust(extension_id)
-        return self._automation
-
-    def call(self, method: str, params: dict[str, Any] | None = None) -> Any:
-        if method == "run_python_script":
-            raise ValueError("Nested Python workspace runs are not supported.")
-        return self._worker().call(method, params)
-
-    def extensions(self) -> Any:
-        return self._worker().extension_catalog()
-
-    def invoke_extension(self, extension_id: str, contribution_id: str,
-                         parameters: dict[str, Any] | None = None) -> Any:
-        """Run a trusted adapter with the current board and declared context."""
-        catalog = self.extensions()
-        entry = next((item for item in catalog.get("extensions", []) if item.get("id") == extension_id), None)
-        if entry is None:
-            raise ValueError(f"Extension is not installed: {extension_id}")
-        permissions = entry.get("permissions", [])
-        context: dict[str, Any] = {}
-        if "results.read" in permissions and self.results is not None:
-            context["results"] = self.results
-        reply = self._worker().invoke_extension(
-            extension_id, contribution_id,
-            design=self.design if "design.read" in permissions else None,
-            parameters=parameters, context=context)
-        analysis = reply.get("data", {}).get("analysis_result") if isinstance(reply.get("data"), dict) else None
-        if isinstance(analysis, dict):
-            provenance = analysis.get("provenance")
-            if isinstance(provenance, dict):
-                analysis = {**analysis, "provenance": {
-                    **provenance, "script_upstream_extension_id": extension_id}}
-            self.publish_result(analysis)
-        return reply
-
-    def publish_result(self, result: dict[str, Any]) -> None:
-        """Offer a design-bound AnalysisResult to the viewer after host admission."""
-        if self._binding is None:
-            raise ValueError("Load a board before publishing an analysis result.")
-        if not isinstance(result, dict):
-            raise TypeError("Published result must be an AnalysisResult object.")
-        try:
-            json.dumps(result, allow_nan=False)
-        except (TypeError, ValueError) as exc:
-            raise ValueError("Published result contains a non-finite or non-JSON value.") from exc
-        self._published = result
-
-    def publish_scalar_field(self, name: str, samples: list[dict[str, Any]], *,
-                             mode: str = "dc", solver: str = "python-script",
-                             model_status: str = "unvalidated", summary: dict[str, Any] | None = None) -> None:
-        """Publish one explicitly named board field without implying other physics."""
-        if self._binding is None:
-            raise ValueError("Load a board before publishing a field.")
-        if not isinstance(name, str) or not name or not isinstance(samples, list):
-            raise ValueError("Field name and sample array are required.")
-        import uuid
-        self.publish_result({
-            "contract": "spike/v1", "analysis_id": f"python-{uuid.uuid4()}",
-            "status": "completed", "mode": mode, "model_status": model_status,
-            "summary": summary or {}, "fields": {"visualization": {
-                "schema": "spike/result-visualization/v1", "scalar_fields": {name: samples}}},
-            "networks": {}, "probes": [], "issues": [],
-            "provenance": {"design_id": self._binding["design_id"],
-                           "design_digest_sha256": self._binding["digest_sha256"],
-                           "solver": solver},
-        })
-
-    @property
-    def published_result(self) -> dict[str, Any] | None:
-        return self._published
-
-
 def run(request: dict[str, Any]) -> dict[str, Any]:
     output = _CappedText()
     errors = _CappedText()
-    api = SpikeScriptAPI(request.get("context", {}))
+    api = bind_spike_module(request.get("context", {}))
     code = request["code"]
+    filename = str(request.get("filename") or "<SPIKE Python workspace>")
+    working_directory = request.get("working_directory")
+    if isinstance(working_directory, str):
+        os.chdir(working_directory)
+        if working_directory not in sys.path:
+            sys.path.insert(0, working_directory)
     status = "completed"
     with contextlib.redirect_stdout(output), contextlib.redirect_stderr(errors):
         try:
-            compiled = compile(code, "<SPIKE Python workspace>", "exec")
-            exec(compiled, {"__name__": "__main__", "spike": api})
+            compiled = compile(code, filename, "exec")
+            exec(compiled, {"__name__": "__main__", "__file__": filename,
+                            "__package__": None, "spike": api})
         except BaseException:
             status = "failed"
             traceback.print_exc(limit=12)
     return {"contract": "spike/python-script-result/v1", "status": status,
             "stdout": output.getvalue(), "stderr": errors.getvalue(),
             "return_code": 0 if status == "completed" else 1,
-            "published_result": api.published_result if status == "completed" else None}
+            "published_result": api.published_result if status == "completed" else None,
+            "ui_actions": api.ui_actions if status == "completed" else []}
 
 
 def main() -> int:

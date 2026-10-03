@@ -66,3 +66,8 @@ for(const count of [2,6,12,16,32])for(const batched of [false,true]){
 assert.match(source,/layerAddressable: copperLayers.length > 0/);
 assert.doesNotMatch(source,/viasOnlyActive/,'All-off must not implicitly restore all via faces');
 console.log('Actual renderer/batching: all-off then each layer on, independent layers/models/substrate, via spans/opacity, category gates and stable roots passed at 2/6/12/16/32 layers');
+
+const nativeBase={is3D:true,boardReady:true,componentsReady:true,split:true,layerAddressable:true,preferAuthoritativeBoard:true,layerFiltered:false,exploded:false,isolated:false,analysisOnly:false,resultsOnly:false,showModels:true,categoryFiltered:false,resultModelsVisible:true,missingModels:false};
+assert.equal(policy.boardSceneVisibility(nativeBase).importedBoard,true,"assembled unfiltered view uses verified KiCad surfaces");
+assert.equal(policy.boardSceneVisibility({...nativeBase,layerFiltered:true}).importedBoard,false,"layer edits restore addressable geometry");
+assert.equal(policy.boardSceneVisibility({...nativeBase,exploded:true}).importedBoard,false,"explosion preserves addressable layer rendering");

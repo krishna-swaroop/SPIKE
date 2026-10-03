@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "report-preview",
+  "description": "The engineering report preview receives parent-owned HTML and can request print or export actions.",
+  "windows": ["spike-report-preview"],
+  "permissions": ["core:event:default"]
+}

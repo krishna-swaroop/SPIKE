@@ -15,7 +15,7 @@ import os
 import platform
 from typing import Any, Dict, Iterable, List, Sequence, Tuple
 
-from .contracts import AnalysisSpec, DesignIR
+from .contracts import AnalysisSpec, SpiDeR
 from .dc_result_utils import stratified_sample_records
 from .hybrid_mesh import DEFAULT_COPPER_THICKNESS_MM, HybridMesh, build_hybrid_mesh
 from .layers import copper_stack_profile
@@ -117,11 +117,11 @@ class MeshingOptions:
         )
 
 
-def _copper_thicknesses(design: DesignIR) -> Dict[str, float]:
+def _copper_thicknesses(design: SpiDeR) -> Dict[str, float]:
     return copper_stack_profile(design, DEFAULT_COPPER_THICKNESS_MM)[2]
 
 
-def _via_centers(design: DesignIR) -> Dict[str, Tuple[float, float]]:
+def _via_centers(design: SpiDeR) -> Dict[str, Tuple[float, float]]:
     result: Dict[str, Tuple[float, float]] = {}
     for index, via in enumerate(design.vias):
         point = via.get("at", (0, 0))
@@ -272,14 +272,14 @@ def _quality(cells: Sequence[Dict[str, Any]]) -> Dict[str, Any]:
 class MeshingEngine:
     """Generate deterministic, renderer-neutral PCB meshes."""
 
-    def build(self, design: DesignIR, spec: AnalysisSpec) -> Dict[str, Any]:
+    def build(self, design: SpiDeR, spec: AnalysisSpec) -> Dict[str, Any]:
         options = MeshingOptions.from_spec(spec)
         hybrid = build_hybrid_mesh(design, spec)
         return self.preview(design, spec, hybrid, options)
 
     def preview(
         self,
-        design: DesignIR,
+        design: SpiDeR,
         spec: AnalysisSpec,
         hybrid: HybridMesh,
         options: MeshingOptions,
@@ -372,5 +372,5 @@ class MeshingEngine:
         }
 
 
-def build_mesh(design: DesignIR, spec: AnalysisSpec) -> Dict[str, Any]:
+def build_mesh(design: SpiDeR, spec: AnalysisSpec) -> Dict[str, Any]:
     return MeshingEngine().build(design, spec)

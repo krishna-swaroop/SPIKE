@@ -15,7 +15,7 @@ if str(ROOT) not in sys.path:
 
 from python.spike_core import __version__ as APP_VERSION
 from python.spike_core.dependencies import dependency_status
-from python.spike_core.design_ir_v2 import AssemblyIRV1, DesignIRV2
+from python.spike_core.spider_v2 import AssemblyIRV1, SpiDeRV2
 from python.spike_core.kicad_importer import import_kicad_design
 from python.spike_core.project_package import read_project, write_spike_package
 from python.spike_core.service_project_handlers import handle_project_request
@@ -94,7 +94,7 @@ def _call(method: str, params: dict[str, Any]) -> dict[str, Any]:
 
 
 def _board_design(source: Path, package_name: str) -> dict[str, Any]:
-    design = DesignIRV2.from_v1(import_kicad_design(str(source))).to_dict()
+    design = SpiDeRV2.from_v1(import_kicad_design(str(source))).to_dict()
     digest = str(design["source"]["source_digest"])
     suffix = "".join(Path(package_name).suffixes[-2:])
     design["source"]["artifact_path"] = f"package:sources/{digest}{suffix}"

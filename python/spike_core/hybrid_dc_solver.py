@@ -14,7 +14,7 @@ from .acceleration import (
     assemble_graph_laplacian,
     solve_sparse_system,
 )
-from .contracts import AnalysisResult, AnalysisSpec, DesignIR, ValidationIssue
+from .contracts import AnalysisResult, AnalysisSpec, SpiDeR, ValidationIssue
 from .dc_result_utils import (
     sample_indexes,
     stratified_sample_records,
@@ -39,7 +39,7 @@ from .result_face_projection import (
 )
 
 
-def solve_hybrid_dc(design: DesignIR, spec: AnalysisSpec) -> AnalysisResult:
+def solve_hybrid_dc(design: SpiDeR, spec: AnalysisSpec) -> AnalysisResult:
     overall_started = perf_counter()
     if spec.mode != "dc":
         return AnalysisResult(

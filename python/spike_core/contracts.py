@@ -24,8 +24,8 @@ class ValidationIssue:
 
 
 @dataclass
-class DesignIR:
-    """Normalized design representation independent of an EDA vendor."""
+class SpiDeR:
+    """SPIKE Design Reference: the normalized internal board model."""
 
     contract: str = CONTRACT_VERSION
     design_id: str = ""
@@ -51,6 +51,10 @@ class DesignIR:
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
+
+
+# DesignIR is the compatibility name exposed to existing external consumers.
+DesignIR = SpiDeR
 
 
 @dataclass

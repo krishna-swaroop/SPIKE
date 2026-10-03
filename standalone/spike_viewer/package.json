@@ -1,0 +1,56 @@
+{
+  "name": "@spike/board-viewer",
+  "version": "0.3.0",
+  "description": "Standalone SPIKE 2D/3D PCB visualization and board-bound virtual data layers",
+  "type": "module",
+  "license": "Apache-2.0",
+  "main": "./dist/spike-viewer.js",
+  "module": "./dist/spike-viewer.js",
+  "types": "./dist/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/spike-viewer.js"
+    },
+    "./style.css": "./dist/style.css"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "NOTICE",
+    "THIRD_PARTY_NOTICES.md",
+    "docs",
+    "licenses"
+  ],
+  "scripts": {
+    "prepare:mcad": "node scripts/copy-occt-runtime.mjs",
+    "predev": "npm run prepare:mcad",
+    "prebuild:demo": "npm run prepare:mcad",
+    "preview:demo": "vite preview --mode demo --host 127.0.0.1 --port 1433 --strictPort",
+    "dev": "vite --host 127.0.0.1 --port 1432 --strictPort",
+    "typecheck": "tsc --noEmit",
+    "build": "npm run typecheck && vite build && tsc -p tsconfig.lib.json",
+    "build:demo": "vite build --mode demo",
+    "test": "node scripts/test.mjs",
+    "check:boundary": "node scripts/check-boundary.mjs",
+    "check": "npm run check:boundary && npm run typecheck && npm test && npm run build && npm run build:demo"
+  },
+  "peerDependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "three": "^0.171.0"
+  },
+  "devDependencies": {
+    "@types/react": "18.3.31",
+    "@types/react-dom": "18.3.7",
+    "@types/three": "0.171.0",
+    "@vitejs/plugin-react": "4.7.0",
+    "occt-import-js": "0.0.23",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "three": "0.171.0",
+    "typescript": "5.9.3",
+    "vite": "6.4.3"
+  }
+}

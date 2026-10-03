@@ -1,4 +1,4 @@
-# ADR 0001: Normalized DesignIR
+# ADR 0001: Normalized SpiDeR
 
 - Status: Accepted
 - Date: 2026-08-09
@@ -12,7 +12,7 @@ source and make project persistence unstable.
 
 ## Decision
 
-All design sources normalize into versioned, JSON-compatible `DesignIR` before
+All design sources normalize into versioned, JSON-compatible `SpiDeR` before
 analysis. `AnalysisSpec` and `AnalysisResult` are likewise source and UI
 independent. Units, coordinate rules, import issues, and provenance cross the
 boundary explicitly.

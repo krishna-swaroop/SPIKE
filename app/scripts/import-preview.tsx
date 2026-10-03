@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import BoardImportPanel from '../src/BoardImportPanel';
 import type { BoardImportProgress } from '../src/boardImportProgress';
+import '../src/buttonStandard.css';
 
 const initial: BoardImportProgress = { fileName: 'JTYU-TSMC-Ki10.kicad_pcb', stage: 'components', percent: 60,
   label: 'Resolving and loading 3D parts', startedAt: Date.now(), busy: true, warnings: [], problems: [] };

@@ -1,6 +1,6 @@
 import unittest
 
-from python.spike_core.contracts import AnalysisSpec, DesignIR
+from python.spike_core.contracts import AnalysisSpec, SpiDeR
 from python.spike_core.service import handle
 from python.spike_core.topology_circuit import (
     TOPOLOGY_CIRCUIT_CONTRACT,
@@ -9,8 +9,8 @@ from python.spike_core.topology_circuit import (
 )
 
 
-def design() -> DesignIR:
-    return DesignIR(
+def design() -> SpiDeR:
+    return SpiDeR(
         design_id="topology-fixture",
         components=[
             {"reference": "R1", "value": "10"},

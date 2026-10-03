@@ -19,7 +19,7 @@ sys.path.insert(0, str(ROOT))
 
 from extensions.openems_suite.engine import prepare_openems_case, run_openems_case, _validate_openems_case
 from python.spike_core.cli import load_design
-from python.spike_core.contracts import AnalysisSpec, DesignIR
+from python.spike_core.contracts import AnalysisSpec, SpiDeR
 
 
 SIGNAL = "/filter_bank/RF_IN"
@@ -28,8 +28,8 @@ PORT_XY = (174.27, 44.09)  # Source pad C5.1, checked below.
 
 
 def build_case(board: Path, start_hz: float = 1e9, stop_hz: float = 3e9,
-               two_port: bool = False, excite_port: int = 1) -> tuple[DesignIR, AnalysisSpec, dict]:
-    original = DesignIR(**load_design(board))
+               two_port: bool = False, excite_port: int = 1) -> tuple[SpiDeR, AnalysisSpec, dict]:
+    original = SpiDeR(**load_design(board))
     signal_tracks = [item for item in original.tracks if item.get("net_name") == SIGNAL]
     signal_pads = [item for item in original.pads if item.get("net_name") == SIGNAL]
     if len(signal_tracks) != 3 or len(signal_pads) != 2:
@@ -75,7 +75,7 @@ def build_case(board: Path, start_hz: float = 1e9, stop_hz: float = 3e9,
     if two_port:
         assumptions["assumed_port_2"] = "50 ohm vertical lumped port at U13.8 to local In1.Cu GND; uncalibrated"
         assumptions["excited_port"] = excite_port
-    design = DesignIR(design_id="provisional-hforsten-rf-in", name="HForsten RF_IN exploratory slice",
+    design = SpiDeR(design_id="provisional-hforsten-rf-in", name="HForsten RF_IN exploratory slice",
                       source_format="derived", source_path=str(board),
                       layers=original.layers, nets=[{"id": "signal", "name": SIGNAL}, {"id": "return", "name": RETURN}],
                       tracks=signal_tracks, pads=signal_pads, zones=[plane], stackup=stackup,

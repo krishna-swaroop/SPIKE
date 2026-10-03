@@ -1,0 +1,144 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "spike/ac-pi-result/v1",
+  "title": "Experimental explicit uniform AC power integrity result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract",
+    "status",
+    "model_status",
+    "source_voltage_v_rms",
+    "samples",
+    "assumptions",
+    "provenance"
+  ],
+  "properties": {
+    "contract": {
+      "const": "spike/ac-pi-result/v1"
+    },
+    "status": {
+      "const": "completed_with_warnings"
+    },
+    "model_status": {
+      "const": "experimental"
+    },
+    "source_voltage_v_rms": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": {
+        "type": "number"
+      }
+    },
+    "samples": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 2048,
+      "items": {
+        "type": "object",
+        "required": [
+          "frequency_hz",
+          "status",
+          "denominator_relative_margin",
+          "slab"
+        ],
+        "properties": {
+          "frequency_hz": {
+            "type": "number",
+            "minimum": 0
+          },
+          "status": {
+            "enum": [
+              "computed",
+              "singular_source_load_resonance"
+            ]
+          },
+          "denominator_relative_margin": {
+            "type": "number",
+            "minimum": 0
+          },
+          "slab": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "load_voltage_v_rms": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 2,
+            "items": {
+              "type": "number"
+            }
+          },
+          "sending_voltage_v_rms": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 2,
+            "items": {
+              "type": "number"
+            }
+          },
+          "input_current_a_rms": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 2,
+            "items": {
+              "type": "number"
+            }
+          },
+          "input_impedance_ohm": {
+            "anyOf": [
+              {
+                "type": "array",
+                "minItems": 2,
+                "maxItems": 2,
+                "items": {
+                  "type": "number"
+                }
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "input_impedance_state": {
+            "enum": [
+              "finite",
+              "open"
+            ]
+          },
+          "R_ohm_per_m": {
+            "type": "number",
+            "minimum": 0
+          },
+          "load_to_source_voltage_gain": {
+            "type": "number",
+            "minimum": 0
+          },
+          "load_to_sending_voltage_gain": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "voltage_rise_above_sending": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "assumptions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "provenance": {
+      "type": "object"
+    }
+  }
+}

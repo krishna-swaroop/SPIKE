@@ -1,5 +1,5 @@
 /// <reference types="vite/client" />
-import { ArrowLeft, ArrowRight, BookOpen, Bookmark, Copy, Search, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, BookOpen, Bookmark, Copy, Search, X } from "./icons";
 import { Children, isValidElement, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { APP_VERSION } from "./appVersion";
 import { helpTopics } from "./HelpTopics";
@@ -20,6 +20,7 @@ const documents = import.meta.glob([
   "../../docs/EMI_WORKFLOW.md", "../../docs/THERMAL_WORKFLOW.md",
   "../../docs/SI_WORKFLOW.md", "../../docs/PI_PATH_ANALYSIS.md",
   "../../docs/EXTERNAL_ENGINE_INTEROPERABILITY.md", "../../docs/PROJECT_FORMAT.md",
+  "../../docs/PYTHON_WORKSPACE.md",
 ], { eager: true, query: "?raw", import: "default" }) as Record<string, string>;
 const rootDocuments = import.meta.glob(["../../TROUBLESHOOTING.md", "../../QUICK_REFERENCE.md"], { eager: true, query: "?raw", import: "default" }) as Record<string, string>;
 function plain(node: ReactNode): string {

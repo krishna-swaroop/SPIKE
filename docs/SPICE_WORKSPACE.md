@@ -20,7 +20,7 @@ netlist preview before any solver is invoked.
 
 1. Select PI or SI as the workspace domain.
 2. Add a built-in primitive or an explicitly stored subcircuit.
-3. Assign the model to a DesignIR component and map every model pin to a board
+3. Assign the model to a SpiDeR component and map every model pin to a board
    pad and circuit node.
 4. Import geometry parasitics only from a traceable solver result.
 5. Review and confirm every imported parasitic endpoint. Generated `:source`

@@ -187,14 +187,15 @@ assert.ok(panel.includes('method: "tessellate_mcad_part_in_project"'), "MCAD pan
 assert.ok(panel.includes('method: "extract_mcad_package_shape_in_project"'), "MCAD panel must expose bounded exact STEP topology extraction");
 assert.ok(panel.includes('method: "generate_mcad_selector_preview_in_project"'), "MCAD panel must expose bounded exact-selector preview generation");
 assert.ok(panel.includes("AssemblyTopologyEditor"), "MCAD panel must expose typed topology-addressed setup after extraction");
-assert.ok(panel.includes("AssemblyStructureEditor"), "MCAD panel must expose board-instance and harness structure editing");
+assert.ok(panel.includes("onOpenAssemblyWorkspace") && panel.includes("Open multi-board workspace"), "MCAD exposes the separate board-instance and harness setup window");
+assert.ok(!panel.includes("<AssemblyStructureEditor"), "MCAD does not mount a second assembly setup editor over the viewport");
 assert.ok(structureEditor.includes('method: "update_assembly_structure_in_project"'), "assembly structure edits must use their manifest-bound transaction");
 for (const field of ["boards", "harnesses", "connector_mappings", "rigid_flex_links", "expected_manifest_payload_sha256"]) {
   assert.ok(structureEditor.includes(field), `assembly structure request is missing ${field}`);
 }
 assert.ok(structureEditor.includes("Coupled analysis remains disabled"), "assembly structure UI must preserve its coupled-physics qualification boundary");
-assert.ok(structureEditor.includes("assemblyDesigns.designs.map"), "assembly board instances must select from retained DesignIR identities");
-assert.ok(structureEditor.includes("assemblyDesigns?.active_design_id"), "new board instances must default to the retained active DesignIR identity");
+assert.ok(structureEditor.includes("assemblyDesigns.designs.map"), "assembly board instances must select from retained SpiDeR identities");
+assert.ok(structureEditor.includes("assemblyDesigns?.active_design_id"), "new board instances must default to the retained active SpiDeR identity");
 assert.ok(topologyEditor.includes('method: "update_assembly_topology_setup_in_project"'), "exact topology setup must use its dedicated immutable-shape transaction");
 assert.ok(topologyEditor.includes('method: "apply_assembly_geometric_constraint_in_project"'), "exact topology setup must expose its manifest-bound single-constraint transaction");
 assert.ok(topologyEditor.includes("exact BREP descriptors"), "geometric snapping must name its authoritative geometry source");
@@ -246,9 +247,9 @@ assert.ok(viewport.includes("partStates[assemblyModels[index].partId]"), "each v
 assert.ok(viewport.includes("loadSceneWithRetry(() => cloneCachedGltfScene(instance.url))"), "visual model loads must retry transient failures while retaining the shared decode cache");
 assert.ok(viewport.includes("refreshAssemblyDisplayRef.current()"), "async assembly loading must reapply display controls");
 assert.ok(viewport.includes("TransformControls"), "assembly dragging must use one explicit Three.js transform gizmo");
-assert.ok(viewport.includes("matrixToRowMajor(object.matrix)"), "gizmo commits must leave renderer matrices through the canonical row-major boundary");
-assert.ok(viewport.includes('publishGizmoTransform("commit")'), "gizmo persistence must occur once at drag completion");
-assert.ok(viewport.includes("controls3d.enabled = false"), "orbit navigation must pause while the gizmo owns pointer interaction");
+assert.ok(viewport.includes("matrixToRowMajor(placement)"), "gizmo commits must publish the physical placement after removing board-center and display offsets");
+assert.ok(viewport.includes("installAssemblyGizmoNumericInput(assemblyGizmo, host, publishGizmoTransform"), "the numeric transaction controller must own preview and completion");
+assert.ok(viewport.includes("controls3d.enabled = enabled"), "the controller must suspend and restore orbit navigation during pointer ownership");
 assert.ok(viewport.includes("selectorPreviewPickablesRef"), "exact-selector previews require a dedicated pick set outside board pickables");
 assert.ok(viewport.includes("topologyReference"), "selector clicks must resolve to canonical topology references");
 assert.ok(viewport.includes("assemblyGizmo.dragging"), "selector picking must not run while the transform gizmo is dragging");

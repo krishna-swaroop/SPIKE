@@ -1,15 +1,89 @@
 # SPIKE Solver Status
 
+The [coupled assembly electrothermal worker](ASSEMBLY_ELECTROTHERMAL.md) adds
+experimental steady DC tetrahedral current/temperature feedback, matched-bond
+Joule heating and supplied waveform, RMS spectral and semiconductor-table
+averaged losses. A two-board ownership fixture, analytical energy balance and
+four-grid electrical convergence are tested. General PCB extraction, arbitrary
+device subcircuits, transient switching and measured qualification remain open.
+
+The [retained assembly field reference](ASSEMBLY_FIELD_HANDOFF.md) adds bounded
+experimental steady 3-D tetrahedral solid conduction, anisotropic material
+rotation, matched thermal contacts and offline result bindings. Original
+analytical/manufactured tests and geometric view-factor checks are recorded in
+[validation](validation/ASSEMBLY_FIELD_20261004.md). This is not arbitrary CAD
+extraction, airflow, transient thermal, coupled radiosity or a general assembly
+Maxwell/SI backend. EM/SI handoffs retain ports but explicitly reject execution.
+
+The assembly desktop workspace now imports these supplied volume studies,
+edits thermal boundary values, executes the admitted steady thermal path and
+reviews occurrence extrema and conservation evidence. `.spike` and standalone
+records retain setup and optional results with stale-assembly withholding; see
+[desktop integration checks](validation/ASSEMBLY_FIELD_DESKTOP_20261004.md).
+This UI does not yet integrate the separate coupled electrothermal contract.
+
 This file describes executable behavior. Catalog entries marked unavailable are
 architecture contracts, not implemented physics.
+
+The [loaded-design MCP conversation](LOCAL_LLM_MCP.md) can prepare, revise,
+preflight and run the existing PI, SI/NEXT/FEXT, thermal, EMI-screening, trusted
+extension and reduced multiboard worker paths. It reports missing inputs,
+design/revision binding, asynchronous job status and actual solver evidence.
+These tools add orchestration, not new numerical capability. Structural-ready
+paths still require worker validation at execution; extension previews do not
+qualify physics. Unsupported, partial and unvalidated results retain their
+statuses. Eye diagrams require supported channels and explicit timing/models.
+
+The main viewport EM results manager displays admitted spatial E/H samples,
+time-average Poynting vectors, angular radiation, Optycal structure/interference
+and linked returned-data graphs. Candidate amplitude nodes/antinodes and
+display contours are visualization products, not additional solved samples or
+proof of standing waves. Angular display spheres do not imply spatial fields.
+
+The [SPIKE-owned internal tetra engine](INTERNAL_MESH_ENGINE.md) executes bounded
+convex point-cloud generation, indicator/size/manual adaptive refinement and
+interior quality optimization through a versioned worker method. Scalar nodal
+and cell fields transfer on refinement-only passes. It remains experimental;
+general constrained PCB geometry, moving-mesh remap and large/distributed
+meshing are unsupported. Geometry tests do not establish SI/PI/EMI convergence.
+
+The separate [whole-board focused volume path](PCB_FOCUSED_VOLUME_MESHING.md)
+compiles normalized planar outlines/cutouts, layer slabs, copper with antipads
+and explicit via spans into conforming tetrahedra through the admitted external
+Gmsh OCC development process. Net/source/manual selections change sizing without
+discarding background geometry. Its worker probe distinguishes preparation from
+runtime availability. Four actual native examples retain all sources; this does
+not qualify automatic EDA conversion, arbitrary PCB geometry or SI/EM/thermal
+accuracy. Curved-source volume error and low cell quality remain reported.
 
 The [external analysis extension path](EXTENSION_ANALYSIS_API.md) now admits
 design-bound, finite `spike/v1` results into the desktop viewer and reports.
 This is an integration capability. The host does not qualify an external
 solver's physical method or turn imported field samples into validated data.
 
+The optional [Optycal Suite](../extensions/optycal_suite/README.md) imports bounded,
+closed STEP solids as PEC surfaces through the separately installed Gmsh runtime.
+It uses complex, design-bound EMerge radiation samples as an assumed outgoing
+far-zone source for one-way physical optics. Explicit source convention and
+antenna aperture are required; proximity and observation-radius guards reject
+nearby assembly cases. Direct and scattered complex fields share one reference
+for pattern differences and coherent interference. This beta integration is
+unvalidated, with no absolute field calibration, antenna input-matching feedback,
+diffraction, shadowing, dielectric structures or multiple scattering. STEP
+antenna solids alone do not specify feeds or an electromagnetic antenna model.
+FreeCAD/KiCad/Kikakuka neutral STEP exports can provide the structure geometry;
+an independently solved EMerge antenna result provides the excitation.
+
+The [native Gerber route](EMERGE_GERBER.md) retains original copper files for
+EMerge's `FileBasedPCB` loader alongside the KiCad/polygon adapter. EMerge
+3.0.0a19 loaded original millimetre clear-polarity and inch flash/trace fixtures
+and generated a 539-node, 2,622-tetrahedron mesh on October 4, 2026. This is
+loader and mesh execution evidence, not RF solution or convergence validation.
+Ports remain manual annotations, copper is surface PEC, dielectric extents are
+declared rectangles, and Excellon execution is blocked while files are retained.
+
 The optional [EMerge Suite](../extensions/emerge_suite/README.md) constructs
-a bounded two-layer PCB model from imported DesignIR, runs explicit pad-pair
+a bounded 2-16 copper-layer PCB model from imported SpiDeR, runs explicit pad-pair
 ports and a frequency sweep, then imports S-parameters, angular far-field
 cuts, and a coarse full-sphere sample grid for an interactive 3D pattern.
 Its selected-net surface-PEC geometry, rectangular substrate, omitted
@@ -30,8 +104,40 @@ one bounded dielectric box in the FEM geometry; the 5° surface and EM chamber
 overlay are display interpolation. Curved radomes and imported complex
 surroundings remain unsupported.
 These are execution evidence, not mesh convergence or physical validation.
+An original [four-layer regression fixture](../examples/emerge/multilayer/README.md)
+also completed a two-frequency SI sweep with EMerge 3.0.0a19 and optional
+EMCAD 0.1.0 copper unions. Unequal 0.2/0.5/0.3 mm dielectrics have independent
+permittivities and a top-to-inner-layer port. Multilayer vias remain unsupported;
+surface PEC, omitted dielectric loss and rectangular bounds remain explicit.
 The [antenna walkthrough](EMERGE_ANTENNA_WALKTHROUGH.md) records the setup,
 saved plots, numerical samples, and remaining qualification work.
+The [expanded GUI examples](../examples/emerge/gui_workflow/README.md) record
+four fresh EMerge 3.0.0a19 runs on September 30, 2026. Their saved readable
+Python source hashes match executed-source provenance and all results pass
+SPIKE admission. The lossy patch case returned 242 valid complex E/H XY-plane
+samples at two frequencies. GUI controls now expose constant dielectric loss,
+reference impedance, air margin, auto/SuperLU solving, parallel workers,
+angular sampling and field port excitation. S-parameter and field CSV export,
+Touchstone, explicit samples/probes and report evidence use actual returned data.
+E/H amplitudes retain the solver port coefficient convention and require power
+calibration for absolute interpretation. A full feature inventory explicitly
+marks non-integrated EMerge studies and boundaries as pending adapters.
+
+The [Marble/White Rabbit SI experiments](../examples/emerge/board_si/README.md)
+completed source-derived four-port coupled-route sweeps with EMerge 3.0.0a19 and
+EMCAD 0.1.0: 64 frequencies from 100 MHz to 6.4 GHz and 7,744 valid E/H samples
+per model. The adapter now accepts explicitly mapped 2–8 ports across up to four
+signal nets. These examples idealize the reference planes and terminals and omit
+the rest of the boards. Marble passed sampled passivity; an independent two-point
+SuperLU/automatic-backend comparison agreed within 1.20e-11 in complex S.
+Both models exceeded a strict 1e-6 reciprocity residual tolerance. White Rabbit
+also exceeded the eye passivity gate (maximum singular value 1.001609); a finer
+mesh and doubled air margin did not remove this failure. Its eyes are blocked.
+Marble's 500 Mb/s differential and single-ended diagnostic eyes use a separately
+disclosed ideal-through DC assumption, 150 ps edges and matched ideal endpoints.
+They are finite-bandwidth scenarios, not source-device or link qualifications.
+The offline report, raw Touchstone/CSV, source/script bindings and probes reside
+under local `build/emerge-si`; source boards are not redistributed by this example.
 
 For governing equations, implementation links and evidence interpretation, see
 the [solver handbook](SOLVER_HANDBOOK.md). The [annotated research references](SOLVER_REFERENCES.md)
@@ -88,9 +194,25 @@ reject pin reuse across those links. Desktop PI, thermal, and EMI requests bind 
 active-design board occurrence; EMI preflight/screening and component thermal
 also validate that scope before execution and retain it in result provenance.
 An occurrence of another design is not silently substituted. Independent
-planning is a dispatch contract, not a coupled solve. General coupled PI/SI,
-cross-board heat transfer, and assembly EMI remain blocked pending qualified
-adapters and validation. See [assembly workflow](MULTIBOARD_HARNESS_ASSEMBLIES.md).
+planning is a dispatch contract, not a coupled solve. The assembly editor now
+executes explicit reduced coupled models: shared PI DC/AC and SI AC circuits
+with harness/mate/contact RLC, shared thermal RC networks with inter-board
+contact conductance, and reciprocal magnetic RL loop coupling for EM screening.
+Analytical fixtures check remote-load/contact sensitivity, heat sharing,
+induced currents, reciprocity and conservation. These models remain
+experimental/approximate; artwork is not automatically extracted into them.
+General coupled field qualification and radiation/EMI compliance remain open.
+The reduced models now require explicit coverage of physical casings and other
+mechanical parts. Thermal admits part RC nodes, contacts and reciprocal
+radiosity surfaces; PI/SI admits passive part RLC and retained bond R/L; EM
+admits part-owned magnetic loops. One board plus a physical structure is
+supported. Model-less hierarchy containers are explicitly excluded. Imported
+STEP/material data does not infer numerical properties or produce full-field
+geometry. [Structure study evidence](validation/ASSEMBLY_STRUCTURE_STUDIES_20261004.md)
+records analytical checks, portable save/reopen and the remaining solver-suite
+field integration requirements.
+See [coupled studies](MULTIBOARD_COUPLED_ANALYSIS.md) and
+[assembly workflow](MULTIBOARD_HARNESS_ASSEMBLIES.md).
 
 ### Authored harness DC PI (`spike/harness-pi-request/v1`)
 
@@ -699,7 +821,7 @@ come from the hybrid conductor PEEC mesh. C and dielectric G remain explicitly
 for supported planar branches.
 
 A separate bounded `geometry_uniform_channel` analysis accepts either one
-straight constant-width DesignIR v2 path, two straight parallel coextensive
+straight constant-width SpiDeR v2 path, two straight parallel coextensive
 paths, or the explicit `piecewise_planar` connected same-layer constant-width
 approximation over one simple fully covering reference zone and homogeneous
 dielectric. The single path produces experimental scalar RLGC and reciprocal
@@ -779,7 +901,7 @@ Managed downloads remain disabled. See `docs/SOLVER_MANAGER.md`.
 | OpenFOAM | v2606 is installed in Ubuntu 24.04 WSL; deterministic steady open-air natural/forced convection cases run through bounded fixed-argv processes and import aligned T/U/p cell fields | Experimental air-domain surrogate only; no PCB solids, conjugate heat transfer, advanced environments, mesh/energy validation, or measured correlation |
 | Siemens FloTHERM | No adapter is present | Future connector only; SPIKE cannot bundle or activate the customer-provided runtime without permitted automation rights |
 | FreeCAD | ECAD/MCAD workbench and inert exchange contracts are implemented; local FreeCAD kernel smoke passes | Geometry exchange is not solver or product validation |
-| sparseLizard | Native Windows self-test runtime compiled without WSL; DesignIR translation for DC, AC/RLCG, thermal, and field case contracts, process isolation/cancellation, strict result conversion, and qualification reporting are implemented | The installed executable is not the production PCB adapter. Its legacy manifest is unsigned, PETSc does not expose MUMPS, and no PCB fixture evidence is installed, so arbitrary PCB execution remains disabled |
+| sparseLizard | Native Windows self-test runtime compiled without WSL; SpiDeR translation for DC, AC/RLCG, thermal, and field case contracts, process isolation/cancellation, strict result conversion, and qualification reporting are implemented | The installed executable is not the production PCB adapter. Its legacy manifest is unsigned, PETSc does not expose MUMPS, and no PCB fixture evidence is installed, so arbitrary PCB execution remains disabled |
 | PETSc/MUMPS | Native Windows PETSc/SLEPc and standalone MUMPS libraries are packaged for the sparseLizard development runtime, but that PETSc build does not register MUMPS as a factorization backend | PETSc LU runs the bounded DC fixture; a PETSc build configured with MUMPS plus equivalence/performance qualification is still required |
 
 ### openEMS (`external.openems`)
@@ -900,7 +1022,7 @@ explicit-netlist circuit adapter.
 
 ### sparseLizard (`external.sparselizard`)
 
-- State: deterministic DesignIR translation, bounded exact-name process launch,
+- State: deterministic SpiDeR translation, bounded exact-name process launch,
   cancellation, Windows Job Object memory enforcement, strict result import,
   and a five-class qualification report are implemented; no production
   `spike-sparselizard-adapter` executable is installed on the current machine
@@ -1014,6 +1136,11 @@ promote the current adapter or replace SPIKE's existing PI solvers.
 ### Surface MoM (`spike.mom_surface`)
 
 No executable or validated MoM implementation is packaged.
+An internal oriented-RWG basis, singular triangular-source Green-moment kernel,
+and supplied-current free-space far-field/RCS postprocessor have bounded
+analytic/invariance tests. They do not assemble or solve the EFIE, compute a
+PCB/antenna current distribution, or qualify scattering accuracy. Unresolved
+quadrature withholds RCS; the public solver capability remains unavailable.
 
 ### Full-Wave 3D (`spike.fullwave_3d`)
 

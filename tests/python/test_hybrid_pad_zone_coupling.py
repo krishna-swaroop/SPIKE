@@ -2,13 +2,13 @@
 """Zone contact must not be duplicated by a centroid-dependent pad shortcut."""
 import unittest
 
-from python.spike_core.contracts import AnalysisSpec, DesignIR
+from python.spike_core.contracts import AnalysisSpec, SpiDeR
 from python.spike_core.hybrid_mesh import _Builder
 
 
 class HybridPadZoneCouplingTests(unittest.TestCase):
     def builder(self, target, with_conductors=False):
-        design = DesignIR(
+        design = SpiDeR(
             layers=[{"name": "F.Cu"}, {"name": "B.Cu"}],
             nets=[{"id": 1, "name": "VCC"}],
             zones=[{"id": "zone", "net_name": "VCC", "layer": "F.Cu",

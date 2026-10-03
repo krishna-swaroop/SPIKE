@@ -1,12 +1,15 @@
 import { useDeferredValue, useMemo, useState } from "react";
-import type { LucideIcon } from "lucide-react";
+import type { LucideIcon } from "./icons";
 import {
   Activity, Boxes, Cable, ChartArea, ChevronDown, CircuitBoard, Component,
   Crosshair, Fan, Layers3, MapPin, Microchip, Network, PackageOpen, RadioTower, Route,
   Search, Spline, ThermometerSun, Workflow, X,
-} from "lucide-react";
+} from "./icons";
 import { boundedMatches, firstObjectByNet, sceneRowWindow } from "./viewportPerformance";
-import type { BoardObject } from "./BoardViewport";
+import type { BoardObject, ViewportContextRequest } from "./BoardViewport";
+import ActionContextMenu from "./ActionContextMenu";
+import { contextMenuTrigger } from "./contextMenuTrigger";
+import { openContextScript } from "./contextScript";
 import type { ParsedBoard } from "./boardParser";
 import { asThermalScenario } from "./thermalScene";
 import { assemblyHierarchyRows, createAssemblyFrameResolver, partDisplayStatus } from "./mcadAssembly";
@@ -16,6 +19,7 @@ export type SceneNavigatorAction =
   | "board"
   | "assembly"
   | "stackup"
+  | "flex"
   | "layers"
   | "nets"
   | "components"
@@ -44,6 +48,7 @@ type Props = {
   thermalScenario: Record<string, unknown> | null;
   importQuality: number;
   onSelect: (object: BoardObject) => void;
+  onObjectContext?: (request: ViewportContextRequest) => void;
   onAssemblyPart: (partId: string) => void;
   onAction: (action: SceneNavigatorAction) => void;
 };
@@ -70,10 +75,12 @@ type SummaryRow = {
   action?: SceneNavigatorAction;
 };
 
-function SummarySection({ title, badge, rows, onAction }: { title: string; badge?: string; rows: SummaryRow[]; onAction: (action: SceneNavigatorAction) => void }) {
+type EntryContextHandler = (x: number, y: number, title: string, payload: unknown, activate: () => void) => void;
+
+function SummarySection({ title, badge, rows, onAction, onEntryContext }: { title: string; badge?: string; rows: SummaryRow[]; onAction: (action: SceneNavigatorAction) => void; onEntryContext: EntryContextHandler }) {
   return <details className="scene-nav-section" open>
     <summary><ChevronDown size={12} /><span>{title}</span>{badge && <em>{badge}</em>}</summary>
-    <div>{rows.map(({ id, label, detail, count, icon: Icon, action }) => <button key={id ?? label} disabled={!action} onClick={() => action && onAction(action)} title={detail}>
+    <div>{rows.map(({ id, label, detail, count, icon: Icon, action }) => <button {...contextMenuTrigger((x,y) => onEntryContext(x,y,label,{section:title,id,label,detail,count,action},() => action && onAction(action)))} key={id ?? label} disabled={!action} onClick={() => action && onAction(action)} title={detail}>
       <Icon size={14} />
       <span><b>{label}</b><small>{detail}</small></span>
       {count !== undefined && <em>{count.toLocaleString()}</em>}
@@ -81,7 +88,7 @@ function SummarySection({ title, badge, rows, onAction }: { title: string; badge
   </details>;
 }
 
-function AssemblyHierarchySection({ rows, onAssemblyPart, onAction }: { rows: AssemblyHierarchyRow[]; onAssemblyPart: (partId: string) => void; onAction: (action: SceneNavigatorAction) => void }) {
+function AssemblyHierarchySection({ rows, onAssemblyPart, onAction, onEntryContext }: { rows: AssemblyHierarchyRow[]; onAssemblyPart: (partId: string) => void; onAction: (action: SceneNavigatorAction) => void; onEntryContext: EntryContextHandler }) {
   const [scrollTop, setScrollTop] = useState(0);
   const virtual = rows.length > 120;
   const window = virtual ? sceneRowWindow(rows.length, scrollTop) : { start: 0, end: rows.length, before: 0, after: 0 };
@@ -94,7 +101,7 @@ function AssemblyHierarchySection({ rows, onAssemblyPart, onAction }: { rows: As
       {rows.slice(window.start, window.end).map(row => {
       const Icon = row.kind === "board" ? CircuitBoard : row.kind === "part" ? PackageOpen : Boxes;
       const activate = row.partId && row.actionable ? () => onAssemblyPart(row.partId!) : row.resolved ? () => onAction("assembly") : undefined;
-      return <button key={row.nodeKey} className={!row.resolved ? "unresolved" : ""} disabled={!activate} onClick={activate} title={row.detail} style={{ height: 38, paddingLeft: `${9 + Math.min(row.depth, 12) * 13}px` }}>
+      return <button {...contextMenuTrigger((x,y) => onEntryContext(x,y,row.label,row,activate ?? (() => {})))} key={row.nodeKey} className={!row.resolved ? "unresolved" : ""} disabled={!activate} onClick={activate} title={row.detail} style={{ height: 38, paddingLeft: `${9 + Math.min(row.depth, 12) * 13}px` }}>
         <Icon size={14} /><span><b>{row.label}</b><small>{row.detail}</small></span><em>{row.kind}</em>
       </button>;
     })}{window.after > 0 && <div aria-hidden style={{ height: window.after }} />}</div>
@@ -107,8 +114,11 @@ const cleanBoardName = (name: string) => name.replace(/\.kicad_pcb$/i, "").repla
 
 export default function SceneNavigator({
   board, boardName, query, onQuery, probes, modelAssignments, assemblyIr, modelIndex, assemblyPartViewportStates, bondCount, sourceCount,
-  powerPathCount, resultCount, thermalScenario, importQuality, onSelect, onAssemblyPart, onAction,
+  powerPathCount, resultCount, thermalScenario, importQuality, onSelect, onAssemblyPart, onAction, onObjectContext,
 }: Props) {
+  const [menu, setMenu] = useState<{ x: number; y: number; title: string; payload: unknown; activate: () => void } | null>(null);
+  const [contextNotice, setContextNotice] = useState("");
+  const entryContext: EntryContextHandler = (x,y,title,payload,activate) => setMenu({x,y,title,payload:{board:boardName,entry:payload},activate});
   const scenario = useMemo(() => asThermalScenario(thermalScenario), [thermalScenario]);
   const normalizedQuery = useDeferredValue(query.trim().toLowerCase());
   const searchEnabled = Boolean(normalizedQuery);
@@ -177,8 +187,8 @@ export default function SceneNavigator({
       icon: Network, object: { id: zone.id, type: "zone", name: zone.net || `Zone ${index + 1}`, net: zone.net, layer: zone.layer, position: zone.points[0] },
     }));
     board.layerDefinitions.forEach(layer => add({ id: `layer:${layer.id}`, label: layer.userName || layer.name, detail: `${layer.name} | ${layer.kind}`, category: "Layer", keywords: `stackup copper dielectric documentation ${layer.name} ${layer.userName ?? ""}`, icon: Layers3, action: "layers" }));
-    (board.regions ?? []).forEach(region => add({ id: `region:${region.id}`, label: region.name, detail: `${region.kind} region | ${region.sourceLayer}`, category: "Board region", keywords: `mechanical ecad mcad rigid flex transition stiffener ${region.name}`, icon: CircuitBoard, action: "thermal" }));
-    (board.bendLines ?? []).forEach(bend => add({ id: `bend:${bend.id}`, label: bend.name, detail: `${bend.sourceLayer} bend definition`, category: "Bend", keywords: `mechanical ecad mcad flex radius angle ${bend.name}`, icon: Spline, action: "thermal" }));
+    (board.regions ?? []).forEach(region => add({ id: `region:${region.id}`, label: region.name, detail: `${region.kind} region | ${region.sourceLayer}`, category: "Board region", keywords: `mechanical ecad mcad rigid flex transition stiffener ${region.name}`, icon: CircuitBoard, action: "flex" }));
+    (board.bendLines ?? []).forEach(bend => add({ id: `bend:${bend.id}`, label: bend.name, detail: `${bend.sourceLayer} bend definition | ${bend.angleDeg ?? "unspecified"} deg | ${bend.radiusMm ?? "unspecified"} mm radius`, category: "Bend", keywords: `mechanical ecad mcad flex radius angle ${bend.name}`, icon: Spline, action: "flex" }));
     thermalElements.forEach(element => add({ id: `thermal:${element.id}`, label: element.reference || element.name || element.id, detail: `${element.kind || "thermal object"} | ${Number(element.power_w || 0).toFixed(3)} W`, category: "Thermal / MCAD", keywords: `mechanical thermal heat step assembly ${element.reference ?? ""} ${element.name ?? ""} ${element.material_id ?? ""}`, icon: ThermometerSun, action: "thermal" }));
     attachedParts.forEach(part => {
       const model = modelsById.get(part.model_id);
@@ -212,7 +222,7 @@ export default function SceneNavigator({
     { title: "Mechanical & MCAD", rows: [
       { label: "3D model assignments", detail: "Source assignments; open models to check loading and missing files", count: assignedModels, icon: Boxes, action: "models" },
       { label: "Attached MCAD", detail: "Persistent AssemblyIR parts and model-index artifacts", count: attachedParts.length, icon: PackageOpen, action: "mcad" },
-      { label: "Board regions and bends", detail: `${board.regions?.length ?? 0} regions | ${board.bendLines?.length ?? 0} bend lines`, count: (board.regions?.length ?? 0) + (board.bendLines?.length ?? 0), icon: CircuitBoard, action: "thermal" },
+      { label: "Board regions and bends", detail: `${board.regions?.length ?? 0} regions | ${board.bendLines?.length ?? 0} bend lines`, count: (board.regions?.length ?? 0) + (board.bendLines?.length ?? 0), icon: CircuitBoard, action: "flex" },
       { label: "Thermal assembly objects", detail: `${thermalHardware} fans and heatsinks | ECAD/MCAD setup`, count: thermalElements.length, icon: Fan, action: "thermal" },
     ] },
     ...(attachedParts.length ? [] : [attachedMcadEmptySection]),
@@ -235,14 +245,25 @@ export default function SceneNavigator({
       {!sceneAvailable && <div className="scene-nav-empty"><CircuitBoard size={20} /><b>No design loaded</b><span>Import a board or open a SPIKE project.</span></div>}
       {sceneAvailable && normalizedQuery && <div className="scene-search-results">
         <header><span>SCENE RESULTS</span><em>{matches.length}{matches.length === 120 ? "+" : ""}</em></header>
-        {matches.map(({ id, label, detail, category, icon: Icon, object, action, assemblyPartId }) => <button key={id} onClick={() => object ? onSelect(object) : assemblyPartId ? onAssemblyPart(assemblyPartId) : action && onAction(action)}>
+        {matches.map(({ id, label, detail, category, icon: Icon, object, action, assemblyPartId }) => <button key={id} onClick={() => object ? onSelect(object) : assemblyPartId ? onAssemblyPart(assemblyPartId) : action && onAction(action)}
+          onContextMenu={event => { event.preventDefault(); event.stopPropagation();
+            if (object && onObjectContext) { onSelect(object); onObjectContext({ clientX: event.clientX, clientY: event.clientY, object }); }
+            else setMenu({ x: event.clientX, y: event.clientY, title: label, payload: { id, label, detail, category, object, assemblyPartId, board: boardName }, activate: () => object ? onSelect(object) : assemblyPartId ? onAssemblyPart(assemblyPartId) : action && onAction(action) });
+          }} onKeyDown={event => { if (event.key === "ContextMenu" || (event.shiftKey && event.key === "F10")) { event.preventDefault(); event.stopPropagation(); const box = event.currentTarget.getBoundingClientRect();
+            if (object && onObjectContext) { onSelect(object); onObjectContext({ clientX: box.left, clientY: box.bottom, object }); }
+            else setMenu({ x: box.left, y: box.bottom, title: label, payload: { id, label, detail, category, assemblyPartId, board: boardName }, activate: () => assemblyPartId ? onAssemblyPart(assemblyPartId) : action && onAction(action) });
+          } }}>
           <Icon size={14} /><span><b>{label}</b><small>{detail}</small></span><em>{category}</em>
         </button>)}
         {!matches.length && <div className="scene-nav-empty"><Search size={18} /><b>No matching scene objects</b><span>Search references, nets, layers, pads, vias, models, or thermal objects.</span></div>}
       </div>}
-      {sceneAvailable && !normalizedQuery && hierarchyRows.length > 0 && <AssemblyHierarchySection rows={hierarchyRows} onAssemblyPart={onAssemblyPart} onAction={onAction} />}
-      {sceneAvailable && !normalizedQuery && sections.map(section => <SummarySection key={section.title} {...section} onAction={onAction} />)}
+      {sceneAvailable && !normalizedQuery && hierarchyRows.length > 0 && <AssemblyHierarchySection rows={hierarchyRows} onAssemblyPart={onAssemblyPart} onAction={onAction} onEntryContext={entryContext} />}
+      {sceneAvailable && !normalizedQuery && sections.map(section => <SummarySection key={section.title} {...section} onAction={onAction} onEntryContext={entryContext} />)}
     </div>
+    {contextNotice && <p role="status">{contextNotice}</p>}
+    {menu && <ActionContextMenu x={menu.x} y={menu.y} title={menu.title} onClose={() => setMenu(null)} actions={[
+      { label: "Select / open", run: menu.activate }, { label: "Open in script", description: "Open this navigator entry as an unsaved Python context", run: () => { try { openContextScript({ kind: "navigator", title: menu.title, payload: menu.payload }); } catch (error) { setContextNotice(String(error)); } } },
+    ]}/>}
     <div className="nav-footer"><span>IMPORT QUALITY</span><b>{importQuality}%</b><div className="meter"><i style={{ width: `${importQuality}%` }} /></div></div>
   </div>;
 }

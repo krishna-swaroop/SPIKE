@@ -1,3 +1,5 @@
+import { parseKikakukaBends } from "./kikakukaFlex";
+
 export type Point = [number, number];
 export type ParsedTrack = { id: string; start: Point; end: Point; width: number; layer: string; net?: string };
 export type ParsedVia = { id: string; at: Point; size: number; drill: number; layers: string[]; net?: string };
@@ -40,11 +42,23 @@ export type ParsedComponent = {
   modelOffset: [number, number, number];
   modelScale: [number, number, number];
   modelRotation: [number, number, number];
+  /** Every model assignment retained in source order. Offsets are KiCad board
+   * millimetres, scales are unitless, and rotations are degrees. The legacy
+   * singular fields above remain aliases for the first assignment. */
+  models?: ParsedFootprintModel[];
   bodyBounds?: { minX: number; minY: number; maxX: number; maxY: number };
   courtyardBounds?: { minX: number; minY: number; maxX: number; maxY: number };
-  properties?: readonly { name?: unknown; values?: readonly unknown[] }[];
+  properties?: readonly { name?: unknown; values?: readonly unknown[] }[] | Record<string, unknown>;
   vendor_properties?: Record<string, unknown>;
   bom_records?: readonly string[];
+};
+export type ParsedFootprintModel = {
+  path: string;
+  offset: [number, number, number];
+  scale: [number, number, number];
+  rotation: [number, number, number];
+  /** Canonical imports may retain the complete source model-to-board matrix. */
+  transform?: number[];
 };
 export type ParsedZone = { id: string; points: Point[]; holes?: Point[][]; layer: string; net?: string;
   source_kind?: string; filled_copper_state?: string; source_fill_provenance_complete?: boolean; source_fill_representation?: string };
@@ -81,7 +95,10 @@ export type ParsedBoardRegion = {
   sourceLayer: string;
   source: "kicad-user-layer" | "implicit-board-outline" | "project";
   stackup?: ParsedStackupLayer[];
+  format?: string;
+  issues?: ParsedFlexIssue[];
 };
+export type ParsedFlexIssue = { code: string; severity: "info" | "warning" | "error"; message: string };
 export type ParsedBendLine = {
   id: string;
   name: string;
@@ -89,6 +106,16 @@ export type ParsedBendLine = {
   sourceLayer: string;
   radiusMm?: number;
   angleDeg?: number;
+  spanMm?: number;
+  radiusSource?: "r" | "s";
+  annotation?: string;
+  annotationPosition?: Point;
+  sourceLayerUserName?: string;
+  sourceDrawingId?: string;
+  source?: "kikakuka-freekicad" | "kicad-user-layer" | "project";
+  format?: "kikakuka/freekicad-v1" | string;
+  configured?: boolean;
+  issues?: ParsedFlexIssue[];
 };
 export type ParsedBoard = {
   width: number;
@@ -115,6 +142,7 @@ export type ParsedBoard = {
   technology?: "rigid" | "flex" | "rigid-flex";
   regions?: ParsedBoardRegion[];
   bendLines?: ParsedBendLine[];
+  flexIssues?: ParsedFlexIssue[];
 };
 
 const COPPER_LAYER_KINDS = new Set(["signal", "power", "mixed", "jumper"]);
@@ -376,8 +404,16 @@ function polygonArea(points: Point[]): number {
 function buildOutlineLoops(drawings: ParsedDrawing[], layerName = "Edge.Cuts"): Point[][] {
   const complete: Point[][] = [];
   const open: Point[][] = [];
+  const unique: Point[][] = [];
   drawings.filter((drawing) => drawing.layer === layerName).forEach((drawing) => {
     const points = drawing.points;
+    // Imported CAD can repeat an edge with a different stroke or direction.
+    // Retain every drawing, but join each geometric edge only once for display.
+    if (unique.some(prior => prior.length === points.length && (
+      prior.every((point, index) => Math.hypot(point[0] - points[index][0], point[1] - points[index][1]) < 1e-6)
+      || prior.every((point, index) => Math.hypot(point[0] - points[points.length - 1 - index][0], point[1] - points[points.length - 1 - index][1]) < 1e-6)
+    ))) return;
+    unique.push(points);
     if (points.length > 2 && closeEnough(points[0], points[points.length - 1])) complete.push(points);
     else if (points.length > 1) open.push([...points]);
   });
@@ -452,6 +488,7 @@ export function parseKicadBoard(source: string): ParsedBoard {
   const layers = new Set<string>();
   const layerDefinitions: ParsedLayerDefinition[] = [];
   const stackup: ParsedStackupLayer[] = [];
+  const graphicTexts: { id: string; text: string; at: Point; layer: string }[] = [];
   const nets: Record<string, string> = {};
 
   for (const item of root) {
@@ -544,6 +581,9 @@ export function parseKicadBoard(source: string): ParsedBoard {
           source_fill_representation: polygonNodes.length ? "flat_polygon_path" : undefined });
         layers.add(layer);
       });
+    } else if (head === "gr_text") {
+      const at = pointAt(item, "at");
+      if (at) graphicTexts.push({ id: nodeId(item, `drawing-text-${graphicTexts.length + 1}`), text: stringAt(item, 1), at, layer: layerOf(item, "Dwgs.User") });
     } else if (head.startsWith("gr_")) {
       const drawing = drawingFromNode(item, nodeId(item, `drawing-${drawings.length + 1}`));
       if (drawing) drawings.push(drawing);
@@ -621,7 +661,14 @@ export function parseKicadBoard(source: string): ParsedBoard {
       const padBounds = boundsOf(localPadPoints);
       const width = localPadPoints.length ? Math.max(padBounds.maxX - padBounds.minX + 2.5, 2.5) : 5;
       const height = localPadPoints.length ? Math.max(padBounds.maxY - padBounds.minY + 2.5, 2.5) : 5;
-      const modelNode = child(item, "model");
+      const modelNodes = children(item, "model");
+      const modelNode = modelNodes[0];
+      const models = modelNodes.map(model => ({
+        path: stringAt(model, 1),
+        offset: xyzAt(model, "offset", [0, 0, 0]),
+        scale: xyzAt(model, "scale", [1, 1, 1]),
+        rotation: xyzAt(model, "rotate", [0, 0, 0]),
+      }));
       components.push({
         id: nodeId(item, `component-${reference}`),
         ref: reference,
@@ -634,10 +681,11 @@ export function parseKicadBoard(source: string): ParsedBoard {
         layer,
         model: Boolean(modelNode),
         modelPath: stringAt(modelNode, 1),
-        modelPaths: children(item, "model").map(model => stringAt(model, 1)).filter(Boolean),
+        modelPaths: models.map(model => model.path).filter(Boolean),
         modelOffset: xyzAt(modelNode, "offset", [0, 0, 0]),
         modelScale: xyzAt(modelNode, "scale", [1, 1, 1]),
         modelRotation: xyzAt(modelNode, "rotate", [0, 0, 0]),
+        models,
         bodyBounds: bodyPoints.length ? boundsOf(bodyPoints) : undefined,
         courtyardBounds: courtyardPoints.length ? boundsOf(courtyardPoints) : undefined,
       });
@@ -646,8 +694,9 @@ export function parseKicadBoard(source: string): ParsedBoard {
   }
 
   const outlineLoops = buildOutlineLoops(drawings);
-  const geometryPoints = outlineLoops[0]
-    ?? tracks.flatMap((track) => [track.start, track.end]).concat(pads.map((pad) => pad.at));
+  const edgePoints = drawings.filter(drawing => drawing.layer === "Edge.Cuts").flatMap(drawing => drawing.points);
+  const geometryPoints = edgePoints.length ? edgePoints
+    : tracks.flatMap((track) => [track.start, track.end]).concat(pads.map((pad) => pad.at));
   const bounds = boundsOf(geometryPoints);
   const knownLayerNames = new Set(layerDefinitions.map((layer) => layer.name));
   let nextSyntheticLayerId = Math.max(-1, ...layerDefinitions.map(layer => layer.id)) + 1;
@@ -693,15 +742,24 @@ export function parseKicadBoard(source: string): ParsedBoard {
       });
     });
   });
+  const kikakuka = parseKikakukaBends(layerDefinitions, drawings, graphicTexts, stackup);
+  bendLines.push(...kikakuka.bendLines);
+  const flexIssues = kikakuka.flexIssues;
   const outerOutline = outlineLoops[0] ?? [];
   const boardArea = Math.abs(polygonArea(outerOutline));
   const flexArea = explicitRegions.filter(region => region.kind === "flex").reduce((sum, region) => sum + Math.abs(polygonArea(region.outline)), 0);
   const hasFlex = flexArea > 0;
   const hasRigid = explicitRegions.some(region => region.kind === "rigid");
+  const hasKikakukaBends = bendLines.some(bend => bend.format === "kikakuka/freekicad-v1");
   const technology: ParsedBoard["technology"] = hasFlex
     ? !hasRigid && boardArea > 0 && flexArea >= boardArea * 0.92 ? "flex" : "rigid-flex"
-    : "rigid";
+    : hasKikakukaBends ? hasRigid ? "rigid-flex" : "flex" : "rigid";
   const regions = [...explicitRegions];
+  if (hasKikakukaBends && !hasFlex) {
+    const issue: ParsedFlexIssue = { code: "KIKAKUKA_FLEX_REGION_IMPLICIT", severity: "info", message: `FreekiCAD bend lines were imported without explicit SPIKE flex-region geometry; the board is classified as ${technology} for display metadata only.` };
+    flexIssues.push(issue);
+    if (!explicitRegions.length && outerOutline.length) regions.push({ id: "region:implicit-freekicad-board", name: "FreekiCAD flex board", kind: "flex", outline: outerOutline, sourceLayer: "Edge.Cuts", source: "implicit-board-outline", format: "kikakuka/freekicad-v1", issues: [issue] });
+  }
   if (outerOutline.length && technology !== "flex" && !regions.some(region => region.kind === "rigid" && Math.abs(polygonArea(region.outline)) >= boardArea * 0.92)) {
     regions.unshift({
       id: "region:implicit-rigid-board",
@@ -731,6 +789,7 @@ export function parseKicadBoard(source: string): ParsedBoard {
     technology,
     regions,
     bendLines,
+    flexIssues,
   };
 }
 import { numericExtent } from "./numericRange";

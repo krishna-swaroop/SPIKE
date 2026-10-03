@@ -7,7 +7,7 @@ import unittest
 
 from python.spike_core.assembly_frames import enforce_placement_policy
 from python.spike_core.assembly_placement_policy import AssemblyPlacementPolicy
-from python.spike_core.design_ir_v2 import AssemblyIRV1
+from python.spike_core.spider_v2 import AssemblyIRV1
 
 
 IDENTITY = (1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1)

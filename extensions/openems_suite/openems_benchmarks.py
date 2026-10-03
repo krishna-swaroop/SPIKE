@@ -7,7 +7,7 @@ import math
 from pathlib import Path
 from typing import Any, Dict, Iterable
 
-from python.spike_core.contracts import AnalysisSpec, DesignIR
+from python.spike_core.contracts import AnalysisSpec, SpiDeR
 from .engine import prepare_openems_case, run_openems_case
 from .openems_validation import FAR_FIELD_REQUEST_CONTRACT
 
@@ -17,9 +17,9 @@ PATCH_EXPECTED_RESONANCE_HZ = 2.45e9
 PATCH_RESONANCE_TOLERANCE_HZ = 0.25e9
 
 
-def patch_antenna_fixture() -> tuple[DesignIR, AnalysisSpec]:
+def patch_antenna_fixture() -> tuple[SpiDeR, AnalysisSpec]:
     """Return the dimensions and excitation from the official openEMS tutorial."""
-    design = DesignIR(
+    design = SpiDeR(
         design_id="openems-simple-patch-reference",
         name="openEMS simple patch antenna reference",
         layers=[{"name": "F.Cu"}, {"name": "B.Cu"}],

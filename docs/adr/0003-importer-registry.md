@@ -12,7 +12,7 @@ would spread vendor coupling across the application.
 ## Decision
 
 Use an importer protocol and registry. Each adapter declares source IDs and
-extensions, parses one source family, normalizes into `DesignIR`, and records
+extensions, parses one source family, normalizes into `SpiDeR`, and records
 provenance. Ambiguous and unsupported formats fail explicitly. Source-specific
 parsers are imported only inside adapter modules.
 

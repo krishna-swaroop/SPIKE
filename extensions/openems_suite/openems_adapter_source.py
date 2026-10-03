@@ -409,14 +409,18 @@ def main():
     pin_mesh_lines(grid, "z", list(elevations.values()) + dielectric_mesh)
     pin_mesh_lines(grid, "x", [float(value) for port in geometry["excitations"].get("ports", []) for value in (port["start"][0], port["stop"][0])])
     pin_mesh_lines(grid, "y", [float(value) for port in geometry["excitations"].get("ports", []) for value in (port["start"][1], port["stop"][1])])
+    actual_lines = {axis: grid.GetLines(axis, do_sort=True) for axis in ("x", "y", "z")}
+    if any(len(values) > 100000 for values in actual_lines.values()):
+        raise RuntimeError("Actual CSXCAD grid exceeds the 100000-lines-per-axis export bound")
     actual_mesh = actual_grid_report(
-        {axis: grid.GetLines(axis, do_sort=True) for axis in ("x", "y", "z")},
+        actual_lines,
         options.get("max_estimated_cells", 25000000),
         options.get("max_estimated_memory_bytes", 8 * 1024**3),
     )
     actual_mesh.update(require_time_window(
         actual_mesh, options.get("max_timesteps", 10000000), f_start, f_stop))
     actual_mesh["edge_grid_policy"] = edge_grid_policy
+    grid_export = {axis: np.asarray(values, dtype=float).tolist() for axis, values in actual_lines.items()}
     nf2ff = fdtd.CreateNF2FFBox("spike_nf2ff", frequency=far_request["frequencies"]) if far_request is not None else None
     output = root / "engine-output"; output.mkdir(exist_ok=True)
     csx.Write2XML(str(root / "engine-input" / "spike-openems.xml"))
@@ -457,6 +461,7 @@ def main():
             reference_impedance = float(options.get("reference_impedance_ohm", 50))
             ports[excited].CalcPort(str(output / "simulation"), far_request["frequencies"], ref_impedance=reference_impedance)
             result["far_field"] = normalized_far_field(nf2ff, output / "simulation", far_request, int(options.get("verbosity", 2)), ports[excited].uf_inc, reference_impedance)
+    result["mesh"]["lines_mm"] = grid_export
     (output / "normalized-result.json").write_text(json.dumps(result, allow_nan=False), encoding="utf-8")
     print(json.dumps({"status": result["status"], "result": str(output / "normalized-result.json")}, allow_nan=False))
 

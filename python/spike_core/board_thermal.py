@@ -16,7 +16,7 @@ import numpy as np
 from scipy.sparse import lil_matrix
 from scipy.sparse.linalg import spsolve
 
-from .contracts import DesignIR
+from .contracts import SpiDeR
 from .hybrid_mesh import _clip_polygon_to_rect, _pad_boundary_polygon, _polygon_area
 from .thermal_copper_geometry import CopperGeometryError
 
@@ -25,7 +25,7 @@ MAX_CELLS = 8192
 MAX_COMPONENTS = 256
 
 
-def _pad_contacts(design: DesignIR, ref: str, bounds: tuple[float, float, float, float],
+def _pad_contacts(design: SpiDeR, ref: str, bounds: tuple[float, float, float, float],
                   shape: tuple[int, int], spacing: tuple[float, float]) -> list[dict[str, Any]]:
     """Rasterize imported copper lands; omit unplated holes and copper voids."""
     xmin, ymin, xmax, ymax = bounds
@@ -100,7 +100,7 @@ def _point(component: Mapping[str, Any], ref: str) -> tuple[float, float]:
     return _number(raw[0], f"{ref} x"), _number(raw[1], f"{ref} y")
 
 
-def _solve(design: DesignIR, request: Mapping[str, Any]) -> dict[str, Any]:
+def _solve(design: SpiDeR, request: Mapping[str, Any]) -> dict[str, Any]:
     if not isinstance(request, Mapping):
         raise ValueError("Board thermal request must be an object.")
     raw_board = request.get("board")
@@ -161,7 +161,7 @@ def _solve(design: DesignIR, request: Mapping[str, Any]) -> dict[str, Any]:
                     diagonal += conductance
                     matrix[index, neighbor] = -conductance
             matrix[index, index] = diagonal
-    # Desktop KiCad parsing uses ``ref`` while normalized DesignIR imports use
+    # Desktop KiCad parsing uses ``ref`` while normalized SpiDeR imports use
     # ``reference``. Both retain the same source coordinates in millimetres.
     available = {str(item.get("reference") or item.get("ref") or ""): item
                  for item in design.components if isinstance(item, Mapping)}
@@ -292,7 +292,7 @@ def _solve(design: DesignIR, request: Mapping[str, Any]) -> dict[str, Any]:
     }
 
 
-def run_board_thermal(design: DesignIR, request: Mapping[str, Any]) -> dict[str, Any]:
+def run_board_thermal(design: SpiDeR, request: Mapping[str, Any]) -> dict[str, Any]:
     """Solve an explicit steady board-plate model or return a blocking diagnostic."""
     try:
         return _solve(design, request)

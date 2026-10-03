@@ -6,7 +6,7 @@ import unittest
 import zlib
 from pathlib import Path
 
-from python.spike_core.design_ir_v2 import DesignIRV2
+from python.spike_core.spider_v2 import SpiDeRV2
 from python.spike_core.odb_importer import import_odb_design
 from python.spike_core.normalized_source_codec import decode_normalized_source, encode_normalized_source
 from python.spike_core.service_project_persistence import merge_future_fields, project_for_desktop
@@ -23,11 +23,11 @@ class ProjectPersistenceWorkflowTests(unittest.TestCase):
 
     def test_desktop_save_open_save_as_keeps_odb_results_and_future_fields(self):
         with tempfile.TemporaryDirectory() as directory:
-            canonical = DesignIRV2.from_v1(import_odb_design(str(write_board(directory)))).to_dict()
+            canonical = SpiDeRV2.from_v1(import_odb_design(str(write_board(directory)))).to_dict()
             canonical["future_geometry"] = {"curves": [1, 2], "vendor": "kept"}
             canonical["source"]["artifact_path"] = ""
             normalized = {"contract": "spike/design-snapshot/v1", "canonical_design": canonical,
-                          "design": DesignIRV2.from_dict(canonical).to_v1().to_dict()}
+                          "design": SpiDeRV2.from_dict(canonical).to_v1().to_dict()}
             results = [{"analysis_id": f"R{i}", "outputs": {"waveform": [i, i + 1]}, "future": {"unit": "A"}} for i in range(25)]
             snapshot = {"format": "spike-project-package/v2", "project": {"name": "ODB saved"},
                         "design": {"source_file": "job.spike-design.json", "source_format": "spike-normalized",
@@ -58,7 +58,7 @@ class ProjectPersistenceWorkflowTests(unittest.TestCase):
 
     def test_binary_odb_projects_project_complete_canonical_geometry(self):
         with tempfile.TemporaryDirectory() as directory:
-            canonical = DesignIRV2.from_v1(import_odb_design(str(write_board(directory)))).to_dict()
+            canonical = SpiDeRV2.from_v1(import_odb_design(str(write_board(directory)))).to_dict()
         canonical["future_geometry"] = {"polarity": "negative", "vendor": ["A", "B"]}
         canonical["source"]["artifact_path"] = "package:sources/job.tgz"
         projected = project_for_desktop({"design_ir": canonical}, {"design": {}, "analysis": {}})
@@ -70,11 +70,11 @@ class ProjectPersistenceWorkflowTests(unittest.TestCase):
 
     def test_compact_normalized_source_save_and_open_roundtrip(self):
         with tempfile.TemporaryDirectory() as directory:
-            canonical = DesignIRV2.from_v1(import_odb_design(str(write_board(directory)))).to_dict()
+            canonical = SpiDeRV2.from_v1(import_odb_design(str(write_board(directory)))).to_dict()
             canonical["source"]["artifact_path"] = ""
             normalized = json.dumps({"contract": "spike/design-snapshot/v1",
                                      "canonical_design": canonical,
-                                     "design": DesignIRV2.from_dict(canonical).to_v1().to_dict()})
+                                     "design": SpiDeRV2.from_dict(canonical).to_v1().to_dict()})
             snapshot = {"format": "spike-project-package/v2", "project": {"name": "compact"},
                         "design": {"source_file": "job.spike-design.json", "source_format": "spike-normalized",
                                    "source_board": encode_normalized_source(normalized)}, "analysis": {}}

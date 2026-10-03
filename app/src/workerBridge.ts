@@ -40,6 +40,10 @@ export type WorkerActivity = {
 };
 
 const HEAVY_METHODS = new Set([
+  "model_library",
+  "model_library_status",
+  "model_library_add_root",
+  "resolve_3d_model",
   "export_mcad_session",
   "preview_mcad_feedback",
   "apply_mcad_feedback",
@@ -57,6 +61,7 @@ const HEAVY_METHODS = new Set([
   "prepare_3d_scene",
   "prepare_thermal_case",
   "prepare_visual_bundle",
+  "prepare_assembly_design_visual_bundle",
   "plan_thermal_field_job",
   "read_project_model_artifacts",
   "read_project_state_artifact",
@@ -71,6 +76,16 @@ const HEAVY_METHODS = new Set([
   "run_multiboard_si_independent_batch",
   "run_pi_path_native_mna",
   "run_harness_pi",
+  "run_multiboard_circuit",
+  "run_multiboard_thermal",
+  "run_multiboard_em",
+  "prepare_assembly_field_handoff",
+  "run_assembly_field_thermal",
+  "derive_assembly_view_factors",
+  "import_assembly_field_study",
+  "export_assembly_field_study",
+  "read_assembly_field_study_in_project",
+  "save_assembly_field_study_in_project",
   "generate_tetrahedral_mesh",
   "run_openems_case",
   "run_preflighted_analysis",
@@ -314,12 +329,22 @@ export async function selectNativeProjectFile(): Promise<NativeSelectedFile | nu
   return invoke<NativeSelectedFile | null>("select_project_file");
 }
 
+export async function selectNativeWorkbenchFile(): Promise<NativeSelectedFile | null> {
+  if (!isDesktopShell()) return null;
+  return invoke<NativeSelectedFile | null>("select_workbench_file");
+}
+
+export async function readApprovedSourceFile(path: string): Promise<NativeTextFile> {
+  if (!isDesktopShell()) throw new Error("Source file access requires the SPIKE desktop shell.");
+  return invoke<NativeTextFile>("read_approved_source_file", { path });
+}
+
 export async function readApprovedResultFile(path: string): Promise<NativeTextFile> {
   if (!isDesktopShell()) throw new Error("Result file access requires the SPIKE desktop shell.");
   return invoke<NativeTextFile>("read_approved_result_file", { path });
 }
 
-export async function selectNativeImportFile(kind: "board" | "harness" | "extension", directory = false): Promise<NativeSelectedFile | null> {
+export async function selectNativeImportFile(kind: "board" | "harness" | "extension" | "structure" | "script", directory = false): Promise<NativeSelectedFile | null> {
   if (!isDesktopShell()) return null;
   return invoke<NativeSelectedFile | null>("select_import_file", { kind, directory });
 }
@@ -332,6 +357,11 @@ export async function takeStartupProject(): Promise<NativeSelectedFile | null> {
 export async function selectNativeMcadFile(): Promise<NativeSelectedFile | null> {
   if (!isDesktopShell()) return null;
   return invoke<NativeSelectedFile | null>("select_mcad_file");
+}
+
+export async function selectNativeAssemblySources(): Promise<NativeSelectedFile[] | null> {
+  if (!isDesktopShell()) return null;
+  return invoke<NativeSelectedFile[] | null>("select_assembly_sources");
 }
 
 export async function selectNativeProjectSavePath(suggestedName: string): Promise<string | null> {

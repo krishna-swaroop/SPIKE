@@ -20,8 +20,8 @@ ENTRY = REPOSITORY / "scripts" / "spike_layout_scoring_worker_entry.py"
 if str(REPOSITORY) not in sys.path:
     sys.path.insert(0, str(REPOSITORY))
 
-from python.spike_core.contracts import DesignIR
-from python.spike_core.design_ir_v2 import DesignIRV2
+from python.spike_core.contracts import SpiDeR
+from python.spike_core.spider_v2 import SpiDeRV2
 from python.spike_core.layout_scoring_process import JOB_CONTRACT
 from python.spike_core.spikes_layout_adapter import (
     LAYOUT_EVALUATION_CONTRACT,
@@ -30,8 +30,8 @@ from python.spike_core.spikes_layout_adapter import (
 
 
 def _candidate() -> dict:
-    return DesignIRV2.from_v1(
-        DesignIR(design_id="layout-example"), source_digest="1" * 64,
+    return SpiDeRV2.from_v1(
+        SpiDeR(design_id="layout-example"), source_digest="1" * 64,
     ).to_dict()
 
 

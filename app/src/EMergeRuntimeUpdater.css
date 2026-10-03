@@ -1,0 +1,11 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+.emerge-update-setup { border: 0; margin: 0; padding: 0; min-width: 0; }
+.emerge-runtime-updater { padding: 12px; margin: 12px 0; border: 1px solid var(--spike-table-border); border-radius: 5px; min-width: 0; }
+.emerge-runtime-updater header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px; margin-bottom: 10px; }
+.emerge-runtime-updater header span, .emerge-runtime-updater small { color: var(--spike-table-muted); }
+.emerge-update-actions { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px; }
+.emerge-update-actions label { display: grid; gap: 4px; font: 11px/1.4 Inter, "Segoe UI", sans-serif; }
+.emerge-update-actions button { display: inline-flex; align-items: center; gap: 5px; min-height: 30px; }
+.emerge-update-actions select { min-height: 30px; max-width: 100%; padding: 4px 8px; font: 12px/1.3 Inter, "Segoe UI", sans-serif; }
+.emerge-update-path, .emerge-runtime-updater p { overflow-wrap: anywhere; }
+.emerge-runtime-updater pre { max-height: 220px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; font: 11px/1.5 Consolas, monospace; }

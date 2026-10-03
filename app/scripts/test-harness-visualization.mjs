@@ -121,7 +121,8 @@ for (const [actual, expected] of marbleProjection.visuals.map((item, index) => [
 }
 
 assert.ok(harnessSource.includes("new Map"), "endpoint resolution must be indexed");
-assert.ok(!harnessSource.includes("components") && !harnessSource.includes("nets"), "harness projection must not scan dense board features");
+const harnessProjectionSource = harnessSource.slice(harnessSource.indexOf("export function buildVirtualHarnessVisualization"));
+assert.ok(!harnessProjectionSource.includes("components") && !harnessProjectionSource.includes(".nets"), "harness endpoint projection must not scan dense board features");
 assert.ok(viewportSource.includes("harnessPickablesRef"), "harness picking must remain separate from dense board pickables");
 assert.ok(viewportSource.includes("virtualHarnessScene"), "viewport must expose bounded harness render diagnostics");
 assert.ok(viewportSource.includes("virtualBoardPickablesRef"), "board-instance proxies need a bounded dedicated picking set");

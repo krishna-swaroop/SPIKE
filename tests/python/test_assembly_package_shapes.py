@@ -18,9 +18,9 @@ from python.spike_core.assembly_package_shapes import (
     model_transform_sha256,
     selector_inventory_sha256,
 )
-from python.spike_core.contracts import DesignIR
-from python.spike_core.design_ir_v2 import AssemblyIRV1, DesignIRV2
-from python.spike_core.design_ir_v2_schema import canonical_uuid
+from python.spike_core.contracts import SpiDeR
+from python.spike_core.spider_v2 import AssemblyIRV1, SpiDeRV2
+from python.spike_core.spider_v2_schema import canonical_uuid
 from python.spike_core.project_package import ProjectPackageError, read_spike_package, write_spike_package
 from python.spike_core.project_model_artifacts import read_package_shape_selector_previews
 from python.spike_core.service_project_handlers import handle_project_request
@@ -198,7 +198,7 @@ class AssemblyPackageShapeTests(unittest.TestCase):
 
     def test_package_save_reopen_is_digest_bound_and_lossless(self):
         assembly, models, index, model_artifacts, shape_artifacts = self.fixture()
-        design = DesignIRV2.from_v1(DesignIR(
+        design = SpiDeRV2.from_v1(SpiDeR(
             design_id="shape-design", name="Shape design", source_format="neutral",
             layers=[{"id": 0, "name": "F.Cu"}], metadata={"source_sha256": "7" * 64},
         ))
@@ -240,7 +240,7 @@ class AssemblyPackageShapeTests(unittest.TestCase):
         canonical = canonicalize_assembly_package_shapes(index, assembly, models)
         self.assertEqual(canonical["shapes"][0]["selector_preview"]["artifact_uri"], first["selector_preview"]["artifact_uri"])
 
-        design = DesignIRV2.from_v1(DesignIR(
+        design = SpiDeRV2.from_v1(SpiDeR(
             design_id="shape-preview-design", name="Shape preview design", source_format="neutral",
             layers=[{"id": 0, "name": "F.Cu"}], metadata={"source_sha256": "8" * 64},
         ))
@@ -303,7 +303,7 @@ class AssemblyPackageShapeTests(unittest.TestCase):
             "face_count": 1, "edge_count": 1, "axis_count": 1,
             "visual_only": True, "solver_ready": False,
         }
-        design = DesignIRV2.from_v1(DesignIR(
+        design = SpiDeRV2.from_v1(SpiDeR(
             design_id="shape-reader", name="Shape reader", source_format="neutral",
             layers=[{"id": 0, "name": "F.Cu"}], metadata={"source_sha256": "a" * 64},
         ))

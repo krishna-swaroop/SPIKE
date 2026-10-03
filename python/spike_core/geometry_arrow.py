@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Iterable
 
-from .design_ir_v2 import DesignIRV2, content_digest
+from .spider_v2 import SpiDeRV2, content_digest
 
 
 GEOMETRY_ARROW_CONTRACT_V1 = "spike/copper-geometry-arrow/v1"
@@ -48,14 +48,14 @@ def _validate_decode_limits(*, max_ipc_bytes: int, max_rows: int) -> None:
         raise GeometryArrowError("Geometry Arrow row limit is invalid.")
 
 
-def _geometry_row_count(design: DesignIRV2) -> int:
+def _geometry_row_count(design: SpiDeRV2) -> int:
     """Count projected rows without constructing their nested Python values."""
     return sum(len(items) for items in (
         design.tracks, design.arcs, design.zones, design.pads, design.vias,
     ))
 
 
-def _require_row_budget(design: DesignIRV2, max_rows: int) -> None:
+def _require_row_budget(design: SpiDeRV2, max_rows: int) -> None:
     if _geometry_row_count(design) > max_rows:
         raise GeometryArrowError(f"Geometry table exceeds the {max_rows}-row limit.")
 
@@ -70,7 +70,7 @@ def _pyarrow():
     return pa
 
 
-def canonical_design_digest(design: DesignIRV2) -> str:
+def canonical_design_digest(design: SpiDeRV2) -> str:
     payload = design.to_dict()
     for name in (
         "materials", "layers", "nets", "tracks", "arcs", "zones", "pads", "vias", "drills",
@@ -81,7 +81,7 @@ def canonical_design_digest(design: DesignIRV2) -> str:
     return content_digest(payload)
 
 
-def geometry_arrow_contract(design: DesignIRV2) -> str:
+def geometry_arrow_contract(design: SpiDeRV2) -> str:
     if any(item.land_profiles for item in [*design.pads, *design.vias]):
         return GEOMETRY_ARROW_CONTRACT_V4
     if any(item.boundary_rings for item in design.zones):
@@ -89,7 +89,7 @@ def geometry_arrow_contract(design: DesignIRV2) -> str:
     return GEOMETRY_ARROW_CONTRACT_V2 if any(item.path is not None for item in design.tracks) else GEOMETRY_ARROW_CONTRACT_V1
 
 
-def _metadata(design: DesignIRV2, contract: str) -> dict[bytes, bytes]:
+def _metadata(design: SpiDeRV2, contract: str) -> dict[bytes, bytes]:
     return {
         b"spike.contract": contract.encode("ascii"),
         b"spike.table": GEOMETRY_ARROW_TABLE_NAME.encode("ascii"),
@@ -100,7 +100,7 @@ def _metadata(design: DesignIRV2, contract: str) -> dict[bytes, bytes]:
     }
 
 
-def _schema(design: DesignIRV2, contract: str):
+def _schema(design: SpiDeRV2, contract: str):
     pa = _pyarrow()
     point = pa.struct([pa.field("x_mm", pa.float64(), nullable=False), pa.field("y_mm", pa.float64(), nullable=False)])
     polygons = pa.list_(pa.list_(point))
@@ -190,7 +190,7 @@ def _land_profiles(value: Iterable[Any]) -> list[dict[str, Any]]:
 
 
 def canonical_geometry_rows(
-    design: DesignIRV2,
+    design: SpiDeRV2,
     *,
     contract: str | None = None,
     max_rows: int = MAX_GEOMETRY_ARROW_ROWS,
@@ -268,7 +268,7 @@ def canonical_geometry_rows(
 
 
 def _serialize_geometry_arrow(
-    design: DesignIRV2,
+    design: SpiDeRV2,
     *,
     contract: str | None = None,
     max_rows: int = MAX_GEOMETRY_ARROW_ROWS,
@@ -284,7 +284,7 @@ def _serialize_geometry_arrow(
     return sink.getvalue().to_pybytes()
 
 
-def build_geometry_arrow(design: DesignIRV2) -> bytes:
+def build_geometry_arrow(design: SpiDeRV2) -> bytes:
     result = _serialize_geometry_arrow(design)
     validate_geometry_arrow(result, design)
     return result
@@ -292,7 +292,7 @@ def build_geometry_arrow(design: DesignIRV2) -> bytes:
 
 def validate_geometry_arrow(
     data: bytes,
-    design: DesignIRV2,
+    design: SpiDeRV2,
     *,
     max_ipc_bytes: int = MAX_GEOMETRY_ARROW_IPC_BYTES,
     max_rows: int = MAX_GEOMETRY_ARROW_ROWS,
@@ -304,7 +304,7 @@ def validate_geometry_arrow(
         raise GeometryArrowError(f"Geometry Arrow IPC payload exceeds the {max_ipc_bytes}-byte limit.")
     if len(data) < 12 or not data.startswith(b"ARROW1") or not data.endswith(b"ARROW1"):
         raise GeometryArrowError("Geometry member is not a valid Arrow IPC file.")
-    # The DesignIR is the trusted source for this design-bound projection.
+    # The SpiDeR is the trusted source for this design-bound projection.
     # Reject its projected row count before building nested canonical values.
     _require_row_budget(design, max_rows)
     pa = _pyarrow()
@@ -325,11 +325,11 @@ def validate_geometry_arrow(
     expected_bytes = _serialize_geometry_arrow(design, contract=contract, max_rows=max_rows)
     if data != expected_bytes:
         raise GeometryArrowError(
-            "Geometry Arrow bytes do not exactly match the canonical uncompressed DesignIR projection."
+            "Geometry Arrow bytes do not exactly match the canonical uncompressed SpiDeR projection."
         )
     expected_schema = _schema(design, contract)
     if not reader.schema.equals(expected_schema, check_metadata=True):
-        raise GeometryArrowError("Geometry Arrow schema or DesignIR binding metadata is invalid.")
+        raise GeometryArrowError("Geometry Arrow schema or SpiDeR binding metadata is invalid.")
     # Do not decode untrusted record batches.  Exact equality above proves the
     # file is the local, uncompressed serialization, so return those local
     # canonical rows instead of materializing Arrow buffers into Python.

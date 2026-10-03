@@ -7,14 +7,14 @@ import contextlib
 import hashlib
 
 from python.spike_core.cli import EXIT_ANALYSIS, EXIT_OK, main
-from python.spike_core.contracts import AnalysisSpec, DesignIR
+from python.spike_core.contracts import AnalysisSpec, SpiDeR
 from python.spike_core.convergence import run_mesh_convergence
 from python.spike_core.solver_plugins import default_solver_registry
 
 
 class MeshConvergenceTests(unittest.TestCase):
     def setUp(self):
-        self.design = DesignIR(
+        self.design = SpiDeR(
             name="convergence trace",
             layers=[{"name": "F.Cu"}],
             nets=[{"id": 1, "name": "VCC"}],

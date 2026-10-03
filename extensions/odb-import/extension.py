@@ -7,6 +7,7 @@ import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from python.spike_core.importers import ImportPolicy
 from python.spike_core.odb_importer import import_odb_design
+from python.spike_core.odb_source_inspection import inspect_odb_source
 
 
 def main():
@@ -17,13 +18,21 @@ def main():
     request = json.loads(Path(args.request).read_text(encoding="utf-8"))
     if request["contribution_id"] == "odb-enrichment-schema":
         data = json.loads((Path(__file__).resolve().parents[2] / "schemas/board-enrichment-v1.schema.json").read_text(encoding="utf-8"))
-    else:
+        title = "ODB++ import"
+    elif request["contribution_id"] == "odb-inspect":
+        source = request["context"]["source"]
+        data = inspect_odb_source(source["path"], policy=ImportPolicy(**source.get("policy", {})))
+        title = "ODB++ source inspection"
+    elif request["contribution_id"] == "odb-design":
         source = request["context"]["source"]
         options = source.get("options", {})
         if set(options) - {"step"}: raise ValueError("Unknown ODB++ import options.")
         design = import_odb_design(source["path"], step=options.get("step", ""), policy=ImportPolicy(**source.get("policy", {})))
         data = {"design": design.to_dict()}
-    Path(args.result).write_text(json.dumps({"contract": "spike/extension-result/v1", "status": "completed", "title": "ODB++ import", "data": data}, allow_nan=False), encoding="utf-8")
+        title = "ODB++ import"
+    else:
+        raise ValueError(f"Unknown ODB++ contribution: {request['contribution_id']}")
+    Path(args.result).write_text(json.dumps({"contract": "spike/extension-result/v1", "status": "completed", "title": title, "data": data}, allow_nan=False), encoding="utf-8")
 
 
 if __name__ == "__main__": main()

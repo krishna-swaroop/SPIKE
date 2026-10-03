@@ -5,7 +5,7 @@ from __future__ import annotations
 from math import sqrt
 from typing import Any, Dict, List, Tuple
 
-from .contracts import AnalysisSpec, DesignIR, ValidationIssue
+from .contracts import AnalysisSpec, SpiDeR, ValidationIssue
 from .hybrid_mesh import HybridMesh, nearest_mesh_node
 from .pi_path import validate_pi_path
 
@@ -15,7 +15,7 @@ PI_PATH_INTERFACE_ELEMENT_CONTRACT = "spike/pi-path-interface-elements/v1"
 
 def build_pi_path_interface_elements(
     mesh: HybridMesh,
-    design: DesignIR,
+    design: SpiDeR,
     spec: AnalysisSpec,
 ) -> Tuple[List[Dict[str, Any]], List[ValidationIssue]]:
     """Resolve reviewed cross-net component models onto exact conductor nodes.
@@ -106,7 +106,7 @@ def build_pi_path_interface_elements(
 
 def stamp_pi_path_interfaces(
     mesh: HybridMesh,
-    design: DesignIR,
+    design: SpiDeR,
     spec: AnalysisSpec,
     node_positions: List[tuple[float, float, str]],
     edges: List[Dict[str, Any]],

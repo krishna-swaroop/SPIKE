@@ -3,7 +3,7 @@
 
 # PI/SI casebook inputs
 
-`straight_trace.design.json` is an original synthetic DesignIR fixture owned
+`straight_trace.design.json` is an original synthetic SpiDeR fixture owned
 by SigHarmonic and released under Apache 2.0. It is not a copied PCB or measured
 material dataset. Copper dimensions and conductivity are explicit so the DC
 result can be checked against `R = length/(sigma * width * thickness)`.

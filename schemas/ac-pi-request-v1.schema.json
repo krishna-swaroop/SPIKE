@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "spike/ac-pi-request/v1",
+  "title": "Explicit uniform AC power integrity request",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract",
+    "frequencies_hz",
+    "length_m",
+    "R_ohm_per_m",
+    "L_h_per_m",
+    "G_s_per_m",
+    "C_f_per_m",
+    "source_impedance_ohm",
+    "load_impedance_ohm"
+  ],
+  "properties": {
+    "contract": {
+      "const": "spike/ac-pi-request/v1"
+    },
+    "frequencies_hz": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 2048,
+      "items": {
+        "type": "number",
+        "minimum": 0
+      }
+    },
+    "length_m": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "R_ohm_per_m": {
+      "type": "number",
+      "minimum": 0
+    },
+    "L_h_per_m": {
+      "type": "number",
+      "minimum": 0
+    },
+    "G_s_per_m": {
+      "type": "number",
+      "minimum": 0
+    },
+    "C_f_per_m": {
+      "type": "number",
+      "minimum": 0
+    },
+    "source_impedance_ohm": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": {
+        "type": "number"
+      }
+    },
+    "load_impedance_ohm": {
+      "anyOf": [
+        {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "number"
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "conductor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "width_m",
+        "thickness_m",
+        "conductivity_s_m"
+      ],
+      "properties": {
+        "width_m": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "thickness_m": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "conductivity_s_m": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "relative_permeability": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "field_bias_ratio": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "number"
+          }
+        }
+      }
+    }
+  }
+}

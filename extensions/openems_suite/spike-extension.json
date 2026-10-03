@@ -12,13 +12,309 @@
   "state": "experimental",
   "license": "Apache-2.0",
   "bundled": true,
-  "ui": {"menu_bar": true, "title_bar": true, "menu_items": ["openems-pi", "openems-si"]},
-  "permissions": ["design.read"],
-  "limits": {"timeout_seconds": 3600, "max_result_bytes": 8388608},
+  "ui": {
+    "menu_bar": true,
+    "title_bar": true,
+    "menu_items": [
+      "openems-pi",
+      "openems-si",
+      "openems-em",
+      "openems-mesh"
+    ]
+  },
+  "permissions": [
+    "design.read",
+    "results.write"
+  ],
+  "limits": {
+    "timeout_seconds": 3600,
+    "max_result_bytes": 8388608
+  },
   "contributes": {
     "applications": [
-      {"id": "openems-pi", "name": "PI full-wave setup", "category": "Power integrity", "description": "Preflight, prepare or run an explicit high-frequency PDN port sweep; not DC PI.", "output_contract": "spike/extension-result/v1", "input_schema": {"type": "object", "required": ["analysis"], "properties": {"operation": {"enum": ["preflight", "prepare", "run"]}, "analysis": {"type": "object"}, "engine_options": {"type": "object"}}}},
-      {"id": "openems-si", "name": "SI full-wave setup", "category": "Signal integrity", "description": "Preflight, prepare or run an explicit interconnect port sweep.", "output_contract": "spike/extension-result/v1", "input_schema": {"type": "object", "required": ["analysis"], "properties": {"operation": {"enum": ["preflight", "prepare", "run"]}, "analysis": {"type": "object"}, "engine_options": {"type": "object"}}}}
+      {
+        "id": "openems-pi",
+        "name": "PI full-wave setup",
+        "category": "Power integrity",
+        "description": "Preflight, prepare or run an explicit high-frequency PDN port sweep; not DC PI.",
+        "output_contract": "spike/extension-result/v1",
+        "input_schema": {
+          "type": "object",
+          "required": [
+            "analysis"
+          ],
+          "properties": {
+            "operation": {
+              "enum": [
+                "preflight",
+                "prepare",
+                "run"
+              ]
+            },
+            "analysis": {
+              "type": "object"
+            },
+            "engine_options": {
+              "type": "object"
+            }
+          }
+        }
+      },
+      {
+        "id": "openems-si",
+        "name": "SI full-wave setup",
+        "category": "Signal integrity",
+        "description": "Preflight, prepare or run an explicit interconnect port sweep.",
+        "output_contract": "spike/extension-result/v1",
+        "input_schema": {
+          "type": "object",
+          "required": [
+            "analysis"
+          ],
+          "properties": {
+            "operation": {
+              "enum": [
+                "preflight",
+                "prepare",
+                "run"
+              ]
+            },
+            "analysis": {
+              "type": "object"
+            },
+            "engine_options": {
+              "type": "object"
+            }
+          }
+        }
+      },
+      {
+        "id": "openems-em",
+        "name": "EM full-wave setup",
+        "category": "Electromagnetics",
+        "description": "Preflight, prepare or run explicit EM ports and optional NF2FF.",
+        "output_contract": "spike/extension-result/v1",
+        "input_schema": {
+          "type": "object",
+          "required": [
+            "analysis"
+          ],
+          "properties": {
+            "operation": {
+              "enum": [
+                "preflight",
+                "prepare",
+                "run"
+              ]
+            },
+            "analysis": {
+              "type": "object"
+            },
+            "engine_options": {
+              "type": "object"
+            }
+          }
+        }
+      },
+      {
+        "id": "openems-preview",
+        "name": "OpenEMS script and case preview",
+        "category": "Electromagnetics",
+        "description": "Prepare authenticated case and inspect the trusted adapter body; no execution.",
+        "output_contract": "spike/extension-result/v1",
+        "input_schema": {
+          "type": "object",
+          "required": [
+            "analysis"
+          ],
+          "properties": {
+            "operation": {
+              "enum": [
+                "preflight",
+                "prepare",
+                "run"
+              ]
+            },
+            "analysis": {
+              "type": "object"
+            },
+            "engine_options": {
+              "type": "object"
+            }
+          }
+        }
+      },
+      {
+        "id": "openems-mesh",
+        "name": "OpenEMS Cartesian grid",
+        "category": "Mesh",
+        "description": "Run actual CSXCAD setup only and export complete final grid lines; no field solve.",
+        "output_contract": "spike/openems-grid/v1",
+        "input_schema": {
+          "type": "object",
+          "required": [
+            "analysis"
+          ],
+          "properties": {
+            "operation": {
+              "enum": [
+                "preflight",
+                "prepare",
+                "run"
+              ]
+            },
+            "analysis": {
+              "type": "object"
+            },
+            "engine_options": {
+              "type": "object"
+            }
+          }
+        },
+        "workspace_routes": [
+          {
+            "id": "openems-cartesian-grid",
+            "workspace": "mesh",
+            "operation": "mesh",
+            "label": "OpenEMS Cartesian FDTD grid",
+            "setup_contribution_id": "openems-mesh",
+            "preview_contribution_id": "openems-preview",
+            "mesh_kind": "cartesian_fdtd",
+            "model_status": "unvalidated",
+            "compatible_solver_ids": [
+              "external.openems"
+            ]
+          }
+        ]
+      }
+    ],
+    "analyses": [
+      {
+        "id": "openems-pi-solve",
+        "name": "OpenEMS PI full-wave solve",
+        "category": "Power integrity",
+        "description": "Actual completed full-wave AC port sweep with unsolved columns explicitly invalid.",
+        "output_contract": "spike/v1",
+        "input_schema": {
+          "type": "object",
+          "required": [
+            "analysis"
+          ],
+          "properties": {
+            "operation": {
+              "enum": [
+                "preflight",
+                "prepare",
+                "run"
+              ]
+            },
+            "analysis": {
+              "type": "object"
+            },
+            "engine_options": {
+              "type": "object"
+            }
+          }
+        },
+        "workspace_routes": [
+          {
+            "id": "openems-pi-solve",
+            "workspace": "pi",
+            "operation": "solve",
+            "label": "OpenEMS full-wave AC PI",
+            "setup_contribution_id": "openems-pi",
+            "preview_contribution_id": "openems-preview",
+            "model_status": "unvalidated",
+            "compatible_solver_ids": [
+              "external.openems"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "openems-si-solve",
+        "name": "OpenEMS SI full-wave solve",
+        "category": "Signal integrity",
+        "description": "Actual completed full-wave AC port sweep with unsolved columns explicitly invalid.",
+        "output_contract": "spike/v1",
+        "input_schema": {
+          "type": "object",
+          "required": [
+            "analysis"
+          ],
+          "properties": {
+            "operation": {
+              "enum": [
+                "preflight",
+                "prepare",
+                "run"
+              ]
+            },
+            "analysis": {
+              "type": "object"
+            },
+            "engine_options": {
+              "type": "object"
+            }
+          }
+        },
+        "workspace_routes": [
+          {
+            "id": "openems-si-solve",
+            "workspace": "si",
+            "operation": "solve",
+            "label": "OpenEMS SI",
+            "setup_contribution_id": "openems-si",
+            "preview_contribution_id": "openems-preview",
+            "model_status": "unvalidated",
+            "compatible_solver_ids": [
+              "external.openems"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "openems-em-solve",
+        "name": "OpenEMS EM full-wave solve",
+        "category": "Electromagnetics",
+        "description": "Actual completed full-wave AC port sweep with unsolved columns explicitly invalid.",
+        "output_contract": "spike/v1",
+        "input_schema": {
+          "type": "object",
+          "required": [
+            "analysis"
+          ],
+          "properties": {
+            "operation": {
+              "enum": [
+                "preflight",
+                "prepare",
+                "run"
+              ]
+            },
+            "analysis": {
+              "type": "object"
+            },
+            "engine_options": {
+              "type": "object"
+            }
+          }
+        },
+        "workspace_routes": [
+          {
+            "id": "openems-em-solve",
+            "workspace": "em",
+            "operation": "solve",
+            "label": "OpenEMS EM",
+            "setup_contribution_id": "openems-em",
+            "preview_contribution_id": "openems-preview",
+            "model_status": "unvalidated",
+            "compatible_solver_ids": [
+              "external.openems"
+            ]
+          }
+        ]
+      }
     ]
   }
 }

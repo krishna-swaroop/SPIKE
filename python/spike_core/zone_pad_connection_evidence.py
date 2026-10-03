@@ -10,8 +10,8 @@ import json
 import hashlib
 from typing import Any, Callable, Dict, Mapping
 
-from .design_ir_v2 import DesignIRV2
-from .design_ir_v2_schema import content_digest
+from .spider_v2 import SpiDeRV2
+from .spider_v2_schema import content_digest
 
 
 CONTRACT = "spike/zone-pad-connection-evidence/v1"
@@ -21,7 +21,7 @@ MAX_SOURCE_FILLED_ZONES = 65_536
 MAX_RECORDS = 262_144
 MAX_WORK_STEPS = 16_777_216
 # Marble-class boards retain source-filled copper rings which can make a valid
-# DesignIR larger than 64 MiB.  This remains a hard admission limit: it is
+# SpiDeR larger than 64 MiB.  This remains a hard admission limit: it is
 # deliberately separate from the record and work limits below.
 MAX_SERIALIZED_BYTES = 134_217_728
 
@@ -42,7 +42,7 @@ def _canonical_bytes(value: Any) -> bytes:
 
 
 def _canonical_digest_and_size(value: Any) -> tuple[str, int]:
-    """Digest canonical DesignIR JSON without allocating a second full copy.
+    """Digest canonical SpiDeR JSON without allocating a second full copy.
 
     ``content_digest`` defines the public source binding as compact,
     ASCII-escaped, sorted JSON.  Iterating the encoder preserves those exact
@@ -61,23 +61,23 @@ def _canonical_digest_and_size(value: Any) -> tuple[str, int]:
             digest.update(encoded)
             serialized_bytes += len(encoded)
             if serialized_bytes > MAX_SERIALIZED_BYTES:
-                _fail("DesignIR v2 exceeds the 128 MiB connection-evidence input limit")
+                _fail("SpiDeR v2 exceeds the 128 MiB connection-evidence input limit")
     except (TypeError, ValueError) as error:
         raise ZonePadConnectionEvidenceError(f"{ERROR_CODE}: evidence inputs must be finite JSON values") from error
     return digest.hexdigest(), serialized_bytes
 
 
-def _design(value: DesignIRV2 | Mapping[str, Any]) -> tuple[DesignIRV2, Dict[str, Any]]:
-    if isinstance(value, DesignIRV2):
+def _design(value: SpiDeRV2 | Mapping[str, Any]) -> tuple[SpiDeRV2, Dict[str, Any]]:
+    if isinstance(value, SpiDeRV2):
         design, payload = value, value.to_dict()
     elif isinstance(value, Mapping):
         payload = dict(value)
         try:
-            design = DesignIRV2.from_dict(payload)
+            design = SpiDeRV2.from_dict(payload)
         except (TypeError, ValueError) as error:
-            raise ZonePadConnectionEvidenceError(f"{ERROR_CODE}: source geometry is not valid DesignIR v2") from error
+            raise ZonePadConnectionEvidenceError(f"{ERROR_CODE}: source geometry is not valid SpiDeR v2") from error
     else:
-        _fail("source geometry must be DesignIR v2 or a mapping")
+        _fail("source geometry must be SpiDeR v2 or a mapping")
     if payload.get("contract") != "spike/design-ir/v2" or not design.design_id:
         _fail("connection evidence requires an identified spike/design-ir/v2 source")
     return design, payload
@@ -149,7 +149,7 @@ def _resolve_mode(pad, component, zone, layer_id: str) -> tuple[str, str, str, s
 
 
 def build_zone_pad_connection_evidence(
-    source_geometry: DesignIRV2 | Mapping[str, Any],
+    source_geometry: SpiDeRV2 | Mapping[str, Any],
     cancel_check: Callable[[], Any] | None = None,
 ) -> Dict[str, Any]:
     design, payload = _design(source_geometry)
@@ -157,7 +157,7 @@ def build_zone_pad_connection_evidence(
     # Keep this defensive check at the admission boundary as well; the helper
     # normally fails early while streaming.
     if serialized_bytes > MAX_SERIALIZED_BYTES:
-        _fail("DesignIR v2 exceeds the 128 MiB connection-evidence input limit")
+        _fail("SpiDeR v2 exceeds the 128 MiB connection-evidence input limit")
     pads = list(design.pads)
     if any(item.filled_copper_state == "outline_fallback" for item in design.zones):
         _fail("outline-fallback zones cannot produce source-filled connection evidence")
@@ -294,7 +294,7 @@ def build_zone_pad_connection_evidence(
 
 
 def validate_zone_pad_connection_evidence(
-    report: Mapping[str, Any], *, source_geometry: DesignIRV2 | Mapping[str, Any]
+    report: Mapping[str, Any], *, source_geometry: SpiDeRV2 | Mapping[str, Any]
 ) -> Dict[str, Any]:
     if not isinstance(report, Mapping) or report.get("contract") != CONTRACT:
         _fail("connection evidence has an unsupported contract")

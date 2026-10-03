@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
-import { Activity, AlertTriangle, Download, Eye, EyeOff, Grid3X3, Layers3, Pause, Play, RadioTower, SlidersHorizontal, Waves, X } from "lucide-react";
+import DataTable from "./DataTable";
+import PlotlyChart from "./PlotlyChart";
+import { Activity, AlertTriangle, Download, Eye, EyeOff, Grid3X3, Layers3, Pause, Play, RadioTower, SlidersHorizontal, Waves, X } from "./icons";
 import type { ParsedBoard } from "./boardParser";
 import { previewViewportTarget } from "./BoardViewport";
 import {
@@ -188,20 +190,6 @@ export default function ResultVisualizationPanel({
   const impedanceExtent = numericExtent(impedanceMagnitudes);
   const impedanceMinimum = impedanceExtent.count ? impedanceExtent.minimum : undefined;
   const impedanceMaximum = impedanceExtent.count ? impedanceExtent.maximum : undefined;
-  const impedancePlot = (() => {
-    if (impedancePoints.length < 2) return "";
-    const frequencies = impedancePoints.map(point => Math.log10(Math.max(point.frequency_hz, 1e-30)));
-    const magnitudes = impedancePoints.map(point => Math.log10(Math.max(point.magnitude_ohm, 1e-30)));
-    const frequencyExtent = numericExtent(frequencies);
-    const magnitudeExtent = numericExtent(magnitudes);
-    const minF = frequencyExtent.minimum; const maxF = frequencyExtent.maximum;
-    const minZ = magnitudeExtent.minimum; const maxZ = magnitudeExtent.maximum;
-    return impedancePoints.map((_, index) => {
-      const x = 18 + (frequencies[index] - minF) / Math.max(maxF - minF, 1e-12) * 604;
-      const y = 132 - (magnitudes[index] - minZ) / Math.max(maxZ - minZ, 1e-12) * 108;
-      return `${index ? "L" : "M"}${x.toFixed(2)},${y.toFixed(2)}`;
-    }).join(" ");
-  })();
   const resultLabel = !result ? rawResult ? `${rawResult.mode.toUpperCase()} / ${rawResult.status} / ${rawResult.model_status}` : "No solver result loaded"
     : result.status === "preview" ? `${result.mode.toUpperCase()} mesh preview / not solved`
       : `${result.mode.toUpperCase()} / ${result.model_status}`;
@@ -337,14 +325,14 @@ export default function ResultVisualizationPanel({
           {terminalReview && <div className="source-load-review" aria-label="Source to load terminal paths">
             <h4>Source to load terminals · {terminalReview.status}</h4>
             <p>Voltage reference: {terminalReview.voltageReference}. Source current balance: {terminalReview.sourceCurrentBalanceA === null ? "not returned" : analyticsValue(terminalReview.sourceCurrentBalanceA, "A")}.</p>
-            <table><thead><tr><th>Source → load</th><th>Source</th><th>Load</th><th>Supply drop</th><th>Loop drop</th><th>Load current</th><th>Limit</th></tr></thead>
+            <DataTable label="Power delivery path results"><thead><tr><th>Source → load</th><th>Source</th><th>Load</th><th>Supply drop</th><th>Loop drop</th><th>Load current</th><th>Limit</th></tr></thead>
               <tbody>{terminalReview.paths.map((path, index) => <tr key={`${path.sourceId}-${path.loadId}-${index}`}>
                 <td>{path.sourceId} → {path.loadId}<small>{path.supplyNet}{path.returnNet ? ` / return ${path.returnNet}` : ""}</small></td>
                 <td>{analyticsValue(path.sourceVoltageV, "V")}</td><td>{analyticsValue(path.loadVoltageV, "V")}</td>
                 <td>{analyticsValue(path.supplyDropV * 1000, "mV")}</td>
                 <td>{path.loopDropV === null ? "No explicit return" : analyticsValue(path.loopDropV * 1000, "mV")}</td>
                 <td>{analyticsValue(path.loadCurrentA, "A")}</td><td>{path.limitState}</td>
-              </tr>)}</tbody></table>
+              </tr>)}</tbody></DataTable>
           </div>}
           <p className="analytics-validity-note">These are original solver samples for the selected net and layers. {terminalReview ? "The terminal paths are separately anchored solver values; field extrema need not coincide with load pads." : "The worst board sample is not identified as a load terminal. A source-to-load voltage budget requires returned terminal identities and values."} {result?.model_status === "approximate" ? "This DC solve is approximate; check mesh convergence before engineering sign-off." : "Review model validity and mesh convergence before engineering sign-off."}</p>
         </section>}
@@ -362,7 +350,12 @@ export default function ResultVisualizationPanel({
           <div className="field-statistics">
             {visualization.mode === "impedance" && domain === "si" && selectedImpedancePoint ? <>
               <div className="impedance-plot" aria-label="Log-frequency impedance magnitude plot">
-                <svg viewBox="0 0 640 150" preserveAspectRatio="none"><path className="grid" d="M18 24H622M18 78H622M18 132H622" /><path className="trace" d={impedancePlot} /></svg>
+                <PlotlyChart title="Impedance magnitude sweep" revision={`result-impedance:${selectedImpedanceNetwork?.name}:${impedancePoints.length}`}
+                  data={[{ type: "scatter", mode: "lines+markers", name: "|Z|", x: impedancePoints.map(point => point.frequency_hz), y: impedancePoints.map(point => point.magnitude_ohm), connectgaps: false,
+                    line: { color: "#54d5c8", width: 2.5 }, marker: { color: impedancePoints.map((_, index) => index === selectedImpedanceIndex ? "#e5b253" : "#54d5c8"), size: impedancePoints.map((_, index) => index === selectedImpedanceIndex ? 9 : 5) },
+                    hovertemplate: "%{x:.6g} Hz<br>%{y:.6g} Ω<extra></extra>" }]}
+                  layout={{ margin: { l: 55, r: 12, t: 10, b: 42 }, showlegend: false, xaxis: { title: "Frequency (Hz)", type: "log" }, yaxis: { title: "|Z| (Ω)", type: "log" } }}
+                  onPointClick={point => update({ impedanceFrequencyHz: point.x })} />
               </div>
               <input className="impedance-frequency-slider" aria-label="Impedance frequency" type="range" min="0" max={Math.max(0, impedancePoints.length - 1)} value={selectedImpedanceIndex} onChange={event => update({ impedanceFrequencyHz: impedancePoints[Number(event.target.value)]?.frequency_hz ?? null })} />
               <dl>

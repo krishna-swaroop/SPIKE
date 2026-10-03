@@ -104,8 +104,11 @@ export function thermalRowsFromOdb(board: ParsedBoard | null): ThermalImportResu
       else if (aliases.theta_top_c_per_w.includes(key)) values["Rth top K/W"] = value;
       else if (aliases.theta_bottom_c_per_w.includes(key)) values["Rth bottom K/W"] = value;
     };
-    for (const property of component.properties ?? []) {
+    for (const property of Array.isArray(component.properties) ? component.properties : []) {
       if (typeof property.name === "string" && Array.isArray(property.values) && property.values.length === 1) assign(property.name, String(property.values[0]));
+    }
+    if (component.properties && !Array.isArray(component.properties)) for (const [name, value] of Object.entries(component.properties)) {
+      if (typeof value === "string" || typeof value === "number") assign(name, String(value));
     }
     for (const [name, value] of Object.entries(component.vendor_properties ?? {})) {
       if (typeof value === "string" || typeof value === "number") assign(name, String(value));

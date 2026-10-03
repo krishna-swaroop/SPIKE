@@ -1,0 +1,14 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+.assembly-field-study { min-width: 0; margin: 16px 0; padding: 12px; border: 1px solid var(--spike-table-border); border-radius: 6px; background: var(--spike-table-surface); color: var(--spike-table-text); }
+.assembly-field-study h4 { margin: 0 0 8px; text-transform: none; letter-spacing: 0; }
+.assembly-field-study p { max-width: 90ch; line-height: 1.5; color: var(--spike-table-muted); overflow-wrap: anywhere; }
+.assembly-field-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+.assembly-field-study details { min-width: 0; margin: 10px 0; }
+.assembly-field-study summary { cursor: pointer; font-weight: 600; }
+.assembly-field-study fieldset { min-width: 0; padding: 10px; border: 1px solid var(--spike-table-border); }
+.assembly-field-study label { display: grid; min-width: 0; gap: 5px; margin: 8px 0; font-size: 12px; }
+.assembly-field-study textarea { width: 100%; box-sizing: border-box; font: 12px/1.5 monospace; resize: vertical; }
+.assembly-field-boundary { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(200px,100%),1fr)); gap: 8px; }
+.assembly-field-boundary strong { grid-column: 1 / -1; overflow-wrap: anywhere; }
+.assembly-field-study pre { max-width: 100%; max-height: 300px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; }
+.assembly-field-study [role="alert"] { padding: 8px; border-left: 3px solid var(--spike-table-focus); }

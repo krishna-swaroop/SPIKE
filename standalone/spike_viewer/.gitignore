@@ -1,0 +1,7 @@
+node_modules/
+dist/
+demo-dist/
+artifacts/
+*.tgz
+*.log
+public/vendor/occt-import-js/

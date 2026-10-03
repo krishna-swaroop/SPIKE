@@ -15,8 +15,8 @@ from jsonschema import Draft202012Validator
 from referencing import Registry, Resource
 
 from python.core.board_parser import KicadParser
-from python.spike_core.contracts import AnalysisSpec, DesignIR
-from python.spike_core.design_ir_v2 import DesignIRV2
+from python.spike_core.contracts import AnalysisSpec, SpiDeR
+from python.spike_core.spider_v2 import SpiDeRV2
 from python.spike_core.hybrid_mesh import _polygon_is_contained_in, build_hybrid_mesh
 from python.spike_core.kicad_importer import import_kicad_design
 from python.spike_core.mesh_ownership import audit_dc_conductor_volume_ownership
@@ -78,8 +78,8 @@ class CustomPadDrillTests(unittest.TestCase):
         return import_kicad_design(str(self.write_board(**kwargs))).pads[0]
 
     @staticmethod
-    def design_for(pad: dict) -> DesignIR:
-        return DesignIR(
+    def design_for(pad: dict) -> SpiDeR:
+        return SpiDeR(
             layers=[{"name": "F.Cu"}, {"name": "B.Cu"}],
             stackup=[
                 {"name": "F.Cu", "type": "copper", "thickness": 0.035},
@@ -98,8 +98,8 @@ class CustomPadDrillTests(unittest.TestCase):
         self.assertEqual(parsed["drill_size"], (0.8, 0.8))
 
         imported = import_kicad_design(str(board))
-        typed = DesignIRV2.from_v1(imported)
-        restored = DesignIRV2.from_dict(typed.to_dict())
+        typed = SpiDeRV2.from_v1(imported)
+        restored = SpiDeRV2.from_dict(typed.to_dict())
         self.assertEqual(restored.pads[0].drill_shape, "circle")
         self.assertEqual(restored.pads[0].drill_size_mm, (0.8, 0.8))
         self.assertTrue(restored.pads[0].plated)

@@ -3,7 +3,7 @@ import json
 import math
 import unittest
 
-from python.spike_core.contracts import DesignIR
+from python.spike_core.contracts import SpiDeR
 from python.spike_core.spikes_layout_adapter import (
     SpikesLayoutAdapterError,
     canonical_layout_json,
@@ -15,7 +15,7 @@ from python.spike_core.spikes_layout_adapter import (
 
 class SpikesLayoutAdapterTests(unittest.TestCase):
     def setUp(self):
-        self.design = DesignIR(design_id="board-1")
+        self.design = SpiDeR(design_id="board-1")
         self.request = {
             "contract": "spike/layout-evaluation/v1",
             "record_type": "request",

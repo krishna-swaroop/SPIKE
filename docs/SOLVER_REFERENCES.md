@@ -205,6 +205,32 @@ are recorded in the research ledger for design context and validation boundaries
 IPC-2228/IPC-2221 revision references in that ledger establish standards scope;
 licensed normative requirements and applicable clauses are not reconstructed.
 
+### R17 - Surface-EM reference operators
+
+Retrieved 2026-09-30. S. M. Rao, D. R. Wilton and A. W. Glisson,
+*Electromagnetic Scattering by Surfaces of Arbitrary Shape*, IEEE Transactions
+on Antennas and Propagation (1982),
+[DOI 10.1109/TAP.1982.1142818](https://doi.org/10.1109/TAP.1982.1142818),
+is method lineage for a full interior-edge triangular current basis. M. G.
+Duffy, *Quadrature Over a Pyramid or Cube of Integrands with a Singularity at a
+Vertex*, SIAM Journal on Numerical Analysis (1982),
+[DOI 10.1137/0719090](https://doi.org/10.1137/0719090), motivates
+singularity-removing coordinate transformations; SPIKE independently derives
+its triangular fan Jacobian and exact radial static moment. [MIT radiation
+potential notes](https://web.mit.edu/6.013_book/www/chapter12/Backup/12.4.html)
+support the outgoing far-field asymptotic. [NIST CODATA 2022](https://physics.nist.gov/cuu/pdf/all.pdf)
+provides vacuum constants. The implemented kernel and supplied-current
+postprocessor are tested in the [operator evidence](validation/MOM_REFERENCE_OPERATORS_20260930.md);
+they are not a MoM current solver or an RCS validation of a scatterer.
+
+[Planewave density interpolation](https://arxiv.org/abs/1910.02046)
+(Pérez-Arancibia, Turc, Faria and Sideris, 2019) and
+[OSRC EFIE preconditioning](https://arxiv.org/abs/2507.20707)
+(Darbas and Fierro-Piccardo, 2025) are research
+candidates only. No algorithm, performance result or geometry from those
+papers is claimed as implemented. Sources informed the future validation
+questions, not SPIKE source code or fixtures.
+
 ## Experimental datasets and hardware fixtures
 
 | ID | Primary source | Recorded use and exact limitation |

@@ -1,0 +1,379 @@
+{
+  "case": {
+    "contract": "spike/emerge-board-case/v1",
+    "bounds_mm": [
+      100.0,
+      100.0,
+      140.0,
+      130.0
+    ],
+    "dielectric_thickness_mm": 1.6,
+    "epsilon_r": 4.3,
+    "copper_layers": [
+      {
+        "name": "F.Cu",
+        "z_mm": -0.0
+      },
+      {
+        "name": "B.Cu",
+        "z_mm": -1.6
+      }
+    ],
+    "dielectric_layers": [
+      {
+        "name": "dielectric 1",
+        "thickness_mm": 1.6,
+        "epsilon_r": 4.3,
+        "loss_tangent": 0.02,
+        "z_top_mm": -0.0,
+        "z_bottom_mm": -1.6
+      }
+    ],
+    "geometry_backend": "emerge",
+    "loss_tangent_omitted": 0.02,
+    "include_dielectric_loss": false,
+    "reference_impedance_ohm": 50.0,
+    "parallel": false,
+    "n_workers": 2,
+    "sparse_solver": "auto",
+    "air_margin_mm": null,
+    "radiation_theta_step_deg": 15,
+    "radiation_phi_step_deg": 15,
+    "radiation_cut_phi_deg": 0.0,
+    "nearfield_enabled": false,
+    "nearfield_z_mm": 1.0,
+    "nearfield_grid_points": 11,
+    "polygons": [
+      {
+        "id": "51d0c420-4c7b-4da5-b9ec-001000000021",
+        "net": "RF",
+        "layer": "F.Cu",
+        "xs_mm": [
+          105.0,
+          110.0,
+          110.0,
+          105.0
+        ],
+        "ys_mm": [
+          116.0,
+          116.0,
+          114.0,
+          114.0
+        ]
+      },
+      {
+        "id": "51d0c420-4c7b-4da5-b9ec-001000000011",
+        "net": "RF",
+        "layer": "F.Cu",
+        "xs_mm": [
+          104.0,
+          106.0,
+          106.0,
+          104.0
+        ],
+        "ys_mm": [
+          114.0,
+          114.0,
+          116.0,
+          116.0
+        ]
+      },
+      {
+        "id": "51d0c420-4c7b-4da5-b9ec-001000000012",
+        "net": "GND",
+        "layer": "B.Cu",
+        "xs_mm": [
+          104.0,
+          106.0,
+          106.0,
+          104.0
+        ],
+        "ys_mm": [
+          114.0,
+          114.0,
+          116.0,
+          116.0
+        ]
+      },
+      {
+        "id": "51d0c420-4c7b-4da5-b9ec-001000000041:F.Cu:1",
+        "net": "RF",
+        "layer": "F.Cu",
+        "xs_mm": [
+          110.0,
+          130.0,
+          130.0,
+          110.0
+        ],
+        "ys_mm": [
+          105.0,
+          105.0,
+          125.0,
+          125.0
+        ]
+      },
+      {
+        "id": "51d0c420-4c7b-4da5-b9ec-001000000051:B.Cu:1",
+        "net": "GND",
+        "layer": "B.Cu",
+        "xs_mm": [
+          100.25,
+          139.75,
+          139.75,
+          100.25
+        ],
+        "ys_mm": [
+          100.25,
+          100.25,
+          129.75,
+          129.75
+        ]
+      }
+    ],
+    "ports": [
+      {
+        "signal_pad_id": "51d0c420-4c7b-4da5-b9ec-001000000011",
+        "return_pad_id": "51d0c420-4c7b-4da5-b9ec-001000000012",
+        "x_mm": 105.0,
+        "y_mm": 115.0,
+        "width_mm": 1.0,
+        "height_mm": 1.6,
+        "z_bottom_mm": -1.6,
+        "signal_layer": "F.Cu",
+        "return_layer": "B.Cu",
+        "reference_impedance_ohm": 50.0
+      }
+    ],
+    "frequency_start_hz": 3000000000.0,
+    "frequency_stop_hz": 4200000000.0,
+    "frequency_points": 7,
+    "mesh_resolution_mm": 2.0,
+    "planar_cell_estimate": 300,
+    "layered_cell_estimate": 300,
+    "shorting_vias": [],
+    "attributed_graphic_polygon_ids": [],
+    "idealized_reference_plane_ids": [],
+    "fragment_copper": true,
+    "modeled_nets": [
+      "RF",
+      "GND"
+    ],
+    "geometry_status": "approximate_rectangular_surface_pec"
+  },
+  "script_sha256": "80e1601aa2e57f08b234a791b858cab896dc831b0add1f8ad61df691d3961eec",
+  "case_sha256": "d1513adfe4a329e4208058a85da6edab0c6dce2fd2fb06bf7d143ec163822f0f",
+  "capabilities": [
+    {
+      "id": "pcb_multilayer",
+      "name": "Multilayer PCB surfaces",
+      "status": "implemented_unvalidated",
+      "scope": "2-16 copper layers; selected nets, rectangular rigid board; no multilayer vias",
+      "source": "https://www.emerge-software.com/features"
+    },
+    {
+      "id": "dielectric_materials",
+      "name": "Per-layer dielectric materials and loss",
+      "status": "implemented_unvalidated",
+      "scope": "Explicit constant relative permittivity; optional imported loss tangent",
+      "source": "https://www.emerge-software.com/features"
+    },
+    {
+      "id": "lumped_ports",
+      "name": "Lumped ports",
+      "status": "implemented_unvalidated",
+      "scope": "One or two aligned pad pairs on adjacent layers, explicit reference impedance",
+      "source": "https://www.emerge-software.com/features"
+    },
+    {
+      "id": "absorbing_boundary",
+      "name": "Absorbing air boundary",
+      "status": "implemented_unvalidated",
+      "scope": "Finite air region with optional explicit margin; requires convergence review",
+      "source": "https://www.emerge-software.com/features"
+    },
+    {
+      "id": "mesh_controls",
+      "name": "Manual copper and port mesh sizing",
+      "status": "implemented_unvalidated",
+      "scope": "Bounded requested copper resolution and port face refinement",
+      "source": "https://www.emerge-software.com/features"
+    },
+    {
+      "id": "frequency_sweep",
+      "name": "Solved S-parameter frequency sweep",
+      "status": "implemented_unvalidated",
+      "scope": "2-64 direct solved samples; no vector-fit interpolation",
+      "source": "https://www.emerge-software.com/features"
+    },
+    {
+      "id": "parallel_sweep",
+      "name": "Parallel frequency sweep",
+      "status": "implemented_unvalidated",
+      "scope": "Optional 1-8 runtime workers; availability depends on selected runtime API",
+      "source": "https://www.emerge-software.com/features"
+    },
+    {
+      "id": "farfield",
+      "name": "Far-field cuts and 3D patterns",
+      "status": "implemented_unvalidated",
+      "scope": "Configurable bounded angular sampling; relative normalization only",
+      "source": "https://www.emerge-software.com/features"
+    },
+    {
+      "id": "nearfield",
+      "name": "Electric and magnetic field plane",
+      "status": "implemented_unvalidated",
+      "scope": "Optional XY grid with complex E/H samples and explicit invalid-point mask",
+      "source": "https://www.emerge-software.com/features"
+    },
+    {
+      "id": "touchstone",
+      "name": "Touchstone and CSV export",
+      "status": "implemented_unvalidated",
+      "scope": "Exports returned complex network data at its stated reference impedance",
+      "source": "https://www.emerge-software.com/features"
+    },
+    {
+      "id": "emcad",
+      "name": "EMCAD copper geometry",
+      "status": "implemented_unvalidated",
+      "scope": "Optional same-net, same-layer union; holes rejected",
+      "source": "https://www.emerge-software.com/features"
+    },
+    {
+      "id": "dielectric_surroundings",
+      "name": "Dielectric surroundings",
+      "status": "implemented_unvalidated",
+      "scope": "Up to eight explicit non-overlapping boxes",
+      "source": "https://www.emerge-software.com/features"
+    },
+    {
+      "id": "script",
+      "name": "Readable Python model",
+      "status": "implemented_unvalidated",
+      "scope": "GUI preview/export matches the generated script used by the contained runner",
+      "source": "https://www.emerge-software.com/features"
+    },
+    {
+      "id": "analysis",
+      "name": "SPIKE analysis, probes and reports",
+      "status": "implemented_unvalidated",
+      "scope": "Sampled network and angular/field review with model status and provenance",
+      "source": "https://www.emerge-software.com/features"
+    },
+    {
+      "id": "general_cad",
+      "name": "General CAD primitives, booleans and transforms",
+      "status": "adapter_pending",
+      "scope": "Requires neutral volume/face selection and an EMerge CAD adapter",
+      "source": "https://www.emerge-software.com/features"
+    },
+    {
+      "id": "pml",
+      "name": "Perfectly matched layers",
+      "status": "adapter_pending",
+      "scope": "Requires explicit volume assignments and thickness validation",
+      "source": "https://www.emerge-software.com/features"
+    },
+    {
+      "id": "wave_ports",
+      "name": "Waveguide, coaxial and modal wave ports",
+      "status": "adapter_pending",
+      "scope": "Requires face geometry and mode selection contracts",
+      "source": "https://www.emerge-software.com/features"
+    },
+    {
+      "id": "periodic_floquet",
+      "name": "Periodic and Floquet ports",
+      "status": "adapter_pending",
+      "scope": "Requires paired-face periodic-cell contract",
+      "source": "https://www.emerge-software.com/features"
+    },
+    {
+      "id": "pmc",
+      "name": "PMC and symmetry planes",
+      "status": "adapter_pending",
+      "scope": "Requires boundary face selection and symmetry validation",
+      "source": "https://www.emerge-software.com/features"
+    },
+    {
+      "id": "surface_impedance",
+      "name": "Surface impedance and thin metal",
+      "status": "adapter_pending",
+      "scope": "Requires conductor/material model and boundary contracts",
+      "source": "https://www.emerge-software.com/features"
+    },
+    {
+      "id": "lumped_elements",
+      "name": "Lumped elements",
+      "status": "adapter_pending",
+      "scope": "Requires circuit-to-face mapping",
+      "source": "https://www.emerge-software.com/features"
+    },
+    {
+      "id": "adaptive_mesh",
+      "name": "Adaptive mesh refinement",
+      "status": "adapter_pending",
+      "scope": "Requires error/convergence admission and bounded refinement lifecycle",
+      "source": "https://www.emerge-software.com/features"
+    },
+    {
+      "id": "optimization",
+      "name": "Optimization and geometry parameter sweeps",
+      "status": "adapter_pending",
+      "scope": "Requires geometry parameter ownership and result comparison contracts",
+      "source": "https://www.emerge-software.com/features"
+    },
+    {
+      "id": "tensor_materials",
+      "name": "Dispersive and tensor materials",
+      "status": "adapter_pending",
+      "scope": "Requires material tensor, frequency and coordinate validity contracts",
+      "source": "https://www.emerge-software.com/features"
+    },
+    {
+      "id": "material_library",
+      "name": "Upstream material library",
+      "status": "adapter_pending",
+      "scope": "Requires provenance and verification of individual library properties",
+      "source": "https://www.emerge-software.com/features"
+    },
+    {
+      "id": "vector_fitting",
+      "name": "Vector fitting",
+      "status": "adapter_pending",
+      "scope": "Requires separately identified fitted network and error/passivity evidence",
+      "source": "https://www.emerge-software.com/features"
+    },
+    {
+      "id": "eigenmode",
+      "name": "Eigenmode studies",
+      "status": "adapter_pending",
+      "scope": "Requires eigenmode excitation, units and mode-shape result contracts",
+      "source": "https://www.emerge-software.com/features"
+    },
+    {
+      "id": "rcs",
+      "name": "Scattered-field and radar cross section",
+      "status": "adapter_pending",
+      "scope": "Requires incident-wave setup and absolute scattering result contract",
+      "source": "https://www.emerge-software.com/features"
+    },
+    {
+      "id": "thermal",
+      "name": "Heat conduction and one-way coupling",
+      "status": "adapter_pending",
+      "scope": "Requires thermal boundaries and transferred-loss validity contracts",
+      "source": "https://www.emerge-software.com/features"
+    },
+    {
+      "id": "gpu_direct",
+      "name": "Alternate CPU/GPU direct solvers",
+      "status": "adapter_pending",
+      "scope": "Requires runtime discovery and explicit supported solver selection",
+      "source": "https://www.emerge-software.com/features"
+    }
+  ],
+  "solved": false,
+  "model_status": "unvalidated"
+}

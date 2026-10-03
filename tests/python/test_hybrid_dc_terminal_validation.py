@@ -10,7 +10,7 @@ from unittest.mock import patch
 import numpy as np
 from scipy.sparse import csr_matrix
 
-from python.spike_core.contracts import AnalysisSpec, DesignIR
+from python.spike_core.contracts import AnalysisSpec, SpiDeR
 from python.spike_core.hybrid_dc_solver import solve_hybrid_dc
 from python.spike_core.dc_terminal_validation import build_source_to_load_evidence, terminal_copper_weights
 from python.spike_core.hybrid_mesh import HybridMesh, MeshBranch, MeshNode
@@ -20,8 +20,8 @@ from python.spike_core.kicad_importer import import_kicad_design
 ROOT = Path(__file__).resolve().parents[2]
 
 
-def _line_design() -> DesignIR:
-    return DesignIR(
+def _line_design() -> SpiDeR:
+    return SpiDeR(
         layers=[{"name": "F.Cu"}],
         tracks=[
             {"id": "source-track", "start": [0, 0], "end": [5, 0], "width": 1, "layer": "F.Cu", "net_name": "VCC"},
@@ -117,7 +117,7 @@ class HybridDCTerminalValidationTests(unittest.TestCase):
                     )
                     with patch("python.spike_core.hybrid_dc_solver.build_hybrid_mesh",
                                return_value=self._parallel_contact_mesh(split)):
-                        result = solve_hybrid_dc(DesignIR(), spec)
+                        result = solve_hybrid_dc(SpiDeR(), spec)
                     self.assertEqual(result.status, "completed")
                     self.assertAlmostEqual(result.summary["max_load_voltage_drop_v"], 0.5 + resistance, places=10)
                     self.assertAlmostEqual(result.summary["geometry_power_loss_w"]["track"], 0.5, places=10)
@@ -164,7 +164,7 @@ class HybridDCTerminalValidationTests(unittest.TestCase):
             options={"require_exact_terminal_geometry": True},
         )
         with patch("python.spike_core.hybrid_dc_solver.build_hybrid_mesh", return_value=mesh):
-            result = solve_hybrid_dc(DesignIR(), spec)
+            result = solve_hybrid_dc(SpiDeR(), spec)
         expected = 13 / 24
         self.assertEqual(result.status, "completed")
         self.assertAlmostEqual(result.summary["max_load_voltage_drop_v"], expected, places=10)
@@ -205,7 +205,7 @@ class HybridDCTerminalValidationTests(unittest.TestCase):
         self.assertIn("SPIKE-BE-PI-E-0007", {issue.code for issue in result.issues})
 
     def test_explicit_return_reports_signed_source_and_load_differentials(self) -> None:
-        design = DesignIR(
+        design = SpiDeR(
             layers=[{"name": "F.Cu"}, {"name": "B.Cu"}],
             tracks=[
                 {"id": "supply-source", "start": [0, 0], "end": [5, 0], "width": 1, "layer": "F.Cu", "net_name": "VCC"},

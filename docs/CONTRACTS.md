@@ -7,9 +7,46 @@ JSON schemas in `schemas/` document the compatible wire envelope.
 
 ## Contract family
 
+`spike/assembly-electrothermal-request/v1` binds retained volumes, thermal setup,
+scalar DC laws, terminals, every retained bond and explicit averaged loss data.
+`spike/assembly-electrothermal-result/v1` carries experimental coupled outputs,
+conservation and fixed-point defects. `spike/electrical-heat-source/v1` and
+`spike/electrical-heat-evaluation/v1` admit waveform, RMS spectral and bounded
+semiconductor-table losses. See [scope and worker methods](ASSEMBLY_ELECTROTHERMAL.md).
+
+`spike/emerge-gerber-source/v1` retains original UTF-8 copper artwork,
+dielectric gaps, declared bounds and explicit manual port planes. The native
+EMerge importer returns `spike/design-snapshot/v1`; source content and digests
+remain in design metadata while the current stackup controls executed material
+values. See [native Gerber admission and workflow](EMERGE_GERBER.md) and
+[ADR 0035](adr/0035-native-emerge-gerber-source.md).
+
+Retained volume field studies add `spike/assembly-field-handoff-request/v1`,
+`spike/assembly-field-handoff/v1`, `spike/assembly-field-thermal-problem/v1`,
+`spike/assembly-field-thermal-result/v1`, and
+`spike/assembly-field-study-file/v1`. A private bounded P1 kernel uses
+`spike/assembly-tetra-thermal-request/v1` and corresponding result; geometric
+view factors use `spike/assembly-view-factor-request/v1` and corresponding
+result. See [field workflow](ASSEMBLY_FIELD_HANDOFF.md) and ADR 0035. The
+public solver-mesh object map remains unchanged. Handoff and view factors
+do not assert CAD extraction, Maxwell execution or coupled radiation solving.
+
+`spike/emerge-runtime-update/v1` describes local EMerge 3+ update checks,
+background operations, bounded status logs, and independent install,
+dependency and adapter API outcomes. See
+[EMerge runtime updates](EMERGE_RUNTIME_UPDATES.md) for the three worker
+methods, version/channel rules and interruption recovery.
+
+Coupled assembly studies add `spike/multiboard-circuit-request/v1`,
+`spike/multiboard-thermal-request/v1`, and `spike/multiboard-em-request/v1`
+with corresponding result contracts. These use explicit reduced properties and
+retained occurrence identities. `spike/multiboard-study-file/v1` stores a domain,
+physical assembly digest, setup and nullable results for direct loading.
+See [coupled assembly contracts](MULTIBOARD_COUPLED_ANALYSIS.md) and ADR 0027.
+
 ```mermaid
 flowchart LR
-    Design["DesignIR"] --> Spec["AnalysisSpec references design objects"]
+    Design["SpiDeR"] --> Spec["AnalysisSpec references design objects"]
     Design --> Solver["Solver plugin"]
     Spec --> Solver
     Solver --> Result["AnalysisResult"]
@@ -18,14 +55,17 @@ flowchart LR
 
 All three currently use `contract: spike/v1`.
 
+`DesignIR` naming remains a compatibility surface at the KiCad-Prism boundary;
+SPIKE internals consume `SpiDeR` (SPIKE Design Reference).
+
 Workflow-specific envelopes use separate contracts where their lifecycle is not
 a normal solver request/result. The EMI family uses `spike/emi-setup/v1`,
 `spike/emi-preflight/v1`, and `spike/emi-workflow/v1`; see
 `docs/EMI_WORKFLOW.md` and `schemas/emi-setup-v1.schema.json`.
 
-## DesignIR
+## SpiDeR
 
-`DesignIR` describes normalized source geometry and metadata. Coordinates and
+`SpiDeR` describes normalized source geometry and metadata. Coordinates and
 linear dimensions use millimetres unless an entity contract explicitly states
 otherwise. Electrical values use SI units. It includes:
 
@@ -68,6 +108,15 @@ not return. Reports and visualizations preserve the exact model status.
 
 ## Compatibility
 
+The internal meshing worker uses `spike/internal-mesh-request/v1` and returns
+`spike/internal-mesh-result/v1`. Generation/adaptation/optimization candidates
+contain solver-neutral tetra meshes, complete labeled boundary triangles,
+quality and provenance digests; `production_qualified` remains false. Unknown
+controls are rejected. See [the request schema](../schemas/internal-mesh-request-v1.schema.json)
+and [the engine integration guide](INTERNAL_MESH_ENGINE.md) for limits and field
+transfer semantics. This is additive and does not change `spike/mesh/v3` preview
+or `spike/solver-mesh/v1` interchange semantics.
+
 Compatible `spike/v1` changes may add optional fields or new issue codes.
 Breaking changes include unit changes, renamed required fields, changed identity
 semantics, or altered interpretation of existing values. They require:
@@ -84,6 +133,24 @@ mapping to a different mode.
 
 ## Validation ownership
 
+### Python IDE files and recovery
+
+`python_workspace_files` returns `spike/python-workspace-files/v1`. List, read,
+and write remain confined to the selected root, reject symlink traversal, and
+limit files to 512 KB. Writes require the opened file's SHA-256 before replacing
+an existing path. The additive `worktrees` action inventories existing Git
+checkouts with argument-array invocation, a five-second timeout, and bounded
+porcelain parsing. It returns `root`, `available`, `worktrees`, and an optional
+diagnostic `message`; navigation never changes Git state.
+
+The IDE's v2 session record is validated before restoration. Durable local
+recovery retains at most five snapshots in a 2 MB record. Recovery opens a new
+unsaved identity without path, root, or overwrite hash. Failed storage writes
+retain the last valid backup and remain visible. Recovery does not establish a
+file save or a solver-result validation.
+
+### Analysis validation
+
 - Importer registry validates that adapters return the expected contract.
 - Design validation checks completeness and source quality.
 - Preflight validates analysis terminals, geometry, mesh, and solver capability.
@@ -91,3 +158,7 @@ mapping to a different mode.
 - Reports present recorded validation; they do not approve it.
 - EMI preflight owns setup, geometry-coverage, and execution-readiness gates;
   EMI screening ranks only supplied pre-pass metrics and never creates fields.
+
+## Study resources and captured history
+
+The optional additions to the version-one frontend study projection are `tags`, `archived`, `datasets`, case `datasetIds`, and case `runs`. A run is a workspace capture with `capturedAt`, frozen settings/scenario, reported result facts, and the original payload or reference. Capture time is not execution time. Legacy current-result fields retain their invalidation behavior. Limits are 128 datasets per study, 2 MiB per dataset, 100 captures per case, 96 MiB of retained dataset/capture data per study, and 256 MiB per full study document including frozen setups. Exceeding a bound is an explicit error. Result-free copies remove result-derived payloads and references while preserving definitions. See [study model](SIMULATION_STUDIES.md) and ADR 0033.

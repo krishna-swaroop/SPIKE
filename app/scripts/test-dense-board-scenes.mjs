@@ -6,18 +6,19 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { viewportSceneIdentity, viewportRenderOrder } from '../src/viewportScenePolicy.ts';
 import { resolveBoardCopperLayers } from '../src/copperLayerSelection.ts';
+import { configureImportedMaterial } from '../src/boardSurfaceMaterials.ts';
 
 // Exercise the production preparation functions without mounting the entire UI.
 const source = readFileSync(new URL('../src/BoardViewport.tsx', import.meta.url), 'utf8');
 const ast = ts.createSourceFile('BoardViewport.tsx', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
-const names = new Set(['classifyBoardSurface', 'consolidateStaticModel', 'prepareImportedScene', 'padPath', 'capsulePath', 'roundedRectanglePath']);
+const names = new Set(['consolidateStaticModel', 'prepareImportedScene', 'padPath', 'capsulePath', 'roundedRectanglePath']);
 const declarations = ast.statements.filter(node => ts.isFunctionDeclaration(node) && names.has(node.name?.text));
 assert.equal(declarations.length, names.size);
 const js = ts.transpileModule(declarations.map(node => node.getText(ast)).join('\n'), {
   compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext },
 }).outputText;
-const prepare = new Function('THREE', 'mergeGeometries', 'viewportSceneIdentity', 'viewportRenderOrder',
-  `${js}\nreturn prepareImportedScene;`)(THREE, mergeGeometries, viewportSceneIdentity, viewportRenderOrder);
+const prepare = new Function('THREE', 'mergeGeometries', 'viewportSceneIdentity', 'viewportRenderOrder', 'configureImportedMaterial',
+  `${js}\nreturn prepareImportedScene;`)(THREE, mergeGeometries, viewportSceneIdentity, viewportRenderOrder, configureImportedMaterial);
 const padPath = new Function('THREE', `${js}\nreturn padPath;`)(THREE);
 const customPad = padPath({width:2,height:2,drill:0,shape:'custom',customPolygon:[[-1,0],[0,1],[1,0],[0,-1]]},2);
 assert.ok(Math.abs(Math.abs(THREE.ShapeUtils.area(customPad.getPoints())) - 8) < 1e-6, 'custom pad must retain polygon area instead of its rectangular bounds');

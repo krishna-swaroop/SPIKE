@@ -1,0 +1,23 @@
+OCCT browser runtime source and replacement notice
+
+This application uses unmodified `occt-import-js` 0.0.23 JavaScript and
+WebAssembly files from the package's `dist` directory. The corresponding
+source, Open CASCADE submodule revision, and build scripts are available at:
+
+https://github.com/kovacsv/occt-import-js/tree/0.0.23
+
+The exact npm source archive is:
+
+https://registry.npmjs.org/occt-import-js/-/occt-import-js-0.0.23.tgz
+
+The browser worker loads `occt-import-js.js` and `occt-import-js.wasm` as
+separate local files. A recipient may rebuild version 0.0.23 from the source
+above and replace those two files with interface-compatible modified copies
+under the same names. Run `node scripts/copy-occt-runtime.mjs` to restore the
+files from the locally installed locked npm dependency.
+
+`LICENSE.occt-import-js.txt` and `LICENSE.occt.txt` beside the runtime are
+verbatim files from that installed package. The package does not ship a
+separate file or appendix labelled as an Open CASCADE additional exception;
+`LICENSE.occt.txt` is therefore reproduced as supplied, without inferring
+license language that is absent from the distribution.

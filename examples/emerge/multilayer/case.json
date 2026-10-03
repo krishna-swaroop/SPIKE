@@ -1,0 +1,201 @@
+{
+  "contract": "spike/emerge-board-case/v1",
+  "bounds_mm": [
+    -2.0,
+    -2.0,
+    12.0,
+    2.0
+  ],
+  "dielectric_thickness_mm": 1.0,
+  "epsilon_r": 3.2,
+  "copper_layers": [
+    {
+      "name": "F.Cu",
+      "z_mm": -0.0
+    },
+    {
+      "name": "In1.Cu",
+      "z_mm": -0.2
+    },
+    {
+      "name": "In2.Cu",
+      "z_mm": -0.7
+    },
+    {
+      "name": "B.Cu",
+      "z_mm": -1.0
+    }
+  ],
+  "dielectric_layers": [
+    {
+      "name": "D1",
+      "thickness_mm": 0.2,
+      "epsilon_r": 3.2,
+      "loss_tangent": 0.0,
+      "z_top_mm": -0.0,
+      "z_bottom_mm": -0.2
+    },
+    {
+      "name": "D2",
+      "thickness_mm": 0.5,
+      "epsilon_r": 4.1,
+      "loss_tangent": 0.0,
+      "z_top_mm": -0.2,
+      "z_bottom_mm": -0.7
+    },
+    {
+      "name": "D3",
+      "thickness_mm": 0.3,
+      "epsilon_r": 3.8,
+      "loss_tangent": 0.0,
+      "z_top_mm": -0.7,
+      "z_bottom_mm": -1.0
+    }
+  ],
+  "geometry_backend": "emcad",
+  "loss_tangent_omitted": 0.0,
+  "polygons": [
+    {
+      "id": "T1",
+      "net": "RF",
+      "layer": "F.Cu",
+      "xs_mm": [
+        0.0,
+        10.0,
+        10.0,
+        0.0
+      ],
+      "ys_mm": [
+        0.2,
+        0.2,
+        -0.2,
+        -0.2
+      ]
+    },
+    {
+      "id": "P1",
+      "net": "RF",
+      "layer": "F.Cu",
+      "xs_mm": [
+        -0.5,
+        0.5,
+        0.5,
+        -0.5
+      ],
+      "ys_mm": [
+        -0.5,
+        -0.5,
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "id": "G1",
+      "net": "GND",
+      "layer": "In1.Cu",
+      "xs_mm": [
+        -0.5,
+        0.5,
+        0.5,
+        -0.5
+      ],
+      "ys_mm": [
+        -0.5,
+        -0.5,
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "id": "P2",
+      "net": "RF",
+      "layer": "F.Cu",
+      "xs_mm": [
+        9.5,
+        10.5,
+        10.5,
+        9.5
+      ],
+      "ys_mm": [
+        -0.5,
+        -0.5,
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "id": "G2",
+      "net": "GND",
+      "layer": "In1.Cu",
+      "xs_mm": [
+        9.5,
+        10.5,
+        10.5,
+        9.5
+      ],
+      "ys_mm": [
+        -0.5,
+        -0.5,
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "id": "Z1",
+      "net": "GND",
+      "layer": "In1.Cu",
+      "xs_mm": [
+        -2.0,
+        12.0,
+        12.0,
+        -2.0
+      ],
+      "ys_mm": [
+        -2.0,
+        -2.0,
+        2.0,
+        2.0
+      ]
+    }
+  ],
+  "ports": [
+    {
+      "signal_pad_id": "P1",
+      "return_pad_id": "G1",
+      "x_mm": 0.0,
+      "y_mm": 0.0,
+      "width_mm": 1.0,
+      "height_mm": 0.2,
+      "z_bottom_mm": -0.2,
+      "signal_layer": "F.Cu",
+      "return_layer": "In1.Cu",
+      "reference_impedance_ohm": 50.0
+    },
+    {
+      "signal_pad_id": "P2",
+      "return_pad_id": "G2",
+      "x_mm": 10.0,
+      "y_mm": 0.0,
+      "width_mm": 1.0,
+      "height_mm": 0.2,
+      "z_bottom_mm": -0.2,
+      "signal_layer": "F.Cu",
+      "return_layer": "In1.Cu",
+      "reference_impedance_ohm": 50.0
+    }
+  ],
+  "frequency_start_hz": 1000000000.0,
+  "frequency_stop_hz": 2000000000.0,
+  "frequency_points": 2,
+  "mesh_resolution_mm": 0.7,
+  "planar_cell_estimate": 115,
+  "shorting_vias": [],
+  "attributed_graphic_polygon_ids": [],
+  "idealized_reference_plane_ids": [],
+  "fragment_copper": true,
+  "modeled_nets": [
+    "RF",
+    "GND"
+  ],
+  "geometry_status": "approximate_rectangular_surface_pec"
+}

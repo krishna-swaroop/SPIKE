@@ -68,8 +68,7 @@ htmlcov/
 # Documentation builds
 docs/_build/
 
-# Local wxWidgets interface replica experiment
-/wx_ui_experiment/
+# wxWidgets client build artifacts are ignored in wx_ui_experiment/.gitignore.
 
 # Local solver toolchains, settings, and generated HDL libraries
 /tools/hdl/ghdl/
@@ -81,3 +80,8 @@ docs/_build/
 /tools/models/berkeley/*.tar.gz
 /spike_settings.json
 /work-obj*.cf
+
+# Local review staging, agent state, and generated model-library indexes
+/.codex_emide_stage/
+/ccd_tracker.json
+/model-collections/*.spkindex

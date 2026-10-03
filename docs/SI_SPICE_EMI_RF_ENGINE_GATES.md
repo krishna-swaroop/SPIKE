@@ -10,7 +10,7 @@ passed review.
 ## Planned Execution Chain
 
 ```text
-DesignIR
+SpiDeR
   -> complete-net and coupled-net geometry
   -> stackup/material model
   -> quasi-static RLC extraction
@@ -67,7 +67,7 @@ platform support, license obligations, process isolation, and commercial
 distribution. Do not embed an engine merely because it is open source.
 
 - Prefer process-level adapters with versioned files or JSON contracts.
-- Keep engine-specific meshes and setup out of DesignIR.
+- Keep engine-specific meshes and setup out of SpiDeR.
 - Record engine name, version, options, convergence, and license metadata in
   every result.
 - Keep optional engines as separate bundles when their license or footprint

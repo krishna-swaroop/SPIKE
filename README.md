@@ -42,6 +42,19 @@ responsible for checking inputs, assumptions, and results before relying on
 them. This summarizes the warranty and liability provisions in the
 [Apache License 2.0](LICENSE); the license terms govern.
 
+**Development disclosure:** SPIKE's development effort is largely LLM-driven
+under human review. Human direction and responsibility remain distinct from
+LLM-generated proposals, code, tests, and documentation. Passing tests and
+generated reports are engineering evidence, not independent physical
+validation. See
+[LLM-driven development](docs/LLM_DEVELOPMENT.md) for the scope of this
+acknowledgement and the review required before engineering reliance.
+
+This is an early community preview and may contain instabilities, bugs, and
+incomplete behavior. The community is invited to test it and report
+[reproducible issues](https://github.com/wayri/SPIKE-Main/issues), usability
+feedback, and numerical comparisons.
+
 Current limits are summarized below and described in
 [Solver Status](docs/SOLVER_STATUS.md).
 
@@ -80,7 +93,7 @@ requirements and limits, summarized below.
 
 | Area | Available workflow | Current limit |
 |---|---|---|
-| Board and project | Import KiCad PCB data into `DesignIR` with ordered stackup, copper, tracks, vias, pads, filled zones, components, rigid-flex regions, and import diagnostics. Inspect 2D layers and the assembled 3D scene; select nets and objects, place probes, and save versioned `.spike` projects with multiple study cases. | Some KiCad features or 3D models may be omitted or substituted; review the import report for the specific board. |
+| Board and project | Import KiCad PCB data into `SpiDeR` with ordered stackup, copper, tracks, vias, pads, filled zones, components, rigid-flex regions, and import diagnostics. Inspect 2D layers and the assembled 3D scene; select nets and objects, place probes, and save versioned `.spike` projects with multiple study cases. | Some KiCad features or 3D models may be omitted or substituted; review the import report for the specific board. |
 | Power integrity and circuits | Set sources, loads, returns, mesh and limits; run supported DC voltage-drop, harness, PEEC, PDN, power-tree, and circuit workflows. Converter models can include voltage, efficiency, and loss settings. | DC and PEEC paths use simplified conductor and return models. Converter behavior and pin mapping must be supplied; a footprint alone does not provide them. |
 | Signal integrity | Analyze loaded RLGC or Touchstone channels with explicit ports and terminations; inspect S-parameters, reflection/VSWR, TDR/TDT, waveforms, eyes, and NEXT/FEXT. | Port-network results do not contain spatial E/H fields. Nonlinear IBIS-AMI models and protocol checks are not implemented in this workflow. |
 | Thermal | Solve object-node, 2D board-plate, and layered steady/transient board models with explicit powers, heat paths and boundaries. Compare still-air, sealed-box, and forced-air presets; inspect layer maps, temperature history, case/junction estimates and board-aligned result overlays. | Cooling presets use specified heat-transfer coefficients instead of solving airflow. Board grids omit detailed package geometry and conjugate heat transfer. |
@@ -171,6 +184,10 @@ see [third-party notices](THIRD_PARTY_NOTICES.md).
 
 ## Acknowledgements
 
+- Large language models have produced substantial proposals, code, tests, and
+  documentation during SPIKE's development under human direction and review.
+  The [LLM-driven development disclosure](docs/LLM_DEVELOPMENT.md) explains
+  this contribution and its limits.
 - The KiCad project and its contributors for the PCB ecosystem SPIKE works with.
 - The Tauri, React, Three.js, Plotly.js, and Lucide projects behind the desktop interface and plots.
 - The NumPy, SciPy, Shapely/GEOS, PyVista, wxPython, nanobind, Matplotlib, mplcursors, ReportLab, Apache Arrow, jsonschema, and Eigen projects used by the Python and native tooling.

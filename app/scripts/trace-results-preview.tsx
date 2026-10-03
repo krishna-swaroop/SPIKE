@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { createRoot } from "react-dom/client";
 import TraceResultsWorkbench from "../src/TraceResultsWorkbench";
 import type { ScalarSample, SolverResultBundle } from "../src/analysisResults";
+import "../src/buttonStandard.css";
 const samples: ScalarSample[] = [];
 for (const [net, offset] of [["3V3", 0], ["1V8", 8]] as const) for (let trace = 0; trace < 3; trace++) for (let step = 0; step < 50; step++) {
   const x = step * .5, y = offset + trace * 2;

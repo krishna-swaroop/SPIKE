@@ -12,7 +12,7 @@ from .mcad_importer import McadImportError, validate_step_mcad_artifact, validat
 from .assembly_package_shapes import (
     AssemblyPackageShapeError, canonicalize_assembly_package_shapes, validate_package_shape_artifacts,
 )
-from .design_ir_v2 import AssemblyIRV1
+from .spider_v2 import AssemblyIRV1
 from .mcad_selector_preview import McadSelectorPreviewError, SelectorPreviewPolicy, _validate_selector_glb
 from .model_index import ModelIndexError, canonicalize_model_index, validate_model_artifacts
 from .project_package import (
@@ -116,7 +116,7 @@ def read_project_source_artifact(
             if info.file_size != size:
                 raise ProjectPackageError("Canonical design source size does not match its manifest record.")
             if str(record.get("sha256", "")) != expected_source_sha256:
-                raise ProjectPackageError("Canonical design source identity does not match DesignIR.")
+                raise ProjectPackageError("Canonical design source identity does not match SpiDeR.")
             return _verify_member_stream(
                 archive,
                 info,

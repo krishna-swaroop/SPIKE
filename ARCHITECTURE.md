@@ -35,9 +35,17 @@ SPIKE is an offline-first engineering application with these constraints:
 
 ## Runtime architecture
 
+Optional EMerge package maintenance stays in the Python worker. The
+`emerge_runtime_updates` service owns bounded background update state and
+exclusion with active EMerge operations; its IO adapter validates a dedicated
+solver environment and invokes fixed-index pip and fresh-process API checks.
+See [ADR 0034](docs/adr/0034-local-emerge-runtime-updates.md) and the
+[runtime update contract](docs/EMERGE_RUNTIME_UPDATES.md). Package installation
+and detected APIs do not establish validated physics.
+
 Large-scene resource ownership, batching, projection complexity, package
 admission limits, and remaining scaling work are documented in
-[Large scene performance](docs/LARGE_SCENE_PERFORMANCE.md). Cached assembly
+Large scene performance. Cached assembly
 geometry/textures have shared lifetimes; occurrence materials remain independent.
 The desktop admits ZIP64 project paths up to 16 GiB while preserving bounded
 legacy JSON and worker transport.
@@ -94,7 +102,7 @@ flowchart LR
     WorkerCore --> Importers["Importer registry"]
     WorkerCore --> Solvers["Solver registry"]
     WorkerCore --> Reports["Validation, reports, and exports"]
-    Importers --> IR["DesignIR"]
+    Importers --> IR["SpiDeR"]
     Solvers --> Result["AnalysisResult"]
     Package --> IR
     IR --> Solvers
@@ -120,7 +128,7 @@ sequenceDiagram
     Bridge->>Host: bounded invoke request
     Host->>Worker: one JSON request on stdin
     Worker->>Worker: validate contract and capability
-    Worker->>Solver: DesignIR plus AnalysisSpec
+    Worker->>Solver: SpiDeR plus AnalysisSpec
     Solver-->>Worker: AnalysisResult or structured failure
     Worker-->>Host: one bounded JSON response
     Host-->>Bridge: response plus timing/failure metadata
@@ -137,7 +145,7 @@ adapter and must return through the same result/error boundaries.
 
 | State | Authority | Persisted form | Must not own |
 |---|---|---|---|
-| Imported design and provenance | Python import/application services | `DesignIR` inside the project package | Viewport-only selections or solver-private objects |
+| Imported design and provenance | Python import/application services | `SpiDeR` inside the project package | Viewport-only selections or solver-private objects |
 | Analysis setup and result | Versioned Python contracts | `AnalysisSpec` and `AnalysisResult` data in project/result records | UI-derived numerical claims |
 | Dock, active view, and cameras | React composition and renderers | `spike/workspace-state/v1` in `workspace/state.json` | Solver validity or source geometry |
 | Approved filesystem path and worker process | Tauri host | Native dialog grants and packaged resources | Domain, importer, or solver logic |
@@ -174,7 +182,7 @@ Dependencies point inward toward versioned contracts:
 ```mermaid
 flowchart TB
     Sources["EDA files and plugin exchanges"] --> Adapters["Source adapters"]
-    Adapters --> Contracts["DesignIR / AnalysisSpec / AnalysisResult"]
+    Adapters --> Contracts["SpiDeR / AnalysisSpec / AnalysisResult"]
     UI["Desktop UI"] --> Contracts
     CLI["CLI"] --> Contracts
     Solvers["Solver plugins"] --> Contracts
@@ -206,7 +214,7 @@ npm.cmd run check:architecture
 The Python definitions in `python/spike_core/contracts.py` are the current
 worker-side source of truth:
 
-- `DesignIR`: normalized layers, stackup, conductive geometry, components,
+- `SpiDeR`: normalized layers, stackup, conductive geometry, components,
   component bonds, connectors, regions, bends, issues, and provenance. The
   component-bond handoff is documented in `docs/COMPONENT_BONDS.md`.
 - `AnalysisSpec`: solver mode, nets, terminals, return path, probes, mesh,
@@ -224,7 +232,7 @@ contracts.
 `python/spike_core/importers.py` defines the backend importer protocol and
 registry. `app/src/designSourceRegistry.ts` provides the corresponding local
 UI source dispatch. The implemented KiCad adapter is isolated in
-`python/spike_core/kicad_importer.py`; downstream services receive `DesignIR`,
+`python/spike_core/kicad_importer.py`; downstream services receive `SpiDeR`,
 not parser objects.
 
 ```mermaid
@@ -237,7 +245,7 @@ sequenceDiagram
     Source->>Registry: path plus optional format hint
     Registry->>Adapter: select by declared format and extension
     Adapter->>Adapter: parse, normalize units and coordinates
-    Adapter-->>Registry: DesignIR plus issues and provenance
+    Adapter-->>Registry: SpiDeR plus issues and provenance
     Registry->>Validator: validate contract and import quality
     Validator-->>Consumer: normalized design
 ```
@@ -260,7 +268,7 @@ silently treated as KiCad or imported as a partial valid design.
 ## Solver architecture
 
 `python/spike_core/solver_plugins.py` owns solver registration, cataloging,
-capability matching, and execution. Solvers consume `DesignIR` and
+capability matching, and execution. Solvers consume `SpiDeR` and
 `AnalysisSpec`, then return `AnalysisResult`. The public SDK lives in
 `solver_sdk/`.
 
@@ -339,7 +347,7 @@ recorded numerical output, not an independent solver.
   structured failures.
 - the Rust host uses `spawn_blocking`, concurrent pipe readers, and watchdogs.
 - parser syntax errors fail import instead of yielding a partially valid board.
-- import diagnostics remain attached to `DesignIR`.
+- import diagnostics remain attached to `SpiDeR`.
 - tests cover importer dispatch, parser failure, 32-layer ordering, rigid-flex
   metadata, and native worker limits.
 

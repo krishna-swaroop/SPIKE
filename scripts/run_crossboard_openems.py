@@ -111,7 +111,7 @@ result={'contract':'spike/crossboard-box-field-example/v1','status':'executed',
         'crossboard_s31_peak_magnitude':float(np.abs(s[:,2,0]).max()),
         'crossboard_s41_peak_magnitude':float(np.abs(s[:,3,0]).max()),
         'field_coupling_executed':True,'production_qualified':False,
-        'limitations':['Explicit box geometry only; not arbitrary DesignIR import.',
+        'limitations':['Explicit box geometry only; not arbitrary SpiDeR import.',
         'Finite-conductivity Cartesian FDTD requires mesh, PML and duration convergence; coarse copper cells do not resolve RF skin loss.',
         'All port polarities are +z; board B is opposite its signal-to-return voltage polarity.',
         'Four field excitations, not a cascade or inferred missing S-parameters.']}

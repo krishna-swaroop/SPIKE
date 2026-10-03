@@ -8,7 +8,7 @@ from python.spike_core.assembly_geometric_constraints import (
     AssemblyGeometricConstraintError,
     apply_single_geometric_constraint,
 )
-from python.spike_core.design_ir_v2 import AssemblyIRV1
+from python.spike_core.spider_v2 import AssemblyIRV1
 
 
 def _geometry(representation, origin, direction=None):

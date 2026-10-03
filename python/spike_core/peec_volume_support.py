@@ -12,7 +12,7 @@ from __future__ import annotations
 from math import fsum, isfinite
 from typing import Any, Sequence
 
-from .contracts import DesignIR
+from .contracts import SpiDeR
 from .hybrid_mesh import (
     MeshBranch, _normalize_filled_zone_polygon, _point, _polygon_area,
     _polygon_is_simple, _signed_polygon_area, _triangulate_polygon,
@@ -40,7 +40,7 @@ def _unresolved(branch: MeshBranch, reason: str) -> ZoneBasisSupportError:
 
 
 def zone_basis_support_report(
-    design: DesignIR, branches: Sequence[MeshBranch],
+    design: SpiDeR, branches: Sequence[MeshBranch],
 ) -> dict[str, Any]:
     """Measure unsupported area without changing or repairing supplied bases."""
     zones: dict[str, list] = {}
@@ -63,7 +63,7 @@ def zone_basis_support_report(
                 or str(zone.get("net_name") or zone.get("net") or "") != branch.net):
             raise _unresolved(branch, "source layer/net mismatch")
         if branch.source_id not in triangulations:
-            # The current DesignIR zone represents one simple filled outline.
+            # The current SpiDeR zone represents one simple filled outline.
             # Never silently fill a separately supplied exclusion ring.
             if zone.get("holes") or zone.get("interiors"):
                 raise _unresolved(branch, "separate hole rings are not supported")
@@ -121,7 +121,7 @@ def zone_basis_support_report(
             "violating_basis_count": len(records), "violations": records}
 
 
-def admit_zone_basis_support(design: DesignIR, branches: Sequence[MeshBranch]) -> dict[str, Any]:
+def admit_zone_basis_support(design: SpiDeR, branches: Sequence[MeshBranch]) -> dict[str, Any]:
     """Fail before native quadrature when a zone basis extends outside copper."""
     report = zone_basis_support_report(design, branches)
     if report["violations"]:

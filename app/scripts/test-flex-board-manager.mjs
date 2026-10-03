@@ -1,0 +1,26 @@
+// SPDX-License-Identifier: Apache-2.0
+import assert from 'node:assert/strict';
+import { build } from 'esbuild';
+import { fileURLToPath } from 'node:url';
+import { renderToStaticMarkup } from 'react-dom/server';
+import React from 'react';
+const bundle = await build({ entryPoints: [fileURLToPath(new URL('../src/FlexBoardManager.tsx', import.meta.url))], bundle: true, write: false, format: 'esm', platform: 'node', external: ['react', 'react/jsx-runtime', 'react-dom', 'lucide-react', 'plotly.js-dist-min'], loader: { '.css': 'empty' } });
+let code = bundle.outputFiles[0].text;
+for (const [name, file] of [['react/jsx-runtime','react/jsx-runtime.js'],['react','react/index.js'],['react-dom','react-dom/index.js'],['lucide-react','lucide-react/dist/cjs/lucide-react.js']]) code = code.split(`from "${name}"`).join(`from ${JSON.stringify(new URL('../node_modules/'+file, import.meta.url).href)}`);
+const { default: FlexBoardManager, kikakukaBendAnnotation } = await import(`data:text/javascript;base64,${Buffer.from(code).toString('base64')}`).catch(error => { console.error(error.message); process.exit(1); });
+const bend = { id: 'b1', name: 'FreekiCAD Bend 1', sourceLayer: 'User.1', sourceLayerUserName: 'FreekiCAD', points: [[0,0],[0,10]], angleDeg: -70, radiusMm: .5, spanMm: .61, annotation: 'a=-70 r=0.5 s=0.61', radiusSource: 'r', issues: [{ code: 'TEST', severity: 'warning', message: 'Radius takes precedence over span.' }] };
+assert.equal(kikakukaBendAnnotation(bend), bend.annotation, 'copy retains the original annotation and units');
+assert.equal(kikakukaBendAnnotation({ ...bend, annotation: undefined, angleDeg: 90, radiusMm: 1.234567891 }), 'a=90 r=1.234567891mm', 'derived copy does not round the imported radius');
+assert.equal(kikakukaBendAnnotation({ ...bend, angleDeg: undefined }), null);
+assert.equal(kikakukaBendAnnotation({ ...bend, radiusMm: -.1 }), null, 'negative radius cannot produce a valid annotation action');
+const board = { width: 10, height: 10, technology: 'flex', outlineLoops: [[[0,0],[10,0],[10,10],[0,10]]], bendLines: [bend], regions: [{ id:'r1', name:'Flex region', kind:'flex', sourceLayer:'User.2', outline:[[0,0],[10,0],[10,10],[0,10]], source:'kicad-user-layer' }], flexIssues: [{code:'KIKAKUKA_ANNOTATION_ORPHAN',severity:'warning',message:'Orphan annotation outside endpoint tolerance.'}] };
+const before = JSON.stringify(board);
+const diagnostic = console.error;
+console.error = (...args) => diagnostic(...args.map(value => typeof value === 'string' ? value.replace(/data:text\/javascript;base64,[A-Za-z0-9+/=]+/g, '<SSR flex manager module>') : value));
+const html = renderToStaticMarkup(React.createElement(FlexBoardManager, { board, onClose(){}, onStatus(){}, onShowLayers(){} }));
+console.error = diagnostic;
+for (const text of ['Flex PCB manager','Span (mm)','FreekiCAD','Radius takes precedence','Copy KiKakuka annotation','flat fabrication reference','Export definitions','All flex import diagnostics','Orphan annotation outside endpoint tolerance.']) assert.ok(html.includes(text), text);
+assert.equal(JSON.stringify(board), before, 'manager presentation does not change source coordinates or bend definitions');
+const empty = renderToStaticMarkup(React.createElement(FlexBoardManager, { board: null, onClose(){}, onStatus(){}, onShowLayers(){} }));
+assert.ok(empty.includes('No board is loaded.'));
+console.log('Flex manager source annotation, diagnostics, units, missing/invalid parameters and empty-state checks passed.');

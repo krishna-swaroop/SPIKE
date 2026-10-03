@@ -1,9 +1,12 @@
 # Importer Architecture
 
 SPIKE analysis is source agnostic. An importer translates an EDA artifact into
-the normalized `DesignIR` contract and reports every material omission or
+the normalized `SpiDeR` contract and reports every material omission or
 ambiguity. Solvers, reports, project storage, and renderers do not parse EDA
 formats.
+
+At the KiCad-Prism boundary, compatible `DesignIR` naming may be exposed;
+SPIKE internals consume `SpiDeR` (SPIKE Design Reference) after import.
 
 ## Boundary
 
@@ -13,7 +16,7 @@ flowchart LR
     Detect --> Adapter["Registered source adapter"]
     Adapter --> Normalize["Units, coordinates, identities, geometry"]
     Normalize --> Quality["Import-quality validation"]
-    Quality --> IR["DesignIR spike/v1"]
+    Quality --> IR["SpiDeR spike/v1"]
     IR --> Project["Project package"]
     IR --> Solver["Solver plugins"]
     IR --> Scene["2D/3D scene"]
@@ -27,7 +30,7 @@ in `app/src/designSourceRegistry.ts`.
 ## Adapter contract
 
 An adapter descriptor declares a stable ID, display name, source format IDs,
-and file extensions. Its import function returns `DesignIR` or raises a clear
+and file extensions. Its import function returns `SpiDeR` or raises a clear
 unsupported/invalid-source error.
 
 Every successful import records:
@@ -105,7 +108,7 @@ their owner identity, while unresolved owners remain explicitly diagnostic.
 Manufacturing drills do not create copper, barrels, or mesh voids. Multi-step
 polylines retain deterministic
 segment identities plus a typed ordered parent-path, step count, round end-cap,
-and round join; DesignIR JSON and versioned Arrow v4 preserve those semantics.
+and round join; SpiDeR JSON and versioned Arrow v4 preserve those semantics.
 Arrow v4 additionally retains exact per-layer land profiles; pathless Arrow v1,
 typed-path Arrow v2, and exact-ring Arrow v3 remain compatible.
 It also retains the exact `PWR1/GND` `SOLID_FILL`/`FILL` zone boundary from the
@@ -184,7 +187,7 @@ useful visual QA but is not sufficient geometry validation.
 
 1. Add a focused module under `python/spike_core` or an external extension.
 2. Implement the importer protocol and descriptor.
-3. Normalize into `DesignIR` without leaking source types.
+3. Normalize into `SpiDeR` without leaking source types.
 4. Register it at the application composition root.
 5. Add redistributable fixtures and assertion-based tests.
 6. Update the support table and project-format migration behavior.

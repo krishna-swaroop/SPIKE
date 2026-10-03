@@ -1,6 +1,6 @@
 import unittest
 
-from python.spike_core.contracts import DesignIR
+from python.spike_core.contracts import SpiDeR
 from python.spike_core.native_circuit_compiler import (
     compile_spice_workspace_to_native_mna,
     run_spice_workspace_native_mna,
@@ -10,7 +10,7 @@ from python.spike_core.spice_workspace import SPICE_WORKSPACE_CONTRACT
 
 
 def design():
-    return DesignIR(
+    return SpiDeR(
         design_id="native-workspace",
         components=[
             {"id": "v1", "reference": "V1"},

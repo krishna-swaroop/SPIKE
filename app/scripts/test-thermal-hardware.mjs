@@ -11,7 +11,7 @@ const viewport = readFileSync(resolve(root, "src", "BoardViewport.tsx"), "utf8")
 for (const fragment of ["<ThermalHardwareEditor", "fans,", "virtual_heatsinks: heatsinks", "totalFanFlow"]) {
   if (!app.includes(fragment)) throw new Error(`Thermal hardware handoff missing: ${fragment}`);
 }
-for (const fragment of ["FANS", "INTEGRATED HEATSINKS", "Pressure Pa", "Fin height", "Interface Rth", "onSpreadsheetKeyDown"]) {
+for (const fragment of ["FANS", "INTEGRATED HEATSINKS", "Pressure Pa", "Fin height", "Interface Rth", "DataTable"]) {
   if (!editor.includes(fragment)) throw new Error(`Thermal hardware spreadsheet missing: ${fragment}`);
 }
 for (const fragment of ["normalizeThermalFans", "normalizeThermalHeatsinks", "static_pressure_pa", "interface_resistance_c_per_w"]) {

@@ -15,6 +15,9 @@ import zipfile
 from python.spike_core.mcad_export import export_assembly
 from python.spike_core.mcad_export_contract import IDENTITY, validate_assembly
 from python.spike_core.mcad_export_design import assembly_from_context
+from python.spike_core.contracts import SpiDeR
+from python.spike_core.spider_v2 import AssemblyIRV1, BoardInstance, SpiDeRV2
+from python.spike_core.spider_v2_schema import CoordinateFrame
 
 
 def ring(points, role="outer"):
@@ -42,7 +45,87 @@ def assembly_fixture():
         ]}
 
 
+def retained_multiboard_fixture():
+    design = SpiDeRV2.from_v1(SpiDeR(
+        design_id="shared-design", name="Shared source board", source_format="neutral",
+        stackup=[{"name": "Core", "type": "dielectric", "thickness_mm": 1.6, "material": "FR-4"}],
+        components=[{"reference": "U1", "position": [2.0, 3.0], "rotation": 90.0,
+                     "model_path": "retained-controller.step"}],
+        metadata={"source_sha256": "a" * 64,
+                  "board_outline_rings": [ring([[0, 0], [10, 0], [10, 5], [0, 5]])]},
+    )).to_dict()
+    translated = IDENTITY.copy()
+    translated[3], translated[7], translated[11] = 30.0, 4.0, 2.0
+    rotated = [0.0, -1.0, 0.0, 12.0, 1.0, 0.0, 0.0, 7.0,
+               0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0]
+    assembly = AssemblyIRV1(assembly_id="repeated-board-assembly", name="Repeated boards", boards=[
+        BoardInstance(id="controller-a", name="Controller A", design_id=design["design_id"],
+                      frame=CoordinateFrame(frame_id="controller-a-frame", parent_frame_id="assembly", transform=tuple(translated))),
+        BoardInstance(id="controller-b", name="Controller B", design_id=design["design_id"],
+                      frame=CoordinateFrame(frame_id="controller-b-frame", parent_frame_id="assembly", transform=tuple(rotated))),
+    ]).to_dict()
+    retained = {"contract": "spike/assembly-designs/v1", "active_design_id": design["design_id"], "designs": [design]}
+    return design, assembly, retained
+
+
 class McadContractTests(unittest.TestCase):
+    def test_multiboard_projection_preserves_repeated_occurrences_placements_and_removal(self):
+        design, assembly_ir, retained = retained_multiboard_fixture()
+        context = {"design": design, "project": {"assembly_ir": assembly_ir, "assembly_designs": retained},
+                   "parameters": {"allow_partial": True}}
+        before = copy.deepcopy(context)
+        projected = assembly_from_context(context)
+        self.assertEqual(context, before)
+        rows = {row["id"]: row for row in projected["objects"]}
+        self.assertEqual(rows["controller-a"]["transform"][3:12:4], [30.0, 4.0, 2.0])
+        self.assertEqual(rows["controller-b"]["transform"], list(assembly_ir["boards"][1]["frame"]["transform"]))
+        self.assertEqual(rows["controller-a/layer:0"]["parent_id"], "controller-a")
+        self.assertEqual(rows["controller-b/layer:0"]["parent_id"], "controller-b")
+        occurrences = projected["properties"]["component_occurrences"]
+        component_id = design["components"][0]["id"]
+        self.assertEqual({row["id"] for row in occurrences},
+                         {f"controller-a/component:{component_id}", f"controller-b/component:{component_id}"})
+        self.assertTrue(all(row["model_ids"] for row in occurrences))
+        self.assertEqual(len(projected["properties"]["retained_design_models"][design["design_id"]]), 1)
+        self.assertEqual(len(projected["properties"]["retained_design_components"][design["design_id"]]), 1)
+        self.assertEqual(projected["provenance"]["board_occurrence_ids"], ["controller-a", "controller-b"])
+
+        active_fallback = assembly_from_context({"design": design, "project": {"assembly_ir": assembly_ir},
+                                                 "parameters": {"allow_partial": True}})
+        self.assertEqual(active_fallback["provenance"]["board_occurrence_ids"],
+                         ["controller-a", "controller-b"])
+
+        removed = copy.deepcopy(context)
+        removed["project"]["assembly_ir"]["boards"].pop()
+        reprojected = assembly_from_context(removed)
+        self.assertNotIn("controller-b", {row["id"] for row in reprojected["objects"]})
+        self.assertNotIn(f"controller-b/component:{component_id}",
+                         {row["id"] for row in reprojected["properties"]["component_occurrences"]})
+
+    def test_multiboard_projection_requires_every_retained_design(self):
+        design, assembly_ir, _ = retained_multiboard_fixture()
+        other = copy.deepcopy(assembly_ir)
+        other["boards"][1]["design_id"] = "missing-design"
+        with self.assertRaisesRegex(ValueError, "missing retained SpiDeR designs: missing-design"):
+            assembly_from_context({"design": design, "project": {"assembly_ir": other},
+                                   "parameters": {"allow_partial": True}})
+
+    def test_isolated_extension_plan_receives_complete_project_assembly(self):
+        from python.spike_core.extensions import ExtensionRegistry
+        design, assembly_ir, retained = retained_multiboard_fixture()
+        root = Path(__file__).resolve().parents[2] / "extensions"
+        registry = ExtensionRegistry()
+        registry.discover([root], trusted_roots=[root])
+        result = registry.invoke("spike.mcad", "mcad-plan", {
+            "design": design,
+            "project": {"name": "Repeated boards", "assembly_ir": assembly_ir, "assembly_designs": retained},
+            "parameters": {},
+        })
+        self.assertEqual(result["data"]["provenance"]["board_occurrence_ids"],
+                         ["controller-a", "controller-b"])
+        self.assertEqual({row["id"] for row in result["data"]["objects"] if row["kind"] == "assembly"},
+                         {"controller-a", "controller-b"})
+
     def test_identities_materials_and_source_are_not_mutated(self):
         a = assembly_fixture(); before = copy.deepcopy(a)
         result = validate_assembly(a)
@@ -135,6 +218,33 @@ class McadKernelTests(unittest.TestCase):
                 self.assertEqual(hashlib.sha256(archive.read(artifact["file"])).hexdigest(), artifact["sha256"])
             source = json.loads(archive.read("assembly.spike-mcad.json"))
             self.assertEqual(source["objects"][3]["properties"], a["objects"][3]["properties"])
+
+    def test_repeated_board_occurrences_reach_every_mechanical_artifact(self):
+        design, assembly_ir, retained = retained_multiboard_fixture()
+        projected = assembly_from_context({
+            "design": design,
+            "project": {"assembly_ir": assembly_ir, "assembly_designs": retained},
+            "parameters": {"allow_partial": True},
+        })
+        result = export_assembly(projected)
+        expected_ids = {row["id"] for row in projected["objects"]}
+        self.assertEqual({row["id"] for row in result["manifest"]["objects"]}, expected_ids)
+        self.assertEqual(result["manifest"]["provenance"]["board_occurrence_ids"],
+                         ["controller-a", "controller-b"])
+        archive_bytes = base64.b64decode(result["artifacts"][1]["data"])
+        with zipfile.ZipFile(io.BytesIO(archive_bytes)) as archive:
+            exported_input = json.loads(archive.read("assembly.spike-mcad.json"))
+            self.assertEqual({row["id"] for row in exported_input["objects"]}, expected_ids)
+            breps = {row["brep_file"] for row in result["manifest"]["objects"] if row["kind"] != "assembly"}
+            self.assertEqual(breps, {name for name in archive.namelist() if name.endswith(".brep")})
+            self.assertIn("assembly.step", archive.namelist())
+            self.assertIn("assembly.FCStd", archive.namelist())
+        bodies = {row["id"]: row for row in result["manifest"]["objects"] if row["kind"] != "assembly"}
+        self.assertEqual(bodies["controller-a/layer:0"]["step_roundtrip"], "passed")
+        self.assertEqual(bodies["controller-b/layer:0"]["step_roundtrip"], "passed")
+        self.assertEqual(bodies["controller-a/layer:0"]["bounds_mm"][:3], [30.0, 4.0, 2.0])
+        for measured, expected in zip(bodies["controller-b/layer:0"]["bounds_mm"], [7.0, 7.0, 1.0, 12.0, 17.0, 2.6]):
+            self.assertAlmostEqual(measured, expected, places=6)
 
     def test_invalid_cutout_is_rejected_by_kernel(self):
         a = assembly_fixture()

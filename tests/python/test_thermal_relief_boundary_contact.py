@@ -8,7 +8,7 @@ from pathlib import Path
 
 from jsonschema import Draft202012Validator
 
-from python.spike_core.design_ir_v2 import DesignIRV2
+from python.spike_core.spider_v2 import SpiDeRV2
 from python.spike_core.kicad_importer import import_kicad_design
 from python.spike_core.thermal_relief_boundary_contact import (
     build_thermal_relief_boundary_contact_evidence,
@@ -21,7 +21,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 class ThermalReliefBoundaryContactTests(unittest.TestCase):
-    def design(self, *, pad_x: float = 0.0) -> DesignIRV2:
+    def design(self, *, pad_x: float = 0.0) -> SpiDeRV2:
         directory = tempfile.TemporaryDirectory()
         self.addCleanup(directory.cleanup)
         path = Path(directory.name) / "thermal-boundary.kicad_pcb"
@@ -38,9 +38,9 @@ class ThermalReliefBoundaryContactTests(unittest.TestCase):
             (property "Reference" "J1")
             (pad "1" smd rect (at 0 0) (size 2 2) (layers "F.Cu")
               (net 1 "VCC") (uuid "pad-a"))))""", encoding="utf-8")
-        return DesignIRV2.from_v1(import_kicad_design(str(path)))
+        return SpiDeRV2.from_v1(import_kicad_design(str(path)))
 
-    def build(self, design: DesignIRV2):
+    def build(self, design: SpiDeRV2):
         connection = build_zone_pad_connection_evidence(design)
         return connection, build_thermal_relief_boundary_contact_evidence(design, connection)
 
@@ -81,7 +81,7 @@ class ThermalReliefBoundaryContactTests(unittest.TestCase):
             "source_fill_component_sha256": "", "source_fill_representation": "none",
             "source_fill_provenance_complete": False,
         })
-        incomplete = DesignIRV2.from_dict(payload)
+        incomplete = SpiDeRV2.from_dict(payload)
         _, report = self.build(incomplete)
         self.assertEqual(report["accounting"]["status"], "unsupported")
         self.assertEqual(report["records"][0]["reason_code"], "source_fill_provenance_incomplete")

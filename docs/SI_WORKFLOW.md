@@ -44,7 +44,7 @@ aggressor and victim routes. Click either route to identify it while reviewing
 the board from another side. The NEXT/FEXT values shown beside those routes
 are whole-channel transfer and loaded-terminal metrics; their route colors
 are categorical and do not encode local coupling voltage. A raw KiCad layout
-without a canonical DesignIR binding does not admit this overlay.
+without a canonical SpiDeR binding does not admit this overlay.
 
 For an imported two-layer board, the **S-parameter solver** selector in the
 **HF / SI** ribbon can route **S-parameters** and **Ports** to the optional

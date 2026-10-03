@@ -12,8 +12,8 @@ from dataclasses import asdict
 from pathlib import Path, PurePosixPath
 
 from .assembly_frames import IDENTITY, validate_rigid_transform
-from .design_ir_v2 import AssemblyIRV1, AssemblyPart, BoardInstance, DesignIRV2
-from .design_ir_v2_schema import CoordinateFrame, canonical_uuid, content_digest
+from .spider_v2 import AssemblyIRV1, AssemblyPart, BoardInstance, SpiDeRV2
+from .spider_v2_schema import CoordinateFrame, canonical_uuid, content_digest
 from .mcad_importer import import_mcad_artifact
 from .service_project import import_design
 from .project_package import _source_member_name
@@ -98,7 +98,7 @@ def import_exchange(path, root_frame="assembly", namespace=""):
                 local.write_bytes(assets[asset])
                 if kind == "board":
                     if local.suffix.lower() == ".json":
-                        design = DesignIRV2.from_dict(json.loads(assets[asset])).to_dict()
+                        design = SpiDeRV2.from_dict(json.loads(assets[asset])).to_dict()
                         report = {"source_format": "spike/design-ir/v2", "source_sha256": content_digest(assets[asset])}
                     else:
                         outcome = import_design(str(local), with_report=True)

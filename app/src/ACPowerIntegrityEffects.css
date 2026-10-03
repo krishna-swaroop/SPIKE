@@ -1,0 +1,18 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+.acpi-workbench { display: grid; gap: 12px; padding: 16px; max-width: 1350px; margin: auto; }
+.acpi-workbench fieldset { border: 1px solid var(--border, #596171); border-radius: 6px; padding: 12px; }
+.acpi-workbench p, .acpi-workbench small { line-height: 1.5; }
+.acpi-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; margin-bottom: 10px; }
+.acpi-workbench label { display: grid; gap: 5px; font-size: 12px; }
+.acpi-workbench input, .acpi-workbench select, .acpi-workbench textarea { box-sizing: border-box; min-width: 0; width: 100%; padding: 7px; }
+.acpi-workbench input[type=checkbox] { width: auto; justify-self: start; }
+.acpi-workbench button { justify-self: start; }
+.acpi-plots { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 10px; }
+.acpi-chart { min-width: 0; margin: 0; padding: 10px; border: 1px solid var(--border, #596171); border-radius: 6px; }
+.acpi-chart figcaption { font-weight: 600; }
+.acpi-chart svg { width: 100%; overflow: visible; color: inherit; }
+.acpi-chart svg text { fill: currentColor; font-size: 9px; }
+.acpi-legend { display: flex; flex-wrap: wrap; gap: 15px; font-size: 12px; }
+.acpi-table { overflow-x: auto; max-height: 430px; margin-top: 12px; }
+.acpi-table table { border-collapse: collapse; width: 100%; font-size: 12px; }
+.acpi-table th, .acpi-table td { white-space: nowrap; text-align: left; padding: 7px; border-bottom: 1px solid var(--border, #596171); }

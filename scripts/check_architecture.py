@@ -120,6 +120,8 @@ def main() -> int:
         "app/src/workerBridge.ts",
         "app/src/resourceMonitor.ts",
         "app/src/detachedToolWindows.tsx",
+        "app/src/assemblyToolWindows.ts",
+        "app/src/reportPreviewWindow.ts",
     }
     for path in typescript:
         name = relative(path)
@@ -137,7 +139,11 @@ def main() -> int:
     for path in python:
         name = relative(path)
         text = path.read_text(encoding="utf-8")
-        if re.search(r"(?:from|import)\s+python\.core\..*parser", text) and name != "python/spike_core/kicad_importer.py":
+        parser_adapters = {
+            "python/spike_core/kicad_importer.py",
+            "python/spike_core/model_resolver_staging.py",
+        }
+        if re.search(r"(?:from|import)\s+python\.core\..*parser", text) and name not in parser_adapters:
             errors.append(f"{name}: source parser imports belong in a registered importer adapter")
 
     for path in supported_python:

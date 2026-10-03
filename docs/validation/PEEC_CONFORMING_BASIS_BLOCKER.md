@@ -67,7 +67,7 @@ contact distribution. C383.1 remains disconnected at all levels.
 
 No native L extraction was repeated after this failed geometry gate. The
 existing passive but nonconverged L evidence is recorded in
-[the volume correction record](../PEEC_VOLUME_CORRECTION_20260924.md).
+the volume correction record.
 Its passivity result remains evidence about those supplied bases, not proof of
 correct support or a new conforming extraction.
 

@@ -8,8 +8,8 @@ from pathlib import Path
 from unittest.mock import patch
 
 from python.spike_core import __version__ as APP_VERSION
-from python.spike_core.contracts import DesignIR
-from python.spike_core.design_ir_v2 import AssemblyIRV1, DesignIRV2
+from python.spike_core.contracts import SpiDeR
+from python.spike_core.spider_v2 import AssemblyIRV1, SpiDeRV2
 from python.spike_core.geometry_arrow import canonical_geometry_rows
 from python.spike_core import project_model_artifacts
 from python.spike_core.project_package import (
@@ -85,7 +85,7 @@ class ProjectPackageV3Tests(unittest.TestCase):
         }
 
     def payload(self):
-        design = DesignIRV2.from_v1(DesignIR(
+        design = SpiDeRV2.from_v1(SpiDeR(
             design_id="fixture",
             name="Fixture",
             source_format="kicad",
@@ -140,7 +140,7 @@ class ProjectPackageV3Tests(unittest.TestCase):
 
     def test_retained_incomplete_padstack_group_is_package_bound_but_not_arrow_copper(self):
         payload = self.payload()
-        legacy = DesignIR(
+        legacy = SpiDeR(
             design_id="retained", name="Retained", source_format="ipc-2581",
             layers=[{"id": "L1", "name": "TOP", "type": "copper"},
                     {"id": "L2", "name": "BOTTOM", "type": "copper"}],
@@ -155,7 +155,7 @@ class ProjectPackageV3Tests(unittest.TestCase):
                              "at_mm": [1, 2], "shape": {"kind": "circle", "size_mm": [1, 1],
                              "source_primitive_id": "C1"}, "pin": None}],
         }]
-        payload["design_ir"] = DesignIRV2.from_v1(legacy).to_dict()
+        payload["design_ir"] = SpiDeRV2.from_v1(legacy).to_dict()
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "retained.spike"
             write_spike_package(path, payload, generate_geometry_tables=True)
@@ -164,13 +164,13 @@ class ProjectPackageV3Tests(unittest.TestCase):
         self.assertEqual(reopened.payload["geometry"]["tables"][0]["rows"], 0)
 
     def test_retained_nonregular_padstack_geometry_survives_package_without_inferred_entities_or_arrow_rows(self):
-        legacy = DesignIR(
+        legacy = SpiDeR(
             design_id="retained-nonregular", name="Retained non-regular", source_format="ipc-2581",
             layers=[{"id": "L1", "name": "TOP", "type": "copper"}],
             nets=[{"id": "N1", "name": "VCC"}], metadata={"source_sha256": "8" * 64},
         )
         legacy.metadata["ipc2581_retained_nonregular_padstack_geometry"] = self.retained_nonregular_padstack_geometry()
-        design = DesignIRV2.from_v1(legacy)
+        design = SpiDeRV2.from_v1(legacy)
         self.assertEqual((len(design.pads), len(design.vias), len(design.zones)), (0, 0, 0))
 
         payload = self.payload()
@@ -179,7 +179,7 @@ class ProjectPackageV3Tests(unittest.TestCase):
             path = Path(directory) / "retained-nonregular.spike"
             write_spike_package(path, payload)
             reopened = read_spike_package(path)
-            restored = DesignIRV2.from_dict(reopened.payload["design_ir"])
+            restored = SpiDeRV2.from_dict(reopened.payload["design_ir"])
 
         self.assertEqual(
             json.loads(json.dumps(restored.to_v1().metadata["ipc2581_retained_nonregular_padstack_geometry"])),
@@ -188,7 +188,7 @@ class ProjectPackageV3Tests(unittest.TestCase):
         self.assertEqual(canonical_geometry_rows(restored), [])
 
     def test_retained_negative_contour_survives_package_without_zone_or_arrow_rows(self):
-        legacy = DesignIR(
+        legacy = SpiDeR(
             design_id="retained-negative", name="Retained negative", source_format="ipc-2581",
             layers=[{"id": "L1", "name": "TOP", "type": "copper"}], nets=[],
             metadata={"source_sha256": "9" * 64},
@@ -207,19 +207,19 @@ class ProjectPackageV3Tests(unittest.TestCase):
             }],
         }
         legacy.metadata["ipc2581_retained_negative_contours"] = retained
-        design = DesignIRV2.from_v1(legacy)
+        design = SpiDeRV2.from_v1(legacy)
         payload = self.payload()
         payload["design_ir"] = design.to_dict()
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "retained-negative.spike"
             write_spike_package(path, payload, generate_geometry_tables=True)
             reopened = read_spike_package(path)
-            restored = DesignIRV2.from_dict(reopened.payload["design_ir"])
+            restored = SpiDeRV2.from_dict(reopened.payload["design_ir"])
         self.assertEqual(restored.to_v1().metadata["ipc2581_retained_negative_contours"], retained)
         self.assertEqual((len(restored.zones), canonical_geometry_rows(restored)), (0, []))
 
     def test_retained_unnetted_padstack_group_survives_without_pad_via_or_arrow_rows(self):
-        legacy = DesignIR(
+        legacy = SpiDeR(
             design_id="retained-unnetted", name="Retained unnetted", source_format="ipc-2581",
             layers=[{"id": "L1", "name": "TOP", "type": "copper"}], nets=[],
             metadata={"source_sha256": "8" * 64},
@@ -236,18 +236,18 @@ class ProjectPackageV3Tests(unittest.TestCase):
         }
         legacy.metadata["ipc2581_retained_unnetted_padstack_occurrence_groups"] = retained
         payload = self.payload()
-        payload["design_ir"] = DesignIRV2.from_v1(legacy).to_dict()
+        payload["design_ir"] = SpiDeRV2.from_v1(legacy).to_dict()
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "retained-unnetted.spike"
             write_spike_package(path, payload, generate_geometry_tables=True)
-            restored = DesignIRV2.from_dict(read_spike_package(path).payload["design_ir"])
+            restored = SpiDeRV2.from_dict(read_spike_package(path).payload["design_ir"])
         self.assertEqual(
             restored.to_v1().metadata["ipc2581_retained_unnetted_padstack_occurrence_groups"], retained,
         )
         self.assertEqual((len(restored.pads), len(restored.vias), canonical_geometry_rows(restored)), (0, 0, []))
 
     def test_retained_standard_contour_land_survives_without_pad_via_or_arrow_rows(self):
-        legacy = DesignIR(
+        legacy = SpiDeR(
             design_id="retained-contour-land", name="Retained contour land", source_format="ipc-2581",
             layers=[{"id": "L1", "name": "TOP", "type": "copper"}],
             nets=[{"id": "N1", "name": "VCC"}], metadata={"source_sha256": "a" * 64},
@@ -263,11 +263,11 @@ class ProjectPackageV3Tests(unittest.TestCase):
         }
         legacy.metadata["ipc2581_retained_standard_contour_land_geometry"] = retained
         payload = self.payload()
-        payload["design_ir"] = DesignIRV2.from_v1(legacy).to_dict()
+        payload["design_ir"] = SpiDeRV2.from_v1(legacy).to_dict()
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "retained-contour-land.spike"
             write_spike_package(path, payload, generate_geometry_tables=True)
-            restored = DesignIRV2.from_dict(read_spike_package(path).payload["design_ir"])
+            restored = SpiDeRV2.from_dict(read_spike_package(path).payload["design_ir"])
         self.assertEqual(
             restored.to_v1().metadata["ipc2581_retained_standard_contour_land_geometry"], retained,
         )
@@ -297,7 +297,7 @@ class ProjectPackageV3Tests(unittest.TestCase):
 
     def test_generated_arrow_v2_preserves_typed_conductor_paths(self):
         payload = self.payload()
-        payload["design_ir"] = DesignIRV2.from_v1(DesignIR(
+        payload["design_ir"] = SpiDeRV2.from_v1(SpiDeR(
             design_id="path-fixture",
             name="Path fixture",
             source_format="ipc-2581",
@@ -329,7 +329,7 @@ class ProjectPackageV3Tests(unittest.TestCase):
         )
 
     def test_manufacturing_drill_round_trip_is_digest_bound_but_not_extra_copper(self):
-        legacy = DesignIR(
+        legacy = SpiDeR(
             design_id="drill-fixture",
             name="Drill fixture",
             source_format="ipc-2581",
@@ -356,7 +356,7 @@ class ProjectPackageV3Tests(unittest.TestCase):
                 }],
             },
         )
-        design = DesignIRV2.from_v1(legacy)
+        design = SpiDeRV2.from_v1(legacy)
         payload = self.payload()
         payload["design_ir"] = design.to_dict()
 
@@ -364,7 +364,7 @@ class ProjectPackageV3Tests(unittest.TestCase):
             path = Path(directory) / "drill.spike"
             manifest = write_spike_package(path, payload, generate_geometry_tables=True)
             opened = read_spike_package(path)
-            reopened_design = DesignIRV2.from_dict(opened.payload["design_ir"])
+            reopened_design = SpiDeRV2.from_dict(opened.payload["design_ir"])
             table = opened.payload["geometry"]["tables"][0]
             decoded = read_geometry_arrow_artifact(
                 path, table["path"],
@@ -380,7 +380,7 @@ class ProjectPackageV3Tests(unittest.TestCase):
         self.assertEqual([row["kind"] for row in decoded["rows"]], ["via"])
 
     def test_generated_arrow_v3_preserves_exact_curved_zone_boundaries(self):
-        legacy = DesignIR(
+        legacy = SpiDeR(
             design_id="curve-zone", name="Curve zone", source_format="ipc-2581",
             layers=[{"id": "L1", "name": "PWR1", "type": "plane"}],
             nets=[{"id": "N1", "name": "GND"}],
@@ -403,7 +403,7 @@ class ProjectPackageV3Tests(unittest.TestCase):
             metadata={"source_sha256": "4" * 64, "geometry_solver_ready": False},
         )
         payload = self.payload()
-        payload["design_ir"] = DesignIRV2.from_v1(legacy).to_dict()
+        payload["design_ir"] = SpiDeRV2.from_v1(legacy).to_dict()
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "curve-zone.spike"
             manifest = write_spike_package(path, payload, generate_geometry_tables=True)
@@ -413,14 +413,14 @@ class ProjectPackageV3Tests(unittest.TestCase):
                 path, table["path"],
                 expected_manifest_payload_sha256=manifest["manifest_payload_sha256"],
             )
-            restored = DesignIRV2.from_dict(opened.payload["design_ir"])
+            restored = SpiDeRV2.from_dict(opened.payload["design_ir"])
 
         self.assertEqual((table["schema"], table["rows"]), ("spike/copper-geometry-arrow/v3", 1))
         self.assertEqual(len(restored.zones[0].boundary_rings), 2)
         self.assertEqual(decoded["rows"][0]["boundary_rings"][1]["segments"][0]["kind"], "arc")
 
     def test_generated_arrow_v4_preserves_per_layer_land_profiles(self):
-        legacy = DesignIR(
+        legacy = SpiDeR(
             design_id="land-profiles", name="Land profiles", source_format="ipc-2581",
             layers=[{"id": "L1", "name": "TOP", "type": "copper"}, {"id": "L2", "name": "BOTTOM", "type": "copper"}],
             nets=[{"id": "N1", "name": "VCC"}],
@@ -434,7 +434,7 @@ class ProjectPackageV3Tests(unittest.TestCase):
             }], metadata={"source_sha256": "5" * 64, "geometry_solver_ready": False},
         )
         payload = self.payload()
-        payload["design_ir"] = DesignIRV2.from_v1(legacy).to_dict()
+        payload["design_ir"] = SpiDeRV2.from_v1(legacy).to_dict()
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "land-profiles.spike"
             manifest = write_spike_package(path, payload, generate_geometry_tables=True)
@@ -464,7 +464,7 @@ class ProjectPackageV3Tests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "generated.spike"
             payload = self.payload()
-            payload["design_ir"] = DesignIRV2.from_v1(DesignIR(
+            payload["design_ir"] = SpiDeRV2.from_v1(SpiDeR(
                 design_id="row-budget", name="Row budget", source_format="fixture",
                 layers=[{"id": "L1", "name": "TOP", "type": "copper"}],
                 nets=[{"id": "N1", "name": "VCC"}],

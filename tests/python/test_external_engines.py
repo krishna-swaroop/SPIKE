@@ -12,7 +12,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 
-from python.spike_core.contracts import AnalysisSpec, DesignIR
+from python.spike_core.contracts import AnalysisSpec, SpiDeR
 from python.spike_core.external_engines import (
     ExternalEngineDescriptor,
     _run_isolated_python,
@@ -26,8 +26,8 @@ from python.spike_core.openems_validation import validate_normalized_result
 from extensions.openems_suite.openems_mesh_policy import actual_grid_report, require_time_window
 
 
-def openems_design() -> DesignIR:
-    return DesignIR(
+def openems_design() -> SpiDeR:
+    return SpiDeR(
         design_id="fixture",
         name="OpenEMS fixture",
         layers=[{"name": "F.Cu"}, {"name": "B.Cu"}],

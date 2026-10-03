@@ -19,6 +19,7 @@ export function boardSceneVisibility(options: {
   is3D: boolean; boardReady: boolean; componentsReady: boolean; split: boolean;
   layerFiltered: boolean; exploded: boolean; isolated: boolean;
   layerAddressable?: boolean;
+  preferAuthoritativeBoard?: boolean;
   analysisOnly: boolean; resultsOnly: boolean;
   showModels: boolean; categoryFiltered: boolean; resultModelsVisible: boolean;
   missingModels: boolean;
@@ -28,7 +29,7 @@ export function boardSceneVisibility(options: {
   // Legacy single-file scenes cannot independently hide their component meshes.
   const legacyFiltered = !o.split && (!o.showModels || o.categoryFiltered || !o.resultModelsVisible);
   const importedBoard = o.is3D && o.boardReady && !o.resultsOnly && !o.analysisOnly
-    && !o.layerAddressable && !o.isolated && !o.layerFiltered && !o.exploded && !legacyFiltered;
+    && (!o.layerAddressable || o.preferAuthoritativeBoard === true) && !o.isolated && !o.layerFiltered && !o.exploded && !legacyFiltered;
   const importedComponents = modelsRequested && o.split && o.componentsReady
     && (!o.isolated || o.analysisOnly);
   const proceduralComponents = modelsRequested && (!o.isolated || o.analysisOnly)

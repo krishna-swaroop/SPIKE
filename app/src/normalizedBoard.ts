@@ -113,6 +113,8 @@ export function parseNormalizedBoard(source: string): ParsedBoard {
   const artwork = d.metadata.odb_artwork ?? canonical?.metadata?.odb_artwork ?? [];
   const canonicalLayerNames = new Map((canonical?.layers ?? []).map((layer: any) => [layer.id, layer.name]));
   const canonicalNetNames = new Map((canonical?.nets ?? []).map((entry: any) => [entry.id, entry.name]));
+  const canonicalModels = new Map((canonical?.models ?? []).map((model: any) => [model.id, model]));
+  const canonicalComponents = new Map((canonical?.components ?? []).map((component: any) => [component.id, component]));
   const omittedZones = canonical?.metadata?.transport_projection?.legacy_omitted_collections?.includes("zones");
   if (omittedZones && !Array.isArray(canonical?.zones)) throw new Error("Normalized snapshot is missing its canonical zone geometry.");
   const zoneRows = omittedZones ? canonical.zones.flatMap((zone: any) => zone.layer_ids.map((id: string) => ({
@@ -124,20 +126,43 @@ export function parseNormalizedBoard(source: string): ParsedBoard {
     const points = [arc.start, ...arcPoints(arc.start, arc.end, arc.center, arc.clockwise)];
     points.slice(1).forEach((end, i) => tracks.push({ id: `${arc.id}:display:${i}`, start: points[i], end, width: arc.width, layer: arc.layer, net: net(arc) }));
   }
+  const regions = (d.regions ?? []).map((region: any) => ({
+    id: region.id, name: region.name ?? region.id, kind: region.kind,
+    outline: region.outline ?? region.outline_mm ?? region.outlines_mm?.[0] ?? [],
+    sourceLayer: region.source_layer ?? region.sourceLayer ?? "", source: region.source ?? "project",
+    stackup: region.stackup, format: region.format, issues: region.issues,
+  }));
+  const bendLines = (d.bends ?? d.bend_lines ?? []).map((bend: any) => ({
+    id: bend.id, name: bend.name ?? bend.id,
+    points: bend.points ?? (bend.line_start_mm && bend.line_end_mm ? [bend.line_start_mm, bend.line_end_mm] : []),
+    sourceLayer: bend.source_layer ?? bend.sourceLayer ?? "",
+    radiusMm: bend.radius_mm ?? bend.radiusMm, angleDeg: bend.angle_deg ?? bend.angleDeg,
+    spanMm: bend.span_mm ?? bend.spanMm, radiusSource: bend.radius_source ?? bend.radiusSource,
+    annotation: bend.annotation, annotationPosition: bend.annotation_position ?? bend.annotationPosition,
+    sourceLayerUserName: bend.source_layer_user_name ?? bend.sourceLayerUserName,
+    sourceDrawingId: bend.source_drawing_id ?? bend.sourceDrawingId,
+    source: bend.source, format: bend.format, configured: bend.configured, issues: bend.issues,
+  }));
+  const flexIssues = [
+    ...(d.metadata?.flex_issues ?? []),
+    ...regions.flatMap((region: any) => region.issues ?? []),
+    ...bendLines.flatMap((bend: any) => bend.issues ?? []),
+  ];
   return {
     width: bounds[2] - bounds[0], height: bounds[3] - bounds[1], bounds: { minX: bounds[0], minY: bounds[1], maxX: bounds[2], maxY: bounds[3] }, outlineLoops,
     tracks, layers, layerDefinitions, nets,
     vias: d.vias.map((v: any) => ({ ...v, size: v.diameter, net: net(v) })),
     pads: [...d.pads, ...artwork.filter((r: any) => r.kind === "pad")].map((p: any) => { const size = p.size ?? p.size_mm ?? [1, 1]; return ({ ...p, customPolygon: p.custom_geometry?.status === "supported" ? p.custom_geometry.positive_filled_polygon : undefined, at: p.at ?? p.center_mm, name: p.number ?? p.name ?? "", width: size[0], height: size[1], drill: p.drill ?? p.drill_size_mm?.[0] ?? 0, rotation: p.rotation ?? p.rotation_deg ?? 0, net: net(p), ref: p.component ?? p.component_id }); }),
-    components: d.components.map((c: any) => ({ ...c, ref: c.reference, at: c.at ?? c.position_mm, rotation: c.rotation ?? c.rotation_deg ?? 0, library: c.footprint ?? c.library ?? "",
+    components: d.components.map((c: any) => { const retained = canonicalComponents.get(c.id) ?? c; const models = (retained.model_ids ?? c.model_ids ?? []).map((id: string) => canonicalModels.get(id)).filter(Boolean).map((model: any) => ({ path: model.uri ?? "", offset: [0,0,0] as [number,number,number], scale: [1,1,1] as [number,number,number], rotation: [0,0,0] as [number,number,number], transform: Array.isArray(model.transform) ? [...model.transform] : [] })); return ({ ...c, ref: c.reference, at: c.at ?? c.position_mm, rotation: c.rotation ?? c.rotation_deg ?? 0, library: c.footprint ?? c.library ?? "",
       width: (c.odb_package_ref ?? c.odb_package)?.bounds_mm ? (c.odb_package_ref ?? c.odb_package).bounds_mm[2] - (c.odb_package_ref ?? c.odb_package).bounds_mm[0] : 2,
       height: (c.odb_package_ref ?? c.odb_package)?.bounds_mm ? (c.odb_package_ref ?? c.odb_package).bounds_mm[3] - (c.odb_package_ref ?? c.odb_package).bounds_mm[1] : 2,
-      layer: c.side === "bottom" ? layers[layers.length - 1] : c.side === "top" ? layers[0] : c.layer ?? layers[0], modelOffset: [0,0,0], modelScale: [1,1,1], modelRotation: [0,0,0] })),
+      layer: c.side === "bottom" ? layers[layers.length - 1] : c.side === "top" ? layers[0] : c.layer ?? layers[0], model: models.length > 0, modelPath: models[0]?.path, modelPaths: models.map((model: { path: string }) => model.path), models, modelOffset: models[0]?.offset ?? [0,0,0], modelScale: models[0]?.scale ?? [1,1,1], modelRotation: models[0]?.rotation ?? [0,0,0] }); }),
     zones: [...zoneRows, ...artwork.filter((r: any) => r.kind === "zone")].map((z: any) => ({ id: z.id, layer: z.layer, net: net(z), points: z.boundary_rings?.length ? ringPoints(z.boundary_rings[0]) : z.points ?? z.outlines_mm?.[0] ?? [], holes: z.boundary_rings?.length ? z.boundary_rings.slice(1).map(ringPoints) : z.holes_mm ?? [],
       ...(z.source_kind ? { source_kind: z.source_kind } : {}),
       ...(z.filled_copper_state ? { filled_copper_state: z.filled_copper_state } : {}),
       ...(z.source_fill_provenance_complete === true ? { source_fill_provenance_complete: true } : {}),
       ...(z.source_fill_representation ? { source_fill_representation: z.source_fill_representation } : {}) })),
     drawings, stackup: d.stackup.map((s: any) => ({ ...s, epsilonR: s.epsilon_r, lossTangent: s.loss_tangent })), technology: d.technology ?? "rigid",
+    regions, bendLines, flexIssues,
   };
 }

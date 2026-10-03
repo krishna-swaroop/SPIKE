@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-import { FileArchive, X } from "lucide-react";
+import { FileArchive, X } from "./icons";
 
 export default function ProjectUpgradeDialog({ fileName, sourceFormat, onUpgrade, onLater }: {
   fileName: string;

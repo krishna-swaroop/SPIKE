@@ -15,6 +15,7 @@ from .project_package import (
 from .project_package_auth import validate_targeted_manifest_signature
 
 STATE_REFERENCE = "spike/state-artifact-reference/v1"
+ASSEMBLY_FIELD_STUDY = "spike/assembly-field-study-file/v1"
 MAX_STATE_BYTES = 96 * 1024 * 1024
 
 
@@ -85,6 +86,11 @@ def externalize_result_state(payload: dict[str, Any]) -> tuple[dict[str, Any], d
         if value.get("contract") == STATE_REFERENCE:
             return copy.deepcopy(value)
         contract = str(value.get("contract", ""))
+        # The file digest binds the complete field-study envelope, including
+        # its nested result. Replacing that result with an artifact reference
+        # would make the retained record fail its own import admission.
+        if contract == ASSEMBLY_FIELD_STUDY:
+            return copy.deepcopy(value)
         is_result = bool(value) and (
             key in {"latest_result", "active_result", "bundle", "latest_channel_result", "field_result"}
             or "analysis_id" in value and ("scalar_fields" in value or "outputs" in value)
@@ -107,7 +113,7 @@ def externalize_result_state(payload: dict[str, Any]) -> tuple[dict[str, Any], d
 
     # Traverse immutable input before copying: a dense result is serialized
     # directly into its artifact, never duplicated as a full Python object tree.
-    result = {name: walk(value) if name in {"analyses", "results", "extensions"} else copy.deepcopy(value)
+    result = {name: walk(value) if name in {"analyses", "results", "extensions", "assembly_ir"} else copy.deepcopy(value)
               for name, value in payload.items()}
     return result, artifacts
 
@@ -128,6 +134,8 @@ def hydrate_result_state(value: Any, path: str | Path, digest: str) -> Any:
                                                allowed_prefix="state/artifacts/")
                 cache[name] = json.loads(data[name])
             return cache[name]
+        if item.get("contract") == ASSEMBLY_FIELD_STUDY:
+            return copy.deepcopy(item)
         return {name: walk(child) for name, child in item.items()}
 
     return walk(value)

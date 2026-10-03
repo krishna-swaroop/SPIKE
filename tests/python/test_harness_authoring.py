@@ -3,7 +3,7 @@ import math
 import unittest
 
 from python.spike_core.assembly_frames import IDENTITY
-from python.spike_core.design_ir_v2 import AssemblyIRV1
+from python.spike_core.spider_v2 import AssemblyIRV1
 from python.spike_core.harness_authoring import plan_harnesses
 from python.spike_core.harness_routing import route_cable
 from python.spike_core.service_assembly_handlers import handle_assembly_request
@@ -49,6 +49,16 @@ class HarnessAuthoringTests(unittest.TestCase):
         request = fixture()
         request["assembly"]["harnesses"] = plan_harnesses(request)["harnesses"]
         self.assertFalse(plan_harnesses(request)["harnesses"])
+        request["pairs"] = [{"endpoint_a": "a::J1", "endpoint_b": "b::J2", "pin_map": {"1": "5"}}]
+        with self.assertRaisesRegex(ValueError, "already assigned"):
+            plan_harnesses(request)
+
+    def test_direct_mate_pins_are_excluded_from_virtual_harness_suggestions(self):
+        request = fixture()
+        request["assembly"]["connector_mappings"].append({"id": "mate", "kind": "connector-mate",
+            "data": {"endpoint_a": "a::J1", "endpoint_b": "b::J2", "pin_map": {"1": "5"}}})
+        plan = plan_harnesses(request)
+        self.assertEqual(plan["harnesses"][0]["pin_map"], {"2": "6"})
         request["pairs"] = [{"endpoint_a": "a::J1", "endpoint_b": "b::J2", "pin_map": {"1": "5"}}]
         with self.assertRaisesRegex(ValueError, "already assigned"):
             plan_harnesses(request)

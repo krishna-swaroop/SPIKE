@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from "react";
-import { AlertTriangle, BookOpenCheck, Boxes, CheckCircle2, Code2, Download, FileJson, Network, Play, Plus, Save, Settings2, ShieldAlert, Upload, X } from "lucide-react";
+import { AlertTriangle, BookOpenCheck, Boxes, CheckCircle2, Code2, Download, FileJson, Network, Play, Plus, Save, Settings2, ShieldAlert, Upload, X } from "./icons";
 import {
   builtinSiProtocolSuites, createCustomSiProtocolSuite, protocolSuiteExtensionBundle,
   SiAnalysisId, SiProtocolSuite, validateSiProtocolSuite,

@@ -116,7 +116,7 @@ export async function captureViewport(width = 800, height = 500): Promise<ImageD
   const context = output.getContext("2d", { willReadFrequently: true });
   if (!context) throw new Error("2D capture canvas is unavailable.");
   const webgl = document.querySelector<HTMLCanvasElement>(".board-canvas canvas.three-canvas");
-  const layout = document.querySelector<SVGSVGElement>(".board-canvas .layout-viewport > svg");
+  const layout = document.querySelector<SVGSVGElement>(".board-canvas .layout-active .layout-viewport > svg, .board-canvas .layout-active .assembly-layout-viewport > svg");
   if (layout && getComputedStyle(layout).display !== "none") {
     const clone = layout.cloneNode(true) as SVGSVGElement;
     clone.querySelectorAll("image").forEach(image => {

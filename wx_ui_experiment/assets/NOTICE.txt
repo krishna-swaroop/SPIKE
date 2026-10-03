@@ -1,0 +1,2 @@
+Icons generated from lucide-react 0.468.0, ISC license (see LUCIDE_LICENSE.txt).
+SPIKE mark copied from the current app/public/spike-mark.svg in this repository.

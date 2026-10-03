@@ -20,9 +20,10 @@ export function useNativeCopperForImport(board: ParsedBoard, sourceBytes: number
     || board.tracks.length + board.pads.length + board.vias.length >= 25_000;
 }
 
-export function missingModelProblems(board: ParsedBoard, paths: string[]): ImportProblem[] {
+export function missingModelProblems(board: ParsedBoard, paths: string[], missingReferences?: readonly string[]): ImportProblem[] {
+  const missing = missingReferences === undefined ? null : new Set(missingReferences);
   return [...new Set(paths)].map(source => ({
     source,
-    references: board.components.filter(component => (component.modelPaths ?? [component.modelPath]).includes(source)).map(component => component.ref),
-  }));
+    references: board.components.filter(component => (!missing || missing.has(component.ref)) && (component.modelPaths ?? [component.modelPath]).includes(source)).map(component => component.ref),
+  })).filter(problem => !missing || problem.references.length > 0);
 }

@@ -6,6 +6,20 @@
   text-transform: uppercase;
 }
 
+.report-preview-window {
+  width: 100vw;
+  height: 100vh;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: #101b22;
+}
+
+.report-preview-window > .report-preview {
+  border: 0;
+  box-shadow: none;
+}
+
 @media (max-width: 820px) {
   .report-preview-toolbar::after {
     display: none;

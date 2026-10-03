@@ -126,8 +126,8 @@ assert.doesNotMatch(viewportSource, /analysisNets\.includes\(/,
   "large-board traversals must use the indexed analysis-net membership set");
 assert.doesNotMatch(viewportSource, /loadedComponents\.getObjectByName\(/,
   "component-model matching must not traverse the complete scene once per part");
-assert.match(viewportSource, /componentObjectsByName/,
-  "component-model matching must build one indexed name lookup");
+assert.match(viewportSource, /componentReferenceLookup\(/,
+  "component-model matching must build one indexed reference lookup");
 assert.match(viewportSource, /dataset\.contourHoverQuery/,
   "contour hover must publish inspected-sample telemetry");
 assert.match(viewportSource, /dataset\.raycastBroadphase/,
