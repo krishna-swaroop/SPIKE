@@ -37,6 +37,12 @@ the release visible. A failed upload leaves the draft unpublished, so the job
 can be rerun. Published releases are not overwritten; use a new version for
 different binaries.
 
+For 0.3.5, the maintainer explicitly held Intel macOS. The pending Intel job
+and automatic publication chain were canceled. The three successful platform
+artifacts from the tagged commit were downloaded, checked against their SHA-256
+files, and published separately. The release notes record this exception; the
+default automated chain still requires all four platforms.
+
 For a manual release, use **Run workflow**, check **Publish**, and enter the
 matching version tag. A new tag is created at the selected commit if necessary.
 An existing tag must point to that commit.

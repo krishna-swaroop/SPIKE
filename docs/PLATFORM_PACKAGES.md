@@ -22,8 +22,9 @@ for configured local model services and extensions.
 
 ## macOS: DMG
 
-Choose `macos-arm64` for Apple Silicon or `macos-x86_64` for an Intel Mac.
-Open the DMG and drag SPIKE into Applications. The packages are tested on macOS 15;
+The 0.3.5 release provides `macos-arm64` for Apple Silicon. Intel macOS is held
+pending completion of its platform checks; there is no Intel DMG in this release.
+Open the DMG and drag SPIKE into Applications. The package is tested on macOS 15;
 earlier versions have not been tested.
 
 These experimental builds are ad-hoc signed, without Apple notarization.

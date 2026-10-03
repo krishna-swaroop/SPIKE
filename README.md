@@ -25,7 +25,8 @@ simulation workflows.
 
 SPIKE runs locally and includes a command-line interface. Version 0.3.5 is an
 early community preview with an unsigned Windows x64 installer, an experimental
-Linux Flatpak, and experimental macOS DMGs for Apple Silicon and Intel.
+Linux Flatpak, and an experimental macOS DMG for Apple Silicon. Intel macOS is
+held from this release pending completion of its platform checks.
 
 [Downloads and release notes](https://github.com/wayri/SPIKE/releases/tag/v0.3.5)
 · [Five-minute ESP32 walkthrough](docs/ESP32_QUICKSTART.md)
