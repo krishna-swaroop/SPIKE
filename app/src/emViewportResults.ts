@@ -16,6 +16,7 @@ export type EMViewportData = {
   positionsMm: [number, number, number][]; indices: number[]; values: (number | null)[];
   directions: ([number, number, number] | null)[]; highlights: ("node" | "antinode" | null)[];
   range: [number, number]; notices: string[]; structure?: { vertices_mm: number[][]; triangles: number[][] };
+  angularNeedsBoardAnchor?: boolean;
 };
 export function emViewportPayload(value: unknown): Record<string, unknown> {
   const envelope = rec(value);
@@ -67,6 +68,7 @@ export function buildEMViewportData(record: EMViewportRecord, s: EMViewportSetti
   let domain: "spatial" | "angular" = "angular", unit = "arbitrary coherent units";
   let positionsMm: [number, number, number][] = [], vectors: (Vector | null)[] = [], values: (number | null)[] = [], ny = 0, nx = 0;
   const notices = ["Only returned samples are probed. Surfaces and contours connect samples for display; they do not create solved field data."];
+  let angularNeedsBoardAnchor = false;
   if (["near_e", "near_h", "poynting"].includes(s.quantity)) {
     const plane = admitEMergeFieldPlanes(fields.nearfield).find(p => p.frequency_hz === frequencyHz);
     if (!plane) return null;
@@ -103,7 +105,8 @@ export function buildEMViewportData(record: EMViewportRecord, s: EMViewportSetti
         return a.map((n, k) => [n * v[0] + b[k] * ep[i][0], n * v[1] + b[k] * ep[i][1]]);
       });
     }
-    const origin = openems ? openems.centerMm : rec(payload.summary).setup ? rec(rec(payload.summary).setup).antenna_translation_mm : [0, 0, 0];
+    const origin = openems ? openems.centerMm : rec(rec(payload.summary).setup).antenna_translation_mm;
+    angularNeedsBoardAnchor = !(Array.isArray(origin) && origin.length === 3 && origin.every(Number.isFinite));
     const center = Array.isArray(origin) && origin.length === 3 && origin.every(Number.isFinite) ? origin : [0, 0, 0];
     const amplitudes = vectors.map(v => v ? Math.hypot(...v.flat()) : 0), peak = amplitudes.reduce((m, v) => Math.max(m, v), 1e-300);
     positionsMm = theta.flatMap(t => phi.map(p => { const tr = t * Math.PI / 180, pr = p * Math.PI / 180;
@@ -125,5 +128,5 @@ export function buildEMViewportData(record: EMViewportRecord, s: EMViewportSetti
   const structureRaw = rec(fields.structure_mesh);
   const structure = structureRaw.contract === "spike/optycal-structure-mesh/v1" && Array.isArray(structureRaw.vertices_mm) && Array.isArray(structureRaw.triangles) ? { vertices_mm: structureRaw.vertices_mm as number[][], triangles: structureRaw.triangles as number[][] } : undefined;
   if (s.projection === "phase") unit = "degrees";
-  return { domain, frequencyHz, label: availableEMQuantities(record).find(q => q.id === s.quantity)?.label ?? s.quantity, unit, positionsMm, indices: triangles(ny, nx, values), values, directions, highlights, range: [low, high], notices, structure };
+  return { domain, frequencyHz, label: availableEMQuantities(record).find(q => q.id === s.quantity)?.label ?? s.quantity, unit, positionsMm, indices: triangles(ny, nx, values), values, directions, highlights, range: [low, high], notices, structure, angularNeedsBoardAnchor };
 }

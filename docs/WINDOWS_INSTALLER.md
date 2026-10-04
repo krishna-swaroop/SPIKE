@@ -15,7 +15,7 @@ the installers to `artifacts/windows/installer`; and writes a SHA-256 manifest.
 The NSIS installer supports per-user or per-machine installation and registers
 the `.spike` project association.
 
-The current Windows community release is `0.3.6` (NSIS x64). The local preview
+The current Windows community release is `0.3.7` (NSIS x64). The local preview
 builder also supports MSI. It stages current resources after building the worker,
 including the CLI launcher, before packaging.
 The SHA-256 installer manifest records the package and application versions.

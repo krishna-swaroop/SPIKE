@@ -49,7 +49,7 @@ An existing tag must point to that commit.
 
 ## What the chain checks
 
-Version 0.3.6 is a Windows-only release. Run the standalone **Windows x64 package**
+Version 0.3.7 is a Windows-only release. Run the standalone **Windows x64 package**
 workflow at the release commit, then verify its installer and SHA-256 artifact
 before publishing that exact commit as a prerelease. The all-platform helper
 continues to require four packages; do not describe a Windows-only artifact set

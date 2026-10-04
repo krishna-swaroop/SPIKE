@@ -79,6 +79,7 @@ import {
 export type BoardObject = {
   id: string;
   type: "component" | "trace" | "zone" | "via" | "pad" | "terminal";
+  terminalRole?: "source" | "load" | "source_return" | "load_return";
   name: string;
   ref?: string;
   net?: string;
@@ -3471,7 +3472,7 @@ function BoardViewport({ qualityTarget, onEmiScene, viewMode, visibleLayers, lay
     if (activeBoard && emOverlay && viewMode === "3D") {
       try {
         // EMerge/Optycal use top copper at z=0; this viewport centers the PCB thickness.
-        const overlay = buildEMViewportScene(emOverlay.data, emOverlay.settings, { ...boardTransformRef.current, zOffsetMm: boardThicknessMm(activeBoard) / 2 });
+        const overlay = buildEMViewportScene(emOverlay.data, emOverlay.settings, { ...boardTransformRef.current, zOffsetMm: boardThicknessMm(activeBoard) / 2, angularAnchorMm: antennaCopperCenter(activeBoard) ?? undefined });
         group.add(overlay);
         overlay.traverse(object => { if (object.userData.emOverlay && object.userData.emSampleIndices) emRadiationPickablesRef.current.push(object); });
         if (hostRef.current) hostRef.current.dataset.emRadiation = `${emOverlay.data.domain};${emOverlay.data.label};samples=${emOverlay.data.values.length}`;
@@ -4335,6 +4336,7 @@ function BoardViewport({ qualityTarget, onEmiScene, viewMode, visibleLayers, lay
       const object: BoardObject = {
         id: `analysis-terminal:${terminal.id}`,
         type: "terminal",
+        terminalRole: terminal.role,
         name: terminal.name,
         net: terminal.net,
         layer: terminal.layer === "auto" ? "through" : terminal.layer,

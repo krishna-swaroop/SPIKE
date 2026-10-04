@@ -4,8 +4,9 @@
 .emi-chamber-workspace button { border: 1px solid #486071; border-radius: 4px; padding: 7px 10px; color: #dbe6ee; background: #1c3242; font-size: 11px; cursor: pointer; }
 .emi-chamber-workspace button.active { color: #8ae4dc; border-color: #62ada9; background: #204449; }
 .emi-chamber-workspace button:disabled { opacity: .45; cursor: default; }
-.canvas-area:has(.emi-chamber-workspace) { grid-template-rows: minmax(0, 1fr); }
-.canvas-area:has(.emi-chamber-workspace) > :not(.board-canvas) { display: none; }
+.app-shell .canvas-area:has(.emi-chamber-workspace) { grid-template-rows: var(--ui-context-toolbar-height, 34px) minmax(0, 1fr); }
+.app-shell .canvas-area:has(.emi-chamber-workspace) > :not(.board-canvas):not(.result-mode-toolbar) { display: none; }
+.app-shell .canvas-area:has(.emi-chamber-workspace) > .board-canvas { grid-row: 2; }
 .board-canvas:has(.emi-chamber-workspace) > .viewport-hud-top, .board-canvas:has(.emi-chamber-workspace) > .viewport-hud-bottom { display: none; }
 .emi-chamber-content { flex: 1; display: flex; min-height: 0; min-width: 0; overflow: hidden; }
 .emi-chamber-scene { flex: 1; position: relative; min-height: 180px; min-width: 0; overflow: hidden; }

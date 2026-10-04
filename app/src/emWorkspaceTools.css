@@ -1,0 +1,18 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+.result-mode-toolbar .emi-viewport-bar {
+  flex: 0 0 auto;
+  align-items: center;
+  max-width: none;
+  height: 28px;
+  box-shadow: none;
+}
+.result-mode-toolbar .emi-viewport-bar .setup-sublabel {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+  margin: 0;
+  padding-inline: 6px;
+  font-size: 10px;
+}
+.result-mode-toolbar .emi-viewport-bar select { height: 24px; min-height: 24px; }

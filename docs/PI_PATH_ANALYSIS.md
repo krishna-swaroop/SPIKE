@@ -1,5 +1,16 @@
 # Ordered PI Path Analysis
 
+## Terminal assignment and removal
+
+New PI setups start with no supply net, sources or sinks. Add terminals in the
+PI setup editor and select board pads or enter both coordinates. Blank coordinates
+remain unassigned, produce no viewport marker and cannot be submitted for solving.
+Explicit zero coordinates are valid. Saved assigned terminals remain intact.
+Right-click an assigned viewport terminal and choose **Delete source** or
+**Delete sink** (including return terminals). Deletion participates in project
+undo and removes the corresponding setup record. Terminal-table removal is
+also available. Solving requires at least one assigned source and sink.
+
 SPIKE represents an end-to-end power path as ordered copper meshes separated by
 explicit component interfaces. A PCB net is never treated as if it continued
 through a package by itself.

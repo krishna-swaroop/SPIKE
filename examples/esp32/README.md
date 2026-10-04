@@ -240,6 +240,13 @@ distance from the board at which the field was solved. The preview is labeled
 unvalidated and retains the simplified-geometry warning; opening it does not
 rerun the external solver or make it a full-board prediction.
 
+Angular results without a recorded solver origin are anchored to the focused
+board's antenna/RF copper center, falling back to its board center. Physical
+near-field samples and explicit solver origins keep their supplied coordinates.
+In v0.3.6 the generalized EM display can incorrectly place this origin-less
+saved pattern at the CAD origin, visibly separating it from the board. The
+source fix corrects display placement only; it does not change solver values.
+
 A completed EMerge radiation run opens SPIKE's **EM (electromagnetics)** workspace with the
 relative pattern in the board viewport and the interactive 3D surface, angular
 cut, and S-parameters in its results pane. **EM → Board + pattern** returns

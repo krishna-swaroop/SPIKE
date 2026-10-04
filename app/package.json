@@ -2,7 +2,7 @@
   "name": "spike-desktop",
   "license": "Apache-2.0",
   "private": true,
-  "version": "0.3.6",
+  "version": "0.3.7",
   "type": "module",
   "scripts": {
     "test:plot-interaction": "node scripts/test-plot-interaction.mjs && node scripts/test-plot-wheel-events.mjs && node scripts/test-report-plot-interaction.mjs",
@@ -46,7 +46,7 @@
     "test:webview": "node scripts/test-webview-guards.mjs && node scripts/test-editable-shortcuts.mjs",
     "test:model-scene": "node scripts/test-model-scene-loader.mjs",
     "test:model-resolver": "node scripts/test-model-resolver-panel.mjs",
-    "test:python-workspace": "node scripts/test-python-workspace.mjs && node scripts/test-python-workspace-backups.mjs && node scripts/test-python-file-explorer.mjs && node scripts/test-python-templates.mjs && node scripts/test-python-completions.mjs && node scripts/test-python-editor.mjs",
+    "test:python-workspace": "node scripts/test-python-workspace.mjs && node scripts/test-python-workspace-backups.mjs && node scripts/test-python-file-explorer.mjs && node scripts/test-python-templates.mjs && node scripts/test-python-completions.mjs && node scripts/test-python-editor.mjs && node scripts/test-python-floating-window.mjs",
     "test:large-scene": "node scripts/test-scene-resource-cache.mjs && node scripts/test-dense-board-scenes.mjs && node scripts/test-viewport-performance.mjs && node scripts/test-assembly-performance.mjs && node scripts/test-assembly-scene-visibility.mjs",
     "test:mcad": "node scripts/test-mcad-assembly.mjs",
     "test:board-visuals": "node scripts/test-board-visual-bundles.mjs",
@@ -68,7 +68,7 @@
     "benchmark:result-viewport": "node scripts/benchmark-result-viewport.mjs",
     "test:result-layers": "node scripts/test-result-layer-selection.mjs",
     "test:transient-ui": "node scripts/test-transient-waveform.mjs",
-    "test:terminal-table": "node scripts/test-terminal-table.mjs",
+    "test:terminal-table": "node scripts/test-terminal-table.mjs && node scripts/test-pi-terminal-state.mjs",
     "test:owned-spice-workbench": "node scripts/test-owned-spice-workbench.mjs",
     "test:si-protocol-suites": "node scripts/test-si-protocol-suites.mjs",
     "test:si-channel-results": "node scripts/test-si-channel-results.mjs",
@@ -109,7 +109,8 @@
     "test:flex-manager": "node scripts/test-flex-board-manager.mjs",
     "test:emerge-updates": "node scripts/test-emerge-runtime-updates.mjs",
     "test:emerge-gerber": "node scripts/test-emerge-gerber-ui.mjs",
-    "test:context-menus": "node scripts/test-context-menus.mjs"
+    "test:context-menus": "node scripts/test-context-menus.mjs",
+    "test:script-viewport": "node scripts/test-script-result-viewport.mjs && node scripts/test-script-viewport-import.mjs"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.5.0",

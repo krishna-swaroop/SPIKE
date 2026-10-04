@@ -1,5 +1,14 @@
 # Extension engines in the SPIKE workspace
 
+## EM display controls
+
+EM view controls occupy the reserved viewport toolbar, outside Notifications.
+Use **Minimize** to move these controls to an **EM tools** restore button in the
+bottom tool shelf. Restoring returns to EM without changing the active study.
+Chamber mode reserves the remaining viewport height for the WebGL scene, with
+the EM controls retained above it. The chamber is a display choice; board view
+and saved analysis results remain available independently.
+
 SPIKE exposes declared extension mesh and solve routes in the normal Mesh, PI,
 HF / SI, EM and Thermal setup docks. Open **External engines > Extension
 workflows** to jump to a declared route, or select **Extension engine** in the
