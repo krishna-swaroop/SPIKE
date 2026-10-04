@@ -118,7 +118,17 @@ Invoke-Checked $python @("scripts/verify_packaged_cli.py", "--", $frozenWorker, 
 Invoke-Checked "npm.cmd" @("ci") $app
 Invoke-Checked "npm.cmd" @("run", "build") $app
 Invoke-Checked $python @("scripts/prepare_release_resources.py", "--config-output", "build/tauri.release.json") $root
-Invoke-Checked "npm.cmd" @("run", "tauri", "build", "--", "--bundles", "nsis", "--config", "../build/tauri.release.json") $app
+# --config merges resource maps, which would reintroduce unstaged source trees.
+# Replace the base config only for bundling and restore its exact source bytes.
+$tauriConfig = Join-Path $app "src-tauri\tauri.conf.json"
+$sourceConfigBytes = [System.IO.File]::ReadAllBytes($tauriConfig)
+try {
+    Copy-Item -LiteralPath (Join-Path $root "build\tauri.release.json") -Destination $tauriConfig -Force
+    Invoke-Checked "npm.cmd" @("run", "tauri", "build", "--", "--bundles", "nsis") $app
+}
+finally {
+    [System.IO.File]::WriteAllBytes($tauriConfig, $sourceConfigBytes)
+}
 
 $bundleRoot = Join-Path $app "src-tauri\target\release\bundle\nsis"
 $installers = @(Get-ChildItem -LiteralPath $bundleRoot -Filter "*.exe" -File)

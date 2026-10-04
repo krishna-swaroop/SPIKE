@@ -41,6 +41,18 @@ class WindowsInstallerScriptTests(unittest.TestCase):
         self.assertLess(stage, self.script.index('Copy-Item -LiteralPath $ResourceConfig'))
         self.assertIn('if (-not $ResourceConfig)', self.script)
 
+    def test_ci_bundler_replaces_resource_map_and_restores_source_bytes(self):
+        script = (ROOT / 'scripts/build_windows_ci.ps1').read_text(encoding='utf-8-sig')
+        stage = script.index('"scripts/prepare_release_resources.py"')
+        replace = script.index('Copy-Item -LiteralPath (Join-Path $root "build\\tauri.release.json")')
+        bundle = script.index('@("run", "tauri", "build", "--", "--bundles", "nsis")')
+        restore = script.index('[System.IO.File]::WriteAllBytes($tauriConfig, $sourceConfigBytes)')
+        self.assertLess(stage, replace)
+        self.assertLess(replace, bundle)
+        self.assertLess(bundle, restore)
+        self.assertIn('finally {', script[bundle:restore])
+        self.assertNotIn('"--config", "../build/tauri.release.json"', script)
+
 
 if __name__ == "__main__":
     unittest.main()

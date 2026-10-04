@@ -81,6 +81,8 @@ The GitHub workflows call the same checked-in scripts used for local builds:
 - Linux/macOS: `scripts/build_unix_release.sh`, then `scripts/package_unix_release.py`.
 
 These scripts install build dependencies and prepare resources in a disposable
-checkout. Use a clean checkout; staging emits a separate Tauri build configuration.
+checkout. Staging emits a separate Tauri build configuration; bundling temporarily
+installs it as the base configuration and restores the source afterward. Tauri's
+`--config` merges resource maps and must not reintroduce the unstaged directories.
 See [platform installation and CLI commands](PLATFORM_PACKAGES.md) for running
 the finished packages.
