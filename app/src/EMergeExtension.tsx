@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 import { useMemo, useState } from "react";
+import { persistedEnginePython } from "./persistedEnginePython";
 import DataTable from "./DataTable";
 import { emergeRuntimePresentation } from "./emergeRuntimePresentation";
 import PlotlyChart from "./PlotlyChart";
@@ -86,7 +87,7 @@ export const defaultEMergeSetup = (signalNet = ""): EMergeSetup => ({
   frequency_stop_hz: "1000000000",
   frequency_points: "21",
   mesh_resolution_mm: "0.5",
-  python_executable: "",
+  python_executable: persistedEnginePython(),
   radome_enabled: false,
   radome_origin_x_mm: "0", radome_origin_y_mm: "0", radome_gap_mm: "10",
   radome_width_mm: "50", radome_depth_mm: "40", radome_thickness_mm: "1.5", radome_epsilon_r: "2.1",
