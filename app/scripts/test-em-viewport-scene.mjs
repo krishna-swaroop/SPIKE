@@ -61,6 +61,15 @@ assert.equal(emViewportSampleIndexForIntersection({ object: samples.getObjectByN
 const angular = buildEMViewportScene({ ...data, domain: 'angular', notices: ['Display sphere, not a spatial field'], structure: undefined }, { ...settings, showStructure: false }, transform);
 assert.equal(angular.userData.emDisplaySphere, true);
 assert.deepEqual(angular.getObjectByName('EM scalar surface').geometry.attributes.position.array, surface.geometry.attributes.position.array, 'renderer preserves pre-positioned display sphere; it never substitutes a physical observer radius');
+const localAngular = { ...data, domain: 'angular', angularNeedsBoardAnchor: true,
+  positionsMm: [[0, 0, 1], [2, 0, 1], [0, 2, 1], [2, 2, 1]] };
+const anchored = buildEMViewportScene(localAngular, settings, { ...transform, angularAnchorMm: [12, 21] });
+assert.deepEqual(Array.from(anchored.getObjectByName('EM scalar surface').geometry.attributes.position.array.slice(0, 9)), [4, -2, 2, 8, -2, 2, 4, -6, 2], 'local angular pattern follows antenna coordinates on an offset PCB');
+assert.deepEqual(anchored.getObjectByName('EM selected solved sample').position.toArray(), [8, -2, 2], 'probe marker follows the same antenna display frame');
+assert.equal(anchored.getObjectByName('EM numerical STEP structure').geometry.attributes.position.getZ(0), 2000, 'physical mechanical structure is not moved with angular samples');
+const centered = buildEMViewportScene(localAngular, settings, transform);
+assert.deepEqual(Array.from(centered.getObjectByName('EM scalar surface').geometry.attributes.position.array.slice(0, 3)), [0, 0, 2], 'missing antenna falls back to the focused board center, not the CAD origin');
+disposeScene(anchored); disposeScene(centered);
 assert.throws(() => buildEMViewportScene(data, settings, { ...transform, scale: NaN }), /finite board transform/);
 const malformedStructure = buildEMViewportScene({ ...data, structure: { vertices_mm: [[NaN, 1, 2]], triangles: [[0, 0, 0]] } }, settings, transform);
 assert.equal(malformedStructure.getObjectByName('EM numerical STEP structure'), undefined);

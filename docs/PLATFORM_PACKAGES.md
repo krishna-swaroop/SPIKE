@@ -1,6 +1,6 @@
 # Linux and macOS
 
-The newest Windows package is the [0.3.6 community preview](https://github.com/wayri/SPIKE/releases/tag/v0.3.6).
+The newest Windows package is the [0.3.7 community preview](https://github.com/wayri/SPIKE/releases/tag/v0.3.7).
 This is a Windows-only release; the Linux and macOS instructions below use 0.3.5.
 
 The experimental platform packages include the desktop app, Python runtime,

@@ -1243,7 +1243,11 @@ function LayoutViewport({ board, visibleLayers, layerOpacity, showVias = true, s
             : terminal.role === "source_return" ? "SR" : "LR";
         const radius = Math.max(view.width * 0.0065, 0.44);
         const tooltip = `${terminal.name}\n${terminal.net}\n${terminal.value} ${terminal.role.includes("source") ? "V" : "A"}\n${terminal.position[0].toFixed(4)}, ${terminal.position[1].toFixed(4)} mm\n${terminal.layers.join(" / ") || terminal.layer || "connected conductor"}`;
-        return <g key={`analysis-terminal-${terminal.id}`} className="analysis-terminal-marker">
+        const object: BoardObject = { id: `analysis-terminal:${terminal.id}`, type: "terminal", terminalRole: terminal.role,
+          name: terminal.name, net: terminal.net, layer: terminal.layer, layers: terminal.layers, position: terminal.position };
+        return <g key={`analysis-terminal-${terminal.id}`} className="analysis-terminal-marker"
+          onContextMenu={event => { event.preventDefault(); event.stopPropagation();
+            onSelect(object); onContextMenu?.({ clientX: event.clientX, clientY: event.clientY, object }); }}>
           <title>{tooltip}</title>
           <circle cx={point[0]} cy={point[1]} r={radius * 1.45} fill="#071116" fillOpacity="0.9" stroke={color} strokeWidth="0.2" vectorEffect="non-scaling-stroke" />
           <circle cx={point[0]} cy={point[1]} r={radius * 0.48} fill={color} />

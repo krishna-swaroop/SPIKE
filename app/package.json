@@ -2,7 +2,7 @@
   "name": "spike-desktop",
   "license": "Apache-2.0",
   "private": true,
-  "version": "0.3.6",
+  "version": "0.3.7",
   "type": "module",
   "scripts": {
     "test:plot-interaction": "node scripts/test-plot-interaction.mjs && node scripts/test-plot-wheel-events.mjs && node scripts/test-report-plot-interaction.mjs",
@@ -68,7 +68,7 @@
     "benchmark:result-viewport": "node scripts/benchmark-result-viewport.mjs",
     "test:result-layers": "node scripts/test-result-layer-selection.mjs",
     "test:transient-ui": "node scripts/test-transient-waveform.mjs",
-    "test:terminal-table": "node scripts/test-terminal-table.mjs",
+    "test:terminal-table": "node scripts/test-terminal-table.mjs && node scripts/test-pi-terminal-state.mjs",
     "test:owned-spice-workbench": "node scripts/test-owned-spice-workbench.mjs",
     "test:si-protocol-suites": "node scripts/test-si-protocol-suites.mjs",
     "test:si-channel-results": "node scripts/test-si-channel-results.mjs",

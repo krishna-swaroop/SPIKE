@@ -2,7 +2,7 @@
 import * as THREE from "three";
 import type { EMViewportData, EMViewportSettings } from "./emViewportResults";
 
-export type EMBoardTransform = { centerX: number; centerY: number; scale: number; zOffsetMm?: number };
+export type EMBoardTransform = { centerX: number; centerY: number; scale: number; zOffsetMm?: number; angularAnchorMm?: readonly [number, number] };
 const MAX_GLYPHS = 2048;
 const UP = new THREE.Vector3(0, 0, 1);
 
@@ -203,13 +203,19 @@ export function buildEMViewportScene(data: EMViewportData, settings: EMViewportS
   tag(group, "EM solved result overlay", { emDomain: data.domain, emLabel: data.label, emUnit: data.unit,
     emFrequencyHz: data.frequencyHz, emNotices: data.notices, emDisplaySphere: data.domain === "angular" });
   if (settings.visible === false) return group;
+  // Angular samples without a recorded origin are display-relative, not PCB coordinates.
+  // Explicit solver origins and spatial samples retain their original physical frame.
+  const anchor = transform.angularAnchorMm ?? [transform.centerX, transform.centerY];
+  if (data.domain === "angular" && data.angularNeedsBoardAnchor && !anchor.every(Number.isFinite)) throw new Error("EM overlay requires a finite angular anchor.");
+  const sampleTransform = data.domain === "angular" && data.angularNeedsBoardAnchor
+    ? { ...transform, centerX: transform.centerX - anchor[0], centerY: transform.centerY - anchor[1] } : transform;
   const opacity = Number.isFinite(settings.opacity) ? THREE.MathUtils.clamp(settings.opacity, 0, 1) : .65;
-  const main = settings.style === "surface" ? surface(data, transform, opacity)
-    : settings.style === "vectors" ? vectorLines(data, transform, opacity)
-      : settings.style === "contours" ? contourLines(data, transform, opacity) : samplePoints(data, transform, opacity);
+  const main = settings.style === "surface" ? surface(data, sampleTransform, opacity)
+    : settings.style === "vectors" ? vectorLines(data, sampleTransform, opacity)
+      : settings.style === "contours" ? contourLines(data, sampleTransform, opacity) : samplePoints(data, sampleTransform, opacity);
   if (main) group.add(main);
   for (const kind of ["node", "antinode"] as const) {
-    const marker = markers(data, settings, transform, kind);
+    const marker = markers(data, settings, sampleTransform, kind);
     if (marker) group.add(marker);
   }
   if (settings.showStructure) {
@@ -219,7 +225,7 @@ export function buildEMViewportScene(data: EMViewportData, settings: EMViewportS
   if (isSample(data, settings.selectedSample)) {
     const selected = new THREE.Mesh(new THREE.SphereGeometry(glyphSize(data, transform)*.24, 12, 8),
       new THREE.MeshBasicMaterial({ color: 0xff51dc, wireframe: true, depthTest: false }));
-    selected.position.copy(point(data.positionsMm[settings.selectedSample], transform));
+    selected.position.copy(point(data.positionsMm[settings.selectedSample], sampleTransform));
     tag(selected, "EM selected solved sample", { emSampleIndex: settings.selectedSample });
     selected.renderOrder = 140;
     group.add(selected);

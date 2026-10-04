@@ -116,6 +116,8 @@ const PythonWorkspace = lazy(() => import("./PythonWorkspace"));
 import { admittedPythonUiActions, pythonBoardNets, pythonWorkspaceContext, type PythonUiAction } from "./pythonWorkspaceContext";
 import { defaultSpiceWorkspace, normalizeSpiceWorkspace, SpiceWorkspace } from "./spiceWorkspace";
 import UniversalSettingsModal from "./UniversalSettingsModal";
+import "./emWorkspaceTools.css";
+import { piTerminalPosition, removePiTerminal } from "./piTerminalState";
 import IconGallery from "./IconGallery";
 import UniversalSearch, { UniversalSearchItem } from "./UniversalSearch";
 import SceneNavigator, { SceneNavigatorAction } from "./SceneNavigator";
@@ -515,8 +517,8 @@ const defaultReturnPath = (): ReturnPathSetup => ({
   mode: "implicit",
   net: "GND",
   domainId: "main",
-  sources: [{ ...terminal("source", 0), id: "return-source-1", name: "Source return", value: "0" }],
-  loads: [{ ...terminal("load", 0), id: "return-load-1", name: "Load return", value: "1" }],
+  sources: [],
+  loads: [],
 });
 const defaultCouplingSetup = (): CouplingSetup => ({
   enabled: false,
@@ -568,10 +570,10 @@ const topologyBatchJobs = (board: ParsedBoard | null, topology: TopologyModel, p
   });
 };
 const defaultPiSetup = (): PiSetup => ({
-  net: "+1V8_CORE",
+  net: "",
   powerPathId: "",
-  sources: [terminal("source", 0)],
-  loads: [terminal("load", 0)],
+  sources: [],
+  loads: [],
   returnPath: defaultReturnPath(),
   meshDimension: "surface_2_5d",
   meshTargetMm: "1",
@@ -982,7 +984,7 @@ export default function App() {
     ["available", "experimental"].includes(solver.state)
     && capabilities.every(capability => solver.capabilities?.includes(capability)),
   );
-  const [powerNets, setPowerNets] = useState(["+1V8_CORE", "GND"]);
+  const [powerNets, setPowerNets] = useState<string[]>([]);
   const [piSetup, setPiSetup] = useState<PiSetup>(defaultPiSetup);
   const [emiSetup, setEmiSetup] = useState<EmiSetup>(() => defaultEmiSetup(["+1V8_CORE", "GND"]));
   const [emiPreflight, setEmiPreflight] = useState<EmiPreflight | null>(null);
@@ -991,6 +993,7 @@ export default function App() {
   const [emiSection, setEmiSection] = useState<EmiSetupSection>("domain");
   const [emiDashboardOpen, setEmiDashboardOpen] = useState(false);
   const [emiChamberOpen, setEmiChamberOpen] = useState(false);
+  const [emToolsMinimized, setEmToolsMinimized] = useState(false);
   const [emiScene, setEmiScene] = useState<Group | null>(null);
   const emiSceneRef = useRef<Group | null>(null);
   const handleEmiScene = useCallback((scene: Group) => {
@@ -2053,7 +2056,7 @@ export default function App() {
     setEmiFieldResult(normalizeEmiFieldResult(data.emi?.field_result));
     setThermalScenario(data.thermal?.scenario ?? null);
     setAnalysisMode(analysis.mode ?? "DC IR Drop"); setSolverId(analysis.solver_id ?? "auto"); setFormulation(analysis.formulation ?? "auto");
-    setPowerNets(analysis.power_nets ?? ["+1V8_CORE", "GND"]); setPiSetup(normalizePiSetup(analysis.pi_setup)); setLimits(analysis.limits ?? { drop: "50", density: "100" }); setFrequency(analysis.frequency ?? "10 MHz");
+    setPowerNets(analysis.power_nets ?? []); setPiSetup(normalizePiSetup(analysis.pi_setup)); setLimits(analysis.limits ?? { drop: "50", density: "100" }); setFrequency(analysis.frequency ?? "10 MHz");
     setVisibleLayers(parsed ? visibilityForBoard(parsed, analysis.visible_layers) : analysis.visible_layers ?? initialLayers); setEmiChamberOpen(analysis.em_chamber_open === true); setAssemblyLayerFocus(analysis.assembly_layer_focus ?? {}); setAssemblyLayerVisibility(analysis.assembly_layer_visibility ?? {}); setAssemblyLayerOpacity(analysis.assembly_layer_opacity ?? {}); setAssemblyModelAssignments(analysis.assembly_model_assignments ?? {}); setAssemblyBoardVisibility(analysis.assembly_display?.visibility ?? {}); setAssemblyExplodedDistanceMm(Math.max(0, Number(analysis.assembly_display?.exploded_distance_mm) || 0)); setAssemblySnapMode("off"); setLayerOpacity(analysis.layer_opacity ?? {}); setLayerSeparation(Math.max(0, Number(analysis.layer_separation_mm) || 0));
     setShowVias(analysis.show_vias ?? true); setShowNetNames(analysis.show_net_names === true); setShowAxes(analysis.show_axes ?? true); setShowModels(analysis.show_models ?? true); setShowSmdModels(analysis.show_smd_models ?? true); setShowThtModels(analysis.show_tht_models ?? true); setNavigationInertia(analysis.navigation_inertia ?? false); setViewMode(analysis.view_mode === "2D" ? "2D" : "3D"); setSelectionFilter(["all", "part", "net"].includes(analysis.selection_filter) ? analysis.selection_filter : "all"); setIsolatedNet(analysis.isolated_net ?? null);
     const savedEmSettings = analysis.em_viewport_settings && typeof analysis.em_viewport_settings === "object" ? analysis.em_viewport_settings : {};
@@ -2986,14 +2989,13 @@ export default function App() {
     : visibleLayers) as LayerName[], [assemblyIr, resolvedAssemblyLayerVisibility, selectedBoardInstanceId, visibleLayers]);
   const terminalMarkers = useMemo<AnalysisTerminalMarker[]>(() => {
     const marker = (item: PiTerminal, role: AnalysisTerminalMarker["role"], net: string): AnalysisTerminalMarker | null => {
-      const x = Number(item.x);
-      const y = Number(item.y);
-      if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
+      const position = piTerminalPosition(item);
+      if (!position) return null;
       return {
         id: item.id,
         name: item.name,
         role,
-        position: [x, y],
+        position,
         net: item.net || net,
         layer: item.layer,
         layers: item.layers ?? [],
@@ -3308,8 +3310,7 @@ export default function App() {
     };
     const terminalValid = (item: PiTerminal | undefined) => Boolean(item
       && item.net === net
-      && Number.isFinite(Number(item.x))
-      && Number.isFinite(Number(item.y))
+      && piTerminalPosition(item)
       && (item.anchorId || item.anchorType === "coordinate"));
     const source = terminalValid(piSetup.sources[0]) ? piSetup.sources[0] : anchor("source", piSetup.sources[0], false);
     const load = terminalValid(piSetup.loads[0]) ? piSetup.loads[0] : anchor("load", piSetup.loads[0], true);
@@ -4353,14 +4354,14 @@ export default function App() {
       const available = [...new Set(Object.values(parsed.nets).filter(Boolean))];
       const returnNet = available.find(net => /(^|[/_.+-])(gnd|agnd|dgnd|pgnd|vss)(?:$|[/_.+-])/i.test(net)) ?? "";
       const nextSetup = defaultPiSetup();
-      nextSetup.net = firstNet;
+      nextSetup.net = "";
       nextSetup.returnPath.net = returnNet;
       setPiSetup(nextSetup);
       setEmiSetup(defaultEmiSetup(available));
       setEmiPreflight(null);
       setEmiScreening(null);
       setEmiFieldResult(null);
-      setPowerNets([firstNet, returnNet].filter(Boolean));
+      setPowerNets([]);
       setPiTopology(extractTopologyFromBoard(parsed, "pi"));
       setSiTopology(extractTopologyFromBoard(parsed, "si"));
       setSpiceWorkspace(defaultSpiceWorkspace("pi", parsed));
@@ -4914,6 +4915,20 @@ export default function App() {
     restore: async () => { if (!await focusReportPreviewWindow()) throw new Error("Report preview is no longer open. Generate the report again"); },
     close: async () => { await closeReportPreviewWindow(); setReportPreview(null); },
   });
+  if (emToolsMinimized) toolRestoreItems.push({ id: "em-viewport-tools", label: "EM tools", restore: () => { setTab("EM"); setEmToolsMinimized(false); } });
+  const emWorkspaceTools = <>
+            {tab === "EM" && !emToolsMinimized && <div className="emi-viewport-bar" aria-label="EM viewport controls">
+              <button className={!emiChamberOpen ? "selected" : ""} onClick={() => setEmiChamberOpen(false)} title="Use the board viewport with the current result; chamber display is optional"><CircuitBoard size={14} /> {emergeViewportPattern ? "Board + pattern" : "Board / assembly"}</button>
+              {emergeViewportPattern && emergePatterns.length > 1 && <label className="setup-sublabel">Frequency <select className="select-control" aria-label="Board radiation frequency" value={emergePatternIndex} onChange={event => setEmergePatternIndex(Number(event.target.value))}>{emergePatterns.map((pattern, index) => <option value={index} key={`${pattern.frequency_hz}-${index}`}>{(pattern.frequency_hz / 1e9).toFixed(3)} GHz</option>)}</select></label>}
+              <button className={emiChamberOpen ? "selected" : ""} onClick={() => setEmiChamberOpen(true)}>Chamber</button>
+              <button onClick={openEmiEmerge} title="Configure EMerge SI and radiation analysis"><SatelliteDish size={14} /> EMerge</button>
+              <button className={emiSetup.viewport.translucent_board ? "selected" : ""} onClick={() => setEmiSetup(current => ({ ...current, viewport: { ...current.viewport, translucent_board: !current.viewport.translucent_board } }))} title="Keep the board and component models visible as a translucent spatial reference"><Blend size={14} /> Translucent</button>
+              <button className={emiSetup.viewport.analysis_nets_only ? "selected" : ""} onClick={() => setEmiSetup(current => ({ ...current, viewport: { ...current.viewport, analysis_nets_only: !current.viewport.analysis_nets_only } }))} title="Show only EMI candidate and return nets"><RouteOff size={14} /> Nets only</button>
+              <button onClick={() => void validateEmi()} disabled={emiBusy}><ClipboardCheck size={14} /> Preflight</button>
+              <button onClick={() => void runEmiScreening()} disabled={emiBusy}><Radar size={14} /> Screen</button>
+              <button className="spike-control--compact" aria-label="Minimize EM tools to bottom bar" onClick={() => setEmToolsMinimized(true)}><PanelBottom size={14} /> Minimize</button>
+            </div>}
+  </>;
   const notificationWorkspaceTools = <div className="notification-workspace-tools">
             {tab === "Probes" && <div className="probe-mode-bar" aria-label="Probe placement mode">
               <select value={probeKind} onChange={event => setProbeKind(event.target.value as NonNullable<BoardObject["probeKind"]>)} title="Probe measurement type" aria-label="Probe measurement type">
@@ -4944,16 +4959,7 @@ export default function App() {
             </div>}
             {tab === "Thermal" && boardData && !thermalPreview && !thermalScenario && <div className="thermal-scene-bar" aria-label="Saved thermal result controls"><button onClick={() => void openSavedBoardThermal()} title="Load a source-bound board thermal view bundle"><FolderOpen size={14} /> Open saved thermal</button></div>}
             <input ref={savedBoardThermalInputRef} type="file" accept=".json" style={{ display: "none" }} onChange={event => { const file = event.target.files?.[0]; event.target.value = ""; if (file) void file.text().then(text => showSavedBoardThermal(JSON.parse(text))).catch(error => setStatus(String(error))); }} />
-            {tab === "EM" && <div className="emi-viewport-bar" aria-label="EM viewport controls">
-              <button className={!emiChamberOpen ? "selected" : ""} onClick={() => setEmiChamberOpen(false)} title="Use the board viewport with the current result; chamber display is optional"><CircuitBoard size={14} /> {emergeViewportPattern ? "Board + pattern" : "Board / assembly"}</button>
-              {emergeViewportPattern && emergePatterns.length > 1 && <label className="setup-sublabel">Frequency <select className="select-control" aria-label="Board radiation frequency" value={emergePatternIndex} onChange={event => setEmergePatternIndex(Number(event.target.value))}>{emergePatterns.map((pattern, index) => <option value={index} key={`${pattern.frequency_hz}-${index}`}>{(pattern.frequency_hz / 1e9).toFixed(3)} GHz</option>)}</select></label>}
-              <button className={emiChamberOpen ? "selected" : ""} onClick={() => setEmiChamberOpen(true)}>Chamber</button>
-              <button onClick={openEmiEmerge} title="Configure EMerge SI and radiation analysis"><SatelliteDish size={14} /> EMerge</button>
-              <button className={emiSetup.viewport.translucent_board ? "selected" : ""} onClick={() => setEmiSetup(current => ({ ...current, viewport: { ...current.viewport, translucent_board: !current.viewport.translucent_board } }))} title="Keep the board and component models visible as a translucent spatial reference"><Blend size={14} /> Translucent</button>
-              <button className={emiSetup.viewport.analysis_nets_only ? "selected" : ""} onClick={() => setEmiSetup(current => ({ ...current, viewport: { ...current.viewport, analysis_nets_only: !current.viewport.analysis_nets_only } }))} title="Show only EMI candidate and return nets"><RouteOff size={14} /> Nets only</button>
-              <button onClick={() => void validateEmi()} disabled={emiBusy}><ClipboardCheck size={14} /> Preflight</button>
-              <button onClick={() => void runEmiScreening()} disabled={emiBusy}><Radar size={14} /> Screen</button>
-            </div>}
+
           </div>;
 
   return <div className={`app-shell ${bottomOpen ? "bottom-open" : "bottom-closed"} ${appSettings.ribbonVisible ? "ribbon-visible" : "ribbon-hidden"}`} style={shellStyle}>
@@ -5142,6 +5148,7 @@ export default function App() {
           <span className="coordinate">{isolatedNet ? `ISOLATED · ${isolatedNet}` : selected ? `${selected.type.toUpperCase()} · ${selected.name}` : navigationMode.toUpperCase()}</span>
         </CommandStrip>
         <CommandStrip className="result-mode-toolbar contextual" label="Contextual viewport">
+          {emWorkspaceTools}
           <span title={`Viewport context: ${contextualToolbarLabel}`}>{contextualToolbarLabel}</span>
           <button onClick={() => openAssemblyWorkspace()} title="Import boards, connect pins and configure coupled assembly studies"><Boxes size={14} /> Multi-board</button>
           {assemblyIr && assemblyDesigns && assemblyIr.boards.length > 1 && <button onClick={() => openBoardManager("links")} title="Link explicit connector pins between board occurrences"><Cable size={14} /> Connector links</button>}
@@ -5600,6 +5607,15 @@ export default function App() {
       onCopy={() => void Promise.resolve().then(() => navigator.clipboard.writeText(JSON.stringify(viewportContext.object, null, 2))).catch(error => setStatus(`Copy failed: ${String(error)}`))}
       onOpenScript={() => { try { openContextScript({ kind: "selection", title: viewportContext.object?.name ?? "Viewport", payload: { object: viewportContext.object, board: boardFile, board_instance_id: selectedBoardInstanceId, object_position_units: "mm", scene_focus_point: viewportContext.focusPoint, scene_focus_frame: "Centered, Y-inverted and render-scaled viewport coordinates; not source board coordinates" } }); } catch (error) { setStatus(String(error)); } }}
       onClear={() => setSelected(null)}
+      onDeleteTerminal={() => {
+        const object = viewportContext.object;
+        if (object?.type !== "terminal" || !object.terminalRole) return;
+        recordChange();
+        const id = object.id.replace(/^analysis-terminal:/, "");
+        setPiSetup(current => removePiTerminal(current, object.terminalRole!, id));
+        setSelected(null);
+        setStatus(`${object.name} deleted from PI setup`);
+      }}
       onProbe={() => viewportContext.object && addProbe(viewportContext.object)}
       onAddPowerNet={() => { const net = viewportContext.object?.net; if (net && !powerNets.includes(net)) setPowerNets(current => [...current, net]); if (net) focusManagedNet(net); openBoardManager("nets"); }}
       onIsolate={() => { const net = viewportContext.object?.net; if (!net) return; recordChange(); setIsolatedNet(isolatedNet ? null : net); setStatus(isolatedNet ? "Complete board restored" : `${net} isolated across all copper layers`); }}
@@ -5793,7 +5809,7 @@ function BoardInstanceInspector({ board, onClear }: { board: VirtualBoardVisual;
   return <div className="inspector"><div className="selection-badge"><span className="status-dot" /> BOARD<button onClick={onClear} title="Clear board selection"><X size={14} /></button></div><h3>{board.name}</h3><MetadataSection title="ASSEMBLY BOARD" rows={rows} /></div>;
 }
 
-function ViewportContextMenu({ request, tab, viewMode, isolated, onClose, onFit, onCenterOrbit, onToggleView, onLayers, onCopy, onOpenScript, onClear, onProbe, onAddPowerNet, onIsolate, onWorkspace }: { request: ViewportContextRequest; tab: RibbonTab; viewMode: "2D" | "3D"; isolated: boolean; onClose: () => void; onFit: () => void; onCenterOrbit: () => void; onToggleView: () => void; onLayers: () => void; onCopy: () => void; onOpenScript: () => void; onClear: () => void; onProbe: () => void; onAddPowerNet: () => void; onIsolate: () => void; onWorkspace: () => void }) {
+function ViewportContextMenu({ request, tab, viewMode, isolated, onClose, onFit, onCenterOrbit, onToggleView, onLayers, onCopy, onOpenScript, onClear, onDeleteTerminal, onProbe, onAddPowerNet, onIsolate, onWorkspace }: { request: ViewportContextRequest; tab: RibbonTab; viewMode: "2D" | "3D"; isolated: boolean; onClose: () => void; onFit: () => void; onCenterOrbit: () => void; onToggleView: () => void; onLayers: () => void; onCopy: () => void; onOpenScript: () => void; onClear: () => void; onDeleteTerminal: () => void; onProbe: () => void; onAddPowerNet: () => void; onIsolate: () => void; onWorkspace: () => void }) {
   const menu = useRef<HTMLDivElement>(null);
   const returnFocus = useRef(document.activeElement as HTMLElement | null);
   useEffect(() => {
@@ -5820,7 +5836,7 @@ function ViewportContextMenu({ request, tab, viewMode, isolated, onClose, onFit,
     }}>
     <div className="context-heading"><span>{object ? object.name : "Viewport"}</span><small>{object ? object.type : `${viewMode} view`}</small></div>
     <div className="context-group"><label>VIEW</label><button role="menuitem" onClick={action(onFit)}><Focus size={15} /> Fit board</button>{viewMode === "3D" && request.focusPoint && <button role="menuitem" onClick={action(onCenterOrbit)}><Crosshair size={15} /> Set orbit center here</button>}<button role="menuitem" onClick={action(onToggleView)}><Orbit size={15} /> Switch to {viewMode === "2D" ? "3D" : "2D"}</button><button role="menuitem" onClick={action(onLayers)}><Layers3 size={15} /> Layer manager</button></div>
-    {object && <div className="context-group"><label>SELECTION</label><button role="menuitem" onClick={action(onCopy)}><Copy size={15} /> Copy metadata</button><button role="menuitem" title="Open selection metadata in an unsaved Python tab; no script is executed" onClick={action(onOpenScript)}><SquareTerminal size={15}/> Open in script</button><button role="menuitem" onClick={action(onProbe)}><RadioTower size={15} /> Add probe here</button>{tab === "PI" && object.net && <button role="menuitem" onClick={action(onAddPowerNet)}><ListTree size={15} /> Add to PI Net Manager</button>}{object.net && <button role="menuitem" onClick={action(onIsolate)}><Focus size={15} /> {isolated ? "Exit net isolation" : "Isolate complete net"}</button>}<button role="menuitem" onClick={action(onClear)}><X size={15} /> Clear selection</button></div>}
+    {object && <div className="context-group"><label>SELECTION</label><button role="menuitem" onClick={action(onCopy)}><Copy size={15} /> Copy metadata</button><button role="menuitem" title="Open selection metadata in an unsaved Python tab; no script is executed" onClick={action(onOpenScript)}><SquareTerminal size={15}/> Open in script</button><button role="menuitem" onClick={action(onProbe)}><RadioTower size={15} /> Add probe here</button>{tab === "PI" && object.net && <button role="menuitem" onClick={action(onAddPowerNet)}><ListTree size={15} /> Add to PI Net Manager</button>}{object.net && <button role="menuitem" onClick={action(onIsolate)}><Focus size={15} /> {isolated ? "Exit net isolation" : "Isolate complete net"}</button>}{object.type === "terminal" && object.terminalRole && <button role="menuitem" onClick={action(onDeleteTerminal)}><X size={15} /> Delete {object.terminalRole.startsWith("source") ? "source" : "sink"}{object.terminalRole.endsWith("_return") ? " return" : ""}</button>}<button role="menuitem" onClick={action(onClear)}><X size={15} /> Clear selection</button></div>}
     <div className="context-group task"><label>{tab.toUpperCase()}</label><button role="menuitem" onClick={action(onWorkspace)}><Play size={15} /> {taskLabel[tab]}</button></div>
   </div>;
 }
@@ -6665,6 +6681,7 @@ function PiRunDialog({ board, importedDesign, selected, analysisMode, initialWor
     setPickTarget(null);
   }, [selected?.id, selected?.position?.[0], selected?.position?.[1]]);
   const terminalPayload = (item: PiTerminal, kind: "source" | "load") => {
+    if (!piTerminalPosition(item)) throw new Error(`${item.name} is unassigned. Select a board pad or enter X and Y before running PI.`);
     const x = Number(item.x);
     const y = Number(item.y);
     const value = parseSpiceNumber(item.value, `${item.name} ${kind === "source" ? "voltage" : "current"}`);
