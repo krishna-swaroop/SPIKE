@@ -3,7 +3,18 @@ import type { ParsedBoard, Point } from "./boardParser";
 import type { VirtualBoardVisual, VirtualHarnessVisual } from "./harnessVisualization";
 
 export type AssemblyViewBox = { x: number; y: number; width: number; height: number };
+/** Preferences from older/mismatched packages must not blank a board's layout. */
+export function resolveAssemblyLayerFocus(board: Pick<ParsedBoard, "layers"> | null, preferred: unknown): string {
+  return typeof preferred === "string" && ["All", "Overview", ...(board?.layers ?? [])].includes(preferred) ? preferred : "All";
+}
 export type AssemblyDisplayOffset = readonly [number, number];
+export type AssemblyLayoutSourceFrame = {
+  sourceViewBox: AssemblyViewBox;
+  /** Maps parser/native board coordinates into the retained SVG page. */
+  boardToSourceOffset: AssemblyDisplayOffset;
+  /** Maps the retained SVG page back into parser/native board coordinates. */
+  sourceToBoardOffset: AssemblyDisplayOffset;
+};
 export type AssemblyDisplayPlacement = {
   visual: VirtualBoardVisual;
   /** Display-only translation. The occurrence's physical transform is never changed. */
@@ -33,17 +44,87 @@ export function assemblyBoardBounds(visual: VirtualBoardVisual, board: ParsedBoa
   return { x, y, width: maxX - x, height: maxY - y };
 }
 
-/** KiCad fits plots to a local page; center that page on the source board envelope. */
-export function assemblyLayoutImageBounds(board: ParsedBoard): AssemblyViewBox {
-  const width = board.layoutViewBox?.[2] ?? board.width;
-  const height = board.layoutViewBox?.[3] ?? board.height;
-  return { x: board.bounds.minX - (width - board.width) / 2,
-    y: board.bounds.minY - (height - board.height) / 2, width, height };
+/**
+ * KiCad SVG plots use a page-local viewBox while parsed features retain their
+ * native CAD coordinates. Keep both translations explicit so source artwork,
+ * hit geometry and occurrence transforms never silently mix those frames.
+ */
+export function assemblyLayoutSourceFrame(board: ParsedBoard, measuredBoardToSourceOffset?: AssemblyDisplayOffset): AssemblyLayoutSourceFrame {
+  const boardWidth = board.bounds.maxX - board.bounds.minX;
+  const boardHeight = board.bounds.maxY - board.bounds.minY;
+  const candidate = board.layoutViewBox;
+  const source = candidate && candidate.length === 4 && candidate.every(Number.isFinite)
+    && candidate[2] > 0 && candidate[3] > 0
+    ? candidate
+    : [0, 0, boardWidth, boardHeight] as const;
+  const sourceViewBox = { x: source[0], y: source[1], width: source[2], height: source[3] };
+  const boardToSourceOffset: AssemblyDisplayOffset = measuredBoardToSourceOffset ?? [
+    sourceViewBox.x + (sourceViewBox.width - boardWidth) / 2 - board.bounds.minX,
+    sourceViewBox.y + (sourceViewBox.height - boardHeight) / 2 - board.bounds.minY,
+  ];
+  return {
+    sourceViewBox,
+    boardToSourceOffset,
+    sourceToBoardOffset: [-boardToSourceOffset[0], -boardToSourceOffset[1]],
+  };
 }
 
-function assemblyDisplayBounds(visual: VirtualBoardVisual, board: ParsedBoard): AssemblyViewBox {
-  if (!Object.keys(board.layoutLayerUrls ?? {}).length) return assemblyBoardBounds(visual, board);
-  const page = assemblyLayoutImageBounds(board);
+const coordinatePattern = "[-+]?(?:\\d+(?:\\.\\d*)?|\\.\\d+)(?:[eE][-+]?\\d+)?";
+
+/** Recover KiCad's plot-page translation from retained Edge.Cuts geometry. */
+export function inferAssemblyLayoutBoardToSourceOffset(board: ParsedBoard, svgSource: string): AssemblyDisplayOffset | null {
+  if (svgSource.length > 20_000_000) return null;
+  const rawPoints = [...board.drawings.filter(item => item.layer === "Edge.Cuts").flatMap(item => item.points), ...board.outlineLoops.flat()];
+  const unique = (points: readonly Point[]) => [...new Map(points.filter(point => point.length >= 2 && point.every(Number.isFinite))
+    .map(point => [`${point[0].toFixed(5)}:${point[1].toFixed(5)}`, point] as const)).values()].slice(0, 512);
+  const boardPoints = unique(rawPoints);
+  if (boardPoints.length < 2) return null;
+  const svgPoints: Point[] = [];
+  const pathPattern = new RegExp(`(?:^|[\\s\"])(?:M|L)\\s*(${coordinatePattern})[\\s,]+(${coordinatePattern})`, "gi");
+  for (const match of svgSource.matchAll(pathPattern)) svgPoints.push([Number(match[1]), Number(match[2])]);
+  const sourcePoints = unique(svgPoints);
+  if (sourcePoints.length < 2) return null;
+  const candidates = new Map<string, { offset: AssemblyDisplayOffset; count: number }>();
+  for (const boardPoint of boardPoints) for (const sourcePoint of sourcePoints) {
+    const offset: AssemblyDisplayOffset = [sourcePoint[0] - boardPoint[0], sourcePoint[1] - boardPoint[1]];
+    const key = `${offset[0].toFixed(3)}:${offset[1].toFixed(3)}`;
+    const candidate = candidates.get(key);
+    if (candidate) candidate.count += 1;
+    else candidates.set(key, { offset, count: 1 });
+  }
+  let best: { offset: AssemblyDisplayOffset; count: number } | undefined;
+  for (const candidate of candidates.values()) if (!best || candidate.count > best.count) best = candidate;
+  if (!best || best.count < 2) return null;
+  const tolerance = .03;
+  const matches = boardPoints.filter(point => sourcePoints.some(source => Math.abs(source[0] - point[0] - best.offset[0]) <= tolerance
+    && Math.abs(source[1] - point[1] - best.offset[1]) <= tolerance)).length;
+  return matches >= Math.min(3, boardPoints.length) ? best.offset : null;
+}
+
+/** Bounds occupied by the retained SVG page after mapping it to native board coordinates. */
+export function assemblyLayoutImageBounds(board: ParsedBoard): AssemblyViewBox {
+  const frame = assemblyLayoutSourceFrame(board);
+  return {
+    x: frame.sourceViewBox.x + frame.sourceToBoardOffset[0],
+    y: frame.sourceViewBox.y + frame.sourceToBoardOffset[1],
+    width: frame.sourceViewBox.width,
+    height: frame.sourceViewBox.height,
+  };
+}
+
+export function assemblyLayerOpacity(layer: string, opacity: Readonly<Record<string, number>>): number {
+  const value = opacity[layer] ?? 1;
+  return Number.isFinite(value) ? Math.max(0, Math.min(1, value)) : 1;
+}
+
+export function assemblyLayerIsRendered(layer: string, visibility: Readonly<Record<string, boolean>>, opacity: Readonly<Record<string, number>>): boolean {
+  return visibility[layer] !== false && assemblyLayerOpacity(layer, opacity) > 0;
+}
+
+function assemblyDisplayBounds(visual: VirtualBoardVisual, board: ParsedBoard, measuredBoardToSourceOffset?: AssemblyDisplayOffset | null): AssemblyViewBox {
+  if (!Object.keys(board.layoutLayerUrls ?? {}).length || measuredBoardToSourceOffset === null) return assemblyBoardBounds(visual, board);
+  const frame = assemblyLayoutSourceFrame(board, measuredBoardToSourceOffset ?? undefined);
+  const page = { x: frame.sourceViewBox.x + frame.sourceToBoardOffset[0], y: frame.sourceViewBox.y + frame.sourceToBoardOffset[1], width: frame.sourceViewBox.width, height: frame.sourceViewBox.height };
   const minX = Math.min(board.bounds.minX, page.x), minY = Math.min(board.bounds.minY, page.y);
   const maxX = Math.max(board.bounds.maxX, page.x + page.width), maxY = Math.max(board.bounds.maxY, page.y + page.height);
   return assemblyBoardBounds(visual, { ...board, bounds: { minX, minY, maxX, maxY } });
@@ -58,11 +139,12 @@ export function arrangeAssemblyBoards(
   visuals: readonly VirtualBoardVisual[],
   designs: Readonly<Record<string, ParsedBoard>>,
   minimumGapMm = 5,
+  measuredBoardToSourceByDesign?: Readonly<Record<string, AssemblyDisplayOffset | null>>,
 ): AssemblyDisplayPlacement[] {
   const measured = visuals
     .map(visual => {
       const board = designs[visual.designId];
-      return board ? { visual, source: assemblyDisplayBounds(visual, board) } : null;
+      return board ? { visual, source: assemblyDisplayBounds(visual, board, measuredBoardToSourceByDesign ? measuredBoardToSourceByDesign[visual.designId] ?? null : undefined) } : null;
     })
     .filter((item): item is { visual: VirtualBoardVisual; source: AssemblyViewBox } => item !== null)
     .sort((a, b) => a.visual.id.localeCompare(b.visual.id));
@@ -148,4 +230,9 @@ export function canonicalNetId(board: ParsedBoard, nameToId: Readonly<Record<str
   if (!parsedNetName) return null;
   if (nameToId?.[board.nets[parsedNetName] ?? parsedNetName]) return nameToId[board.nets[parsedNetName] ?? parsedNetName];
   return Object.entries(board.nets).find(([, name]) => name === parsedNetName)?.[0] ?? parsedNetName;
+}
+
+export function assemblyNetIsSelected(board: ParsedBoard, nameToId: Readonly<Record<string, string>> | undefined, linkedCanonicalIds: readonly string[], parsedNetName: string | undefined): boolean {
+  const id = canonicalNetId(board, nameToId, parsedNetName);
+  return Boolean(id && linkedCanonicalIds.includes(id));
 }

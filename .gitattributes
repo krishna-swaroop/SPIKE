@@ -1,3 +1,8 @@
 # SPDX-License-Identifier: MIT
 # Preserve exact bytes for hash-bound evidence across Git checkouts.
 examples/correlation/uniform_sheet/analytical.json -text
+# Mirrored FreeCAD contracts must compare byte-for-byte on Windows and Unix.
+python/spike_core/mcad_session_contract.py text eol=lf
+integrations/freecad/SPIKEWorkbench/spike_freecad/session_contract.py text eol=lf
+schemas/*.json text eol=lf
+integrations/freecad/SPIKEWorkbench/Resources/schemas/*.json text eol=lf

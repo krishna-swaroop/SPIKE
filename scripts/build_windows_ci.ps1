@@ -117,8 +117,8 @@ Invoke-Checked $python @("scripts/verify_packaged_cli.py", "--", $frozenWorker, 
 
 Invoke-Checked "npm.cmd" @("ci") $app
 Invoke-Checked "npm.cmd" @("run", "build") $app
-Invoke-Checked $python @("scripts/prepare_release_resources.py") $root
-Invoke-Checked "npm.cmd" @("run", "tauri", "build", "--", "--bundles", "nsis") $app
+Invoke-Checked $python @("scripts/prepare_release_resources.py", "--config-output", "build/tauri.release.json") $root
+Invoke-Checked "npm.cmd" @("run", "tauri", "build", "--", "--bundles", "nsis", "--config", "../build/tauri.release.json") $app
 
 $bundleRoot = Join-Path $app "src-tauri\target\release\bundle\nsis"
 $installers = @(Get-ChildItem -LiteralPath $bundleRoot -Filter "*.exe" -File)
@@ -157,6 +157,13 @@ if (-not (Test-Path -LiteralPath $installedLauncher -PathType Leaf)) {
 }
 Invoke-Checked $python @(
     "scripts/verify_packaged_cli.py", "--", "cmd.exe", "/d", "/c", $installedLauncher
+) $root
+
+Invoke-Checked $python @(
+    "scripts/verify_installed_python_runtime.py",
+    "--installed-root", $installRoot,
+    "--worker", (Join-Path $installRoot "bundled\spike-worker\spike-worker.exe"),
+    "--python-executable", $python
 ) $root
 
 . (Join-Path $PSScriptRoot "windows_desktop_path.ps1")

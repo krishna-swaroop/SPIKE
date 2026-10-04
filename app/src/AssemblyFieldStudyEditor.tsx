@@ -28,6 +28,7 @@ export default function AssemblyFieldStudyEditor({ assembly, projectPath, manife
   const [error, setError] = useState("");
   const [reload, setReload] = useState(0);
   const generation = useRef(0);
+  const pendingHydration = useRef<{ key: string; read: Promise<FieldObject> } | null>(null);
   const saved = useRef<{ record: FieldRecord | null; handoff: FieldObject | null }>({ record: null, handoff: null });
   const appliedRequestText = useMemo(() => record ? formatted(record.request) : "", [record?.request]);
   const appliedProblemText = useMemo(() => record ? formatted(record.problem) : "", [record?.problem]);
@@ -49,9 +50,20 @@ export default function AssemblyFieldStudyEditor({ assembly, projectPath, manife
     if (!projectPath || !manifestDigest) return;
     setLoading(true);
     void (async () => {
-      const read = workerValue(await runNativeProjectWorker({ method: "read_assembly_field_study_in_project", params: {
-        project_path: projectPath, expected_manifest_payload_sha256: manifestDigest,
-      } }));
+      const key = `${projectPath}\u0000${manifestDigest}`;
+      let pending = pendingHydration.current;
+      if (!pending || pending.key !== key) {
+        pending = { key, read: runNativeProjectWorker({ method: "read_assembly_field_study_in_project", params: {
+          project_path: projectPath, expected_manifest_payload_sha256: manifestDigest,
+        } }).then(workerValue) };
+        pendingHydration.current = pending;
+        const completed = pending;
+        void completed.read.then(
+          () => { if (pendingHydration.current === completed) pendingHydration.current = null; },
+          () => { if (pendingHydration.current === completed) pendingHydration.current = null; },
+        );
+      }
+      const read = await pending.read;
       if (!active || token !== generation.current) return;
       setPhysical(read.assembly);
       if (read.record) {

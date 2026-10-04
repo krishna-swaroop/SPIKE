@@ -4,7 +4,8 @@ param(
     [string]$Channel = "Preview",
     [switch]$SkipTests,
     [switch]$SkipWorker,
-    [switch]$BuildOnly
+    [switch]$BuildOnly,
+    [string]$ResourceConfig
 )
 
 $ErrorActionPreference = "Stop"
@@ -14,6 +15,7 @@ $mutexKey = [BitConverter]::ToString($mutexDigest.ComputeHash([Text.Encoding]::U
 $mutexDigest.Dispose()
 $buildMutex = New-Object System.Threading.Mutex($false, "Local\SPIKEInstaller-$mutexKey")
 $ownsBuildMutex = $false
+$originalConfigBytes = $null
 try {
     try { $ownsBuildMutex = $buildMutex.WaitOne(0) }
     catch [System.Threading.AbandonedMutexException] { $ownsBuildMutex = $true }
@@ -102,6 +104,9 @@ if ($isProduction) {
     }
 }
 
+if (-not $SkipWorker) {
+    Invoke-Checked $python @("scripts/build_packaged_worker.py") $root
+}
 if (-not $SkipTests) {
     Invoke-Checked $python @("scripts/check_architecture.py") $root
     Invoke-Checked $python @("-m", "unittest", "discover", "-s", "tests/python", "-p", "test_errors.py", "-v") $root
@@ -109,9 +114,13 @@ if (-not $SkipTests) {
     Invoke-Checked "npm.cmd" @("run", "build") $app
     Invoke-Checked "cargo" @("test", "--lib") (Join-Path $app "src-tauri")
 }
-
-if (-not $SkipWorker) {
-    Invoke-Checked $python @("scripts/build_packaged_worker.py") $root
+if (-not $ResourceConfig) {
+    $ResourceConfig = Join-Path $root "build\tauri.release.json"
+    Invoke-Checked $python @("scripts/prepare_release_resources.py", "--config-output", $ResourceConfig) $root
+}
+if ($ResourceConfig) {
+    $originalConfigBytes = [System.IO.File]::ReadAllBytes($config)
+    Copy-Item -LiteralPath $ResourceConfig -Destination $config -Force -ErrorAction Stop
 }
 if ($isProduction) {
     Invoke-Checked $python @(
@@ -270,6 +279,7 @@ Write-Output "Manifest: $manifestPath"
 Write-Warning "These installers are not production-qualified; signing alone does not approve release or qualify physics."
 }
 finally {
+    if ($null -ne $originalConfigBytes) { [System.IO.File]::WriteAllBytes($config, $originalConfigBytes) }
     if ($ownsBuildMutex) { $buildMutex.ReleaseMutex() }
     $buildMutex.Dispose()
 }

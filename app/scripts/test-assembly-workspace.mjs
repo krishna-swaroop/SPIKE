@@ -12,11 +12,15 @@ const layerInventory=await importTestTypescript('layerInventory');
 const layerPalette=await importTestTypescript('layerPalette');
 const stackupVisual=await importTestTypescript('stackupVisual');
 const require=createRequire(import.meta.url);
+const viewportSource=readFileSync(new URL('../src/AssemblyWorkspaceViewport.tsx',import.meta.url),'utf8');
+assert.match(viewportSource,/<BoardViewport\b/,'dedicated workspace reuses the production board viewport');
+assert.match(viewportSource,/2D separated layout/);assert.match(viewportSource,/3D physical assembly/);
+assert.match(viewportSource,/assemblyLayerFocus=\{props\.layerFocus\}/,'focused layer state is occurrence-scoped in the shared viewport');
 function load(name,react=React) {
  const source=readFileSync(new URL(`../src/${name}.tsx`,import.meta.url),'utf8');
  const js=ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText;
  const module={exports:{}};
- new Function('require','module','exports',js)(name=>name==='react'?react:name==='./assemblyBoardManagerModel'?api:name==='./assemblyManagerPresentation'?presentation:name==='./layerInventory'?layerInventory:name==='./layerPalette'?layerPalette:name==='./stackupVisual'?stackupVisual:name==='./icons'?new Proxy({},{get:()=>()=>null}):['./NetCatalog','./LayerManager','./AssemblyConnectorLinks'].includes(name)?{default:load(name.slice(2),react)}:name==='./AssemblyStructureEditor'?{default:()=>React.createElement('div',{'data-editor':'retained'})}:name==='./DataTable'?{default:({children})=>React.createElement('table',null,children)}:name.endsWith('.css')?{}:require(name),module,module.exports);
+ new Function('require','module','exports',js)(name=>name==='react'?react:name==='./assemblyBoardManagerModel'?api:name==='./assemblyManagerPresentation'?presentation:name==='./layerInventory'?layerInventory:name==='./layerPalette'?layerPalette:name==='./stackupVisual'?stackupVisual:name==='./icons'?new Proxy({},{get:()=>()=>null}):['./NetCatalog','./LayerManager','./AssemblyConnectorLinks'].includes(name)?{default:load(name.slice(2),react)}:name==='./AssemblyStructureEditor'?{default:()=>React.createElement('div',{'data-editor':'retained'})}:name==='./AssemblyHandlingBar'?{default:()=>React.createElement('div',{'data-handling':'retained'})}:name==='./AssemblyWorkspaceViewport'?{default:()=>React.createElement('div',{'data-viewport':'retained'})}:name==='./DataTable'?{default:({children})=>React.createElement('table',null,children)}:name.endsWith('.css')?{}:require(name),module,module.exports);
  return module.exports.default;
 }
 const assembly={contract:'spike/assembly-ir/v1',boards:[{id:'A',name:'Controller',design_id:'a'},{id:'B',name:'Power',design_id:'b'}],parts:[]};
@@ -25,10 +29,12 @@ const selectedBoards=[],collaborationModes=[];
 const props={assembly,designs,visuals:{},diagnostics:{b:'No source model assignments'},projectPath:'C:/test.spike',manifestDigest:'a'.repeat(64),projectDirty:false,desktop:true,boardAvailable:true,selectedBoardId:'B',onSave:async()=>true,onUpdated:async()=>{},onStatus(){},onClose(){},onSelectBoard:id=>selectedBoards.push(id),onViewBoard(){},onManager(){},onOpenCollaboration:mode=>collaborationModes.push(mode)};
 const Workspace=load('AssemblyWorkspace');
 let html=renderToStaticMarkup(React.createElement(Workspace,props));
-assert.match(html,/Collaboration workspace/);assert.match(html,/2 board occurrences/);assert.match(html,/Boards &amp; organization/);assert.match(html,/Placement &amp; mechanics/);assert.match(html,/Connector links &amp; harnesses/);assert.match(html,/Coupled studies/);assert.match(html,/FreeCAD collaboration/);assert.match(html,/MCAD attachments/);assert.match(html,/Find board by name/);assert.match(html,/No source model assignments/);assert.match(html,/data-editor="retained"/);
+assert.match(html,/Multi-board assembly workspace/);assert.match(html,/2 board occurrences/);assert.match(html,/Boards/);assert.match(html,/Mechanics/);assert.match(html,/Links &amp; harnesses/);assert.match(html,/Coupled studies/);assert.match(html,/FreeCAD collaboration/);assert.match(html,/MCAD attachments/);assert.match(html,/Find board by name/);assert.match(html,/No source model assignments/);assert.match(html,/data-editor="retained"/);assert.match(html,/data-viewport="retained"/);assert.match(html,/data-handling="retained"/);
 assert.doesNotMatch(html,/A · a|B · b/,'internal board and retained-design IDs are not presented as card labels');
 html=renderToStaticMarkup(React.createElement(Workspace,{...props,projectDirty:true}));
-assert.match(html,/Save project and continue/);assert.doesNotMatch(html,/data-editor="retained"/,'pending project edits must not be overwritten by package mutation');
+assert.match(html,/data-editor="retained"/,'loaded retained sources stay reviewable after placement or layer edits make the project dirty');
+html=renderToStaticMarkup(React.createElement(Workspace,{...props,designs:null,projectDirty:true}));
+assert.match(html,/Save project and continue/);assert.doesNotMatch(html,/data-editor="retained"/,'initial package hydration remains blocked behind saving unrelated project edits');
 const managerProps={assembly,designs,selectedBoardId:'B',initialTab:'nets',assemblyLayerVisibility:{},assemblyLayerOpacity:{},onAssemblyLayerVisibility(){},onAssemblyLayerOpacity(){},onSelectNet(){},onUpdated(){},onStatus(){},onClose(){}};
 html=renderToStaticMarkup(React.createElement(load('AssemblyBoardManagers'),managerProps));
 assert.match(html,/ONLY_B/);assert.doesNotMatch(html,/ONLY_A/,'manager starts on the selected board rather than the first occurrence');
@@ -101,5 +107,5 @@ assert.deepEqual(chosen.at(-1),['A','2D'],'a separate workspace can update the m
 assert.ok(nodes(embedded).some(n=>n.props?.role==='region'));
 assert.ok(!nodes(embedded).some(n=>n.props?.role==='dialog'),'the separate window is not a viewport modal');
 const embeddedHtml=renderToStaticMarkup(React.createElement(Workspace,{...props,embedded:true}));
-assert.match(embeddedHtml,/Move or minimize this window/);
+assert.match(embeddedHtml,/movable native window renders the same retained board sources/);
 console.log('Multi-board workspace actions, save gate, model diagnostics, draft protection and selected-board manager scope passed');

@@ -8,11 +8,15 @@ import ts from 'typescript';
 import { importTestTypescript } from './import-test-typescript.mjs';
 const require=createRequire(import.meta.url);
 const copper=await importTestTypescript('copperLayerSelection');
+const iconModule={exports:{}};
+new Function('require','module','exports',ts.transpileModule(readFileSync(new URL('../src/icons/index.tsx',import.meta.url),'utf8'),{
+  compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX},
+}).outputText)(require,iconModule,iconModule.exports);
 function load(name,react=React) {
   const source=readFileSync(new URL(`../src/${name}.tsx`,import.meta.url),'utf8');
   const js=ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText;
   const module={exports:{}};
-  new Function('require','module','exports',js)(name=>name==='react'?react:name==='./BoardViewport'?{previewViewportTarget(){}}:name==='./copperLayerSelection'?copper:name==='./NetCatalog'?{default:load('NetCatalog',react)}:name==='./DataTable'?{default:({children})=>React.createElement('table',null,children)}:require(name),module,module.exports);
+  new Function('require','module','exports',js)(name=>name==='react'?react:name==='./icons'?iconModule.exports:name==='./BoardViewport'?{previewViewportTarget(){}}:name==='./copperLayerSelection'?copper:name==='./NetCatalog'?{default:load('NetCatalog',react)}:name==='./DataTable'?{default:({children})=>React.createElement('table',null,children)}:require(name),module,module.exports);
   return module.exports.default;
 }
 const board={nets:{'1':'GND','2':'VCC'},layers:['F.Cu','B.Cu'],tracks:[],vias:[],pads:[],zones:[]};

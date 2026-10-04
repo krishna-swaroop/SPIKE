@@ -19,6 +19,17 @@ assert.deepEqual(merged.design.metadata, previous.design.metadata);
 assert.deepEqual(merged.design.models, [{ id: 'm1', enabled: false, vendor_data: { future: 42 } }]);
 assert.equal(merged.analysis.latest_result, null, 'explicit clearing must remain possible');
 assert.deepEqual(merged.analysis.future_solver_setup, previous.analysis.future_solver_setup);
+const assemblyPresentation = { analysis: {
+  assembly_layer_focus: { A:"F.Cu", B:"Overview" },
+  assembly_layer_visibility: { A:{"F.Cu":true,"B.Cu":false}, B:{"F.Cu":false,"B.Cu":true} },
+  assembly_layer_opacity: { A:{"F.Cu":.3}, B:{"B.Cu":.7} },
+} };
+assert.deepEqual(mergeProjectSnapshot(assemblyPresentation, {analysis:{latest_result:null}}).analysis.assembly_layer_focus,
+  assemblyPresentation.analysis.assembly_layer_focus,"unrelated result changes preserve occurrence-specific quick layer preferences");
+for (const key of ["assembly_layer_focus", "assembly_layer_visibility", "assembly_layer_opacity"]) {
+  assert.deepEqual(withoutSavedResults(assemblyPresentation).analysis[key],assemblyPresentation.analysis[key],
+    "saving without results keeps independent assembly layer presentation intact");
+}
 
 const retainedStudyBase = normalizeStudies([{ id: 'saved-study', name: 'Saved', cases: [{ id: 'saved-case', type: 'pi', mode: 'dc',
   scenario: {}, settings: { load: 1 }, resultSnapshot: { contract: 'spike/v1', values: [1] }, resultRef: 'old-result', runs: [{

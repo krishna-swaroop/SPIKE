@@ -1,28 +1,83 @@
 // SPDX-License-Identifier: Apache-2.0
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import AssemblyWorkspace from "./AssemblyWorkspace";
 import AssemblyHandlingBar from "./AssemblyHandlingBar";
 import AssemblyBoardManagers from "./AssemblyBoardManagers";
 import { connectAssemblyToolChild, onAssemblyToolCloseRequest } from "./assemblyToolWindows";
-import type { AssemblyToolAction, AssemblyToolKind, AssemblyToolSnapshot } from "./assemblyToolWindowModel";
-import type { ParsedBoard } from "./boardParser";
+import type { AssemblyToolAction, AssemblyToolKind, AssemblyToolSnapshot, AssemblyToolViewportData } from "./assemblyToolWindowModel";
 import { APP_SETTINGS_STORAGE_KEY, loadAppSettings } from "./appSettings";
 import "./assemblyToolWindows.css";
 
+type StartupCpuActivity = { operationId?: string; heavy?: boolean; phase?: string };
+type StartupCpuQueue = { observe: (activity: StartupCpuActivity) => void; stop: () => void };
+
+/** Hold project-backed startup reads until an earlier mount-time CPU request settles. */
+export function createAssemblyStartupCpuQueue(
+  onIdle: () => void,
+  schedule: (callback: () => void) => () => void = callback => {
+    const timer = setTimeout(callback, 0);
+    return () => clearTimeout(timer);
+  },
+): StartupCpuQueue {
+  const active = new Set<string>();
+  let stopped = false, released = false;
+  const release = () => { if (!stopped && !released) { released = true; onIdle(); } };
+  let cancelIdle = () => {};
+  const scheduleIdle = () => {
+    cancelIdle();
+    cancelIdle = schedule(() => { if (active.size === 0) release(); });
+  };
+  scheduleIdle();
+  return {
+    observe(activity) {
+      if (stopped || released || !activity?.heavy) return;
+      const operationId = activity.operationId;
+      if (!operationId) return;
+      if (activity.phase === "started") { cancelIdle(); active.add(operationId); }
+      else if (["completed", "failed", "cancelled", "rejected"].includes(activity.phase ?? "")) {
+        active.delete(operationId);
+        if (active.size === 0) scheduleIdle();
+      }
+    },
+    stop() { stopped = true; cancelIdle(); },
+  };
+}
+
 export default function AssemblyToolWindowRoot({ kind }: { kind: AssemblyToolKind }) {
   const [snapshot, setSnapshot] = useState<AssemblyToolSnapshot | null>(null);
+  const [viewport, setViewport] = useState<AssemblyToolViewportData | null>(null);
   const [error, setError] = useState(""); const [status, setStatus] = useState("");
   const [closeRequested, setCloseRequested] = useState(0); const [managerCloseWarning, setManagerCloseWarning] = useState(false);
+  const [startupCpuReadyKey, setStartupCpuReadyKey] = useState("");
   const dirty = useRef(false); const actRef = useRef<(action: AssemblyToolAction) => Promise<unknown>>(async () => { throw new Error("Waiting for SPIKE workspace."); });
+  const requestViewportRef = useRef<(revision: string) => Promise<AssemblyToolViewportData>>(async () => { throw new Error("Waiting for SPIKE workspace."); });
   useEffect(() => {
     let disposed = false; let stop: (() => void) | undefined;
     void connectAssemblyToolChild(kind, value => { if (!disposed) setSnapshot(value); }).then(connection => {
-      if (disposed) connection.stop(); else { stop = connection.stop; actRef.current = connection.act; }
+      if (disposed) connection.stop(); else { stop = connection.stop; actRef.current = connection.act; requestViewportRef.current = connection.requestViewport; }
     }).catch(error => { if (!disposed) setError(String(error)); });
     const unload = () => { void actRef.current({ type: "closed" }).catch(() => {}); };
     window.addEventListener("pagehide", unload);
     return () => { disposed = true; stop?.(); window.removeEventListener("pagehide", unload); };
   }, [kind]);
+  useEffect(() => {
+    const revision = kind === "workspace" ? snapshot?.viewportRevision : null;
+    if (!revision || viewport?.revision === revision) return;
+    let cancelled = false;
+    setViewport(null);
+    void requestViewportRef.current(revision).then(value => { if (!cancelled && value.revision === revision) setViewport(value); })
+      .catch(error => { if (!cancelled) setError(error instanceof Error ? error.message : String(error)); });
+    return () => { cancelled = true; };
+  }, [kind, snapshot?.viewportRevision, viewport?.revision]);
+  const startupCpuKey = kind === "workspace" && snapshot?.projectPath && snapshot.manifestDigest
+    ? `${snapshot.projectPath}\u0000${snapshot.manifestDigest}` : "";
+  useLayoutEffect(() => {
+    if (!startupCpuKey) return;
+    const queue = createAssemblyStartupCpuQueue(() => setStartupCpuReadyKey(startupCpuKey));
+    const activity = (event: Event) => queue.observe((event as CustomEvent<StartupCpuActivity>).detail);
+    window.addEventListener("spike-worker-activity", activity);
+    return () => { queue.stop(); window.removeEventListener("spike-worker-activity", activity); };
+  }, [startupCpuKey]);
   useEffect(() => {
     const sync = () => { document.documentElement.dataset.theme = loadAppSettings().theme; };
     const changed = (event: StorageEvent) => { if (!event.key || event.key === APP_SETTINGS_STORAGE_KEY) sync(); };
@@ -53,15 +108,25 @@ export default function AssemblyToolWindowRoot({ kind }: { kind: AssemblyToolKin
   if (!snapshot) return <main className="assembly-tool-root"><p role="status">Connecting to SPIKE workspace…</p>{error && <p role="alert">{error}</p>}</main>;
   const s = snapshot;
   const locked = Boolean(s.draftOwner && s.draftOwner !== kind);
+  const startupCpuReady = !startupCpuKey || startupCpuReadyKey === startupCpuKey;
   return <main className={`assembly-tool-root assembly-tool-${kind}`}>
     {error && <div className="assembly-tool-error" role="alert">{error}</div>}
     {locked && <div className="assembly-tool-error" role="status">Finish or discard edits in the assembly {s.draftOwner} window before editing here.</div>}
     {managerCloseWarning && <div className="assembly-tool-error" role="alert">Unsaved connector rows will be lost.<button onClick={() => setManagerCloseWarning(false)}>Keep editing</button><button onClick={close}>Discard draft and close</button></div>}
-    {kind === "workspace" ? <AssemblyWorkspace embedded assembly={s.assembly} designs={s.designs} visuals={s.visuals as Record<string, ParsedBoard>} diagnostics={s.diagnostics}
-      projectPath={s.projectPath} manifestDigest={s.manifestDigest} projectDirty={s.projectDirty || locked} desktop={s.desktop} boardAvailable={s.boardAvailable}
+    {kind === "workspace" ? <AssemblyWorkspace embedded assembly={s.assembly} designs={startupCpuReady ? s.designs : null} visuals={s.visuals} diagnostics={s.diagnostics} viewport={viewport}
+      projectPath={s.projectPath} manifestDigest={s.manifestDigest} projectDirty={startupCpuReady ? s.projectDirty : false} desktop={s.desktop} boardAvailable={s.boardAvailable} editingLocked={locked || !startupCpuReady}
       closeRequested={closeRequested} onDirtyChange={reportDirty}
       onSave={async () => Boolean(await request({ type: "save" }))} onUpdated={async () => { await request({ type: "reload" }); }} onStatus={report} onClose={close}
       selectedBoardId={s.selectedBoardId} onSelectBoard={boardId => act({ type: "select-board", boardId })}
+      visibility={s.visibility} layerVisibility={s.layerVisibility} layerOpacity={s.layerOpacity} layerFocus={s.layerFocus} linkedNets={s.linkedNets} explodedDistanceMm={s.explodedDistanceMm}
+      moveMode={s.moveMode} snapMode={s.snapMode} snapGapMm={s.snapGapMm} snapSourceLabel={s.snapSourceLabel}
+      onVisibility={(boardId, value) => act({ type: "visibility", boardId, value })}
+      onPlacement={(boardId, transform) => act({ type: "placement", boardId, transform })}
+      onMoveMode={mode => act({ type: "move-mode", mode })} onExplodedDistance={value => act({ type: "explode", value })}
+      onSnapMode={mode => act({ type: "snap-mode", mode })} onSnapGapChange={value => act({ type: "snap-gap", value })}
+      onLayerFocus={(boardId, layer) => act({ type: "layer-focus", boardId, value: layer })}
+      onSnapTarget={target => act({ type: "snap-target", boardId: target.occurrenceId, value: target.id })}
+      onSelectNet={(boardId, netId) => act({ type: "select-net", boardId, netId })}
       onViewBoard={(boardId, mode) => act({ type: "view", boardId, mode })} onManager={(boardId, mode) => act({ type: "manager", boardId, mode })}
       onOpenCollaboration={mode => act({ type: "collaboration", mode })}/> : <>
       <header className="assembly-tool-heading"><div><small>SPIKE ASSEMBLY</small><h1>{kind === "placement" ? "Board placement" : "Board layers, nets & links"}</h1></div><button onClick={() => { if (dirty.current) setManagerCloseWarning(true); else close(); }}>Close tool</button></header>
@@ -75,6 +140,7 @@ export default function AssemblyToolWindowRoot({ kind }: { kind: AssemblyToolKin
         <section className="assembly-tool-options"><label><input type="checkbox" checked={s.passThroughHighlight} onChange={event => act({ type: "pass-through", value: event.target.checked })}/> Pass through components (exclude ground)</label><button onClick={() => act({ type: "export-diagram" })}>Export diagram PNG</button><button onClick={() => act({ type: "load-overlay" })}>Load result overlay</button></section>
         {s.overlayMessages.map((message, index) => <p className="assembly-tool-hint" key={index}>{message}</p>)}
       </> : <AssemblyBoardManagers embedded assembly={s.assembly} designs={s.designs} selectedBoardId={s.selectedBoardId} initialTab={s.managerTab}
+        onFocusBoard={boardId => act({ type: "select-board", boardId })}
         assemblyLayerVisibility={s.layerVisibility} assemblyLayerOpacity={s.layerOpacity} onDirtyChange={reportDirty}
         onAssemblyLayerVisibility={(boardId, layer, value) => act({ type: "layer-visibility", boardId, layer, value })}
         onAssemblyLayerOpacity={(boardId, layer, value) => act({ type: "layer-opacity", boardId, layer, value })}

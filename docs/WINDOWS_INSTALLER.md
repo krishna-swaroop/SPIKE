@@ -8,22 +8,34 @@ From the repository root:
 .\scripts\build_windows_installer.ps1 -Channel Preview
 ```
 
-The script runs architecture, error-contract, schema, frontend, and Rust tests;
-builds the packaged worker; asks Tauri to produce NSIS and MSI bundles; copies
+The script builds and verifies the packaged worker before the resident-worker
+Rust tests, runs architecture, error-contract, schema, and frontend checks;
+asks Tauri to produce NSIS and MSI bundles; copies
 the installers to `artifacts/windows/installer`; and writes a SHA-256 manifest.
 The NSIS installer supports per-user or per-machine installation and registers
 the `.spike` project association.
 
-The current MSI/NSIS preview package and application version are `0.3.0`.
+The current Windows community release is `0.3.6` (NSIS x64). The local preview
+builder also supports MSI. It stages current resources after building the worker,
+including the CLI launcher, before packaging.
 The SHA-256 installer manifest records the package and application versions.
 This does not promote the physics or release qualification state.
 
 The standard preview installers are unsigned and include troubleshooting and
-error-code references. For the 0.3.0 candidate, user-requested self-signed
+error-code references. For the historical 0.3.0 candidate, user-requested self-signed
 copies with subject `CN=Yawar B, O=wayri` are in
 `artifacts/windows/signed-preview`.
 Windows does not trust that certificate, and the copies have no timestamp.
 Neither set is approved for production engineering reliance.
+
+The SPIKE-Em 0.1.0 packaging exercise found that NSIS `installMode: both`
+embeds `highestAvailable` into its uninstaller, including an installation made
+with `/CurrentUser`. On the release host, uninstall then requested administrator
+consent and was canceled. SPIKE-Em's per-user preview uses `currentUser` and
+checks the actual uninstaller manifest and install/reinstall/uninstall lifecycle.
+Main SPIKE retains its existing per-user/per-machine policy; a per-user install
+flag alone is not evidence that its uninstaller runs without elevation. Record
+each tested mode and privilege level separately from administrative extraction.
 
 ## r10 package checkpoint
 

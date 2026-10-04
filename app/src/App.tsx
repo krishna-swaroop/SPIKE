@@ -7,7 +7,7 @@ import ToolRestoreShelf, { type ToolRestoreItem } from "./ToolRestoreShelf";
 import { minimizeTool, removeMinimizedTool } from "./minimizedTools";
 import AssemblyToolHost from "./AssemblyToolHost";
 import { focusAssemblyToolWindow } from "./assemblyToolWindows";
-import type { AssemblyToolAction, AssemblyToolKind, AssemblyToolSnapshot } from "./assemblyToolWindowModel";
+import type { AssemblyToolAction, AssemblyToolKind, AssemblyToolSnapshot, AssemblyToolViewportData } from "./assemblyToolWindowModel";
 import ModelResolverPanel from "./ModelResolverPanel";
 import { assemblyNetHighlight, type AssemblyHighlightSeed } from "./assemblyNetHighlight";
 import DataTable from "./DataTable";
@@ -73,7 +73,7 @@ import ExtensionWorkspacePanel from "./ExtensionWorkspacePanel";
 import { extensionWorkspaceRoutes, type ExtensionWorkspace } from "./ExtensionWorkspaceRoutes";
 import { OpenEMSSetupForm, defaultOpenEMSSetup, openEMSParameters } from "./OpenEMSExtension";
 import { ExtensionArtifacts, McadOptions } from "./ExtensionArtifacts";
-import { defaultEMergeSetup, EMergeResultPlot, EMergeSetupForm, EMergeScriptPreview, EMergeCapabilityInventory, emergeParameters, type EMergeSetup } from "./EMergeExtension";
+import { defaultEMergeSetup, EMergeResultPlot, EMergeSetupForm, EMergeScriptPreview, EMergeCapabilityInventory, EMergeRuntimeStatus, emergeParameters, type EMergeSetup } from "./EMergeExtension";
 import EMergeGerberImport from "./EMergeGerberImport";
 import { activeGerberSource, type EMergeGerberSource } from "./emergeGerberSource";
 import { normalizeOpenEMSSetup, normalizeEMergeSetup } from "./extensionWorkflowSettings";
@@ -660,7 +660,7 @@ const emiFarFieldFrequencies = (startHz: number, stopHz: number) => {
   if (!(startHz > 0) || !(stopHz > startHz)) return [startHz].filter(value => value > 0);
   return [startHz, Math.sqrt(startHz * stopHz), stopHz];
 };
-type ProjectSnapshot = { studies: SimulationStudy[]; probes: BoardObject[]; probeFormulaRows: ProbeFormulaRow[]; probeReferenceIds: Record<string, string>; boardFile: string; frequency: string; solverId: string; formulation: string; solverSelections: Record<string, string>; piSetup: PiSetup; piTopology: TopologyModel; siTopology: TopologyModel; selectedSiSuite: SiProtocolSuite | null; siChannelResult: Record<string, unknown> | null; spiceWorkspace: SpiceWorkspace; emiSetup: EmiSetup; emiPreflight: EmiPreflight | null; emiScreening: EmiScreening | null; emiFieldResult: EmiFieldResult | null; thermalScenario: Record<string, unknown> | null; componentBonds: BondRecord[]; visibleLayers: Record<LayerName, boolean>; assemblyLayerVisibility?: Record<string, Record<string, boolean>>; assemblyLayerOpacity?: Record<string, Record<string, number>>; assemblyBoardVisibility?: Record<string, boolean>; assemblyExplodedDistanceMm?: number; layerOpacity: Record<LayerName, number>; layerSeparation: number; showVias: boolean; showNetNames: boolean; showAxes: boolean; selected: BoardObject | null; selectionFilter: SelectionFilter; isolatedNet: string | null; modelAssignments: Record<string, string>; assemblyModelAssignments?: Record<string, Record<string, string>>; assemblyIr: AssemblyIr | null; assemblyDesigns: AssemblyDesigns | null; assemblyPackageShapes: AssemblyPackageShapesIndex | null; modelIndex: ModelIndex; showModels: boolean; showSmdModels: boolean; showThtModels: boolean; navigationInertia: boolean; viewMode: "2D" | "3D"; resultVisualization: ResultVisualization; analysisResult: SolverResultBundle | null; pdnReview: PdnReview | null; pdnReviewSourceId: string | null; workspace?: WorkspaceState };
+type ProjectSnapshot = { emiChamberOpen?: boolean; studies: SimulationStudy[]; probes: BoardObject[]; probeFormulaRows: ProbeFormulaRow[]; probeReferenceIds: Record<string, string>; boardFile: string; frequency: string; solverId: string; formulation: string; solverSelections: Record<string, string>; piSetup: PiSetup; piTopology: TopologyModel; siTopology: TopologyModel; selectedSiSuite: SiProtocolSuite | null; siChannelResult: Record<string, unknown> | null; spiceWorkspace: SpiceWorkspace; emiSetup: EmiSetup; emiPreflight: EmiPreflight | null; emiScreening: EmiScreening | null; emiFieldResult: EmiFieldResult | null; thermalScenario: Record<string, unknown> | null; componentBonds: BondRecord[]; visibleLayers: Record<LayerName, boolean>; assemblyLayerFocus?: Record<string, string>; assemblyLayerVisibility?: Record<string, Record<string, boolean>>; assemblyLayerOpacity?: Record<string, Record<string, number>>; assemblyBoardVisibility?: Record<string, boolean>; assemblyExplodedDistanceMm?: number; layerOpacity: Record<LayerName, number>; layerSeparation: number; showVias: boolean; showNetNames: boolean; showAxes: boolean; selected: BoardObject | null; selectionFilter: SelectionFilter; isolatedNet: string | null; modelAssignments: Record<string, string>; assemblyModelAssignments?: Record<string, Record<string, string>>; assemblyIr: AssemblyIr | null; assemblyDesigns: AssemblyDesigns | null; assemblyPackageShapes: AssemblyPackageShapesIndex | null; modelIndex: ModelIndex; showModels: boolean; showSmdModels: boolean; showThtModels: boolean; navigationInertia: boolean; viewMode: "2D" | "3D"; resultVisualization: ResultVisualization; analysisResult: SolverResultBundle | null; pdnReview: PdnReview | null; pdnReviewSourceId: string | null; workspace?: WorkspaceState };
 
 function decodeBase64Buffer(value: string): ArrayBuffer {
   const binary = atob(value);
@@ -988,7 +988,7 @@ export default function App() {
   const [emiFieldResult, setEmiFieldResult] = useState<EmiFieldResult | null>(null);
   const [emiSection, setEmiSection] = useState<EmiSetupSection>("domain");
   const [emiDashboardOpen, setEmiDashboardOpen] = useState(false);
-  const [emiChamberOpen, setEmiChamberOpen] = useState(true);
+  const [emiChamberOpen, setEmiChamberOpen] = useState(false);
   const [emiScene, setEmiScene] = useState<Group | null>(null);
   const emiSceneRef = useRef<Group | null>(null);
   const handleEmiScene = useCallback((scene: Group) => {
@@ -1028,6 +1028,7 @@ export default function App() {
   const [limits, setLimits] = useState({ drop: "50", density: "100" });
   const [visibleLayers, setVisibleLayers] = useState<Record<LayerName, boolean>>(initialLayers);
   const [assemblyLayerVisibility, setAssemblyLayerVisibility] = useState<Record<string, Record<string, boolean>>>({});
+  const [assemblyLayerFocus, setAssemblyLayerFocus] = useState<Record<string, string>>({});
   const [assemblyLayerOpacity, setAssemblyLayerOpacity] = useState<Record<string, Record<string, number>>>({});
   const [layerOpacity, setLayerOpacity] = useState<Record<LayerName, number>>({});
   const [layerSeparation, setLayerSeparation] = useState(0);
@@ -1345,6 +1346,12 @@ export default function App() {
   } : current), setStatus);
   const prepareVisualBundleForBoard = boardImport.prepare;
   const assemblyBoardVisuals = useAssemblyBoardVisuals(assemblyDesigns, boardData, projectPath, projectManifestDigest, boardImport.whenReady, assemblyModelAssignments);
+  const resolvedAssemblyLayerVisibility = useMemo(() => Object.fromEntries(virtualBoardProjection.visuals.map(occurrence => {
+    const source = assemblyBoardVisuals.boards[occurrence.designId];
+    return [occurrence.id, assemblyLayerVisibility[occurrence.id] ?? (source ? visibilityForBoard(source, occurrence.active ? visibleLayers : undefined) : {})];
+  })), [virtualBoardProjection.visuals, assemblyBoardVisuals.boards, assemblyLayerVisibility, visibleLayers]);
+  const resolvedAssemblyLayerOpacity = useMemo(() => Object.fromEntries(virtualBoardProjection.visuals.map(occurrence =>
+    [occurrence.id, assemblyLayerOpacity[occurrence.id] ?? (occurrence.active ? layerOpacity : {})])), [virtualBoardProjection.visuals, assemblyLayerOpacity, layerOpacity]);
   const occurrenceHighlightBoards = useMemo(() => {
     const result: Record<string, ParsedBoard> = {};
     for (const visual of virtualBoardProjection.visuals) {
@@ -1662,11 +1669,11 @@ export default function App() {
     setViewportRestore({ token: Date.now(), ...restored.viewports });
     return restored.viewMode === "2D" ? Boolean(restored.viewports.twoD) : Boolean(restored.viewports.threeD);
   };
-  const snapshot = (): ProjectSnapshot => ({ studies: structuredClone(studies), probes: structuredClone(probes), probeFormulaRows: structuredClone(probeFormulaRows), probeReferenceIds: { ...probeReferenceIds }, boardFile, frequency, solverId, formulation, solverSelections: { ...solverSelections }, piSetup: structuredClone(piSetup), piTopology: structuredClone(piTopology), siTopology: structuredClone(siTopology), selectedSiSuite: structuredClone(selectedSiSuite), siChannelResult: structuredClone(siChannelResult), spiceWorkspace: structuredClone(spiceWorkspace), emiSetup: structuredClone(emiSetup), emiPreflight: structuredClone(emiPreflight), emiScreening: structuredClone(emiScreening), emiFieldResult: structuredClone(emiFieldResult), thermalScenario: structuredClone(thermalScenario), componentBonds: structuredClone(componentBonds), visibleLayers: { ...visibleLayers }, assemblyLayerVisibility: structuredClone(assemblyLayerVisibility), assemblyLayerOpacity: structuredClone(assemblyLayerOpacity), assemblyBoardVisibility: { ...assemblyBoardVisibility }, assemblyExplodedDistanceMm, layerOpacity: { ...layerOpacity }, layerSeparation, showVias, showNetNames, showAxes, selected, selectionFilter, isolatedNet, modelAssignments: { ...modelAssignments }, assemblyModelAssignments: structuredClone(assemblyModelAssignments), assemblyIr: structuredClone(assemblyIr), assemblyDesigns: structuredClone(assemblyDesigns), assemblyPackageShapes: structuredClone(assemblyPackageShapes), modelIndex: structuredClone(modelIndex), showModels, showSmdModels, showThtModels, navigationInertia, viewMode, resultVisualization: { ...resultVisualization }, analysisResult, pdnReview: structuredClone(pdnReview), pdnReviewSourceId, workspace: workspaceState() });
+  const snapshot = (): ProjectSnapshot => ({ emiChamberOpen, studies: structuredClone(studies), probes: structuredClone(probes), probeFormulaRows: structuredClone(probeFormulaRows), probeReferenceIds: { ...probeReferenceIds }, boardFile, frequency, solverId, formulation, solverSelections: { ...solverSelections }, piSetup: structuredClone(piSetup), piTopology: structuredClone(piTopology), siTopology: structuredClone(siTopology), selectedSiSuite: structuredClone(selectedSiSuite), siChannelResult: structuredClone(siChannelResult), spiceWorkspace: structuredClone(spiceWorkspace), emiSetup: structuredClone(emiSetup), emiPreflight: structuredClone(emiPreflight), emiScreening: structuredClone(emiScreening), emiFieldResult: structuredClone(emiFieldResult), thermalScenario: structuredClone(thermalScenario), componentBonds: structuredClone(componentBonds), visibleLayers: { ...visibleLayers }, assemblyLayerFocus: { ...assemblyLayerFocus }, assemblyLayerVisibility: structuredClone(assemblyLayerVisibility), assemblyLayerOpacity: structuredClone(assemblyLayerOpacity), assemblyBoardVisibility: { ...assemblyBoardVisibility }, assemblyExplodedDistanceMm, layerOpacity: { ...layerOpacity }, layerSeparation, showVias, showNetNames, showAxes, selected, selectionFilter, isolatedNet, modelAssignments: { ...modelAssignments }, assemblyModelAssignments: structuredClone(assemblyModelAssignments), assemblyIr: structuredClone(assemblyIr), assemblyDesigns: structuredClone(assemblyDesigns), assemblyPackageShapes: structuredClone(assemblyPackageShapes), modelIndex: structuredClone(modelIndex), showModels, showSmdModels, showThtModels, navigationInertia, viewMode, resultVisualization: { ...resultVisualization }, analysisResult, pdnReview: structuredClone(pdnReview), pdnReviewSourceId, workspace: workspaceState() });
   const restoreSnapshot = (next: ProjectSnapshot) => {
     setStudies(normalizeStudies(next.studies));
     setProbes(next.probes ?? []); setProbeFormulaRows(next.probeFormulaRows ?? []); setSavedProbeReferenceIds(next.probeReferenceIds ?? {});
-    setBoardFile(next.boardFile); setFrequency(next.frequency); setSolverId(next.solverId ?? "auto"); setFormulation(next.formulation ?? "auto"); setVisibleLayers(next.visibleLayers); setAssemblyLayerVisibility(next.assemblyLayerVisibility ?? {}); setAssemblyLayerOpacity(next.assemblyLayerOpacity ?? {}); setAssemblyBoardVisibility(next.assemblyBoardVisibility ?? {}); setAssemblyExplodedDistanceMm(next.assemblyExplodedDistanceMm ?? 0);
+    setEmiChamberOpen(next.emiChamberOpen === true); setBoardFile(next.boardFile); setFrequency(next.frequency); setSolverId(next.solverId ?? "auto"); setFormulation(next.formulation ?? "auto"); setVisibleLayers(next.visibleLayers); setAssemblyLayerFocus(next.assemblyLayerFocus ?? {}); setAssemblyLayerVisibility(next.assemblyLayerVisibility ?? {}); setAssemblyLayerOpacity(next.assemblyLayerOpacity ?? {}); setAssemblyBoardVisibility(next.assemblyBoardVisibility ?? {}); setAssemblyExplodedDistanceMm(next.assemblyExplodedDistanceMm ?? 0);
     setSolverSelections(next.solverSelections ?? {});
     setPiSetup(normalizePiSetup(next.piSetup));
     setPiTopology(next.piTopology ?? emptyTopology("pi"));
@@ -1788,7 +1795,7 @@ export default function App() {
         const saved = (result as Record<string, any>).extensionResult;
         if (saved && typeof saved === "object" && !Array.isArray(saved) && emergeRadiationPatterns(saved as Record<string, unknown>).length) {
           setExtensionResult(saved as Record<string, unknown>);
-          setEmergeViewportBoardSource(boardSource); setEmergePatternIndex(0); setEmiChamberOpen(true);
+          setEmergeViewportBoardSource(boardSource); setEmergePatternIndex(0);
         }
       } else if (result) setEmiFieldResult(normalizeEmiFieldResult((result as Record<string, any>).fieldResult ?? result));
       setTab("EM"); setEmiSection("solver");
@@ -1910,12 +1917,12 @@ export default function App() {
   const redo = () => { const next = redoRef.current.pop(); if (!next) { setStatus("Nothing to redo"); return; } historyRef.current.push(snapshot()); restoreSnapshot(next); markProjectDirty(); setStatus("Change redone"); };
   const download = (name: string, content: string, type = "application/json") => { const url = URL.createObjectURL(new Blob([content], { type })); const anchor = document.createElement("a"); anchor.href = url; anchor.download = name; document.body.appendChild(anchor); anchor.click(); anchor.remove(); window.setTimeout(() => URL.revokeObjectURL(url), 1500); };
   const downloadBlob = (name: string, blob: Blob) => { const url = URL.createObjectURL(blob); const anchor = document.createElement("a"); anchor.href = url; anchor.download = name; anchor.click(); window.setTimeout(() => URL.revokeObjectURL(url), 1000); };
-  const projectData = () => createProjectPackage(mergeProjectSnapshot(retainedProjectSnapshot.current, { board_visuals: null, harness: harnessDocument, project: { name: projectName }, studies, design: { canonical_design: canonicalSpiDeR, source_file: boardFile, source_format: boardFile.endsWith(".spike-design.json") ? "spike-normalized" : "kicad_pcb", source_board: boardSource, stackup: boardData?.stackup ?? [], technology: boardData?.technology ?? "rigid", regions: boardData?.regions ?? [], bend_lines: boardData?.bendLines ?? [], model_assignments: modelAssignments, component_bonds: componentBonds, topologies: { pi: piTopology, si: siTopology } }, assembly_ir: assemblyIr, assembly_designs: assemblyDesigns, assembly_package_shapes: assemblyPackageShapes, models: modelIndex, analysis: retainOpaqueResultState(retainedProjectSnapshot.current?.analysis, { mode: analysisMode, solver_id: solverId, formulation, solver_selections: solverSelections, extension_workflows: { openems_setup: workspaceOpenEMSSetup, emerge_setup: emergeEmiSetup }, ac_power_integrity: { request: acEffectsRequest, result: acEffectsResult }, power_nets: powerNets, pi_setup: piSetup, si: { suite: selectedSiSuite, latest_channel_result: siChannelResult }, limits, frequency, visible_layers: visibleLayers, assembly_layer_visibility: assemblyLayerVisibility, assembly_layer_opacity: assemblyLayerOpacity, assembly_model_assignments: assemblyModelAssignments, assembly_display: { visibility: assemblyBoardVisibility, exploded_distance_mm: assemblyExplodedDistanceMm, presentation_only: true }, layer_opacity: layerOpacity, layer_separation_mm: layerSeparation, show_vias: showVias, show_net_names: showNetNames, show_axes: showAxes, show_models: showModels, show_smd_models: showSmdModels, show_tht_models: showThtModels, navigation_inertia: navigationInertia, view_mode: viewMode, selection_filter: selectionFilter, isolated_net: isolatedNet, result_visualization: resultVisualization, em_viewport_settings: emViewportSettings, result_display: resultDisplay, latest_result: analysisResult, result_history: resultRecords.map(record => ({ id: record.id, label: record.label, bundle: record.bundle })), pdn_review: pdnReview, pdn_review_source_id: pdnReviewSourceId, selected_net_geometry: boardData && isolatedNet ? extractNetGeometry(boardData, isolatedNet) : null }, isSupportedSavedResult), spice: { workspace: spiceWorkspace }, emi: { setup: emiSetup, preflight: emiPreflight, screening: emiScreening, field_result: emiFieldResult }, thermal: { scenario: thermalScenario, component_bonds: componentBonds }, workspace: workspaceState(), probes, probe_table: { calculated_rows: probeFormulaRows, reference_ids: probeReferenceIds }, selection: selected }));
+  const projectData = () => createProjectPackage(mergeProjectSnapshot(retainedProjectSnapshot.current, { board_visuals: null, harness: harnessDocument, project: { name: projectName }, studies, design: { canonical_design: canonicalSpiDeR, source_file: boardFile, source_format: boardFile.endsWith(".spike-design.json") ? "spike-normalized" : "kicad_pcb", source_board: boardSource, stackup: boardData?.stackup ?? [], technology: boardData?.technology ?? "rigid", regions: boardData?.regions ?? [], bend_lines: boardData?.bendLines ?? [], model_assignments: modelAssignments, component_bonds: componentBonds, topologies: { pi: piTopology, si: siTopology } }, assembly_ir: assemblyIr, assembly_designs: assemblyDesigns, assembly_package_shapes: assemblyPackageShapes, models: modelIndex, analysis: retainOpaqueResultState(retainedProjectSnapshot.current?.analysis, { mode: analysisMode, solver_id: solverId, formulation, solver_selections: solverSelections, extension_workflows: { openems_setup: workspaceOpenEMSSetup, emerge_setup: emergeEmiSetup }, ac_power_integrity: { request: acEffectsRequest, result: acEffectsResult }, power_nets: powerNets, pi_setup: piSetup, si: { suite: selectedSiSuite, latest_channel_result: siChannelResult }, limits, frequency, visible_layers: visibleLayers, assembly_layer_focus: assemblyLayerFocus, assembly_layer_visibility: assemblyLayerVisibility, assembly_layer_opacity: assemblyLayerOpacity, assembly_model_assignments: assemblyModelAssignments, assembly_display: { visibility: assemblyBoardVisibility, exploded_distance_mm: assemblyExplodedDistanceMm, presentation_only: true }, layer_opacity: layerOpacity, layer_separation_mm: layerSeparation, show_vias: showVias, show_net_names: showNetNames, show_axes: showAxes, show_models: showModels, show_smd_models: showSmdModels, show_tht_models: showThtModels, navigation_inertia: navigationInertia, view_mode: viewMode, selection_filter: selectionFilter, isolated_net: isolatedNet, result_visualization: resultVisualization, em_viewport_settings: emViewportSettings, em_chamber_open: emiChamberOpen, result_display: resultDisplay, latest_result: analysisResult, result_history: resultRecords.map(record => ({ id: record.id, label: record.label, bundle: record.bundle })), pdn_review: pdnReview, pdn_review_source_id: pdnReviewSourceId, selected_net_geometry: boardData && isolatedNet ? extractNetGeometry(boardData, isolatedNet) : null }, isSupportedSavedResult), spice: { workspace: spiceWorkspace }, emi: { setup: emiSetup, preflight: emiPreflight, screening: emiScreening, field_result: emiFieldResult }, thermal: { scenario: thermalScenario, component_bonds: componentBonds }, workspace: workspaceState(), probes, probe_table: { calculated_rows: probeFormulaRows, reference_ids: probeReferenceIds }, selection: selected }));
   const performNewProject = () => { setHarnessDocument(null); setProjectUpgradeOffer(null);
     retainedProjectSnapshot.current = null;
     resetPreparedVisualBundle();
     setDeferredBoardVisual(null);
-    historyRef.current = []; redoRef.current = []; setStudies([]); setActiveStudyCaseId(null); setStudyManagerOpen(false); setProjectName("untitled.spike"); setProjectPath(null); setProjectManifestDigest(null); setActiveDesignId(null); setCanonicalSpiDeR(null); setBoardFile("untitled.kicad_pcb"); setBoardSource(""); setBoardData(null); setSelected(null); setSolverSelections({}); setPiSetup(defaultPiSetup()); setPiTopology(emptyTopology("pi")); setSiTopology(emptyTopology("si")); setSelectedSiSuite(null); setSiChannelResult(null); setSpiceWorkspace(defaultSpiceWorkspace("pi")); setEmiSetup(defaultEmiSetup()); setEmiPreflight(null); setEmiScreening(null); setEmiFieldResult(null); setThermalScenario(null); setComponentBonds([]); setAssemblyIr(null); setAssemblyDesigns(null); setAssemblyLayerVisibility({}); setAssemblyLayerOpacity({}); setAssemblyBoardVisibility({}); setAssemblyExplodedDistanceMm(0); setAssemblySnapMode("off"); setAssemblyPackageShapes(null); setModelIndex(normalizeModelIndex(null)); setBondValidation([]); setProbes([]); setProbeFormulaRows([]); setSavedProbeReferenceIds({}); setAnalysisResult(null); setPdnReview(null); setPdnReviewSourceId(null); setResultRecords([]); setResultDisplay("none"); setAnalysisSummary(null); setProjectManagerOpen(false); setProjectClean(); setStatus("New SPIKE project created");
+    historyRef.current = []; redoRef.current = []; setStudies([]); setActiveStudyCaseId(null); setStudyManagerOpen(false); setProjectName("untitled.spike"); setProjectPath(null); setProjectManifestDigest(null); setActiveDesignId(null); setCanonicalSpiDeR(null); setBoardFile("untitled.kicad_pcb"); setBoardSource(""); setBoardData(null); setSelected(null); setSolverSelections({}); setPiSetup(defaultPiSetup()); setPiTopology(emptyTopology("pi")); setSiTopology(emptyTopology("si")); setSelectedSiSuite(null); setSiChannelResult(null); setSpiceWorkspace(defaultSpiceWorkspace("pi")); setEmiSetup(defaultEmiSetup()); setEmiPreflight(null); setEmiScreening(null); setEmiFieldResult(null); setThermalScenario(null); setComponentBonds([]); setAssemblyIr(null); setAssemblyDesigns(null); setEmiChamberOpen(false); setAssemblyLayerFocus({}); setAssemblyLayerVisibility({}); setAssemblyLayerOpacity({}); setAssemblyBoardVisibility({}); setAssemblyExplodedDistanceMm(0); setAssemblySnapMode("off"); setAssemblyPackageShapes(null); setModelIndex(normalizeModelIndex(null)); setBondValidation([]); setProbes([]); setProbeFormulaRows([]); setSavedProbeReferenceIds({}); setAnalysisResult(null); setPdnReview(null); setPdnReviewSourceId(null); setResultRecords([]); setResultDisplay("none"); setAnalysisSummary(null); setProjectManagerOpen(false); setProjectClean(); setStatus("New SPIKE project created");
   };
   const requestUnsavedAction = (actionLabel: string, action: () => void | Promise<void>) => {
     if (assemblyToolDraftOwnerRef.current) { setStatus(`Finish or discard the assembly ${assemblyToolDraftOwnerRef.current} draft before you ${actionLabel}.`); return; }
@@ -2040,7 +2047,7 @@ export default function App() {
     setThermalScenario(data.thermal?.scenario ?? null);
     setAnalysisMode(analysis.mode ?? "DC IR Drop"); setSolverId(analysis.solver_id ?? "auto"); setFormulation(analysis.formulation ?? "auto");
     setPowerNets(analysis.power_nets ?? ["+1V8_CORE", "GND"]); setPiSetup(normalizePiSetup(analysis.pi_setup)); setLimits(analysis.limits ?? { drop: "50", density: "100" }); setFrequency(analysis.frequency ?? "10 MHz");
-    setVisibleLayers(parsed ? visibilityForBoard(parsed, analysis.visible_layers) : analysis.visible_layers ?? initialLayers); setAssemblyLayerVisibility(analysis.assembly_layer_visibility ?? {}); setAssemblyLayerOpacity(analysis.assembly_layer_opacity ?? {}); setAssemblyModelAssignments(analysis.assembly_model_assignments ?? {}); setAssemblyBoardVisibility(analysis.assembly_display?.visibility ?? {}); setAssemblyExplodedDistanceMm(Math.max(0, Number(analysis.assembly_display?.exploded_distance_mm) || 0)); setAssemblySnapMode("off"); setLayerOpacity(analysis.layer_opacity ?? {}); setLayerSeparation(Math.max(0, Number(analysis.layer_separation_mm) || 0));
+    setVisibleLayers(parsed ? visibilityForBoard(parsed, analysis.visible_layers) : analysis.visible_layers ?? initialLayers); setEmiChamberOpen(analysis.em_chamber_open === true); setAssemblyLayerFocus(analysis.assembly_layer_focus ?? {}); setAssemblyLayerVisibility(analysis.assembly_layer_visibility ?? {}); setAssemblyLayerOpacity(analysis.assembly_layer_opacity ?? {}); setAssemblyModelAssignments(analysis.assembly_model_assignments ?? {}); setAssemblyBoardVisibility(analysis.assembly_display?.visibility ?? {}); setAssemblyExplodedDistanceMm(Math.max(0, Number(analysis.assembly_display?.exploded_distance_mm) || 0)); setAssemblySnapMode("off"); setLayerOpacity(analysis.layer_opacity ?? {}); setLayerSeparation(Math.max(0, Number(analysis.layer_separation_mm) || 0));
     setShowVias(analysis.show_vias ?? true); setShowNetNames(analysis.show_net_names === true); setShowAxes(analysis.show_axes ?? true); setShowModels(analysis.show_models ?? true); setShowSmdModels(analysis.show_smd_models ?? true); setShowThtModels(analysis.show_tht_models ?? true); setNavigationInertia(analysis.navigation_inertia ?? false); setViewMode(analysis.view_mode === "2D" ? "2D" : "3D"); setSelectionFilter(["all", "part", "net"].includes(analysis.selection_filter) ? analysis.selection_filter : "all"); setIsolatedNet(analysis.isolated_net ?? null);
     const savedEmSettings = analysis.em_viewport_settings && typeof analysis.em_viewport_settings === "object" ? analysis.em_viewport_settings : {};
     setEmViewportSettings({ ...defaultEMViewportSettings, ...Object.fromEntries(Object.entries(defaultEMViewportSettings).filter(([key, value]) => typeof savedEmSettings[key] === typeof value).map(([key]) => [key, savedEmSettings[key]])) });
@@ -2967,7 +2974,9 @@ export default function App() {
     for (const component of boardData.components) if (throughHole.has(component.ref)) tht += 1;
     return { smd: boardData.components.length - tht, tht };
   }, [boardData]);
-  const layerEntries = useMemo(() => Object.keys(visibleLayers) as LayerName[], [visibleLayers]);
+  const layerEntries = useMemo(() => Object.keys(assemblyIr && assemblyIr.boards.length > 1
+    ? resolvedAssemblyLayerVisibility[selectedBoardInstanceId ?? ""] ?? {}
+    : visibleLayers) as LayerName[], [assemblyIr, resolvedAssemblyLayerVisibility, selectedBoardInstanceId, visibleLayers]);
   const terminalMarkers = useMemo<AnalysisTerminalMarker[]>(() => {
     const marker = (item: PiTerminal, role: AnalysisTerminalMarker["role"], net: string): AnalysisTerminalMarker | null => {
       const x = Number(item.x);
@@ -3323,14 +3332,52 @@ export default function App() {
     setDock("Issues");
     setStatus(`Simulation setup resolved for ${net}: source and load anchored, ${returnNet ? `return ${returnNet} assigned` : "implicit return retained"}, mesh defaults bounded`);
   };
-  const toggleLayer = (layer: LayerName) => { recordChange(); setVisibleLayers(current => ({ ...current, [layer]: current[layer] === false })); };
-  const setLayersVisible = (layers: LayerName[], visible: boolean) => { recordChange(); setVisibleLayers(current => ({ ...current, ...Object.fromEntries(layers.map(layer => [layer, visible])) })); };
-  const showOnlyLayer = (layer: LayerName) => { recordChange(); setVisibleLayers(Object.fromEntries(layerEntries.map(name => [name, name === layer])) as Record<LayerName, boolean>); };
-  const showOnlyVias = () => { recordChange(); setVisibleLayers(Object.fromEntries(layerEntries.map(layer => [layer, false]))); setShowVias(true); };
+  const updateFocusedLayers = (patch: Record<string, boolean>, replace = false) => {
+    if (assemblyIr && assemblyIr.boards.length > 1) {
+      if (!selectedBoardInstanceId) { setStatus("Focus a board before changing its layers."); return; }
+      recordChange();
+      setAssemblyLayerVisibility(current => ({ ...current, [selectedBoardInstanceId]: {
+        ...(!replace ? resolvedAssemblyLayerVisibility[selectedBoardInstanceId] : {}), ...patch,
+      } }));
+    } else { recordChange(); setVisibleLayers(current => ({ ...(!replace ? current : {}), ...patch })); }
+  };
+  const focusAssemblyLayer = (boardId: string, layer: string) => {
+    const occurrence = virtualBoardProjection.visuals.find(board => board.id === boardId);
+    const source = occurrence && assemblyBoardVisuals.boards[occurrence.designId];
+    if (!source || !["All", "Overview", ...source.layers].includes(layer)) throw new Error("Choose a current copper layer of the focused board.");
+    recordChange(); setAssemblyLayerFocus(current => ({ ...current, [boardId]: layer }));
+  };
+  const toggleLayer = (layer: LayerName) => {
+    const current = assemblyIr && assemblyIr.boards.length > 1 ? resolvedAssemblyLayerVisibility[selectedBoardInstanceId ?? ""] ?? {} : visibleLayers;
+    updateFocusedLayers({ [layer]: current[layer] === false });
+  };
+  const setLayersVisible = (layers: LayerName[], visible: boolean) => updateFocusedLayers(Object.fromEntries(layers.map(layer => [layer, visible])));
+  const showOnlyLayer = (layer: LayerName) => {
+    const names = assemblyIr && assemblyIr.boards.length > 1 ? Object.keys(resolvedAssemblyLayerVisibility[selectedBoardInstanceId ?? ""] ?? {}) : layerEntries;
+    updateFocusedLayers(Object.fromEntries(names.map(name => [name, name === layer])), true);
+  };
+  const showOnlyVias = () => { updateFocusedLayers(Object.fromEntries(layerEntries.map(layer => [layer, false])), true); setShowVias(true); };
   const changeLayerOpacity = (layer: LayerName, opacity: number) => {
+    if (assemblyIr && assemblyIr.boards.length > 1) {
+      if (!selectedBoardInstanceId) { setStatus("Focus a board before changing its layer opacity."); return; }
+      recordChange();
+      setAssemblyLayerOpacity(current => ({ ...current, [selectedBoardInstanceId]: { ...(current[selectedBoardInstanceId] ?? resolvedAssemblyLayerOpacity[selectedBoardInstanceId]), [layer]: Math.max(0, Math.min(1, opacity)) } }));
+      return;
+    }
     setLayerOpacity(current => ({ ...current, [layer]: Math.max(0.05, Math.min(1, opacity)) }));
   };
-  const restoreLayerDefaults = () => { recordChange(); setVisibleLayers(Object.fromEntries(layerEntries.map(layer => [layer, defaultLayerVisible(layer) || Boolean(boardData?.layers.includes(layer))]))); setLayerOpacity({}); setLayerSeparation(0); setShowVias(true); };
+  const restoreLayerDefaults = () => {
+    if (assemblyIr && assemblyIr.boards.length > 1) {
+      if (!selectedBoardInstanceId) { setStatus("Focus a board before restoring its layer defaults."); return; }
+      const occurrence = virtualBoardProjection.visuals.find(board => board.id === selectedBoardInstanceId);
+      const source = occurrence && assemblyBoardVisuals.boards[occurrence.designId];
+      if (!source) { setStatus("Wait for the focused board layout to load before restoring its layers."); return; }
+      updateFocusedLayers(visibilityForBoard(source), true);
+      setAssemblyLayerOpacity(current => ({ ...current, [selectedBoardInstanceId]: {} }));
+      return;
+    }
+    recordChange(); setVisibleLayers(Object.fromEntries(layerEntries.map(layer => [layer, defaultLayerVisible(layer) || Boolean(boardData?.layers.includes(layer))]))); setLayerOpacity({}); setLayerSeparation(0); setShowVias(true);
+  };
   const openAnalysisSetup = (mode?: string, workflow: "single" | "path" | "batch" = "single") => {
     if (mode && mode !== analysisMode) {
       setAnalysisMode(mode);
@@ -3407,7 +3454,7 @@ export default function App() {
       return;
     }
     if (destination === "emerge-emi") { setTab("EM"); setEmergeEmiOpen(true); return; }
-    if (destination === "emerge-em-result") { setTab("EM"); setEmergeEmiOpen(false); setEmiChamberOpen(true); setEmiDashboardOpen(true); return; }
+    if (destination === "emerge-em-result") { setTab("EM"); setEmergeEmiOpen(false); setEmiDashboardOpen(true); return; }
     if (destination === "pi") { setTab("PI"); setRightOpen(true); return; }
     if (destination === "si") { setTab("HF / SI"); setRightOpen(true); return; }
     if (destination === "emi") { setTab("EM"); setRightOpen(true); return; }
@@ -4614,7 +4661,7 @@ export default function App() {
       case "Solve":
         return <><ToolGroup label="SHARED DOMAIN" priority="primary"><Tool icon={BatteryCharging} label="PI solve" active={simulationDomain === "pi"} onClick={() => setSimulationDomain("pi")} /><Tool icon={AudioWaveform} label="SI solve" active={simulationDomain === "si"} onClick={() => setSimulationDomain("si")} /></ToolGroup><ToolGroup label="EXECUTION" priority="secondary"><Tool icon={SlidersHorizontal} label="Review setup" onClick={() => simulationDomain === "pi" ? openAnalysisSetup() : openSiWorkbench("geometry", "channel")} /><Tool icon={Play} label={simulationDomain === "si" ? "Run SI channel" : universalRunning ? "Running..." : "Run controls"} onClick={() => simulationDomain === "pi" ? runAnalysis() : openSiWorkbench("geometry", "channel")} /><Tool icon={X} label={activeWorkerOperation?.cancelling ? "Stopping..." : "Stop"} disabled={!universalRunning || activeWorkerOperation?.cancelling} onClick={() => void cancelActiveAnalysis()} /></ToolGroup><ToolGroup label="REVIEW" priority="tertiary"><Tool icon={BarChart3} label="Results" onClick={() => { if (simulationDomain === "si") openSiWorkbench(siChannelResult?.contract === "spike/si-workflow-result/v1" ? "workflow" : "geometry", "channel"); else { setResultVisualizerDomain("pi"); setResultVisualizerOpen(true); } }} /><Tool icon={Activity} label="Console" onClick={() => setDock("Console")} /></ToolGroup></>;
       case "EM":
-        return <><ToolGroup label="SCREENING" priority="primary"><Tool icon={Network} label="Net domain" active={rightOpen && emiSection === "domain"} onClick={() => { setRightOpen(true); setEmiSection("domain"); setSelectionFilter("net"); setStatus("Select candidate and return nets in the EM setup dock"); }} /><Tool icon={ShieldAlert} label="Preflight" active={Boolean(emiPreflight && !emiPreflight.counts.errors)} onClick={() => { setRightOpen(true); setEmiSection("prepass"); void validateEmi(); }} /><Tool icon={Gauge} label={emiBusy ? "Screening" : "Risk screen"} active={Boolean(emiScreening?.screening)} disabled={emiBusy} onClick={() => { setRightOpen(true); setEmiSection("prepass"); void runEmiScreening(); }} /></ToolGroup><ToolGroup label="EXCITATION" priority="secondary"><Tool icon={RadioTower} label="Ports" active={rightOpen && emiSection === "excitation"} onClick={() => { setRightOpen(true); setEmiSection("excitation"); setStatus("Configure explicit conductor-to-conductor ports in the EM setup dock"); }} /><Tool icon={Cable} label="Bonds" active={bondManagerOpen} onClick={() => setBondManagerOpen(true)} /><Tool icon={Activity} label="PI transient" onClick={() => openAnalysisSetup("Transient PI")} /><Tool icon={CircuitBoard} label="SPICE" onClick={() => setSpiceOpen(true)} /></ToolGroup><ToolGroup label="FULL-WAVE" priority="tertiary"><Tool icon={Layers3} label="Domain mesh" active={rightOpen && emiSection === "solver"} onClick={() => { setRightOpen(true); setEmiSection("solver"); setStatus("Configure frequency, boundary, and mesh controls in the EM setup dock"); }} /><Tool icon={CircuitBoard} label="Prepare case" active={Boolean(externalCase?.caseDir)} disabled={emiBusy || !boardData} onClick={() => { setRightOpen(true); setEmiSection("solver"); void prepareEmiCase(); }} /><Tool icon={Play} label="Run solver" disabled={emiBusy || !emiPreflight?.can_run || !externalCase?.canRun} onClick={() => void runExternalEngine("external.openems", false)} /><Tool icon={SatelliteDish} label="EMerge" active={emergeEmiOpen} onClick={openEmiEmerge} /><Tool icon={SlidersHorizontal} label="Solver manager" onClick={() => void openExternalEngineCenter()} /></ToolGroup><ToolGroup label="REVIEW" priority="quaternary"><Tool icon={BarChart3} label="Dashboard" active={emiDashboardOpen} disabled={!emiPreflight && !emiScreening && !emiFieldResult && !emergePatterns.length} onClick={() => { setEmiDashboardOpen(true); if (emergePatterns.length) setEmiChamberOpen(true); }} /><Tool icon={Waves} label="Near field" disabled onClick={() => setStatus("Near-field visualization requires a completed compatible field result")} /><Tool icon={RadioTower} label="Far field" active={Boolean(emiFieldResult?.far_field || emergePatterns.length)} disabled={!emiFieldResult?.far_field && !emergePatterns.length} onClick={() => { setEmiDashboardOpen(true); if (emergePatterns.length) { setEmiChamberOpen(true); setStatus("Showing the EMerge radiation pattern in EM"); } else setStatus("Showing the completed openEMS NF2FF radiation result"); }} /><Tool icon={FileOutput} label="EMI report" onClick={generateReport} /></ToolGroup></>;
+        return <><ToolGroup label="SCREENING" priority="primary"><Tool icon={Network} label="Net domain" active={rightOpen && emiSection === "domain"} onClick={() => { setRightOpen(true); setEmiSection("domain"); setSelectionFilter("net"); setStatus("Select candidate and return nets in the EM setup dock"); }} /><Tool icon={ShieldAlert} label="Preflight" active={Boolean(emiPreflight && !emiPreflight.counts.errors)} onClick={() => { setRightOpen(true); setEmiSection("prepass"); void validateEmi(); }} /><Tool icon={Gauge} label={emiBusy ? "Screening" : "Risk screen"} active={Boolean(emiScreening?.screening)} disabled={emiBusy} onClick={() => { setRightOpen(true); setEmiSection("prepass"); void runEmiScreening(); }} /></ToolGroup><ToolGroup label="EXCITATION" priority="secondary"><Tool icon={RadioTower} label="Ports" active={rightOpen && emiSection === "excitation"} onClick={() => { setRightOpen(true); setEmiSection("excitation"); setStatus("Configure explicit conductor-to-conductor ports in the EM setup dock"); }} /><Tool icon={Cable} label="Bonds" active={bondManagerOpen} onClick={() => setBondManagerOpen(true)} /><Tool icon={Activity} label="PI transient" onClick={() => openAnalysisSetup("Transient PI")} /><Tool icon={CircuitBoard} label="SPICE" onClick={() => setSpiceOpen(true)} /></ToolGroup><ToolGroup label="FULL-WAVE" priority="tertiary"><Tool icon={Layers3} label="Domain mesh" active={rightOpen && emiSection === "solver"} onClick={() => { setRightOpen(true); setEmiSection("solver"); setStatus("Configure frequency, boundary, and mesh controls in the EM setup dock"); }} /><Tool icon={CircuitBoard} label="Prepare case" active={Boolean(externalCase?.caseDir)} disabled={emiBusy || !boardData} onClick={() => { setRightOpen(true); setEmiSection("solver"); void prepareEmiCase(); }} /><Tool icon={Play} label="Run solver" disabled={emiBusy || !emiPreflight?.can_run || !externalCase?.canRun} onClick={() => void runExternalEngine("external.openems", false)} /><Tool icon={SatelliteDish} label="EMerge" active={emergeEmiOpen} onClick={openEmiEmerge} /><Tool icon={SlidersHorizontal} label="Solver manager" onClick={() => void openExternalEngineCenter()} /></ToolGroup><ToolGroup label="REVIEW" priority="quaternary"><Tool icon={BarChart3} label="Dashboard" active={emiDashboardOpen} disabled={!emiPreflight && !emiScreening && !emiFieldResult && !emergePatterns.length} onClick={() => { setEmiDashboardOpen(true); }} /><Tool icon={Waves} label="Near field" disabled onClick={() => setStatus("Near-field visualization requires a completed compatible field result")} /><Tool icon={RadioTower} label="Far field" active={Boolean(emiFieldResult?.far_field || emergePatterns.length)} disabled={!emiFieldResult?.far_field && !emergePatterns.length} onClick={() => { setEmiDashboardOpen(true); if (emergePatterns.length) { setStatus("Showing the EMerge radiation pattern in EM"); } else setStatus("Showing the completed openEMS NF2FF radiation result"); }} /><Tool icon={FileOutput} label="EMI report" onClick={generateReport} /></ToolGroup></>;
       case "Thermal":
         return <><ToolGroup label="SIMULATION DOMAIN" priority="primary"><Tool icon={Thermometer} label="Bounding volume" onClick={() => setThermalOpen(true)} /><Tool icon={Layers3} label="Board stack" onClick={() => setStackupOpen(true)} /><Tool icon={Activity} label="Heat sources" onClick={() => setThermalOpen(true)} /><Tool icon={Cable} label="Bonds" active={bondManagerOpen} onClick={() => setBondManagerOpen(true)} /></ToolGroup><ToolGroup label="AIRFLOW" priority="secondary"><Tool icon={Wind} label="Flow channels" onClick={() => setThermalOpen(true)} /><Tool icon={Fan} label="Fan placement" onClick={() => setThermalOpen(true)} /><Tool icon={Gauge} label="Ambient" onClick={() => setThermalOpen(true)} /></ToolGroup><ToolGroup label="OPTIONAL CFD" priority="tertiary"><Tool icon={SlidersHorizontal} label="Scenario" onClick={() => setThermalOpen(true)} /><Tool icon={Play} label="Prepare case" onClick={() => setThermalOpen(true)} /><Tool icon={Activity} label="Solver console" onClick={() => setDock("Console")} /></ToolGroup><ToolGroup label="THERMAL RESULTS" priority="quaternary"><Tool icon={BarChart3} label="Temperature" onClick={() => setThermalOpen(true)} /><Tool icon={FileOutput} label="Report" onClick={generateReport} /></ToolGroup></>;
       case "Probes":
@@ -4741,7 +4788,12 @@ export default function App() {
     if (tab === "PI") setSimulationDomain("pi");
   }, [tab]);
 
-  const assemblyToolRevision = useMemo(() => crypto.randomUUID(), [projectPath, projectManifestDigest, assemblyIr]);
+  const assemblyToolRevision = useMemo(() => crypto.randomUUID(), [projectPath, projectManifestDigest, assemblyIr, assemblyBoardVisibility, assemblyLayerVisibility, assemblyLayerOpacity, assemblyLayerFocus, assemblyExplodedDistanceMm]);
+  const assemblyWorkspaceViewportRevision = useMemo(() => crypto.randomUUID(), [assemblyBoardVisuals.boards, assemblySceneModels]);
+  const assemblyWorkspaceViewportData = useMemo<AssemblyToolViewportData>(() => ({
+    revision: assemblyWorkspaceViewportRevision, boards: assemblyBoardVisuals.boards,
+    assemblyModels: assemblySceneModels,
+  }), [assemblyWorkspaceViewportRevision, assemblyBoardVisuals.boards, assemblySceneModels]);
   const selectAssemblyMoveMode = (mode: "translate" | "rotate") => {
     if (assemblyToolDraftOwner) { setStatus(`Finish or discard the assembly ${assemblyToolDraftOwner} draft before moving a board.`); return; }
     setAssemblySnapMode("off"); setAssemblyExplodedDistanceMm(0);
@@ -4749,20 +4801,20 @@ export default function App() {
     setViewMode("3D");
   };
   const assemblyToolSnapshot = useMemo<AssemblyToolSnapshot>(() => ({
-    revision: assemblyToolRevision, assembly: assemblyIr, designs: assemblyDesigns,
-    // Tool windows need readiness and diagnostics, not GPU buffers or source SVGs.
+    revision: assemblyToolRevision, viewportRevision: assemblyWorkspaceViewportRevision, assembly: assemblyIr, designs: assemblyDesigns,
+    // Small manager snapshots stay separate from the viewport's requested CPU assets.
     visuals: Object.fromEntries(Object.entries(assemblyBoardVisuals.boards).map(([id, board]) => [id, { boardModelUrl: board.boardModelUrl, componentModelUrl: board.componentModelUrl }])),
     diagnostics: assemblyBoardVisuals.diagnostics, projectPath, manifestDigest: projectManifestDigest, projectDirty,
     desktop: desktopShell, boardAvailable: Boolean(boardData), selectedBoardId: selectedBoardInstanceId,
-    visibility: assemblyBoardVisibility,
-    layerVisibility: Object.fromEntries(virtualBoardProjection.visuals.map(board => [board.id, assemblyLayerVisibility[board.id] ?? visibleLayers])),
-    layerOpacity: Object.fromEntries(virtualBoardProjection.visuals.map(board => [board.id, assemblyLayerOpacity[board.id] ?? layerOpacity])),
+    visibility: assemblyBoardVisibility, linkedNets: linkedAssemblyNets,
+    layerFocus: assemblyLayerFocus, layerVisibility: resolvedAssemblyLayerVisibility,
+    layerOpacity: resolvedAssemblyLayerOpacity,
     explodedDistanceMm: assemblyExplodedDistanceMm, moveMode: assemblyMoveMode, snapMode: assemblySnapMode, snapGapMm: assemblySnapGapMm,
     snapSourceLabel: assemblySnapSource ? `${assemblySnapSource.occurrenceId}: ${assemblySnapSource.sourceId}` : undefined,
     passThroughHighlight, overlayMessages: [...assemblyOverlayState.diagnostics, ...assemblyOverlayState.overlays.map(row => `${row.boardOccurrenceId}: ${row.metrics.map(metric => `${metric.name}: ${metric.value?.toPrecision(5) ?? "channel"} ${metric.unit ?? ""}`).join("; ")} (occurrence summary, not a spatial field)`) ],
     managerTab: assemblyLinksOpen ? "links" : netManagerOpen ? "nets" : "layers",
     draftOwner: assemblyToolDraftOwner,
-  }), [assemblyToolRevision, assemblyIr, assemblyDesigns, assemblyBoardVisuals.boards, assemblyBoardVisuals.diagnostics, projectPath, projectManifestDigest, projectDirty, desktopShell, boardData, selectedBoardInstanceId, assemblyBoardVisibility, virtualBoardProjection.visuals, assemblyLayerVisibility, visibleLayers, assemblyLayerOpacity, layerOpacity, assemblyExplodedDistanceMm, assemblyMoveMode, assemblySnapMode, assemblySnapGapMm, assemblySnapSource, passThroughHighlight, assemblyOverlayState, assemblyLinksOpen, netManagerOpen, assemblyToolDraftOwner]);
+  }), [assemblyToolRevision, assemblyWorkspaceViewportRevision, assemblyLayerFocus, resolvedAssemblyLayerVisibility, resolvedAssemblyLayerOpacity, assemblyIr, assemblyDesigns, assemblyBoardVisuals.boards, assemblyBoardVisuals.diagnostics, projectPath, projectManifestDigest, projectDirty, desktopShell, boardData, selectedBoardInstanceId, assemblyBoardVisibility, linkedAssemblyNets, virtualBoardProjection.visuals, assemblyLayerVisibility, visibleLayers, assemblyLayerOpacity, layerOpacity, assemblyExplodedDistanceMm, assemblyMoveMode, assemblySnapMode, assemblySnapGapMm, assemblySnapSource, passThroughHighlight, assemblyOverlayState, assemblyLinksOpen, netManagerOpen, assemblyToolDraftOwner]);
   const assemblyToolAction = async (kind: AssemblyToolKind, action: AssemblyToolAction) => {
     if (assemblyToolDraftOwner && (action.type === "placement" || action.type === "move-mode" || ((action.type === "save" || action.type === "reload" || action.type === "update-assembly") && assemblyToolDraftOwner !== kind))) throw new Error(`Finish or discard the assembly ${assemblyToolDraftOwner} draft first.`);
     const boardId = action.boardId;
@@ -4781,16 +4833,22 @@ export default function App() {
       case "move-mode": if (action.mode === "translate" || action.mode === "rotate") selectAssemblyMoveMode(action.mode); return;
       case "explode": if (typeof action.value === "number" && action.value >= 0) { recordChange(); setAssemblyMoveMode(null); setAssemblyExplodedDistanceMm(action.value); } return;
       case "snap-gap": if (typeof action.value === "number" && action.value >= 0) setAssemblySnapGapMm(action.value); return;
+      case "snap-target": {
+        const target = assemblySnapTargets.find(target => target.id === action.value);
+        if (!target) throw new Error("The alignment target is no longer available. Choose a current board edge or hole.");
+        handleAssemblySnapTarget(target); return;
+      }
       case "snap-mode": if (action.mode === "off" || action.mode === "hole" || action.mode === "edge") { setAssemblyMoveMode(null); setAssemblySnapMode(action.mode); if (action.mode !== "off") setAssemblyExplodedDistanceMm(0); setStatus(action.mode === "off" ? "Assembly alignment snap off" : `Click a ${action.mode} on the moving board, then a ${action.mode} on the target board`); } return;
       case "pass-through": setPassThroughHighlight(action.value === true); return;
       case "export-diagram": await exportAssemblyDiagram(); return;
       case "load-overlay": await loadAssemblyOverlayStudy(); return;
-      case "layer-visibility": if (boardId && action.layer) { const layer = action.layer; recordChange(); setAssemblyLayerVisibility(current => ({ ...current, [boardId]: { ...(current[boardId] ?? visibleLayers), [layer]: action.value === true } })); } return;
-      case "layer-opacity": if (boardId && action.layer && typeof action.value === "number" && action.value >= 0 && action.value <= 1) { const layer = action.layer, value = action.value; recordChange(); setAssemblyLayerOpacity(current => ({ ...current, [boardId]: { ...(current[boardId] ?? layerOpacity), [layer]: value } })); } return;
+      case "layer-visibility": if (boardId && action.layer) { const layer = action.layer; recordChange(); setAssemblyLayerVisibility(current => ({ ...current, [boardId]: { ...(current[boardId] ?? resolvedAssemblyLayerVisibility[boardId] ?? {}), [layer]: action.value === true } })); } return;
+      case "layer-focus": if (boardId && typeof action.value === "string") focusAssemblyLayer(boardId, action.value); return;
+      case "layer-opacity": if (boardId && action.layer && typeof action.value === "number" && action.value >= 0 && action.value <= 1) { const layer = action.layer, value = action.value; recordChange(); setAssemblyLayerOpacity(current => ({ ...current, [boardId]: { ...(current[boardId] ?? resolvedAssemblyLayerOpacity[boardId] ?? {}), [layer]: value } })); } return;
       case "layer-state": if (boardId && action.layerVisibility) {
         recordChange(); const visibility = action.layerVisibility, opacity = action.layerOpacity;
-        setAssemblyLayerVisibility(current => ({ ...current, [boardId]: { ...(current[boardId] ?? visibleLayers), ...visibility } }));
-        if (opacity) setAssemblyLayerOpacity(current => ({ ...current, [boardId]: { ...(current[boardId] ?? layerOpacity), ...opacity } }));
+        setAssemblyLayerVisibility(current => ({ ...current, [boardId]: { ...(current[boardId] ?? resolvedAssemblyLayerVisibility[boardId] ?? {}), ...visibility } }));
+        if (opacity) setAssemblyLayerOpacity(current => ({ ...current, [boardId]: { ...(current[boardId] ?? resolvedAssemblyLayerOpacity[boardId] ?? {}), ...opacity } }));
       } return;
       case "select-net": if (boardId && action.netId) { setSelectedBoardInstanceId(boardId); await handleAssemblyNetSelect(boardId, action.netId); } return;
       case "update-assembly": if (action.assembly && assemblyIr && action.assembly.assembly_id === assemblyIr.assembly_id) { recordChange(); linkedSelectionGeneration.current += 1; setAssemblyIr(action.assembly); setLinkedAssemblyNets({}); } return;
@@ -4880,7 +4938,7 @@ export default function App() {
             {tab === "Thermal" && boardData && !thermalPreview && !thermalScenario && <div className="thermal-scene-bar" aria-label="Saved thermal result controls"><button onClick={() => void openSavedBoardThermal()} title="Load a source-bound board thermal view bundle"><FolderOpen size={14} /> Open saved thermal</button></div>}
             <input ref={savedBoardThermalInputRef} type="file" accept=".json" style={{ display: "none" }} onChange={event => { const file = event.target.files?.[0]; event.target.value = ""; if (file) void file.text().then(text => showSavedBoardThermal(JSON.parse(text))).catch(error => setStatus(String(error))); }} />
             {tab === "EM" && <div className="emi-viewport-bar" aria-label="EM viewport controls">
-              {emergeViewportPattern && <button className={!emiChamberOpen ? "selected" : ""} onClick={() => { setEmiChamberOpen(false); setViewMode("3D"); }} title="Rotate and probe the radiation pattern beside the source board"><CircuitBoard size={14} /> Board + pattern</button>}
+              <button className={!emiChamberOpen ? "selected" : ""} onClick={() => setEmiChamberOpen(false)} title="Use the board viewport with the current result; chamber display is optional"><CircuitBoard size={14} /> {emergeViewportPattern ? "Board + pattern" : "Board / assembly"}</button>
               {emergeViewportPattern && emergePatterns.length > 1 && <label className="setup-sublabel">Frequency <select className="select-control" aria-label="Board radiation frequency" value={emergePatternIndex} onChange={event => setEmergePatternIndex(Number(event.target.value))}>{emergePatterns.map((pattern, index) => <option value={index} key={`${pattern.frequency_hz}-${index}`}>{(pattern.frequency_hz / 1e9).toFixed(3)} GHz</option>)}</select></label>}
               <button className={emiChamberOpen ? "selected" : ""} onClick={() => setEmiChamberOpen(true)}>Chamber</button>
               <button onClick={openEmiEmerge} title="Configure EMerge SI and radiation analysis"><SatelliteDish size={14} /> EMerge</button>
@@ -5183,8 +5241,10 @@ export default function App() {
             assemblySelectorPreviews={assemblySelectorPreviews}
             virtualBoards={virtualBoardProjection.visuals}
             assemblyBoardDesigns={assemblyBoardVisuals.boards}
-            assemblyLayerVisibility={assemblyLayerVisibility}
-            assemblyLayerOpacity={assemblyLayerOpacity}
+            assemblyLayerVisibility={resolvedAssemblyLayerVisibility}
+            assemblyLayerOpacity={resolvedAssemblyLayerOpacity}
+            assemblyLayerFocus={assemblyLayerFocus}
+            onAssemblyLayerFocus={focusAssemblyLayer}
             assemblyBoardVisibility={assemblyBoardVisibility}
             assemblyExplodeOffsets={assemblyOffsets}
             assemblySnapTargets={assemblySnapTargets}
@@ -5372,7 +5432,7 @@ export default function App() {
     {flexBoardOpen && <FlexBoardManager board={boardData} onClose={() => setFlexBoardOpen(false)} onStatus={setStatus} onShowLayers={layers => { setLayersVisible(layers, true); commandCamera("fit"); }} />}
     {modelLibraryOpen && <ModelResolverPanel boards={resolverBoards} initialBoardId={modelResolverTarget.designId} initialComponentRef={modelResolverTarget.componentRef} assignedPaths={{ ...assemblyModelAssignments, [assemblyDesigns?.active_design_id ?? activeDesignId ?? "active"]: modelAssignments }} onApplied={applyResolvedComponentModel} onClose={() => { setModelLibraryOpen(false); setModelResolverTarget({}); }} />}
 
-    {assemblyWorkspaceOpen && <AssemblyToolHost kind="workspace" snapshot={assemblyToolSnapshot} onAction={action => assemblyToolAction("workspace", action)} onClose={() => { setAssemblyWorkspaceOpen(false); setAssemblyToolDraftOwner(current => current === "workspace" ? null : current); }}/>}
+    {assemblyWorkspaceOpen && <AssemblyToolHost kind="workspace" snapshot={assemblyToolSnapshot} viewportData={assemblyWorkspaceViewportData} onAction={action => assemblyToolAction("workspace", action)} onClose={() => { setAssemblyWorkspaceOpen(false); setAssemblyToolDraftOwner(current => current === "workspace" ? null : current); }}/>}
     {freecadCollaborationOpen && <div className="modal-shade"><section className="floating-panel" role="dialog" aria-modal="true" aria-label="ECAD–MCAD collaboration" style={{ width: "min(960px, calc(100vw - 32px))", maxHeight: "calc(100vh - 40px)", overflow: "auto" }}><header className="floating-panel-title"><strong>ECAD–MCAD collaboration</strong><button type="button" aria-label="Close ECAD–MCAD collaboration" onClick={() => setFreecadCollaborationOpen(false)}><X size={16}/></button></header><FreecadCollaboration projectPath={projectPath} manifestDigest={projectManifestDigest} disabled={!desktopShell || projectDirty || Boolean(assemblyToolDraftOwner)} onUpdated={async () => { if (projectPath) await loadNativeProjectFromApprovedPath(projectPath, projectName); }} onStatus={setStatus}/></section></div>}
     {assemblyHandlingExpanded && <AssemblyToolHost kind="placement" snapshot={assemblyToolSnapshot} onAction={action => assemblyToolAction("placement", action)} onClose={() => setAssemblyHandlingExpanded(false)}/>}
     {assemblyIr && assemblyDesigns && assemblyIr.boards.length > 1 && (layersOpen || netManagerOpen || assemblyLinksOpen) && <AssemblyToolHost kind="managers" snapshot={assemblyToolSnapshot} onAction={action => assemblyToolAction("managers", action)} onClose={() => { setLayersOpen(false); setNetManagerOpen(false); setAssemblyLinksOpen(false); setAssemblyToolDraftOwner(current => current === "managers" ? null : current); }}/>}
@@ -5492,7 +5552,7 @@ export default function App() {
         {gerberSource && <button className="secondary-btn" disabled={emergeEmiBusy || gerberRunBlocked || !workerAvailable} title="Generate a native EMerge mesh and inspect the original Gerber copper and explicit ports" onClick={() => { setEmergeEmiBusy(true); try { void invokeExtension("spike.emerge-suite", "emerge-mesh", emergeParameters(emergeEmiSetup, "gerber")).finally(() => setEmergeEmiBusy(false)); } catch (error) { setEmergeEmiError(String(error)); setEmergeEmiBusy(false); } }}><Layers3 size={15}/>Prepare native Gerber mesh</button>}
         <EMergeScriptPreview data={emergeScriptPreview} />
         <EMergeCapabilityInventory rows={emergeEmiRuntime?.feature_inventory ?? emergeScriptPreview?.capabilities} />
-        {emergeEmiRuntime && <div className="extension-output"><div className="extension-output-title"><b>{emergeEmiRuntime.available === true ? `EMerge ${String(emergeEmiRuntime.version ?? "")} ready` : "EMerge runtime unavailable"}</b></div><small>{emergeEmiRuntime.available === true ? `Available: ${emergeEmiCapabilities.join(", ") || "none"}` : String(emergeEmiRuntime.reason ?? "Runtime check failed.")}</small></div>}
+        {emergeEmiRuntime && <EMergeRuntimeStatus value={emergeEmiRuntime} />}
         {emergeEmiError && <p role="alert">{emergeEmiError}</p>}
         <div className="extension-contributions"><label>AVAILABLE EMERGE ANALYSES</label>
           {!emergeSiOpen && <div><span><b>Radiation pattern</b><small>3D relative far field, angular cut, and S-parameters</small></span><button data-guide="emerge-emi-run-radiation" disabled={emergeEmiBusy || gerberRunBlocked || !boardData || !emergeEmiExtension?.trusted || emergeEmiExtension.state === "disabled" || emergeEmiRuntime?.available !== true || !emergeEmiCapabilities.includes("radiation_pattern")} onClick={() => void runEmiEmerge("emerge-radiation")}><Play size={12} /> Run</button></div>}

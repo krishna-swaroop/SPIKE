@@ -24,6 +24,29 @@ The normal **All / Part / Net** filters apply to each occurrence: **Net** lets
 you pick tracks, pads, vias and zones without component hitboxes blocking them.
 Only saved connector pin mappings propagate net highlights to other boards.
 
+Layer controls follow the **focused board occurrence**. Selecting a different
+board restores its own visibility and opacity preferences, including duplicated
+instances of one design. The 2D quick selector offers **All layers**, **Copper
+overview**, and individual copper layers; its preference is saved per occurrence
+in the `.spike` analysis presentation state. A change does not affect another
+board with the same layer names. Choose the board in the manager or click it in
+the viewport before changing layers.
+
+The dedicated assembly window also contains the shared SPIKE viewport, with
+**2D separated layout**, **3D physical assembly**, framing, navigation, model
+visibility, and placement gizmos. The parent project owns edits and preferences;
+the separate window receives retained source geometry when its visual revision
+changes. Net selections and layer changes use small scoped messages rather than
+retransmitting all geometry. Structural edits still require the saved package;
+viewing the available assembly does not.
+
+In **EM**, **Board / assembly** and **Chamber** are visual choices. Entering EM
+or reviewing a saved radiation result does not automatically open the chamber.
+Disabling chamber display keeps the board and compatible result data available.
+This choice does not change solver boundary conditions or qualify a solver for
+coupled assembly physics; use the documented coupled-study contracts and solver
+status for those capabilities.
+
 Open **Home → Multi-board** in the desktop shell. It opens a separate native
 window with an OS title bar: drag it outside SPIKE, move it to another monitor,
 resize or minimize it. **Placement**, **Layers**, **Nets** and **Links** in the

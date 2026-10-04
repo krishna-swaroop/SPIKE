@@ -49,6 +49,12 @@ An existing tag must point to that commit.
 
 ## What the chain checks
 
+Version 0.3.6 is a Windows-only release. Run the standalone **Windows x64 package**
+workflow at the release commit, then verify its installer and SHA-256 artifact
+before publishing that exact commit as a prerelease. The all-platform helper
+continues to require four packages; do not describe a Windows-only artifact set
+as a complete all-platform build. Retain the 0.3.5 Linux and macOS downloads.
+
 - Version consistency across the desktop, CLI, and native build.
 - Frozen-worker health and existing numerical runtime checks.
 - Every CLI command's help, version, board inspection, and structured errors.
@@ -75,6 +81,6 @@ The GitHub workflows call the same checked-in scripts used for local builds:
 - Linux/macOS: `scripts/build_unix_release.sh`, then `scripts/package_unix_release.py`.
 
 These scripts install build dependencies and prepare resources in a disposable
-checkout. Use a clean checkout; resource staging updates its Tauri configuration.
+checkout. Use a clean checkout; staging emits a separate Tauri build configuration.
 See [platform installation and CLI commands](PLATFORM_PACKAGES.md) for running
 the finished packages.

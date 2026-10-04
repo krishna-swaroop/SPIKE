@@ -29,6 +29,12 @@ Touchstone matrix. Supported NF2FF complex fields, angular cuts and networks
 appear in the main EM results manager with their actual frequencies and units.
 Missing far-field frequencies produce no field overlay.
 
+EMerge remains a separately installed optional extension engine. Its selected
+interpreter must be reachable from the installed application, and packaged
+SPIKE must retain the adapter's relative Python module layout. API detection,
+executed-fixture evidence, sandbox constraints, and result admission are
+separate gates; see [EMerge version support](EMERGE_VERSION_SUPPORT.md).
+
 Unavailable runtimes, untrusted extensions, invalid geometry, failed jobs,
 resource limits and invalid result contracts remain blocking conditions.
 Changing the loaded board while a job runs prevents its returned payload from

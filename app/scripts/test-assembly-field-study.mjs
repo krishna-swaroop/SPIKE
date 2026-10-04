@@ -20,17 +20,19 @@ assert.equal(model.fieldCanRun(request, { ...handoff, execution_issues: [{ code:
 assert.equal(model.fieldCanRun({ ...request, domain: "si" }, handoff, false), false);
 assert.equal(model.fieldCanRun(request, handoff, true), false);
 assert.deepEqual(model.fieldTemperatureRows(result, assembly).map(row => row.name), ["Controller", "Casing"]);
-let slots = [], cursor = 0, queuedEffects = [], requests = [], selectedFile = null, exported = [], dirtyStates = [];
+let slots = [], cursor = 0, queuedEffects = [], requests = [], selectedFile = null, exported = [], dirtyStates = [], strictReplay = true;
 const hooks = {
   useState(initial) { const i = cursor++; slots[i] ??= { value: typeof initial === "function" ? initial() : initial }; return [slots[i].value, next => { slots[i].value = typeof next === "function" ? next(slots[i].value) : next; }]; },
   useRef(initial) { const i = cursor++; slots[i] ??= { current: initial }; return slots[i]; },
   useMemo(fn, deps) { const i = cursor++; if (!slots[i] || deps.some((value, index) => value !== slots[i].deps[index])) slots[i] = { deps, value: fn() }; return slots[i].value; },
-  useEffect(fn, deps) { const i = cursor++; if (!slots[i] || deps.some((value, index) => value !== slots[i].deps[index])) { const previous = slots[i]; slots[i] = { deps }; queuedEffects.push(() => { previous?.cleanup?.(); slots[i].cleanup = fn(); }); } },
+  useEffect(fn, deps) { const i = cursor++; if (!slots[i] || deps.some((value, index) => value !== slots[i].deps[index])) { const previous = slots[i]; slots[i] = { deps }; queuedEffects.push(() => { previous?.cleanup?.(); const cleanup = fn(); if (strictReplay) { cleanup?.(); slots[i].cleanup = fn(); } else slots[i].cleanup = cleanup; }); } },
 };
-let solve = async () => result;
+let solve = async () => result, releaseInitialRead, failNextRead = false;
 const worker = async operation => {
   requests.push(operation);
   const { method, params } = operation;
+  if (method === "read_assembly_field_study_in_project" && !releaseInitialRead) await new Promise(resolve => { releaseInitialRead = resolve; });
+  if (method === "read_assembly_field_study_in_project" && failNextRead) { failNextRead = false; return { ok: false, error: "field hydration failed" }; }
   const value = method === "read_assembly_field_study_in_project" ? { state: "current", record: saved, assembly }
     : method === "prepare_assembly_field_handoff" ? handoff
     : method === "import_assembly_field_study" ? params.record
@@ -52,7 +54,9 @@ async function settle() { for (let i = 0; i < 5; i++) { await new Promise(resolv
 function nodes(value) { return !value || typeof value !== "object" ? [] : [value, ...React.Children.toArray(value.props?.children).flatMap(nodes)]; }
 const button = text => nodes(tree).find(node => node.type === "button" && node.props.children === text);
 const temperatures = () => nodes(tree).filter(node => node.type === "td" && ["Controller", "Casing"].includes(node.props.children));
-render(); await settle();
+render(); strictReplay = false;
+assert.equal(requests.filter(item => item.method === "read_assembly_field_study_in_project").length, 1, "StrictMode effect replay shares one pending manifest-bound field read");
+releaseInitialRead(); await settle();
 assert.equal(temperatures().length, 2, "manifest-bound saved result is shown with occurrence names");
 const boundaryInput = nodes(tree).find(node => node.type === "input" && node.props.type === "number");
 boundaryInput.props.onChange({ target: { value: "310" } }); render();
@@ -79,4 +83,10 @@ resolveSolve({ ...result, occurrence_temperatures: { "board:a": { minimum_k: 900
 await settle();
 assert.equal(nodes(tree).some(node => node.type === "td" && node.props.children === "1000.000"), false, "late run output cannot overwrite the newly opened manifest");
 assert.equal(button("Run steady thermal").props.disabled, false);
+failNextRead = true; props.manifestDigest = "c".repeat(64); render(); await settle();
+assert.ok(nodes(tree).some(node => node.props?.role === "alert" && String(node.props.children).includes("field hydration failed")), "a failed shared hydration remains diagnosable");
+const readsBeforeRecovery = requests.filter(item => item.method === "read_assembly_field_study_in_project").length;
+button("Reload saved study").props.onClick(); render(); await settle();
+assert.equal(requests.filter(item => item.method === "read_assembly_field_study_in_project").length, readsBeforeRecovery + 1, "reload starts a fresh read after the failed pending hydration is evicted");
+assert.equal(nodes(tree).some(node => node.props?.role === "alert"), false, "fresh hydration clears the earlier read failure");
 console.log("Field study binding, execution blockers, boundary invalidation, result reset, export/save modes and late-response admission passed");

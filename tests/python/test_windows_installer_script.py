@@ -29,7 +29,17 @@ class WindowsInstallerScriptTests(unittest.TestCase):
         self.assertIn('$buildMutex.WaitOne(0)', self.script)
         self.assertIn('Another SPIKE installer build owns this checkout', self.script)
         self.assertIn('catch [System.Threading.AbandonedMutexException]', self.script)
-        self.assertIn('finally {\n    if ($ownsBuildMutex) { $buildMutex.ReleaseMutex() }', self.script)
+        # Configuration restoration may precede mutex release in the cleanup
+        # block. Both must remain in finally, with disposal after release.
+        cleanup = self.script[self.script.rindex('\nfinally {'):]
+        self.assertIn('if ($ownsBuildMutex) { $buildMutex.ReleaseMutex() }', cleanup)
+        self.assertLess(cleanup.index('$buildMutex.ReleaseMutex()'), cleanup.index('$buildMutex.Dispose()'))
+
+    def test_default_staging_follows_worker_build(self):
+        stage = self.script.index('"scripts/prepare_release_resources.py"')
+        self.assertLess(self.script.index('"scripts/build_packaged_worker.py"'), stage)
+        self.assertLess(stage, self.script.index('Copy-Item -LiteralPath $ResourceConfig'))
+        self.assertIn('if (-not $ResourceConfig)', self.script)
 
 
 if __name__ == "__main__":

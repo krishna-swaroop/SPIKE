@@ -14,10 +14,11 @@ type Props = { embedded?: boolean; onDirtyChange?: (dirty: boolean) => void; ass
   onAssemblyLayerVisibility: (boardId: string, layerName: string, visible: boolean) => void; onAssemblyLayerOpacity: (boardId: string, layerName: string, opacity: number) => void;
   onAssemblyLayersChange?: (boardId: string, visibility: Record<string, boolean>, opacity?: Record<string, number>) => void;
   onSelectNet: (occurrenceId: string, canonicalNetId: string) => void;
+  onFocusBoard?: (boardId: string) => void;
   onUpdated: (assembly: AssemblyIr) => void; onStatus: (message: string) => void; onClose: () => void };
 const blank = (): ExplicitNetLinkRow => ({ id: `connector-mate-${crypto.randomUUID()}`, endpointA: "", pinA: "", endpointB: "", pinB: "", applied: false });
 
-export default function AssemblyBoardManagers({ embedded = false, onDirtyChange, assembly, designs, selectedBoardId, initialTab = "layers", assemblyLayerVisibility, assemblyLayerOpacity, onAssemblyLayerVisibility, onAssemblyLayerOpacity, onAssemblyLayersChange, onSelectNet, onUpdated, onStatus, onClose }: Props) {
+export default function AssemblyBoardManagers({ embedded = false, onDirtyChange, assembly, designs, selectedBoardId, initialTab = "layers", assemblyLayerVisibility, assemblyLayerOpacity, onAssemblyLayerVisibility, onAssemblyLayerOpacity, onAssemblyLayersChange, onSelectNet, onFocusBoard, onUpdated, onStatus, onClose }: Props) {
   const [tab, setTab] = useState<"layers" | "nets" | "links">(initialTab);
   const [boardId, setBoardId] = useState(() => boardOccurrences(assembly, designs).find(board => board.id === selectedBoardId)?.id ?? boardOccurrences(assembly, designs)[0]?.id ?? "");
   const [drafts, setDrafts] = useState<ExplicitNetLinkRow[]>([]);
@@ -48,7 +49,7 @@ export default function AssemblyBoardManagers({ embedded = false, onDirtyChange,
   return <div className={embedded ? "assembly-manager-shade" : "modal-shade assembly-manager-shade"}><section className="assembly-board-managers" role={embedded ? "region" : "dialog"} aria-modal={embedded ? undefined : true} aria-label="Assembly board managers">
     <header><div><b>ASSEMBLY BOARD MANAGERS</b><small>Board occurrence scoped layers, nets, and explicit connector links</small></div><button onClick={onClose} aria-label="Close assembly board managers"><X size={17}/></button></header>
     <nav><button className={tab === "layers" ? "selected" : ""} onClick={() => setTab("layers")}><Layers3 size={14}/> Layers</button><button className={tab === "nets" ? "selected" : ""} onClick={() => setTab("nets")}><Network size={14}/> Nets</button><button className={tab === "links" ? "selected" : ""} onClick={() => setTab("links")}><Link2 size={14}/> Connector links</button></nav>
-    {tab !== "links" && <label className="assembly-board-picker">Board occurrence<select value={boardId} onChange={event => setBoardId(event.target.value)}>{boards.map(board => <option key={board.id} value={board.id}>{board.name} · {board.id}</option>)}</select></label>}
+    {tab !== "links" && <label className="assembly-board-picker">Focused board<select value={boardId} onChange={event => { setBoardId(event.target.value); onFocusBoard?.(event.target.value); }}>{boards.map(board => <option key={board.id} value={board.id}>{board.name} · {board.id}</option>)}</select></label>}
     <div className="assembly-manager-content">
       {tab === "layers" && <LayerManager embedded showSceneControls={false} definitions={presentation.definitions} stackup={presentation.stackup}
         layers={boardVisibility} opacity={assemblyLayerOpacity[boardId] ?? {}}

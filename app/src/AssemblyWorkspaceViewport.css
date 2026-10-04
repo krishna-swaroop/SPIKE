@@ -1,0 +1,14 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+.assembly-workspace-viewport{display:flex;flex:1 1 520px;min-width:0;min-height:360px;flex-direction:column;overflow:hidden;border:1px solid var(--spike-table-border,#385261);border-radius:7px;background:#091219}
+.assembly-workspace-viewport-toolbar{display:flex;flex:0 0 auto;align-items:center;gap:6px;padding:7px 8px;border-bottom:1px solid var(--spike-table-border,#385261);background:var(--spike-table-toolbar,#182d38);overflow-x:auto}
+.assembly-workspace-layout-switch{display:flex;gap:3px;padding-right:7px;border-right:1px solid var(--spike-table-border,#385261)}
+.assembly-workspace-viewport-toolbar button{white-space:nowrap}
+.assembly-workspace-viewport-toolbar button.selected{border-color:var(--spike-table-edit-border,#55bcaa);background:var(--spike-table-edit,#255950);color:var(--spike-table-text-strong,#edf5f7)}
+.assembly-workspace-viewport-selection{min-width:90px;max-width:220px;margin-right:auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--spike-table-text-strong,#edf5f7);font-weight:650}
+.assembly-workspace-viewport-stage{position:relative;flex:1;min-width:0;min-height:0;overflow:hidden}
+.assembly-workspace-viewport-stage>.three-host{position:absolute;inset:0}
+.assembly-workspace-viewport-stage .three-canvas{width:100%;height:100%;display:block}
+.assembly-workspace-viewport-stage .three-host.layout-active .three-canvas{visibility:hidden}
+.assembly-workspace-viewport-empty{position:absolute;inset:0;display:grid;place-content:center;gap:5px;padding:24px;text-align:center;color:var(--spike-table-muted,#92adb9)}
+.assembly-workspace-viewport-empty b{color:var(--spike-table-text-strong,#edf5f7)}
+@media(max-width:800px){.assembly-workspace-viewport{min-height:300px}.assembly-workspace-viewport-toolbar{align-items:stretch;flex-wrap:wrap;overflow:visible}.assembly-workspace-layout-switch{flex-basis:100%;border-right:0;padding-right:0}.assembly-workspace-layout-switch button{flex:1}.assembly-workspace-viewport-selection{margin-right:0}}

@@ -32,12 +32,14 @@
   font: 12px/1.3 system-ui, sans-serif;
 }
 .assembly-layout-controls select {
-  flex: 0 1 420px;
+  flex: 1 1 260px;
   min-width: 0;
-  max-width: calc(100% - 124px);
+  max-width: 420px;
   text-overflow: ellipsis;
 }
+.assembly-layout-controls .assembly-layout-layer-focus { flex: 0 1 190px; max-width: 190px; }
 .assembly-layout-controls button { flex: 0 0 auto; min-width: 48px; }
-.assembly-layout-controls button:disabled { cursor: default; opacity: .48; }
+.assembly-layout-controls button:disabled,
+.assembly-layout-controls select:disabled { cursor: default; opacity: .48; }
 .assembly-layout-controls :focus-visible { outline: 2px solid #6ee7ff; outline-offset: 2px; }
 .assembly-layout-drawing { grid-row: 1; min-height: 0; display: block; cursor: grab; touch-action: none; user-select: none; }

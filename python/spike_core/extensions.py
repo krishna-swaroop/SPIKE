@@ -250,7 +250,7 @@ class ProcessExtension:
             command = [str(self.entrypoint)]
             if self.manifest.runtime == "python":
                 command = ([sys.executable, "--extension-host", str(self.entrypoint)]
-                           if getattr(sys, "frozen", False) else [sys.executable, str(self.entrypoint)])
+                           if getattr(sys, "frozen", False) else [sys.executable, "-B", str(self.entrypoint)])
             command.extend(["--request", str(request_path), "--result", str(result_path)])
             environment = {
                 "PATH": os.environ.get("PATH", ""),

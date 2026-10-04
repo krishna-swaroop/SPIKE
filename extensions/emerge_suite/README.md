@@ -92,6 +92,8 @@ exact version and whether the version has executed fixture evidence or only
 API detection. Results remain unvalidated physical models regardless of the
 runtime version. A separate `.venv-emerge3` environment can be selected
 explicitly in the setup form.
+Packaging, interpreter discovery, API-evidence, and sandbox constraints are
+recorded in [EMerge runtime compatibility](../../docs/EMERGE_VERSION_SUPPORT.md).
 
 ## Supported geometry and limits
 

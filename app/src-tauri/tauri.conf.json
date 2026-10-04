@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "SPIKE",
-  "version": "0.3.5",
+  "version": "0.3.6",
   "identifier": "org.spike.integrity",
   "build": {
     "beforeDevCommand": "npm run dev",
@@ -61,6 +61,7 @@
       "../../python/spike_core": "python/spike_core",
       "../../python/spikes": "python/spikes",
       "../../extensions": "extensions",
+      "../../extension_sdk/python": "extension_sdk/python",
       "../../schemas": "schemas",
       "../../LICENSE": "legal/LICENSE",
       "../../NOTICE": "legal/NOTICE",

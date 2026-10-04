@@ -7,6 +7,8 @@ import { fileURLToPath } from "node:url";
 import { importTestTypescript } from "./import-test-typescript.mjs";
 
 const api = await importTestTypescript("assemblyLayout2d");
+assert.equal(api.resolveAssemblyLayerFocus({layers:["F.Cu","B.Cu"]},"F.Cu"),"F.Cu");
+for (const stale of ["In9.Cu", {}, null, 42]) assert.equal(api.resolveAssemblyLayerFocus({layers:["F.Cu","B.Cu"]},stale),"All");
 const interaction = await importTestTypescript("assemblyViewportInteraction");
 const transform = [0, -1, 0, 100, 1, 0, 0, 20, 0, 0, 1, 7, 0, 0, 0, 1];
 assert.deepEqual(api.projectAssemblyPoint(transform, [2, 3, 0]), [97, 22, 7]);
@@ -23,12 +25,43 @@ assert.ok(bounds.x < 70 && bounds.y < 10 && bounds.x + bounds.width > 110 && bou
 assert.equal(api.canonicalNetId(board, { VCC: "net-uuid-vcc" }, "VCC"), "net-uuid-vcc", "retained canonical net IDs take priority over parser IDs");
 assert.equal(api.canonicalNetId(board, undefined, "GND"), "19", "legacy parser IDs remain a bounded fallback");
 assert.equal(api.canonicalNetId(board, undefined, "LOCAL"), "LOCAL", "unmapped local names remain selectable");
+const firstOccurrenceNetIds = { VCC: "same-canonical-id" };
+const secondOccurrenceNetIds = { VCC: "same-canonical-id" };
+assert.equal(api.assemblyNetIsSelected(board, firstOccurrenceNetIds, ["same-canonical-id"], "VCC"), true);
+assert.equal(api.assemblyNetIsSelected(board, secondOccurrenceNetIds, [], "VCC"), false,
+  "identical net IDs and names on another occurrence do not inherit selection");
+assert.equal(api.assemblyLayerIsRendered("F.Cu", {"F.Cu":true}, {"F.Cu":1}), true);
+assert.equal(api.assemblyLayerIsRendered("F.Cu", {"F.Cu":false}, {"F.Cu":1}), false, "an occurrence layer toggle removes source art and its hit geometry");
+assert.equal(api.assemblyLayerIsRendered("F.Cu", {"F.Cu":true}, {"F.Cu":0}), false, "zero occurrence opacity removes source art and its hit geometry");
 assert.notDeepEqual(api.assemblyBoardBounds(visual, board), api.assemblyBoardBounds(secondOccurrence, board), "repeated designs keep occurrence transforms independent");
 const physicalBefore = structuredClone([visual.transform, secondOccurrence.transform]);
 const plotted = { ...board, bounds: {minX:114,minY:78,maxX:134,maxY:88},
-  layoutViewBox:[0,0,24,14], layoutLayerUrls:{"F.Cu":"blob:layer"} };
+  layoutViewBox:[40,25,24,14], layoutLayerUrls:{"F.Cu":"blob:layer"} };
 assert.deepEqual(api.assemblyLayoutImageBounds(plotted), {x:112,y:76,width:24,height:14},
-  "plot page origin must be mapped back to source board coordinates");
+  "offset plot page must be mapped back to source board coordinates");
+const sourceFrame = api.assemblyLayoutSourceFrame(plotted);
+assert.deepEqual(sourceFrame.sourceViewBox, {x:40,y:25,width:24,height:14}, "retained SVG viewBox origin remains explicit");
+assert.deepEqual(sourceFrame.boardToSourceOffset, [-72,-51], "native board coordinates map into the retained SVG page");
+assert.deepEqual(sourceFrame.sourceToBoardOffset, [72,51], "source page coordinates map back into the native board frame");
+assert.deepEqual([114 + sourceFrame.boardToSourceOffset[0] + sourceFrame.sourceToBoardOffset[0], 78 + sourceFrame.boardToSourceOffset[1] + sourceFrame.sourceToBoardOffset[1]], [114,78],
+  "source and normalized geometry frames cancel before the occurrence transform");
+const differentlyLocated = { ...plotted, bounds: {minX:-34,minY:205,maxX:-14,maxY:215}, layoutViewBox:[-8,9,24,14] };
+assert.notDeepEqual(api.assemblyLayoutSourceFrame(differentlyLocated).boardToSourceOffset, sourceFrame.boardToSourceOffset,
+  "each differently located board derives its own source-to-native alignment");
+const actualUnoOutline = { ...plotted, outlineLoops: [], drawings: [
+  { layer:"Edge.Cuts", points:[[114.2111,79.3336],[114.2111,130.6736]] },
+  { layer:"Edge.Cuts", points:[[115.2111,78.3336],[178.7271,78.3336]] },
+  { layer:"Edge.Cuts", points:[[115.2111,131.6736],[179.2511,131.6736]] },
+] };
+const actualUnoEdgeSvg = `<svg viewBox="0 0 83.058 63.5762"><path d="M2.3600 8.5902 L2.3600 59.9302"/><path d="M3.3600 7.5902 L66.8760 7.5902"/><path d="M3.3600 60.9302 L67.4000 60.9302"/></svg>`;
+const actualUnoOffset = api.inferAssemblyLayoutBoardToSourceOffset(actualUnoOutline, actualUnoEdgeSvg);
+assert.ok(actualUnoOffset);
+assert.ok(Math.abs(actualUnoOffset[0] + 111.8511) < 1e-9 && Math.abs(actualUnoOffset[1] + 70.7434) < 1e-9,
+  "real KiCad Edge.Cuts coordinates recover the asymmetric plot-page translation instead of assuming centered margins");
+const actualUnoFrame = api.assemblyLayoutSourceFrame(actualUnoOutline, actualUnoOffset);
+const alignedUnoPoint = [114.2111 + actualUnoFrame.boardToSourceOffset[0], 79.3336 + actualUnoFrame.boardToSourceOffset[1]];
+assert.ok(Math.abs(alignedUnoPoint[0] - 2.36) < 1e-9 && Math.abs(alignedUnoPoint[1] - 8.5902) < 1e-9,
+  "a parsed UNO outline endpoint lands exactly on its retained SVG endpoint");
 const plottedPlacements = api.arrangeAssemblyBoards([visual, secondOccurrence], {cpu:plotted});
 assert.deepEqual(plottedPlacements.map(item => [item.bounds.width,item.bounds.height]), [[14,24],[24,14]],
   "fit and packing include the full plot page under occurrence rotation");
@@ -83,7 +116,15 @@ print(json.dumps({'boards':a['boards'],'designs':[{'design_id':x['design_id'],'b
 const viewportSource = await readFile(new URL("../src/AssemblyLayoutViewport.tsx", import.meta.url), "utf8");
 assert.match(viewportSource, /onComponentSelect\?: \(boardId: string, componentId: string\)/, "component selection is an optional viewport API");
 assert.match(viewportSource, /event\.stopPropagation\(\);\s*onFocus\(visual\.id, event\.currentTarget\);\s*onBoardSelect\(visual\);\s*onComponentSelect\?\.\(visual\.id, item\.id\)/, "component hits retain focus, select their occurrence, and cannot fall through to a net target");
-assert.match(viewportSource, /<ComponentShapes[^>]+sourceLayers=\{layers\.length > 0\}/, "component hit geometry covers retained source SVG boards as well as fallback rendering");
+assert.match(viewportSource, /<ComponentShapes[^>]+sourceLayers=\{!useFallback\}/, "component hit geometry covers retained source SVG boards without flashing fallback component art while alignment loads");
 assert.match(viewportSource, /addEventListener\("wheel", onWheel, \{ passive: false \}\)/, "wheel cancellation is installed on a native non-passive listener");
 assert.match(viewportSource, /selectionFilter !== "net"/, "Net selection mode removes component hitboxes that would occlude pads and tracks");
+assert.match(viewportSource, /linked=\{linkedNets\[visual\.id\] \?\? \[\]\}/, "equal net IDs and names remain scoped to each board occurrence");
+assert.match(viewportSource, /useFallback && <BoardFallback/, "hiding every retained source layer does not draw a fallback ghost board");
+assert.match(viewportSource, /data-layout-source-frame[\s\S]*data-layout-board-frame/, "source SVG and normalized hit geometry use explicit inverse frames");
+assert.match(viewportSource, /stroke="#55e5d5"/, "selected assembly nets use the SPIKE teal highlight");
+assert.doesNotMatch(viewportSource, /drop-shadow\([^)]*#ffe25b|stroke=\{selected\(item\.net\) \? "#ffe25b"/, "legacy broad yellow net glow is removed");
+assert.match(viewportSource, /setLocalFocusedLayerByBoard\(current => \(\{ \.\.\.current, \[selected\.id\]: layer \}\)\); onLayerFocus\?\.\(selected\.id, layer\)/, "quick layer focus mutates and reports only the selected occurrence preference");
+assert.match(viewportSource, /data-layer-focus=\{layerFocus\}/, "each occurrence retains and renders its own quick layer preference");
+assert.match(viewportSource, /inferAssemblyLayoutBoardToSourceOffset\(board, await response\.text\(\)\)/, "retained Edge.Cuts establishes the actual source-page offset before source layers render");
 console.log("Assembly 2D transforms, real-fixture gestures, picking, net mapping and Fit/Focus passed");

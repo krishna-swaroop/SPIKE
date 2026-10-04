@@ -36,7 +36,11 @@ function netId(board: VirtualBoardVisual, source: ParsedBoard, value?: string) {
 function tag(object: THREE.Object3D, board: VirtualBoardVisual, kind: string, id: string, layer?: string, net?: string) {
   object.userData = { ...object.userData, virtualBoard: board, boardOccurrenceId: board.id, sourceObjectId: id, sceneKind: kind, layer, assemblyNetId: net, canonicalNetId: net };
 }
-function copper(linked: boolean) { return new THREE.MeshStandardMaterial({ color: linked ? 0xffd32a : 0xc47b2b, metalness: .55, roughness: .42 }); }
+function copper(linked: boolean) {
+  const material = new THREE.MeshStandardMaterial({ color: linked ? 0x55e5d5 : 0xc47b2b, metalness: .55, roughness: .42 });
+  material.userData.assemblyBaseColor = 0xc47b2b;
+  return material;
+}
 function capsule(length: number, width: number) {
   const r = Math.max(width / 2, .001), h = length / 2, result = new THREE.Shape();
   result.moveTo(-h, -r); result.lineTo(h, -r); result.absarc(h, 0, r, -Math.PI / 2, Math.PI / 2, false);

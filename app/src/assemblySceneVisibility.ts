@@ -23,7 +23,7 @@ export function updateAssemblySceneSelection(group: THREE.Object3D, selected: bo
     for (const material of Array.isArray(object.material) ? object.material : [object.material]) {
       if (!(material instanceof THREE.MeshStandardMaterial || material instanceof THREE.MeshBasicMaterial)) continue;
       material.userData.assemblyBaseColor ??= material.color.getHex();
-      material.color.setHex(copper && object.userData.linkedAssemblyNet ? 0xffd32a
+      material.color.setHex(copper && object.userData.linkedAssemblyNet ? 0x55e5d5
         : kind === "substrate" && selected ? 0x6c913a : material.userData.assemblyBaseColor);
     }
   });

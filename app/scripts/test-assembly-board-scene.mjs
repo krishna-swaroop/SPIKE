@@ -2,13 +2,13 @@ import assert from "node:assert/strict";
 import { readFileSync, writeFileSync, unlinkSync } from "node:fs";
 import ts from "typescript";
 
-const generated = ["assemblyBoardScene", "assemblyCopperBatches", "assemblyImportedBatches", "boardParser", "numericRange", "boardSurfaceMaterials", "componentSceneIndex"];
+const generated = ["assemblyBoardScene", "assemblyCopperBatches", "assemblyImportedBatches", "assemblySceneVisibility", "boardParser", "kikakukaFlex", "numericRange", "boardSurfaceMaterials", "componentSceneIndex"];
 try {
   for (const name of generated) {
     let source = readFileSync(new URL(`../src/${name}.ts`, import.meta.url), "utf8");
     let output = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 } }).outputText;
     output = output.replaceAll('"./assemblyCopperBatches"', '"./.test-assemblyCopperBatches.mjs"').replaceAll('"./boardParser"', '"./.test-boardParser.mjs"').replaceAll('"./numericRange"', '"./.test-numericRange.mjs"').replaceAll('"./harnessVisualization"', '"./.test-harnessVisualization.mjs"');
-    for (const dependency of ["boardSurfaceMaterials", "componentSceneIndex", "assemblyImportedBatches"]) output = output.replaceAll(`"./${dependency}"`, `"./.test-${dependency}.mjs"`);
+    for (const dependency of ["boardSurfaceMaterials", "componentSceneIndex", "assemblyImportedBatches", "kikakukaFlex"]) output = output.replaceAll(`"./${dependency}"`, `"./.test-${dependency}.mjs"`);
     writeFileSync(new URL(`./.test-${name}.mjs`, import.meta.url), output);
   }
   const THREE = await import("three");
@@ -26,6 +26,11 @@ try {
     layers: ["F.Cu", "B.Cu"], layerDefinitions: [{ id: 0, name: "F.Cu", kind: "signal" }, { id: 31, name: "B.Cu", kind: "signal" }], stackup: [], nets: { "1": "GND" }, boardModelIncludesCopper: true,
   };
   const result = boardInstanceScene(board, false, ["net-uuid-1"], { source, showSmd: true });
+  const { updateAssemblySceneSelection } = await import("./.test-assemblySceneVisibility.mjs");
+  const highlightedTrack = result.pickables.find(item => item.userData.sourceObjectId === "t1");
+  assert.equal(highlightedTrack.material.color.getHex(),0x55e5d5,"initial linked copper uses SPIKE net highlight color");
+  updateAssemblySceneSelection(result.group,false,[]);
+  assert.equal(highlightedTrack.material.color.getHex(),0xc47b2b,"clearing an initial net selection restores copper material");
   let substrate;
   result.group.traverse(object => { if (object.userData.sourceObjectId === "board-substrate") substrate = object; });
   assert.equal(substrate.geometry.parameters.shapes.holes.length, 1, "inner outline must cut a board hole");

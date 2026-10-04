@@ -25,7 +25,7 @@ try {
   const geometry = a.copper.geometry;
   updateAssemblySceneSelection(a.root, true, ["gnd"]);
   applyAssemblySceneVisibility(a.root, source, {}, {}, true);
-  assert.equal(a.copper.material.color.getHex(), 0xffd32a); assert.equal(a.copper.material.colorWrite, true);
+  assert.equal(a.copper.material.color.getHex(), 0x55e5d5); assert.equal(a.copper.material.colorWrite, true);
   updateAssemblySceneSelection(a.root, false, []); applyAssemblySceneVisibility(a.root, source, {}, {}, true);
   assert.equal(a.copper.geometry, geometry, "selection reuses GPU geometry"); assert.equal(a.copper.material.color.getHex(), 0xc47b2b);
   assert.equal(a.copper.material.colorWrite, false);
