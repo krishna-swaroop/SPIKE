@@ -55,6 +55,16 @@ before publishing that exact commit as a prerelease. The all-platform helper
 continues to require four packages; do not describe a Windows-only artifact set
 as a complete all-platform build. Retain the 0.3.5 Linux and macOS downloads.
 
+To publish a previously successful Windows package run, dispatch **Windows x64
+package** with `verified_run_id`, its full `release_commit`, and
+`human_review_complete=true` after completing the required review. This mode
+downloads that run's artifact, verifies the successful workflow/source identity
+and exact installer/checksum pair, uploads a draft, verifies its assets and then
+publishes an unsigned preview. It can resume only a draft for that exact commit;
+it never overwrites a published release. Draft releases are looked up by release
+ID because they may not yet have a tag ref. A missing artifact, checksum mismatch
+or source mismatch blocks publication.
+
 - Version consistency across the desktop, CLI, and native build.
 - Frozen-worker health and existing numerical runtime checks.
 - Every CLI command's help, version, board inspection, and structured errors.

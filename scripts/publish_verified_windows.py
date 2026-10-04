@@ -41,13 +41,18 @@ def main():
     tag = "v" + version
     notes = Path("release-notes.md")
     notes.write_text(command("git", "show", f"{commit}:docs/releases/{tag}.md") + "\n")
-    existing = subprocess.run(["gh", "release", "view", tag, "--repo", repo], capture_output=True)
-    if existing.returncode == 0:
-        raise ValueError("Release already exists; refusing to replace or overwrite its assets")
-    command("gh", "release", "create", tag, str(folder / name), str(folder / (name + ".sha256")),
-            "--repo", repo, "--target", commit, "--draft", "--prerelease",
-            "--title", f"SPIKE {version} - Windows community preview", "--notes-file", str(notes))
-    release = json.loads(command("gh", "api", f"repos/{repo}/releases/tags/{tag}"))
+    # Draft releases may have no tag ref and return 404 from releases/tags.
+    # List releases by ID; resume only our exact draft without replacing assets.
+    releases = json.loads(command("gh", "api", f"repos/{repo}/releases?per_page=100"))
+    release = next((item for item in releases if item["tag_name"] == tag), None)
+    if release is None:
+        command("gh", "release", "create", tag, str(folder / name), str(folder / (name + ".sha256")),
+                "--repo", repo, "--target", commit, "--draft", "--prerelease",
+                "--title", f"SPIKE {version} - Windows community preview", "--notes-file", str(notes))
+        releases = json.loads(command("gh", "api", f"repos/{repo}/releases?per_page=100"))
+        release = next(item for item in releases if item["tag_name"] == tag)
+    if not release["draft"] or release["target_commitish"] != commit:
+        raise ValueError("Existing release is published or identifies another source; refusing to modify")
     assets = {asset["name"]: asset for asset in release["assets"]}
     if set(assets) != {name, name + ".sha256"} or assets[name].get("digest") != "sha256:" + digest:
         raise ValueError("Uploaded assets did not match the verified installer; release remains draft")

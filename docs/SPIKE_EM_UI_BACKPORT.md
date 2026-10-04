@@ -67,4 +67,21 @@ architecture/control standards and the PCB parser also pass. A real EMerge
 frozen worker; SPIKE's adapted integration has automated checks. Native SPIKE
 desktop visual acceptance has not been observed in this session.
 
-A real patch solve also completed through this SPIKE source runtime in 31.156 seconds with 11 admitted views. The required broad Python suite ran 2,559 tests: 16 failures, 25 errors, 72 skips. Representative native-geometry, owned-circuit, MCAD and transient failures were reproduced on untouched HEAD (39 tests: 7 failures, 1 error, 2 skips). Rust host checks compiled and passed 37 tests, with one resident native-circuit test failing because this checkout lacks the qualified circuit payload; one test was ignored. These broad failures remain unresolved and prevent a fully green release qualification.
+A real patch solve completed through this SPIKE source runtime in 31.156 seconds
+with 11 admitted views. The initial backport checkout had missing native and
+packaged-runtime assets and did not pass its broad checks.
+
+For the integrated Windows 0.3.7 candidate, the broad Python suite ran 2,587
+tests with 60 skips and seven fixture/cache-environment failures. Restoring the
+retained historical test fixtures and directing the model index to a writable
+path resolved those failures: all 70 tests in the affected modules passed
+(one skip). The clean Windows packaging job passed its frozen-worker, installed
+CLI/runtime, reinstall, desktop startup and uninstall checks, and all 38 Rust
+host tests passed (one ignored). The source and focused frontend checks passed.
+See [the verified build](https://github.com/wayri/SPIKE/actions/runs/37217446360)
+and [source checks](https://github.com/wayri/SPIKE/actions/runs/37217447958).
+
+The maintainer confirmed completion of the required human review before preview
+publication. Automated checks and that review do not establish independent
+solver qualification. Detailed native interaction checks remain distinct from
+the automated desktop startup smoke check.
