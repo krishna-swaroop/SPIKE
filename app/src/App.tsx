@@ -10,6 +10,7 @@ import AssemblyToolHost from "./AssemblyToolHost";
 import { focusAssemblyToolWindow } from "./assemblyToolWindows";
 import type { AssemblyToolAction, AssemblyToolKind, AssemblyToolSnapshot, AssemblyToolViewportData } from "./assemblyToolWindowModel";
 import ModelResolverPanel from "./ModelResolverPanel";
+import { assemblyHighlightBoard } from "./assemblyNetIdentity";
 import { assemblyNetHighlight, type AssemblyHighlightSeed } from "./assemblyNetHighlight";
 import DataTable from "./DataTable";
 import { placeAssemblyBoard } from "./BoardPlacementTool";
@@ -1367,7 +1368,7 @@ export default function App() {
     for (const visual of virtualBoardProjection.visuals) {
       const source = assemblyBoardVisuals.boards[visual.designId];
       const design = assemblyDesigns?.designs.find(row => row.design_id === visual.designId);
-      if (source && design) result[visual.id] = { ...source, nets: Object.fromEntries(((design.nets ?? []) as Array<{ id: string; name: string }>).map(net => [net.id, net.name])) };
+      if (source && design) result[visual.id] = assemblyHighlightBoard(source, Object.fromEntries(((design.nets ?? []) as Array<{ id: string; name: string }>).map(net => [net.id, net.name])));
     }
     return result;
   }, [virtualBoardProjection, assemblyBoardVisuals.boards, assemblyDesigns]);
@@ -4496,13 +4497,23 @@ export default function App() {
     }
     setStatus(`Simulation results loaded: ${name}`);
   };
-  const loadResults = () => requestUnsavedAction("load simulation results", async () => {
+  const loadResults = () => {
+    const saved = (assemblyIr?.extensions as Record<string, unknown> | undefined)?.["spike.multiboard-studies"];
+    const hasSavedCoupledResults = saved && typeof saved === "object" && !Array.isArray(saved)
+      && Object.values(saved).some(study => study && typeof study === "object" && "result" in study && Boolean(study.result));
+    if (activeAnalysisResult || hasSavedCoupledResults) {
+      setTab("Results"); setResultVisualizerOpen(true);
+      setStatus("Showing results from the open project. Select a saved study to view its values.");
+      return;
+    }
+    return requestUnsavedAction("load simulation results", async () => {
     if (!desktopShell) { resultInputRef.current?.click(); return; }
     try {
       const file = await openNativeTextFile("result");
       if (file) await applyResultFile(file.contents, file.fileName);
     } catch (error) { setStatus(`Result load failed: ${error instanceof Error ? error.message : String(error)}`); }
   });
+  };
   const loadResultInput = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]; event.target.value = "";
     if (!file) return;
@@ -4697,7 +4708,7 @@ export default function App() {
       description: `Open the ${name} command ribbon and workflow`,
       keywords: `tab ribbon ${name}${name === "EM" ? " electromagnetics radiation emi emc" : ""}`,
       icon,
-      run: () => { setTab(name); setStatus(`${name} workspace selected from universal search`); },
+      run: () => { setTab(name); if (name === "Results") setResultVisualizerOpen(true); setStatus(`${name} workspace selected from universal search`); },
     })),
     { id: "project:new", label: "New project", category: "Project", description: "Create an empty SPIKE project", icon: FilePlus, run: newProject },
     { id: "project:open", label: "Open file or project", category: "Project", description: "Open SPIKE projects, boards, ODB++, harness connections or MCAD models", keywords: "load recall file", icon: FolderOpen, run: () => void openProject() },
@@ -5037,7 +5048,7 @@ export default function App() {
       </MenuButton>
     </nav>
     <>
-      <CommandStrip className="ribbon-tabs" label="Analysis tools" as="nav" trailing={<button className="ribbon-tab ribbon-toggle" onClick={toggleRibbonVisibility} aria-expanded={appSettings.ribbonVisible} aria-controls="workspace-ribbon-tools" title={appSettings.ribbonVisible ? "Minimize command ribbon" : "Expand command ribbon"}><PanelTop size={16} />{appSettings.ribbonVisible ? "Minimize" : "Expand"}</button>}>{tabs.map(({ name, icon: Icon }) => <button key={name} data-guide={name === "PI" ? "pi-run" : name === "HF / SI" ? "si-setup" : name === "EM" ? "emi-setup" : name === "Thermal" ? "thermal-setup" : name === "Results" ? "results" : undefined} className={tab === name ? "ribbon-tab selected" : "ribbon-tab"} title={name === "EM" ? "Electromagnetics workspace" : undefined} onClick={() => { setTab(name); setStatus(`${name} workspace selected`); }}><Icon size={16} />{name}</button>)}</CommandStrip>
+      <CommandStrip className="ribbon-tabs" label="Analysis tools" as="nav" trailing={<button className="ribbon-tab ribbon-toggle" onClick={toggleRibbonVisibility} aria-expanded={appSettings.ribbonVisible} aria-controls="workspace-ribbon-tools" title={appSettings.ribbonVisible ? "Minimize command ribbon" : "Expand command ribbon"}><PanelTop size={16} />{appSettings.ribbonVisible ? "Minimize" : "Expand"}</button>}>{tabs.map(({ name, icon: Icon }) => <button key={name} data-guide={name === "PI" ? "pi-run" : name === "HF / SI" ? "si-setup" : name === "EM" ? "emi-setup" : name === "Thermal" ? "thermal-setup" : name === "Results" ? "results" : undefined} className={tab === name ? "ribbon-tab selected" : "ribbon-tab"} title={name === "EM" ? "Electromagnetics workspace" : undefined} onClick={() => { setTab(name); if (name === "Results") setResultVisualizerOpen(true); setStatus(`${name} workspace selected`); }}><Icon size={16} />{name}</button>)}</CommandStrip>
       {appSettings.ribbonVisible && <CommandStrip id="workspace-ribbon-tools" label="Ribbon" className={`ribbon-tools ribbon-${tab.toLowerCase().replace(/[^a-z]+/g, "-")}`}>
         <BoardViewRibbon
           viewMode={viewMode}
@@ -5467,7 +5478,7 @@ export default function App() {
     {thermalOpen && <ThermalWizard initialScenario={thermalScenario} componentBonds={componentBonds} board={boardData} design={designForSolver()} boardSource={boardFile.toLowerCase().endsWith(".kicad_pcb") ? boardSource : null} workerAvailable={workerAvailable} onRequireAdmission={requireAssemblyAdmission} onClose={() => { setThermalOpen(false); setThermalPreview(null); }} onStatus={setStatus} onPreview={setThermalPreview} onScenario={scenario => { recordChange(); setThermalScenario(current => ({ ...current, ...scenario })); setThermalPreview(current => ({ ...current, ...scenario })); }} />}
     {tracePlotsOpen && <div className="modal-shade"><div style={{ width: "min(1400px, 94vw)", height: "88vh", background: "#101c25", overflow: "auto" }}><TraceResultsWorkbench result={activeAnalysisResult} domain={resultVisualizerDomain} targetNet={activePdnReview?.net} targetOhm={activePdnReview?.target_ohm}
       onClose={() => setTracePlotsOpen(false)} onDetach={() => void detachTool("trace-plots")} /></div></div>}
-    {resultVisualizerOpen && <ResultVisualizationPanel onTracePlots={() => setTracePlotsOpen(true)} onDetach={() => void detachTool("results")} domain={resultVisualizerDomain} board={boardData} selectedNet={selected?.net ?? piSetup.net ?? null} result={activeAnalysisResult} sourceResult={analysisResult} visualization={resultVisualization} workerAvailable={workerAvailable} parasiticsAvailable={solverSupports("partial_inductance", "frequency_dependent_impedance")} riskAvailable={solverSupports("coupled_line_extraction", "electric_field_coupling", "magnetic_field_coupling")} pdnReview={activePdnReview} pdnReviewSourceId={pdnReviewSourceId} dropLimitMv={Number.isFinite(Number(limits.drop)) && Number(limits.drop) > 0 ? Number(limits.drop) : null} densityLimitAMm2={Number.isFinite(Number(limits.density)) && Number(limits.density) > 0 ? Number(limits.density) : null} onVisualization={setResultVisualization} onConfigure={() => { setResultVisualizerOpen(false); setDcRunOpen(true); }} onRunParasitics={runParasitics} onRunRisk={runSiRisk} onRunPdn={(target, candidate) => void runPdnReview(target, candidate)} onExportAnimation={() => void exportResultAnimation()} onClose={() => setResultVisualizerOpen(false)} />}
+    {resultVisualizerOpen && <ResultVisualizationPanel onTracePlots={() => setTracePlotsOpen(true)} onDetach={() => void detachTool("results")} domain={resultVisualizerDomain} board={boardData} selectedNet={selected?.net ?? piSetup.net ?? null} result={activeAnalysisResult} sourceResult={analysisResult} visualization={resultVisualization} workerAvailable={workerAvailable} parasiticsAvailable={solverSupports("partial_inductance", "frequency_dependent_impedance")} riskAvailable={solverSupports("coupled_line_extraction", "electric_field_coupling", "magnetic_field_coupling")} pdnReview={activePdnReview} pdnReviewSourceId={pdnReviewSourceId} dropLimitMv={Number.isFinite(Number(limits.drop)) && Number(limits.drop) > 0 ? Number(limits.drop) : null} densityLimitAMm2={Number.isFinite(Number(limits.density)) && Number(limits.density) > 0 ? Number(limits.density) : null} coupledAssembly={assemblyIr && (assemblyIr.boards.length > 1 || (assemblyIr.extensions as Record<string, unknown> | undefined)?.["spike.multiboard-studies"]) ? assemblyIr : null} projectManifestDigest={projectManifestDigest} onVisualization={setResultVisualization} onConfigure={() => { setResultVisualizerOpen(false); setDcRunOpen(true); }} onRunParasitics={runParasitics} onRunRisk={runSiRisk} onRunPdn={(target, candidate) => void runPdnReview(target, candidate)} onExportAnimation={() => void exportResultAnimation()} onClose={() => setResultVisualizerOpen(false)} />}
     {(sparameterOpen || sparameterActivated) && <div hidden={!sparameterOpen}><SParameterWorkbench assemblyDesigns={assemblyDesigns} canonicalDesign={canonicalSpiDeR} suite={selectedSiSuite} initialResult={siChannelResult} initialView={siWorkbenchIntent.view} initialFocus={siWorkbenchIntent.focus} intentToken={siWorkbenchIntent.token} onClose={() => setSparameterOpen(false)} onStatus={setStatus} onResult={result => { recordChange(); setSiChannelResult(result); }} /></div>}
     </Suspense>
     {emiDashboardOpen && tab === "EM" && !emiChamberOpen && <EmiDashboard preflight={emiPreflight} screening={emiScreening} fieldResult={emiFieldResult} onClose={() => setEmiDashboardOpen(false)} onScreen={() => void runEmiScreening()} onPrepare={() => void prepareEmiCase()} onSolverManager={() => void openExternalEngineCenter()} />}

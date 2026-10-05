@@ -46,3 +46,22 @@ assert.ok(!componentGroundMap.nets.some(row => row.netName === "GND"), "componen
 const directGround = assemblyNetHighlight({ boards, assembly, seed: { kind: "net", boardId: "left", netId: "gnd-l" } });
 assert.deepEqual(directGround.nets.map(row => row.netId), ["gnd-l", "gnd-r"], "direct canonical ground selection remains supported");
 console.log("Assembly scoped linked-net and pass-through highlighting passed");
+
+const {assemblyHighlightBoard,resolveAssemblyNetId,uniqueNetIdsByName}=await importTestTypescript("assemblyNetIdentity");
+const parsed=board("l"); parsed.nets={"1":"SIG","2":"NEXT","3":"GND"}; parsed.pads=parsed.pads.map(p=>({...p,net:({SIG:"1",NEXT:"2",GND:"3"})[p.net],ref:p.ref==='U1'?'u':p.ref}));
+const rebound=assemblyHighlightBoard(parsed,board("l").nets);
+const reboundThrough=assemblyNetHighlight({boards:{left:rebound,right:board("r"),copy:rebound},assembly,seed:{kind:"component",boardId:"left",componentId:"u"}});
+assert.deepEqual(reboundThrough.nets.map(n=>[n.boardId,n.netId]),[["left","next-l"],["left","sig-l"],["right","sig-r"]],"parser aliases and component IDs traverse only explicitly linked occurrences");
+const invalidDeclared={...assembly,connector_mappings:[{kind:"connector",data:{board_id:"left",connector_id:"J1",pins:{"1":"gone"}}}]};
+const invalid=assemblyNetHighlight({boards,assembly:invalidDeclared,seed:{kind:"net",boardId:"left",netId:"sig-l"}});
+assert.deepEqual(invalid.nets.map(n=>n.boardId),["left"],"an invalid retained pin cannot be silently replaced by parser fallback");
+assert.ok(invalid.unresolvedPinLinks.some(link=>link.pinA==='1'));
+const duplicates={a:"DUP",b:"DUP",c:"OK"};
+assert.equal(resolveAssemblyNetId(parsed,duplicates,uniqueNetIdsByName(duplicates),"DUP"),null,"ambiguous geometry names must not choose a random canonical net");
+assert.equal(resolveAssemblyNetId(parsed,duplicates,uniqueNetIdsByName(duplicates),"a"),"a","exact canonical IDs survive duplicate names");
+
+const conflictBoards={...boards,left:{...boards.left,pads:[...boards.left.pads,pad("conflict","J1","1","NEXT")]}};
+const conflicting=assemblyNetHighlight({boards:conflictBoards,assembly,seed:{kind:"net",boardId:"left",netId:"sig-l"}});
+assert.deepEqual(conflicting.nets.map(n=>n.boardId),["left"],"conflicting retained pin ownership must not create an arbitrary cross-board edge");
+const hierarchical={...board("l"),nets:{...board("l").nets,"gnd-l":"/power/GND"},pads:board("l").pads.map(p=>({...p,net:p.net==='GND'?'/power/GND':p.net}))};
+assert.ok(!assemblyNetHighlight({boards:{left:hierarchical},assembly:{},seed:{kind:"component",boardId:"left",componentId:"u"}}).nets.some(n=>n.netId==='gnd-l'),"hierarchical ground names stay excluded from component traversal");

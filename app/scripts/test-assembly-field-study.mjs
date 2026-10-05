@@ -46,6 +46,7 @@ const module = { exports: {} };
 new Function("require", "module", "exports", code)(name => name === "react" ? hooks
   : name === "./assemblyFieldStudyPresentation" ? model : name === "./DataTable" ? { default: "table" }
     : name === "./workerBridge" ? { runLocalWorker: worker, runNativeProjectWorker: worker, openNativeTextFile: async () => selectedFile, saveNativeTextFile: async (...args) => exported.push(args) }
+      : name === "./automaticWorkerQueue" ? { runSerializedAutomaticWorker: (work, isCurrent) => isCurrent() ? work() : Promise.resolve(undefined) }
       : name.endsWith(".css") ? {} : require(name), module, module.exports);
 const props = { assembly, projectPath: "fixture.spike", manifestDigest: "a".repeat(64), disabled: false, onUpdated: async () => {}, onStatus: () => {}, onDirtyChange: dirty => dirtyStates.push(dirty) };
 let tree;

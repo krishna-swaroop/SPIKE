@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import * as THREE from "three";
 import type { ParsedBoard } from "./boardParser";
+import { importedBoardLayerVisible } from "./importedBoardLayers";
 
 const selectionState = new WeakMap<THREE.Object3D, { selected: boolean; linked: readonly string[]; children: number }>();
 const visibilityState = new WeakMap<THREE.Object3D, { source: ParsedBoard; layers: Record<string, boolean>; opacity: Record<string, number>; showVias: boolean; children: number; revision: number }>();
@@ -39,31 +40,42 @@ export function applyAssemblySceneVisibility(group: THREE.Object3D, source: Pars
     && previous.revision === revision && sameSettings(previous.layers, layers) && sameSettings(previous.opacity, opacity)) return 0;
   visibilityState.set(group, { source, layers: { ...layers }, opacity: { ...opacity }, showVias, children: group.children.length, revision });
   const copper = source.layers.filter(layer => layer.endsWith(".Cu"));
-  const defaultVisible = (name: string) => name === "Board body" || name.endsWith(".Cu") || name.endsWith(".Mask") || name.endsWith(".SilkS") || name === "Edge.Cuts";
-  const filtered = Object.entries(layers).some(([name, value]) => value !== defaultVisible(name))
-    || Object.values(opacity).some(value => value !== 1) || !showVias;
-  let bakedBoard = false;
-  group.traverse(object => { if (object.userData.kiCadSceneKind === "board") bakedBoard = true; });
-  const bakedCopperVisible = bakedBoard && source.boardModelIncludesCopper && !filtered;
+  const covered = new Set<string>();
+  group.traverse(object => {
+    const layer = object.userData.importedBoardLayer as string | undefined;
+    if (layer && !(source.boardModelIncludesCopper === false && (layer.endsWith(".Cu") || layer === "through"))) covered.add(layer);
+  });
   let visited = 0;
   group.traverse(object => {
     visited++;
     const data = object.userData;
-    if (data.kiCadSceneKind === "board") object.visible = !filtered && layers["Board body"] !== false;
+    // Board body is a surface, never a parent gate for copper/mask/silk.
+    if (data.kiCadSceneKind === "board") object.visible = covered.size > 0;
     const kind = String(data.sceneKind ?? "");
-    if (kind === "substrate") object.visible = layers["Board body"] !== false && !(bakedBoard && !filtered);
+    if (data.importedBoardUnaddressable) object.visible = false;
+    else if (data.importedBoardLayer) object.visible = covered.has(data.importedBoardLayer)
+      && importedBoardLayerVisible(data.importedBoardLayer, layers, copper, showVias);
+    else if (kind === "component-placeholder" && data.replacedByResolvedModel) object.visible = false;
+    else if (kind === "component-placeholder") object.visible = true;
+    else if (kind === "substrate") object.visible = layers["Board body"] !== false && !covered.has("Board body");
     else if (kind.startsWith("via-")) object.visible = showVias && copper.some(layer => layers[layer] !== false);
     else if (data.layer && !data.authoritativeModel && kind !== "component-model") object.visible = layers[data.layer] !== false;
     if (!(object instanceof THREE.Mesh || object instanceof THREE.LineSegments)) return;
     const logicalCopper = kind.startsWith("copper-") || kind.startsWith("via-");
     for (const material of Array.isArray(object.material) ? object.material : [object.material]) {
       material.userData.assemblyBaseOpacity ??= logicalCopper ? 1 : material.opacity;
-      const hiddenCopper = logicalCopper && bakedCopperVisible && !data.linkedAssemblyNet;
-      const value = opacity[data.layer] ?? 1;
+      material.userData.assemblyBaseDepthWrite ??= logicalCopper ? true : material.depthWrite;
+      const hiddenCopper = logicalCopper && covered.has(data.layer) && source.boardModelIncludesCopper && !data.linkedAssemblyNet;
+      const hiddenDrawing = kind === "drawing" && covered.has(data.layer);
+      const component = kind === "component-placeholder" || kind === "component-model";
+      const value = component ? 1 : opacity[data.importedBoardLayer ?? (kind === "substrate" ? "Board body" : data.layer)] ?? 1;
       const layerOpacity = Number.isFinite(value) ? Math.max(0, Math.min(1, value)) : 1;
-      material.opacity = hiddenCopper ? 0 : material.userData.assemblyBaseOpacity * layerOpacity;
+      material.opacity = hiddenCopper || hiddenDrawing ? 0 : material.userData.assemblyBaseOpacity * layerOpacity;
+      const wasTransparent = material.transparent;
       material.transparent = material.opacity < 1;
-      if (logicalCopper) { material.colorWrite = !hiddenCopper; material.depthWrite = !hiddenCopper && material.opacity === 1; }
+      material.depthWrite = material.userData.assemblyBaseDepthWrite && material.opacity >= .999;
+      if (material.transparent !== wasTransparent) material.needsUpdate = true;
+      if (logicalCopper || hiddenDrawing) { material.colorWrite = !hiddenCopper && !hiddenDrawing; material.depthWrite = material.colorWrite && material.opacity === 1; }
     }
   });
   return visited;

@@ -13,6 +13,7 @@ const module = { exports: {} };
 new Function("require", "module", "exports", js)(name => {
   if (name === "react") return require("react");
   if (name === "./DataTable") return { default: () => null };
+  if (name === "./CoupledStudyResultTables") return { default: () => null };
   if (name === "./AssemblyMechanicalStudyModels") return { default: () => null, studyOwnerName: () => "" };
   if (name === "./workerBridge") return {};
   if (name === "./multiboardStudyPresentation") return {};

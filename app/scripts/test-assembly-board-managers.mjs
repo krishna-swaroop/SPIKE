@@ -57,3 +57,11 @@ assert.equal(missing.metrics.tracks,null,'missing retained collections must not 
 assert.deepEqual(presentation.assemblyManagerPresentation(assembly,designs,'absent').catalog,[]);
 assert.equal(presentation.managerDefaultLayerVisible('F.Cu'),true);assert.equal(presentation.managerDefaultLayerVisible('F.Paste'),false);
 console.log("Assembly board scoped layers, canonical net occurrences, and explicit links passed");
+
+const collisionDesigns = {...designs, designs:[{...designs.designs[0], nets:[{id:"n1",name:"SIG"},{id:"n2",name:"n1"}]}]};
+assert.equal(api.connectorOccurrences(assembly, collisionDesigns)[0].pins[0].net.netId,"n1","canonical identity takes precedence over another net's name");
+const unresolved = {...assembly, connector_mappings:assembly.connector_mappings.map(row=>({...row,data:{...row.data,pins:{"1":"missing"}}}))};
+assert.throws(()=>api.validateExplicitNetLink(unresolved,designs,{id:"bad",endpointA:"left::J1",pinA:"1",endpointB:"right::J1",pinB:"1",applied:false}),/net/i,"unresolved pins cannot be saved as electrical links");
+
+assert.throws(()=>api.replaceExplicitNetLink(assembly,harnessRow,{...harnessRow,pinA:"2"}),/already has a mapping/,"editing cannot overwrite another saved harness pin");
+assert.throws(()=>api.replaceExplicitNetLink(multiMate,mateRow,{...mateRow,pinA:"2"}),/already has a mapping/,"editing cannot overwrite another saved mate pin");

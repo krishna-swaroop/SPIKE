@@ -1,14 +1,14 @@
 import assert from "node:assert/strict";
-import { readFileSync, writeFileSync, unlinkSync } from "node:fs";
+import { readFileSync, writeFileSync, unlinkSync, existsSync } from "node:fs";
 import ts from "typescript";
 
-const generated = ["assemblyBoardScene", "assemblyCopperBatches", "assemblyImportedBatches", "assemblySceneVisibility", "boardParser", "kikakukaFlex", "numericRange", "boardSurfaceMaterials", "componentSceneIndex"];
+const generated = ["assemblyBoardScene", "assemblyNetIdentity", "assemblyCopperBatches", "assemblyImportedBatches", "assemblySceneVisibility", "boardParser", "kikakukaFlex", "numericRange", "boardSurfaceMaterials", "componentSceneIndex", "importedBoardLayers"];
 try {
   for (const name of generated) {
     let source = readFileSync(new URL(`../src/${name}.ts`, import.meta.url), "utf8");
     let output = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 } }).outputText;
     output = output.replaceAll('"./assemblyCopperBatches"', '"./.test-assemblyCopperBatches.mjs"').replaceAll('"./boardParser"', '"./.test-boardParser.mjs"').replaceAll('"./numericRange"', '"./.test-numericRange.mjs"').replaceAll('"./harnessVisualization"', '"./.test-harnessVisualization.mjs"');
-    for (const dependency of ["boardSurfaceMaterials", "componentSceneIndex", "assemblyImportedBatches", "kikakukaFlex"]) output = output.replaceAll(`"./${dependency}"`, `"./.test-${dependency}.mjs"`);
+    for (const dependency of ["importedBoardLayers", "assemblyNetIdentity", "boardSurfaceMaterials", "componentSceneIndex", "assemblyImportedBatches", "kikakukaFlex"]) output = output.replaceAll(`"./${dependency}"`, `"./.test-${dependency}.mjs"`);
     writeFileSync(new URL(`./.test-${name}.mjs`, import.meta.url), output);
   }
   const THREE = await import("three");
@@ -26,7 +26,7 @@ try {
     layers: ["F.Cu", "B.Cu"], layerDefinitions: [{ id: 0, name: "F.Cu", kind: "signal" }, { id: 31, name: "B.Cu", kind: "signal" }], stackup: [], nets: { "1": "GND" }, boardModelIncludesCopper: true,
   };
   const result = boardInstanceScene(board, false, ["net-uuid-1"], { source, showSmd: true });
-  const { updateAssemblySceneSelection } = await import("./.test-assemblySceneVisibility.mjs");
+  const { updateAssemblySceneSelection, applyAssemblySceneVisibility } = await import("./.test-assemblySceneVisibility.mjs");
   const highlightedTrack = result.pickables.find(item => item.userData.sourceObjectId === "t1");
   assert.equal(highlightedTrack.material.color.getHex(),0x55e5d5,"initial linked copper uses SPIKE net highlight color");
   updateAssemblySceneSelection(result.group,false,[]);
@@ -55,9 +55,10 @@ try {
   const componentFrame = componentModel.parent;
   assert.equal(boardFrame.userData.kiCadSceneKind, "board", "baked board roots remain distinguishable for layer visibility");
   assert.equal(componentFrame.userData.kiCadSceneKind, "components", "component roots remain independently visible");
-  const realGlb = readFileSync(new URL("../public/demo/models/ebrake1_board.glb", import.meta.url));
-  const jsonLength = realGlb.readUInt32LE(12);
-  const glbJson = JSON.parse(realGlb.subarray(20, 20 + jsonLength).toString("utf8"));
+  const modelPath = new URL("../public/demo/models/ebrake1_board.glb", import.meta.url);
+  const realGlb = existsSync(modelPath) ? readFileSync(modelPath) : null;
+  const glbJson = realGlb ? JSON.parse(realGlb.subarray(20, 20 + realGlb.readUInt32LE(12)).toString("utf8"))
+    : JSON.parse(readFileSync(new URL("./fixtures/kicad-board-layer-fragments.json", import.meta.url), "utf8"));
   const realPosition = glbJson.accessors.find(accessor => accessor.type === "VEC3" && accessor.min)?.min;
   assert.ok(realPosition, "checked-in KiCad GLB must expose position bounds");
   const sourcePoint = new THREE.Vector3(...realPosition);
@@ -74,6 +75,22 @@ try {
   assert.equal(componentMesh.userData.componentRef, "U1", "component identity is inherited by unnamed GLB mesh descendants");
   assert.equal(componentMesh.userData.sceneKind, "component-model");
   assert.equal(result.group.children.find(x => x.userData.sceneKind === "component-placeholder")?.visible, false, "only resolved component placeholders are hidden");
+  const placeholder = result.group.children.find(x => x.userData.sceneKind === "component-placeholder");
+  const unresolved = placeholder.clone();
+  unresolved.userData = { ...placeholder.userData, componentRef: "U2", replacedByResolvedModel: false };
+  result.group.add(unresolved);
+  for (const layerSettings of [{}, { "F.Cu": false }, { "F.Cu": true }]) {
+    updateAssemblySceneSelection(result.group, true, ["net-uuid-1"]);
+    applyAssemblySceneVisibility(result.group, source, layerSettings, { "F.Cu": .5 }, true);
+    assert.equal(placeholder.visible, false, "resolved stand-in stays hidden after layer/selection updates");
+    assert.equal(unresolved.visible, true, "footprint copper layer never hides unresolved component stand-ins");
+    assert.equal(componentMesh.visible, true, "resolved component remains rendered");
+    assert.equal(unresolved.material.opacity, 1, "copper opacity never changes component stand-ins");
+  }
+  const secondOccurrence = boardInstanceScene({ ...board, id: "occ-8" }, false, [], { source });
+  applyAssemblySceneVisibility(secondOccurrence.group, source, {}, {}, true);
+  assert.equal(secondOccurrence.group.children.find(x => x.userData.sceneKind === "component-placeholder")?.visible, true,
+    "resolution in one occurrence never hides another occurrence's fallback");
   const denseSource = { ...source, tracks: Array.from({length: 1000}, (_, i) => ({...source.tracks[0], id: `dense-${i}`, start: [12, 10 + i / 100], end: [28, 10 + i / 100]})) };
   const dense = boardInstanceScene(board, false, [], {source: denseSource});
   const stats = dense.group.children[0].userData.copperDrawCalls;

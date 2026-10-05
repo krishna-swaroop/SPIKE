@@ -91,6 +91,8 @@ assert.deepEqual(layerBatches[0],['B',{'Board body':false,'B.Cu':true},undefined
 layerManager.props.restoreDefaults();
 assert.deepEqual(layerBatches[1],['B',{'Board body':true,'B.Cu':true},{'Board body':1,'B.Cu':1}],'reset restores visibility and opacity on the selected board only');
 const all=nodes(render());const views=all.filter(n=>n.type==='button'&&n.props.children==='2D layout');views[1].props.onClick();assert.deepEqual(chosen,[['B','2D']]);
+all.find(n=>n.type==='button'&&React.Children.toArray(n.props.children).some(child=>String(child).includes('Studies & results'))).props.onClick();
+assert.equal(nodes(render()).find(n=>n.props?.projectManifestDigest)?.props.focusSection,'analysis','top command opens the retained study results without searching below the viewport');
 all.find(n=>n.props?.className==='assembly-workspace-board-select'&&n.props['aria-pressed']===false).props.onClick();assert.deepEqual(selectedBoards,['A'],'inventory selection keeps the occurrence identity behind a readable board name');
 all.find(n=>n.type==='button'&&React.Children.toArray(n.props.children).some(child=>String(child).includes('FreeCAD collaboration'))).props.onClick();
 all.find(n=>n.type==='button'&&React.Children.toArray(n.props.children).some(child=>String(child).includes('MCAD attachments'))).props.onClick();

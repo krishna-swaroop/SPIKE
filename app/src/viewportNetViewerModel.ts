@@ -8,8 +8,10 @@ export type ViewportNetRow = { id: string; name: string; source: string; layer: 
 export function netViewerBoard(active: ParsedBoard | null, boards: readonly VirtualBoardVisual[], designs: Record<string, ParsedBoard>, selectedId: string | null) {
   if (boards.length <= 1) return { key: "single-board", label: "Board nets", board: active, occurrence: null };
   const occurrence = boards.find(board => board.id === selectedId) ?? null;
+  const source = occurrence ? designs[occurrence.designId] ?? (occurrence.active ? active : null) : null;
+  const board = source && occurrence?.netNamesById ? { ...source, nets: occurrence.netNamesById } : source;
   return { key: occurrence?.id ?? "assembly:no-selection", label: occurrence?.name ?? "Select a board", occurrence,
-    board: occurrence ? designs[occurrence.designId] ?? (occurrence.active ? active : null) : null };
+    board };
 }
 
 /** Names describe rows; canonical IDs and board occurrences identify selection. */

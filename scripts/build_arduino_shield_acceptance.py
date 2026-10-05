@@ -28,11 +28,14 @@ from python.spike_core.multiboard_circuit import run_multiboard_circuit
 from python.spike_core.multiboard_em import run_multiboard_em
 from python.spike_core.multiboard_thermal import run_multiboard_thermal
 from python.spike_core.project_package import _source_member_name, read_project, write_spike_package
+from python.spike_core.project_state_artifacts import hydrate_result_state
+from python.spike_core.multiboard_study import validate_study_result
 from python.spike_core.service_project import import_design
 from python.spike_core.service_project_handlers import handle_project_request
 from python.spike_core.spider_v2 import AssemblyIRV1
 
 DEFAULT_OUTPUT = ROOT / "build/arduino-shield-acceptance-20261002"
+DEFAULT_SOURCE_CACHE = ROOT / "build/arduino-shield-acceptance-20261002/sources"
 SOURCES = {
     "uno": {
         "product": "Arduino UNO R4 Minima ABX00080",
@@ -74,7 +77,8 @@ def _kicad_cli() -> Path:
     return candidates[0]
 
 
-def prepare_sources(output: Path, *, offline: bool = False) -> tuple[dict, dict[str, Path]]:
+def prepare_sources(output: Path, *, offline: bool = False,
+                    source_cache: Path | None = None) -> tuple[dict, dict[str, Path]]:
     source_dir = output / "sources"
     converted_dir = output / "converted"
     source_dir.mkdir(parents=True, exist_ok=True)
@@ -84,9 +88,13 @@ def prepare_sources(output: Path, *, offline: bool = False) -> tuple[dict, dict[
     for key, spec in SOURCES.items():
         archive = source_dir / (Path(spec["url"]).name)
         if not archive.exists():
-            if offline:
+            cached = source_cache / archive.name if source_cache else None
+            if cached and cached.is_file():
+                shutil.copy2(cached, archive)
+            elif offline:
                 raise FileNotFoundError(f"Offline source archive is missing: {archive}")
-            urllib.request.urlretrieve(spec["url"], archive)
+            else:
+                urllib.request.urlretrieve(spec["url"], archive)
         observed = _sha(archive)
         if observed != spec["sha256"]:
             raise ValueError(f"Pinned {key} archive digest changed: {observed}")
@@ -203,9 +211,25 @@ def _circuit(assembly: dict, domain: str) -> dict:
         "ground": ground, "analysis": analysis}
 
 
-def build(output: Path, *, offline: bool = False) -> dict:
+def _persist_study(project: Path, domain: str, request: dict, result: dict) -> dict:
+    opened = read_project(project)
+    setup = {key: value for key, value in request.items() if key != "assembly"}
+    response = handle_project_request("save_multiboard_study_in_project", {
+        "project_path": str(project),
+        "expected_manifest_payload_sha256": opened.manifest["manifest_payload_sha256"],
+        "domain": domain,
+        "request": setup,
+        "result": result,
+        "assembly_digest": result["assembly_digest"],
+    }, request_id=f"arduino-{domain}-study", application_version=__version__)
+    if not response or not response.get("ok"):
+        raise RuntimeError(f"{domain.upper()} study persistence failed: {response}")
+    return response["result"]["manifest"]
+
+
+def build(output: Path, *, offline: bool = False, source_cache: Path | None = None) -> dict:
     output.mkdir(parents=True, exist_ok=True)
-    provenance, boards = prepare_sources(output, offline=offline)
+    provenance, boards = prepare_sources(output, offline=offline, source_cache=source_cache)
     designs = {key: import_design(str(path), with_report=True)["design"] for key, path in boards.items()}
     for key, expected in EXPECTED_IMPORT_COUNTS.items():
         observed = {"components": len(designs[key]["components"]), "pads": len(designs[key]["pads"]),
@@ -307,6 +331,22 @@ def build(output: Path, *, offline: bool = False) -> dict:
         "ambient_temperature_c": 25.0, "mode": "steady_state"}
     results["thermal"] = run_multiboard_thermal(thermal_request)
     _json(output / "thermal-request.json", thermal_request); _json(output / "thermal-result.json", results["thermal"])
+    if results["thermal"]["status"] != "completed":
+        raise RuntimeError("THERMAL reduced solve failed.")
+    requests = {"pi": _circuit(saved.payload["assembly_ir"], "pi"),
+                "si": _circuit(saved.payload["assembly_ir"], "si"),
+                "thermal": thermal_request}
+    for domain in ("pi", "si", "thermal"):
+        manifest = _persist_study(project, domain, requests[domain], results[domain])
+    reopened = read_project(project)
+    hydrated = hydrate_result_state(reopened.payload, project,
+                                    reopened.manifest["manifest_payload_sha256"])
+    saved_studies = hydrated["assembly_ir"]["extensions"]["spike.multiboard-studies"]
+    for domain in ("pi", "si", "thermal"):
+        study = saved_studies[domain]
+        validate_study_result(hydrated["assembly_ir"], domain, study["request"], study["result"])
+        if study["result"] != results[domain]:
+            raise RuntimeError(f"{domain.upper()} result changed during project persistence.")
     em_request = {"contract": "spike/multiboard-em-request/v1", "assembly": saved.payload["assembly_ir"],
         "loops": [
             {"loop_id": "uno-supply-loop", "board_id": ids[0], "resistance_ohm": 0.5,
@@ -337,6 +377,7 @@ def build(output: Path, *, offline: bool = False) -> dict:
         "pre_link_equal_net_name": "GND (distinct design-local net IDs until explicit connector mate)",
         "placement_evidence": "placement-evidence.json",
         "results": {key: f"{key}-result.json" for key in ("pi", "si", "thermal", "em")},
+        "saved_coupled_studies": ["pi", "si", "thermal"],
         "model_status": {key: results[key]["model_status"] for key in results},
         "production_qualified": {key: results[key]["production_qualified"] for key in results},
         "unsupported": unsupported}
@@ -348,8 +389,11 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT)
     parser.add_argument("--offline", action="store_true", help="Use only already downloaded, digest-matched archives.")
+    parser.add_argument("--source-cache", type=Path, default=DEFAULT_SOURCE_CACHE,
+                        help="Directory containing pinned source archives to copy before any download.")
     args = parser.parse_args()
-    print(json.dumps(build(args.output_dir.resolve(), offline=args.offline), indent=2))
+    print(json.dumps(build(args.output_dir.resolve(), offline=args.offline,
+                           source_cache=args.source_cache.resolve()), indent=2))
     return 0
 
 

@@ -54,6 +54,27 @@ export function studyResultRows(result: Row, domain: string, point = 0): Array<{
   })));
 }
 
+/** Read returned element quantities; never infer currents or power from artwork. */
+export function studyElementResultRows(result: Row, point = 0): Array<{ board: string; owner_kind?: "part"; element: string; quantity: string; value: number; unit: string }> {
+  if (result.status !== "completed") return [];
+  const data = result.native_result?.data ?? {};
+  const ac = result.analysis?.mode === "ac";
+  const quantities = ac ? [
+    ["element_current_a", "real", "Current, real", "A RMS"],
+    ["element_current_a", "imaginary", "Current, imaginary", "A RMS"],
+    ["element_complex_power_va", "real", "Active power", "W"],
+    ["element_complex_power_va", "imaginary", "Reactive power", "var"],
+  ] : [["element_current_a", "", "Current", "A"], ["element_power_w", "", "Power", "W"]];
+  return [{ table: result.element_map ?? {}, part: false }, { table: result.part_element_map ?? {}, part: true }].flatMap(({ table, part }) =>
+    Object.entries(table).flatMap(([board, elements]) => Object.entries(elements as Row).flatMap(([element, key]) =>
+      quantities.flatMap(([field, component, quantity, unit]) => {
+        const returned = data[field]?.[key];
+        const value = ac ? returned?.[component]?.[point] : returned;
+        return typeof value === "number" && Number.isFinite(value)
+          ? [{ board, ...(part ? { owner_kind: "part" as const } : {}), element, quantity, value, unit }] : [];
+      }))));
+}
+
 export function studyResultSummary(result: Row): Row {
   const sample = result.samples?.[0];
   return { contract: result.contract, status: result.status, model_status: result.model_status,

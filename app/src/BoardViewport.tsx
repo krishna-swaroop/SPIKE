@@ -6,12 +6,14 @@ import { createPortal } from "react-dom";
 import * as THREE from "three";
 import { boardInstanceScene, mountKiCadScenes } from "./assemblyBoardScene";
 import { configureImportedMaterial } from "./boardSurfaceMaterials";
+import { importedBoardLayerVisible, tagImportedBoardLayers } from "./importedBoardLayers";
 import { componentReferenceLookup } from "./componentSceneIndex";
 import { boardSceneComplexity, retainAssemblySceneInputs, type AssemblySceneInput } from "./assemblySceneInputs";
 import { installWebGLRecovery } from "./webGLRecovery";
 import { snapshotEmiDut } from "./emiChamber";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { TransformControls } from "three/examples/jsm/controls/TransformControls.js";
+import { installAssemblyMovementControls } from "./assemblyMovementControls";
 import { installAssemblyGizmoNumericInput } from "./assemblyGizmoNumericInput";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { ViewHelper } from "three/examples/jsm/helpers/ViewHelper.js";
@@ -593,7 +595,7 @@ function consolidateStaticModel(
       || object instanceof THREE.InstancedMesh || Array.isArray(object.material)
       || object.material.transparent || object.morphTargetInfluences?.length
       || object.matrixWorld.determinant() <= 0) return;
-    const key = `${object.geometry.uuid}|${object.material.uuid}|${object.renderOrder}|${object.userData.componentMount ?? ""}|${object.userData.componentSide ?? ""}`;
+    const key = `${object.geometry.uuid}|${object.material.uuid}|${object.renderOrder}|${object.userData.componentMount ?? ""}|${object.userData.componentSide ?? ""}|${object.userData.importedBoardLayer ?? ""}|${object.userData.importedBoardSurface ?? ""}`;
     const group = repeated.get(key);
     if (group) group.push(object); else repeated.set(key, [object]);
   });
@@ -658,7 +660,7 @@ function consolidateStaticModel(
       .map(([name, attribute]) => `${name}:${attribute.itemSize}:${attribute.normalized ? 1 : 0}`)
       .sort()
       .join(",");
-    const key = `${object.material.uuid}|${geometry.index ? "indexed" : "plain"}|${attributes}|${object.userData.componentMount ?? ""}|${object.userData.componentSide ?? ""}`;
+    const key = `${object.material.uuid}|${geometry.index ? "indexed" : "plain"}|${attributes}|${object.userData.componentMount ?? ""}|${object.userData.componentSide ?? ""}|${object.userData.importedBoardLayer ?? ""}|${object.userData.importedBoardSurface ?? ""}`;
     const batch: {
       material: THREE.Material;
       geometries: THREE.BufferGeometry[];
@@ -1075,6 +1077,7 @@ function BoardViewport({ qualityTarget, onEmiScene, viewMode, visibleLayers, lay
   const pickingGroupRef = useRef<THREE.Group>();
   const accurateGroupRef = useRef<THREE.Group>();
   const accurateBoardRef = useRef<THREE.Object3D>();
+  const importedBoardLayersRef = useRef<Set<string>>(new Set());
   const accurateComponentsRef = useRef<THREE.Object3D>();
   const resultGroupRef = useRef<THREE.Group>();
   const axisGroupRef = useRef<THREE.Group>();
@@ -1533,11 +1536,18 @@ function BoardViewport({ qualityTarget, onEmiScene, viewMode, visibleLayers, lay
     selectorPreviewGroup.name = "mcad-exact-selector-previews";
     scene.add(selectorPreviewGroup);
     const assemblyGizmo = new TransformControls(perspective, renderer.domElement);
+    const assemblyRotationGizmo = new TransformControls(perspective, renderer.domElement);
+    assemblyRotationGizmo.space = "local";
+    assemblyRotationGizmo.setMode("rotate");
+    assemblyRotationGizmo.size = 1.05;
+    scene.add(assemblyRotationGizmo.getHelper());
     assemblyGizmo.space = "local";
     assemblyGizmo.size = 0.82;
     scene.add(assemblyGizmo.getHelper());
     assemblyGizmoRef.current = assemblyGizmo;
     let numericGizmo: ReturnType<typeof installAssemblyGizmoNumericInput> | undefined;
+    let rotationNumericGizmo: ReturnType<typeof installAssemblyGizmoNumericInput> | undefined;
+    const movementControls = installAssemblyMovementControls(assemblyGizmo, assemblyRotationGizmo, renderer.domElement, () => { numericGizmo?.cancel(); rotationNumericGizmo?.cancel(); });
     const syncAssemblyGizmo = () => {
       const config = assemblyGizmoConfigRef.current;
       const target = config.enabled && viewModeRef.current === "3D"
@@ -1547,14 +1557,17 @@ function BoardViewport({ qualityTarget, onEmiScene, viewMode, visibleLayers, lay
         : undefined;
       if (!target) {
         numericGizmo?.cancel();
-        assemblyGizmo.detach();
+        rotationNumericGizmo?.cancel();
+        assemblyGizmo.detach(); assemblyRotationGizmo.detach();
         return;
       }
-      if (assemblyGizmo.object !== target || assemblyGizmo.mode !== config.mode) numericGizmo?.cancel();
+      if (assemblyGizmo.object !== target) numericGizmo?.cancel();
       target.matrix.decompose(target.position, target.quaternion, target.scale);
       target.matrixAutoUpdate = true;
       if (assemblyGizmo.object !== target) assemblyGizmo.attach(target);
-      assemblyGizmo.setMode(config.mode);
+      if (assemblyRotationGizmo.object !== target) { rotationNumericGizmo?.cancel(); assemblyRotationGizmo.attach(target); }
+      assemblyGizmo.setMode("translate");
+      assemblyRotationGizmo.setRotationSnap(config.rotationSnapDeg > 0 ? THREE.MathUtils.degToRad(config.rotationSnapDeg) : null);
       assemblyGizmo.setTranslationSnap(config.translationSnapMm > 0 ? config.translationSnapMm : null);
       assemblyGizmo.setRotationSnap(config.rotationSnapDeg > 0 ? THREE.MathUtils.degToRad(config.rotationSnapDeg) : null);
     };
@@ -1562,7 +1575,7 @@ function BoardViewport({ qualityTarget, onEmiScene, viewMode, visibleLayers, lay
     const onAssemblyGizmoConfig = (event: Event) => {
       const detail = (event as CustomEvent<Partial<typeof assemblyGizmoConfigRef.current>>).detail;
       if (!detail || typeof detail !== "object") return;
-      numericGizmo?.cancel();
+      numericGizmo?.cancel(); rotationNumericGizmo?.cancel();
       const mode = detail.mode === "rotate" ? "rotate" : "translate";
       const translationSnapMm = Number(detail.translationSnapMm);
       const rotationSnapDeg = Number(detail.rotationSnapDeg);
@@ -1575,8 +1588,8 @@ function BoardViewport({ qualityTarget, onEmiScene, viewMode, visibleLayers, lay
       };
       syncAssemblyGizmo();
     };
-    const publishGizmoTransform = (kind: "preview" | "commit") => {
-      const object = assemblyGizmo.object;
+    const publishGizmoTransform = (kind: "preview" | "commit", control = assemblyGizmo) => {
+      const object = control.object;
       const partId = assemblyGizmoConfigRef.current.partId;
       if (!object || !partId) return;
       object.updateMatrix();
@@ -1587,10 +1600,12 @@ function BoardViewport({ qualityTarget, onEmiScene, viewMode, visibleLayers, lay
         placement.elements[14] -= assemblyDisplayRef.current.assemblyExplodeOffsets[partId.slice(6)] ?? 0;
       }
       window.dispatchEvent(new CustomEvent(`spike-mcad-transform-${kind}`, {
-        detail: { partId, assemblyTransform: matrixToRowMajor(placement), mode: assemblyGizmo.mode },
+        detail: { partId, assemblyTransform: matrixToRowMajor(placement), mode: control.mode },
       }));
     };
     numericGizmo = installAssemblyGizmoNumericInput(assemblyGizmo, host, publishGizmoTransform,
+      enabled => { controls3d.enabled = enabled; });
+    rotationNumericGizmo = installAssemblyGizmoNumericInput(assemblyRotationGizmo, host, kind => publishGizmoTransform(kind, assemblyRotationGizmo),
       enabled => { controls3d.enabled = enabled; });
     window.addEventListener("spike-mcad-gizmo-config", onAssemblyGizmoConfig);
     const resultGroup = new THREE.Group();
@@ -2034,14 +2049,16 @@ function BoardViewport({ qualityTarget, onEmiScene, viewMode, visibleLayers, lay
     const onPointerUp = (event: PointerEvent) => {
       const movement = Math.hypot(event.clientX - pointerStart.x, event.clientY - pointerStart.y);
       renderer.domElement.style.cursor = viewModeRef.current === "2D" ? "grab" : "default";
-      if (numericGizmo?.consumePointer()) return;
+      const arrowConsumed = numericGizmo?.consumePointer();
+      const ringConsumed = rotationNumericGizmo?.consumePointer();
+      if (arrowConsumed || ringConsumed) return;
       if (viewModeRef.current === "3D" && event.button === 1 && pointerStart.button === 1 && movement <= 3) {
         const point = scenePointAt(event);
         if (point) setOrbitCenter(point);
         return;
       }
       if (event.button !== 0 || pointerStart.button !== 0 || movement > 3) return;
-      if (assemblyGizmo.dragging) return;
+      if (assemblyGizmo.dragging || assemblyRotationGizmo.dragging) return;
       if (viewModeRef.current === "3D") {
         viewHelper.center.copy(controls3d.target);
         if (viewHelper.handleClick(event)) return;
@@ -2199,17 +2216,19 @@ function BoardViewport({ qualityTarget, onEmiScene, viewMode, visibleLayers, lay
     renderer.domElement.addEventListener("pointerdown", markInteractive, { passive: true });
     renderer.domElement.addEventListener("pointermove", markInteractive, { passive: true });
     assemblyGizmo.addEventListener("change", markInteractive);
+    assemblyRotationGizmo.addEventListener("change", markInteractive);
     const animate = () => {
       frame = requestAnimationFrame(animate);
       const now = performance.now();
       const animatedHighlight = hoverMaterialsRef.current.size > 0
         || (selectionMaterialsRef.current.size > 0 && selectionBlinkRef.current && !resultOverlayActiveRef.current);
-      const activeFps = now < interactionUntil || animatedHighlight || assemblyGizmo.dragging || viewHelper.animating
+      const activeFps = now < interactionUntil || animatedHighlight || assemblyGizmo.dragging || assemblyRotationGizmo.dragging || viewHelper.animating
         ? renderProfileRef.current.targetFps
         : Math.min(5, renderProfileRef.current.targetFps);
       if (document.hidden || gpuRecovery.lost || now - lastRender < 1000 / activeFps) return;
       lastRender = now;
       numericGizmo?.updateAnchor();
+      rotationNumericGizmo?.updateAnchor();
       const delta = clock.getDelta();
       const pulse = 0.28 + 0.72 * (0.5 + 0.5 * Math.sin(now * 0.012));
       hoverMaterialsRef.current.forEach(entry => {
@@ -2283,6 +2302,7 @@ function BoardViewport({ qualityTarget, onEmiScene, viewMode, visibleLayers, lay
       renderer.domElement.removeEventListener("pointerdown", markInteractive);
       renderer.domElement.removeEventListener("pointermove", markInteractive);
       assemblyGizmo.removeEventListener("change", markInteractive);
+      assemblyRotationGizmo.removeEventListener("change", markInteractive);
       gpuRecovery.dispose();
       requestInteractiveFrameRef.current = () => undefined;
       controls3d.removeEventListener("start", markInteractive);
@@ -2291,6 +2311,11 @@ function BoardViewport({ qualityTarget, onEmiScene, viewMode, visibleLayers, lay
       controls2d.removeEventListener("change", markInteractive);
       window.removeEventListener("spike-capture-webgl-frame", captureWebglFrame);
       window.removeEventListener("spike-mcad-gizmo-config", onAssemblyGizmoConfig);
+      movementControls.dispose();
+      rotationNumericGizmo?.dispose();
+      assemblyRotationGizmo.detach();
+      scene.remove(assemblyRotationGizmo.getHelper());
+      assemblyRotationGizmo.dispose();
       numericGizmo?.dispose();
       assemblyGizmo.detach();
       scene.remove(assemblyGizmo.getHelper());
@@ -2351,6 +2376,7 @@ function BoardViewport({ qualityTarget, onEmiScene, viewMode, visibleLayers, lay
     pickingGroupRef.current = pickingGroup;
     accurateGroupRef.current = accurateGroup;
     accurateBoardRef.current = undefined;
+    importedBoardLayersRef.current = new Set();
     accurateComponentsRef.current = undefined;
     setFullModelState(activeBoard.boardModelUrl || activeBoard.fullModelUrl ? "loading" : "none");
     setComponentModelState(activeBoard.componentModelUrl ? "loading" : "none");
@@ -2854,6 +2880,7 @@ function BoardViewport({ qualityTarget, onEmiScene, viewMode, visibleLayers, lay
             componentResult.status === "rejected" ? `error=${String(componentResult.reason)}` : "",
           ].filter(Boolean).join(";");
         }
+        importedBoardLayersRef.current = tagImportedBoardLayers(loadedBoard);
         const boardConsolidated = prepareImportedScene(loadedBoard, "board");
         const boardModel = boardConsolidated.model;
         boardModel.name = "authoritative-board";
@@ -4031,12 +4058,16 @@ function BoardViewport({ qualityTarget, onEmiScene, viewMode, visibleLayers, lay
     const resultsOnlyScene = resultVisualization?.sceneMode === "results_only";
     const resultModelsVisible = resultVisualization?.showComponentModels !== false;
     const categoryFilterActive = !showSmdModels || !showThtModels;
+    const importedCopperUnavailable = activeBoard?.boardModelIncludesCopper === false;
+    const importedBoardLayers = importedCopperUnavailable
+      ? new Set([...importedBoardLayersRef.current].filter(layer => layer !== "through" && !copperLayers.includes(layer)))
+      : importedBoardLayersRef.current;
     const presentation = boardSceneVisibility({
       is3D: viewMode === "3D", boardReady: fullModelState === "ready",
       componentsReady: componentModelState === "ready", split: splitSceneAvailable,
       // Show verified KiCad surface geometry in the normal assembled view.
       // Explicit layer filtering/exploding uses the addressable retained geometry.
-      layerAddressable: copperLayers.length > 0, preferAuthoritativeBoard: true,
+      layerAddressable: importedBoardLayers.size > 0, preferAuthoritativeBoard: true,
       layerFiltered: layerFilterActive, exploded: layerSeparation > 0.001,
       isolated: Boolean(isolatedNet), analysisOnly: analysisOnlyScene, resultsOnly: resultsOnlyScene,
       showModels, categoryFiltered: categoryFilterActive, resultModelsVisible,
@@ -4044,7 +4075,11 @@ function BoardViewport({ qualityTarget, onEmiScene, viewMode, visibleLayers, lay
     });
     const authoritativeAnalysisView = analysisView && presentation.importedBoard;
     const authoritativeView = !analysisView && presentation.importedBoard;
-    group.visible = presentation.proceduralRoot;
+    // Keep retained geometry available for layers the imported scene could not
+    // identify (for example inner copper), while tagged imported surfaces own
+    // their exact layer without duplicate procedural geometry.
+    group.visible = presentation.proceduralRoot
+      || presentation.importedBoard && importedBoardLayers.size > 0;
     if (accurateGroupRef.current) accurateGroupRef.current.visible = presentation.importedRoot;
     if (accurateBoardRef.current) accurateBoardRef.current.visible = presentation.importedBoard;
     if (accurateComponentsRef.current) accurateComponentsRef.current.visible = presentation.importedComponents;
@@ -4054,6 +4089,7 @@ function BoardViewport({ qualityTarget, onEmiScene, viewMode, visibleLayers, lay
       : 1;
     accurateGroupRef.current?.traverse(object => {
       if (!(object instanceof THREE.Mesh)) return;
+      const importedLayer = object.userData.importedBoardLayer as string | undefined;
       const materials = Array.isArray(object.material) ? object.material : [object.material];
       materials.forEach(entry => {
         const settings = entry.userData as { spikeBaseOpacity?: number; spikeBaseTransparent?: boolean; spikeBaseDepthWrite?: boolean };
@@ -4061,11 +4097,24 @@ function BoardViewport({ qualityTarget, onEmiScene, viewMode, visibleLayers, lay
         settings.spikeBaseTransparent ??= entry.transparent;
         settings.spikeBaseDepthWrite ??= entry.depthWrite;
         const wasTransparent = entry.transparent;
-        entry.opacity = (settings.spikeBaseOpacity ?? 1) * authoritativeOpacity;
-        entry.transparent = Boolean(settings.spikeBaseTransparent) || authoritativeOpacity < 0.999;
-        entry.depthWrite = authoritativeOpacity >= 0.999 && settings.spikeBaseDepthWrite !== false;
+        const requestedLayerOpacity = importedLayer ? layerOpacity[importedLayer] ?? 1 : 1;
+        const layerOpacityFactor = Number.isFinite(requestedLayerOpacity)
+          ? THREE.MathUtils.clamp(requestedLayerOpacity, 0, 1) : 1;
+        entry.opacity = (settings.spikeBaseOpacity ?? 1) * authoritativeOpacity * layerOpacityFactor;
+        entry.transparent = Boolean(settings.spikeBaseTransparent) || authoritativeOpacity < 0.999 || layerOpacityFactor < 0.999;
+        entry.depthWrite = authoritativeOpacity >= 0.999 && layerOpacityFactor >= 0.999 && settings.spikeBaseDepthWrite !== false;
         if (entry.transparent !== wasTransparent) entry.needsUpdate = true;
       });
+    });
+    accurateBoardRef.current?.traverse(object => {
+      if (!(object instanceof THREE.Mesh)) return;
+      const importedLayer = object.userData.importedBoardLayer as string | undefined;
+      // Once a layer mask is active, an unclassified aggregate could contain a
+      // hidden surface. Withhold it and let retained geometry cover that layer.
+      object.visible = importedLayer && !(importedCopperUnavailable
+        && (importedLayer === "through" || copperLayers.includes(importedLayer)))
+        ? importedBoardLayerVisible(importedLayer, visibleLayers, copperLayers, showVias)
+        : Boolean(importedLayer) ? false : object.userData.importedBoardUnaddressable !== true;
     });
     const missingModelSet = new Set(missingModelRefs);
     const hoverMaterials = new Set<THREE.Material>();
@@ -4115,7 +4164,10 @@ function BoardViewport({ qualityTarget, onEmiScene, viewMode, visibleLayers, lay
       const missingModelFallback = Boolean(data.model && data.ref && missingModelSet.has(data.ref));
       const categoryVisible = data.mount === "tht" ? showThtModels : data.mount === "smd" ? showSmdModels : true;
       const modelVisible = !data.model || showModels && resultModelsVisible && categoryVisible && viewMode === "3D" && (proceduralModelsAllowed || missingModelFallback);
-      const authoritativeFallbackVisible = !authoritativeView || Boolean(data.model && presentation.proceduralComponents);
+      const retainedLayer = data.substrate ? "Board body" : data.viaBarrel || data.via ? "through" : data.viaFaceLayer ?? data.layer;
+      const importedLayerCovered = Boolean(retainedLayer && importedBoardLayers.has(retainedLayer));
+      const authoritativeFallbackVisible = !authoritativeView || !importedLayerCovered
+        || Boolean(data.model && presentation.proceduralComponents);
       const viaVisible = !data.via || showVias;
       // The substrate is independent of copper visibility. Inspection uses the
       // explicit scene translucency/explode controls, not an unrelated layer eye.

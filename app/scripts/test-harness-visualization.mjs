@@ -7,12 +7,8 @@ const mcadSource = readFileSync(new URL("src/mcadAssembly.ts", root), "utf8");
 const harnessSource = readFileSync(new URL("src/harnessVisualization.ts", root), "utf8");
 const viewportSource = readFileSync(new URL("src/BoardViewport.tsx", root), "utf8");
 const appSource = readFileSync(new URL("src/App.tsx", root), "utf8");
-const compile = source => ts.transpileModule(source, {
-  compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 },
-}).outputText;
-const mcadUrl = `data:text/javascript;base64,${Buffer.from(compile(mcadSource)).toString("base64")}`;
-const harness = await import(`data:text/javascript;base64,${Buffer.from(compile(harnessSource)
-  .replace('from "./mcadAssembly"', `from "${mcadUrl}"`)).toString("base64")}`);
+const { importTestTypescript } = await import("./import-test-typescript.mjs");
+const harness = await importTestTypescript("harnessVisualization");
 
 const identity = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
 const translatedBoard = [1, 0, 0, 100, 0, 1, 0, 50, 0, 0, 1, 8, 0, 0, 0, 1];

@@ -4,8 +4,10 @@ import type { ParsedBoard, ParsedPad, Point } from "./boardParser";
 import { orderedCopperLayerNames } from "./boardParser";
 import { batchAssemblyCopper } from "./assemblyCopperBatches";
 import { configureImportedMaterial } from "./boardSurfaceMaterials";
+import { tagImportedBoardLayers } from "./importedBoardLayers";
 import { componentMountIndex, componentReferenceLookup } from "./componentSceneIndex";
 import { batchAssemblyImported } from "./assemblyImportedBatches";
+import { resolveAssemblyNetId } from "./assemblyNetIdentity";
 import type { VirtualBoardVisual } from "./harnessVisualization";
 
 export type BoardInstanceSceneOptions = { source?: ParsedBoard; boardScene?: THREE.Object3D | null; componentScene?: THREE.Object3D | null; showSmd?: boolean; showTht?: boolean };
@@ -27,17 +29,20 @@ function outline(source: ParsedBoard, center: readonly [number, number, number])
 function layers(source: ParsedBoard) {
   return orderedCopperLayerNames(source.layerDefinitions, [...source.layers, ...source.tracks.map(x => x.layer), ...source.zones.map(x => x.layer), ...source.pads.flatMap(x => x.layers), ...source.vias.flatMap(x => x.layers)], source.stackup.map(x => x.name));
 }
-function layerZ(layer: string, ordered: string[], thickness: number) { return ordered.length < 2 ? thickness / 2 : thickness / 2 - Math.max(0, ordered.indexOf(layer)) * thickness / (ordered.length - 1); }
+function layerZ(layer: string, ordered: string[], thickness: number) {
+  // Outer copper clears laminate depth on both sides; inner copper stays inside.
+  if (layer === "F.Cu") return thickness / 2 + GAP;
+  if (layer === "B.Cu") return -thickness / 2 - GAP;
+  return ordered.length < 2 ? thickness / 2 + GAP : thickness / 2 - Math.max(0, ordered.indexOf(layer)) * thickness / (ordered.length - 1);
+}
 function netId(board: VirtualBoardVisual, source: ParsedBoard, value?: string) {
-  if (!value) return undefined;
-  const byName = (board as VirtualBoardVisual & { netIdsByName?: Record<string, string> }).netIdsByName;
-  return byName?.[source.nets[value] ?? value] ?? value;
+  return resolveAssemblyNetId(source, board.netNamesById, board.netIdsByName, value) ?? undefined;
 }
 function tag(object: THREE.Object3D, board: VirtualBoardVisual, kind: string, id: string, layer?: string, net?: string) {
   object.userData = { ...object.userData, virtualBoard: board, boardOccurrenceId: board.id, sourceObjectId: id, sceneKind: kind, layer, assemblyNetId: net, canonicalNetId: net };
 }
 function copper(linked: boolean) {
-  const material = new THREE.MeshStandardMaterial({ color: linked ? 0x55e5d5 : 0xc47b2b, metalness: .55, roughness: .42 });
+  const material = new THREE.MeshStandardMaterial({ color: linked ? 0x55e5d5 : 0xc47b2b, metalness: .55, roughness: .42, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 });
   material.userData.assemblyBaseColor = 0xc47b2b;
   return material;
 }
@@ -61,6 +66,7 @@ export function normalizeKiCadScenes(boardScene: THREE.Object3D | null | undefin
   const group = new THREE.Group(); group.name = "authoritative-board-geometry";
   for (const [kind, scene] of [["board", boardScene], ["components", componentScene]] as const) {
     if (!scene) continue;
+    if (kind === "board") tagImportedBoardLayers(scene);
     const frame = new THREE.Group();
     frame.name = `kicad-${kind}-millimetre-frame`;
     frame.matrix.set(
@@ -114,7 +120,11 @@ export function mountKiCadScenes(result: BoardInstanceSceneResult, board: Virtua
     if (!(object instanceof THREE.Mesh)) return;
     for (const material of Array.isArray(object.material) ? object.material : [object.material]) { material.transparent = true; material.opacity = 0; material.depthWrite = false; material.colorWrite = false; }
   });
-  if (componentScene && resolvedRefs.size) result.group.traverse(object => { if (object.userData.sceneKind === "component-placeholder" && resolvedRefs.has(String(object.userData.componentRef))) object.visible = false; });
+  if (componentScene && resolvedRefs.size) result.group.traverse(object => {
+    if (object.userData.sceneKind !== "component-placeholder" || !resolvedRefs.has(String(object.userData.componentRef))) return;
+    object.userData.replacedByResolvedModel = true;
+    object.visible = false;
+  });
   result.group.add(authoritative);
   return authoritative;
 }

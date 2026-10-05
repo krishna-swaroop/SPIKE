@@ -14,6 +14,7 @@ import FreecadCollaboration from "./FreecadCollaboration";
 import { formatPinMappings, parsePinMappings } from "./connectorPresets";
 import { retainedDesignBoardEnvelope, separatedBoardTransform, type BoardDraftOccurrence } from "./assemblyBoardDraft";
 import { duplicateBoardInstance, removeBoardInstance, type BoardInstance } from "./assemblyBoardLifecycle";
+import { assemblyPlanPresentation } from "./assemblyPlanPresentation";
 
 export type AssemblyStructureEditorFocus = "boards" | "links" | "analysis";
 
@@ -63,6 +64,7 @@ export default function AssemblyStructureEditor({ projectPath, projectManifestDi
   const [planDomain, setPlanDomain] = useState<"pi" | "si" | "thermal" | "emi">("pi");
   const [planMode, setPlanMode] = useState<"independent_board_batch" | "coupled_harness_network" | "coupled_assembly">("independent_board_batch");
   const [planSummary, setPlanSummary] = useState<Record<string, unknown> | null>(null);
+  const planDisplay = planSummary ? assemblyPlanPresentation(planSummary) : null;
   const [importSummary, setImportSummary] = useState<Array<{ source_name: string; board_count: number; part_count: number }>>([]);
   const [reducedStudyDirty, setReducedStudyDirty] = useState(false);
   const [fieldStudyDirty, setFieldStudyDirty] = useState(false);
@@ -358,18 +360,19 @@ export default function AssemblyStructureEditor({ projectPath, projectManifestDi
     </details>
     </section> : <p className="mcad-gate">Add a second board instance to enable the Link Manager for direct connector mates and harnesses.</p>}
     <section ref={analysisSection} id="assembly-analysis" aria-label="Multi-board analysis">
-    {assemblyDesigns && <AssemblySiBatch key={projectManifestDigest ?? "unsaved"} assembly={assemblyIr} designs={assemblyDesigns} disabled={busy || dirty} onStatus={onStatus} />}
     {boards.length > 0 && (boards.length > 1 || assemblyIr.parts.some(part => part.part_type !== "subassembly" || part.model_id)) && <MultiboardStudyEditor assembly={assemblyIr} projectPath={projectPath} manifestDigest={projectManifestDigest} disabled={busy || structureDirty || fieldStudyDirty} onUpdated={onUpdated} onStatus={onStatus} onDirtyChange={setReducedStudyDirty} />}
+    {assemblyDesigns && <AssemblySiBatch key={projectManifestDigest ?? "unsaved"} assembly={assemblyIr} designs={assemblyDesigns} disabled={busy || dirty} onStatus={onStatus} />}
     <AssemblyFieldStudyEditor assembly={assemblyIr} projectPath={projectPath} manifestDigest={projectManifestDigest} disabled={busy || structureDirty || reducedStudyDirty} onUpdated={onUpdated} onStatus={onStatus} onDirtyChange={setFieldStudyDirty} />
     <h4><Network size={14} /> Multi-board analysis planning</h4>
     <div className="field-row">
-      <label>Domain <select value={planDomain} onChange={event => { const domain = event.target.value as typeof planDomain; setPlanDomain(domain); setPlanMode("independent_board_batch"); }}><option value="pi">Power integrity</option><option value="si">Signal integrity</option><option value="thermal">Thermal</option><option value="emi">EM</option></select></label>
-      <label>Scope <select value={planMode} onChange={event => setPlanMode(event.target.value as typeof planMode)}><option value="independent_board_batch">Independent board batch</option>{planDomain === "pi" || planDomain === "si" ? <option value="coupled_harness_network">Coupled connector/harness network</option> : <option value="coupled_assembly">Coupled assembly</option>}</select></label>
+      <label>Domain <select disabled={busy} value={planDomain} onChange={event => { const domain = event.target.value as typeof planDomain; setPlanSummary(null); setPlanDomain(domain); setPlanMode("independent_board_batch"); }}><option value="pi">Power integrity</option><option value="si">Signal integrity</option><option value="thermal">Thermal</option><option value="emi">EM</option></select></label>
+      <label>Scope <select disabled={busy} value={planMode} onChange={event => { setPlanSummary(null); setPlanMode(event.target.value as typeof planMode); }}><option value="independent_board_batch">Independent board batch</option>{planDomain === "pi" || planDomain === "si" ? <option value="coupled_harness_network">Coupled connector/harness network</option> : <option value="coupled_assembly">Coupled assembly</option>}</select></label>
       <button className="secondary-btn" disabled={busy || studyDirty || !assemblyDesigns} onClick={() => void planAnalysis()}><Network size={13} /> {busyAction === "plan" ? "Validating plan…" : "Validate multi-board plan"}</button>
     </div>
-    {planSummary && <p className="mcad-gate" data-state={String(planSummary.state ?? "blocked")}>
-      {String(planSummary.state ?? "blocked").toUpperCase()} · {String(planSummary.execution_strategy ?? "none").replace(/_/g, " ")} · graph {String(planSummary.graph_digest ?? "").slice(0, 12)} · coupled physics {planSummary.coupled_physics ? "enabled" : "not enabled"}
-    </p>}
+    {planSummary && planDisplay && <div className="mcad-gate" role="status" data-state={String(planSummary.state ?? "blocked")}>
+      <strong>{planDisplay.title}</strong><p>{planDisplay.explanation}</p><p>{planDisplay.savedResultsNote}</p>
+      {planDisplay.errors.map((message, index) => <p key={index}>{message}</p>)}
+    </div>}
     <div><button className="run-btn" disabled={!projectPath || !projectManifestDigest || busy || !structureDirty || studyDirty} onClick={() => void save()}>{busyAction === "save" ? "Saving boards and links…" : structureDirty ? "Save boards and links" : "Boards and links saved"}</button></div>
     </section>
   </section>;

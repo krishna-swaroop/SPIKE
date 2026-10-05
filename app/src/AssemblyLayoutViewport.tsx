@@ -62,7 +62,7 @@ function svgGraphicBounds(element: SVGGraphicsElement, svg: SVGSVGElement): Asse
 }
 
 function NetShape({ board, visual, net, onNetSelect, onFocus, selectable = true, children }: { board: ParsedBoard; visual: VirtualBoardVisual; net?: string; onNetSelect: AssemblyLayoutViewportProps["onNetSelect"]; onFocus?: (boardId: string, element: SVGGraphicsElement) => void; selectable?: boolean; children: ReactElement }) {
-  const id = canonicalNetId(board, visual.netIdsByName, net);
+  const id = canonicalNetId(board, visual.netIdsByName, net, visual.netNamesById);
   return <g data-canonical-net-id={id ?? undefined} onClick={id && selectable ? event => { event.stopPropagation(); onFocus?.(visual.id, event.currentTarget); onNetSelect(visual.id, id); } : undefined} style={{ cursor: id && selectable ? "pointer" : undefined }}>{children}</g>;
 }
 
@@ -97,7 +97,7 @@ function ComponentShapes({ board, visual, sourceLayers, onBoardSelect, onCompone
 }
 
 function NetHitShapes({ board, visual, linked, visibleLayers, layerOpacity, showVias, onNetSelect, onFocus }: { board: ParsedBoard; visual: VirtualBoardVisual; linked: string[]; onFocus: (boardId: string, element: SVGGraphicsElement) => void } & Pick<AssemblyLayoutViewportProps, "visibleLayers" | "layerOpacity" | "showVias" | "onNetSelect">) {
-  const selected = (net?: string) => assemblyNetIsSelected(board, visual.netIdsByName, linked, net);
+  const selected = (net?: string) => assemblyNetIsSelected(board, visual.netIdsByName, linked, net, visual.netNamesById);
   const rendered = (layer: string) => assemblyLayerIsRendered(layer, visibleLayers, layerOpacity);
   return <g className="assembly-layout-net-hits">
     {board.zones.filter(item => rendered(item.layer)).map((item, i) => <NetShape key={`zh:${item.id}:${i}`} board={board} visual={visual} net={item.net} onNetSelect={onNetSelect} onFocus={onFocus}><path d={[item.points, ...(item.holes ?? [])].map(loop => `M ${loop.map(point => `${point[0]} ${point[1]}`).join(" L ")} Z`).join(" ")} fill={selected(item.net) ? "#55e5d5" : "transparent"} fillOpacity={selected(item.net) ? .16 : 0} fillRule="evenodd" pointerEvents="fill" /></NetShape>)}

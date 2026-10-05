@@ -49,7 +49,10 @@ jobs:
           npm run test:tetra-mesh-panel
           npm run test:em-viewport
           npm run test:mcp-analysis
-          node scripts/test-assembly-layout-viewport.mjs
+          npm run test:assembly-layout
+          npm run test:assembly-structure-studies
+          npm run test:large-scene
+          node scripts/test-viewport-layer-visibility.mjs
           npm run test:assembly-board-managers
           npm run test:assembly-tools
           npm run test:assembly-workspace

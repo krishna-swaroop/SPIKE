@@ -34,7 +34,7 @@ const string = (value: unknown): string => typeof value === "string" ? value : "
 const scoped = (boardId: string, entityId: string): string => `${boardId}::${entityId}`;
 
 export function isGroundNetName(name: string): boolean {
-  return /^(?:0|ground|vss|(?:[adp]?gnd))(?:$|[_-])/i.test(name.trim());
+  return /^(?:0|ground|vss|(?:[adp]?gnd))(?:$|[_-])/i.test(name.trim().split("/").pop() ?? "");
 }
 
 function netIndex(board: ParsedBoard): NetIndex {
@@ -88,36 +88,46 @@ export function assemblyNetHighlight(request: AssemblyNetHighlightRequest): Asse
   for (const [boardId, board] of Object.entries(request.boards)) {
     const index = indexes.get(boardId)!;
     const componentByRef = new Map(board.components.map(item => [item.ref, item]));
+    const componentById = new Map(board.components.map(item => [item.id, item]));
     for (const item of board.components) components.set(scoped(boardId, item.id), { boardId, componentId: item.id, reference: item.ref });
     for (const pad of board.pads) {
-      const component = pad.ref ? componentByRef.get(pad.ref) : undefined;
+      const component = pad.ref ? componentById.get(pad.ref) ?? componentByRef.get(pad.ref) : undefined;
       const netId = canonicalNet(index, pad.net);
       if (!component || !netId) continue;
       const componentKey = scoped(boardId, component.id), netKey = scoped(boardId, netId);
       const occurrence = components.get(componentKey)!;
-      padsByNet.set(netKey, [...(padsByNet.get(netKey) ?? []), { componentKey, component: occurrence }]);
+      const incident = padsByNet.get(netKey) ?? [];
+      incident.push({ componentKey, component: occurrence }); padsByNet.set(netKey, incident);
       (netsByComponent.get(componentKey) ?? netsByComponent.set(componentKey, new Set()).get(componentKey)!).add(netKey);
     }
   }
 
   const connectorPins = new Map<string, string>();
+  const declaredPins = new Set<string>();
   for (const raw of request.assembly.connector_mappings ?? []) {
     if (raw.kind === "connector-mate") continue;
     const data = object(raw.data), pins = object(data?.pins);
     const boardId = string(data?.board_id), connectorId = string(data?.connector_id ?? raw.id), index = indexes.get(boardId);
     if (!pins || !connectorId || !index) continue;
     for (const [pin, identity] of Object.entries(pins)) {
+      declaredPins.add(`${scoped(boardId, connectorId)}::${pin}`);
       const netId = canonicalNet(index, identity);
       if (netId) connectorPins.set(`${scoped(boardId, connectorId)}::${pin}`, scoped(boardId, netId));
     }
   }
+  const ambiguousPins = new Set<string>();
   // Parsed pads are a safe fallback for retained connector pin ownership.
   for (const [boardId, board] of Object.entries(request.boards)) {
     const index = indexes.get(boardId)!;
+    const refs = new Map(board.components.map(component => [component.id, component.ref]));
     for (const pad of board.pads) {
       const netId = canonicalNet(index, pad.net);
-      const pinKey = `${scoped(boardId, pad.ref ?? "")}::${pad.name}`;
-      if (pad.ref && pad.name && netId && !connectorPins.has(pinKey)) connectorPins.set(pinKey, scoped(boardId, netId));
+      const pinKey = `${scoped(boardId, refs.get(pad.ref ?? "") ?? pad.ref ?? "")}::${pad.name}`;
+      if (pad.ref && pad.name && netId && !declaredPins.has(pinKey) && !ambiguousPins.has(pinKey)) {
+        const value = scoped(boardId, netId), previous = connectorPins.get(pinKey);
+        if (previous && previous !== value) { connectorPins.delete(pinKey); ambiguousPins.add(pinKey); }
+        else connectorPins.set(pinKey, value);
+      }
     }
   }
 

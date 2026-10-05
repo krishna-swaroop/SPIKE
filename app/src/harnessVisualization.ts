@@ -1,3 +1,4 @@
+import { uniqueNetIdsByName } from "./assemblyNetIdentity";
 import { resolveFrameToAssembly, type AssemblyDesigns, type AssemblyFrame, type AssemblyIr } from "./mcadAssembly";
 
 export type HarnessPointMm = readonly [number, number, number];
@@ -35,6 +36,7 @@ export type HarnessVisualizationProjection = {
 
 export type VirtualBoardVisual = {
   netIdsByName?: Record<string, string>;
+  netNamesById?: Record<string, string>;
   id: string;
   name: string;
   designId: string;
@@ -183,8 +185,9 @@ export function buildVirtualBoardVisualization(assembly: AssemblyIr | null, desi
       if (id) unresolvedBoardIds.push(id);
       continue;
     }
-    const netIdsByName = Object.fromEntries((Array.isArray(design?.nets) ? design.nets : []).map((net: any) => [net.name, net.id]));
-    visuals.push({ netIdsByName, id, name: text(rawBoard.name) || id, designId, active: designId === designs.active_design_id && !visuals.some(board => board.active), widthMm: envelope.widthMm, heightMm: envelope.heightMm, localCenterMm: envelope.center, transform });
+    const netNamesById = Object.fromEntries((Array.isArray(design?.nets) ? design.nets : []).map((net: any) => [net.id, net.name]));
+    const netIdsByName = uniqueNetIdsByName(netNamesById);
+    visuals.push({ netNamesById, netIdsByName, id, name: text(rawBoard.name) || id, designId, active: designId === designs.active_design_id && !visuals.some(board => board.active), widthMm: envelope.widthMm, heightMm: envelope.heightMm, localCenterMm: envelope.center, transform });
   }
   return { visuals, unresolvedBoardIds };
 }

@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import DataTable from "./DataTable";
 import type { AssemblyIr } from "./mcadAssembly";
 import { openNativeTextFile, runLocalWorker, runNativeProjectWorker, saveNativeTextFile, type WorkerResponse } from "./workerBridge";
+import { runSerializedAutomaticWorker } from "./automaticWorkerQueue";
 import { assertFieldAssembly, fieldCanRun, fieldOwnerName, fieldStudyDirty, fieldTemperatureRows, type FieldObject, type FieldRecord, type FieldSnapshot } from "./assemblyFieldStudyPresentation";
 import "./assemblyFieldStudyEditor.css";
 
@@ -28,7 +29,7 @@ export default function AssemblyFieldStudyEditor({ assembly, projectPath, manife
   const [error, setError] = useState("");
   const [reload, setReload] = useState(0);
   const generation = useRef(0);
-  const pendingHydration = useRef<{ key: string; read: Promise<FieldObject> } | null>(null);
+  const pendingHydration = useRef<{ key: string; read: Promise<{ read: FieldObject; prepared: FieldObject | null } | undefined> } | null>(null);
   const saved = useRef<{ record: FieldRecord | null; handoff: FieldObject | null }>({ record: null, handoff: null });
   const appliedRequestText = useMemo(() => record ? formatted(record.request) : "", [record?.request]);
   const appliedProblemText = useMemo(() => record ? formatted(record.problem) : "", [record?.problem]);
@@ -46,31 +47,37 @@ export default function AssemblyFieldStudyEditor({ assembly, projectPath, manife
     const token = ++generation.current;
     setRecord(null); setHandoff(null); setPhysical(null); setBaseline(null); setError("");
     saved.current = { record: null, handoff: null };
-    setRequestText(""); setProblemText("");
+    setRequestText(""); setProblemText(""); setLoading(false);
     if (!projectPath || !manifestDigest) return;
     setLoading(true);
     void (async () => {
       const key = `${projectPath}\u0000${manifestDigest}`;
       let pending = pendingHydration.current;
       if (!pending || pending.key !== key) {
-        pending = { key, read: runNativeProjectWorker({ method: "read_assembly_field_study_in_project", params: {
-          project_path: projectPath, expected_manifest_payload_sha256: manifestDigest,
-        } }).then(workerValue) };
-        pendingHydration.current = pending;
-        const completed = pending;
-        void completed.read.then(
-          () => { if (pendingHydration.current === completed) pendingHydration.current = null; },
-          () => { if (pendingHydration.current === completed) pendingHydration.current = null; },
+        const entry = { key, read: Promise.resolve(undefined) as Promise<{ read: FieldObject; prepared: FieldObject | null } | undefined> };
+        pendingHydration.current = entry;
+        entry.read = runSerializedAutomaticWorker(async () => {
+          const read = workerValue(await runNativeProjectWorker({ method: "read_assembly_field_study_in_project", params: {
+            project_path: projectPath, expected_manifest_payload_sha256: manifestDigest,
+          } }));
+          const prepared = read.record
+            ? workerValue(await runLocalWorker({ method: "prepare_assembly_field_handoff", params: { request: read.record.request } }))
+            : null;
+          return { read, prepared };
+        }, () => pendingHydration.current === entry);
+        pending = entry;
+        void entry.read.then(
+          () => { if (pendingHydration.current === entry) pendingHydration.current = null; },
+          () => { if (pendingHydration.current === entry) pendingHydration.current = null; },
         );
       }
-      const read = await pending.read;
-      if (!active || token !== generation.current) return;
+      const loaded = await pending.read;
+      if (!loaded || !active || token !== generation.current) return;
+      const { read, prepared } = loaded;
       setPhysical(read.assembly);
       if (read.record) {
-        const prepared = workerValue(await runLocalWorker({ method: "prepare_assembly_field_handoff", params: { request: read.record.request } }));
-        if (!active || token !== generation.current) return;
-        accept(read.record, prepared);
-        saved.current = { record: read.record, handoff: prepared };
+        accept(read.record, prepared!);
+        saved.current = { record: read.record, handoff: prepared! };
         setBaseline({ requestText: formatted(read.record.request), problemText: formatted(read.record.problem), result: read.record.result });
       } else {
         const request = formatted({ contract: "spike/assembly-field-handoff-request/v1", assembly: read.assembly, domain: "thermal", bodies: [], materials: [] });

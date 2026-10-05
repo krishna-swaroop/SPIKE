@@ -3,6 +3,8 @@ import * as THREE from "three";
 
 export type BoardSurfaceKind = "copper" | "silkscreen" | "soldermask" | "substrate" | "unknown";
 export function classifyBoardSurface(material: THREE.MeshStandardMaterial, name: string): BoardSurfaceKind {
+  const retained = material.userData.spikeBoardSurfaceKind as BoardSurfaceKind | undefined;
+  if (retained && ["copper", "silkscreen", "soldermask", "substrate"].includes(retained)) return retained;
   const semantic = `${name} ${material.userData.spikeSourceMaterialName ?? material.name}`.toLowerCase();
   if (semantic.includes("copper")) return "copper";
   if (semantic.includes("silkscreen")) return "silkscreen";
@@ -28,6 +30,7 @@ export function configureImportedMaterial(material: THREE.Material, kind: "board
     if (kind === "board") {
       surface = classifyBoardSurface(material, name);
       if (surface !== "unknown") {
+        material.userData.spikeBoardSurfaceKind = surface;
         material.alphaHash = false; material.alphaToCoverage = false;
         material.opacity = surface === "soldermask" ? .76 : 1;
         material.transparent = surface === "soldermask";

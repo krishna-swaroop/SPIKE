@@ -26,6 +26,12 @@
 .multiboard-study [role="alert"] { border-left: 3px solid #e3aa51; padding: 8px 10px; background: #302819; color: #efc477; }
 .multiboard-study-dirty-warning { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 9px 0; border-left: 3px solid #e3aa51; padding: 8px 10px; background: #302819; color: #efc477; }
 .multiboard-study-dirty-warning > span { min-width: min(260px,100%); flex: 1; }
+.coupled-study-tables { min-width: 0; }
+.coupled-study-tables h5 { margin: 12px 0 8px; font-size: 13px; }
+.coupled-study-tables p { font-size: 11px; line-height: 1.5; overflow-wrap: anywhere; }
+.coupled-study-tables > label { display: grid; width: min(300px,100%); gap: 5px; margin: 10px 0; font-size: 11px; }
+.coupled-study-tables details { min-width: 0; margin: 12px 0; }
+.coupled-study-tables pre { max-width: 100%; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; }
 @media (max-width: 560px) {
   .multiboard-study { padding: 11px; }
   .multiboard-study fieldset { padding: 9px; }
