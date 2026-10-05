@@ -5,6 +5,47 @@ from .spider_v2 import AssemblyIRV1
 from .harness_authoring import validate_harness_connections
 
 
+def _canonical_net(nets, identity):
+    if identity in nets:
+        return identity
+    matches = [net_id for net_id, name in nets.items() if name == identity]
+    return matches[0] if len(matches) == 1 else None
+
+
+def _retained_connector_pins(board_id, design, nets):
+    """Recover connector pin ownership from retained design entities.
+
+    Explicit connector mappings remain authoritative.  This fallback covers
+    valid endpoint-only harnesses and mates, whose pins are already retained
+    by the board design but need not be duplicated into AssemblyIR mappings.
+    """
+    components = {
+        item.get("id"): item.get("reference", item.get("ref"))
+        for item in design.get("components", []) if isinstance(item, dict)
+    }
+    pin_numbers = {
+        item.get("id"): item.get("number", item.get("name"))
+        for item in design.get("pins", []) if isinstance(item, dict)
+    }
+    result, ambiguous = {}, set()
+    for pad in design.get("pads", []):
+        if not isinstance(pad, dict):
+            continue
+        connector = pad.get("ref") or components.get(pad.get("component_id"))
+        pin = pad.get("name") or pin_numbers.get(pad.get("pin_id")) or pad.get("pin_id")
+        net_id = _canonical_net(nets, pad.get("net_id", pad.get("net")))
+        if connector and pin and net_id:
+            key, value = (board_id, str(connector), str(pin)), (board_id, net_id)
+            if key in ambiguous:
+                continue
+            if key in result and result[key] != value:
+                result.pop(key)
+                ambiguous.add(key)
+            else:
+                result[key] = value
+    return result
+
+
 def linked_assembly_nets(raw):
     if not isinstance(raw, dict) or set(raw) != {"assembly", "designs", "board_id", "net_id"}:
         raise ValueError("Linked selection requires assembly, designs, board_id and net_id.")
@@ -17,13 +58,17 @@ def linked_assembly_nets(raw):
         design = raw["designs"].get(board.design_id)
         if not isinstance(design, dict): raise ValueError("Retain every board design for linked net selection.")
         nets[board.id] = {n["id"]: n.get("name", n["id"]) for n in design.get("nets", [])}
+        pin_nets.update(_retained_connector_pins(board.id, design, nets[board.id]))
     for mapping in assembly.connector_mappings:
         data = mapping.data
         board, connector = data.get("board_id"), data.get("connector_id")
         if board not in nets or not connector or not isinstance(data.get("pins"), dict): continue
         for pin, value in data["pins"].items():
-            matches = [value] if value in nets[board] else [identity for identity, name in nets[board].items() if name == value]
-            if len(matches) == 1: pin_nets[(board, connector, pin)] = (board, matches[0])
+            # A retained explicit row is authoritative even when its net no
+            # longer resolves; do not silently replace it from pad geometry.
+            pin_nets.pop((board, connector, pin), None)
+            net_id = _canonical_net(nets[board], value)
+            if net_id is not None: pin_nets[(board, connector, pin)] = (board, net_id)
     adjacent = defaultdict(set)
     links = [(h.endpoint_a, h.endpoint_b, h.pin_map) for h in assembly.harnesses]
     links += [(m.data["endpoint_a"], m.data["endpoint_b"], m.data["pin_map"])

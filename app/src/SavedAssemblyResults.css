@@ -1,0 +1,10 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+.saved-assembly-results { min-width: 0; padding: 12px 16px; border-bottom: 1px solid var(--spike-table-border); background: var(--spike-table-toolbar); }
+.saved-assembly-results h3 { margin: 0 0 8px; font-size: 14px; }
+.saved-assembly-results > p { margin: 8px 0; font-size: 11px; line-height: 1.5; }
+.saved-assembly-results-inventory { display: grid; gap: 6px; }
+.saved-assembly-result-row { min-width: 0; display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; justify-content: space-between; }
+.saved-assembly-result-row > span { min-width: 0; flex: 1; }
+.saved-assembly-result-row small { display: block; margin-top: 3px; color: var(--spike-table-muted); font-size: 10px; overflow-wrap: anywhere; }
+.saved-assembly-result-row > button { max-width: 100%; }
+.saved-assembly-results [role="alert"] { padding: 8px; border-left: 3px solid var(--spike-table-focus); overflow-wrap: anywhere; }

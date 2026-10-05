@@ -1,3 +1,4 @@
+import { resolveAssemblyNetId } from "./assemblyNetIdentity";
 // SPDX-License-Identifier: Apache-2.0
 import type { ParsedBoard, Point } from "./boardParser";
 import type { VirtualBoardVisual, VirtualHarnessVisual } from "./harnessVisualization";
@@ -226,13 +227,11 @@ export function boardAssemblyZ(visual: VirtualBoardVisual): number {
 }
 
 /** Parsed objects carry names; assembly selection carries stable canonical IDs. */
-export function canonicalNetId(board: ParsedBoard, nameToId: Readonly<Record<string, string>> | undefined, parsedNetName: string | undefined): string | null {
-  if (!parsedNetName) return null;
-  if (nameToId?.[board.nets[parsedNetName] ?? parsedNetName]) return nameToId[board.nets[parsedNetName] ?? parsedNetName];
-  return Object.entries(board.nets).find(([, name]) => name === parsedNetName)?.[0] ?? parsedNetName;
+export function canonicalNetId(board: ParsedBoard, nameToId: Readonly<Record<string, string>> | undefined, parsedNetName: string | undefined, namesById?: Readonly<Record<string, string>>): string | null {
+  return resolveAssemblyNetId(board, namesById, nameToId, parsedNetName);
 }
 
-export function assemblyNetIsSelected(board: ParsedBoard, nameToId: Readonly<Record<string, string>> | undefined, linkedCanonicalIds: readonly string[], parsedNetName: string | undefined): boolean {
-  const id = canonicalNetId(board, nameToId, parsedNetName);
+export function assemblyNetIsSelected(board: ParsedBoard, nameToId: Readonly<Record<string, string>> | undefined, linkedCanonicalIds: readonly string[], parsedNetName: string | undefined, namesById?: Readonly<Record<string, string>>): boolean {
+  const id = canonicalNetId(board, nameToId, parsedNetName, namesById);
   return Boolean(id && linkedCanonicalIds.includes(id));
 }

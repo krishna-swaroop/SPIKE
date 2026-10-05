@@ -47,7 +47,7 @@ This choice does not change solver boundary conditions or qualify a solver for
 coupled assembly physics; use the documented coupled-study contracts and solver
 status for those capabilities.
 
-Open **Home → Multi-board** in the desktop shell. It opens a separate native
+Open **Home > Multi-board** in the desktop shell. It opens a separate native
 window with an OS title bar: drag it outside SPIKE, move it to another monitor,
 resize or minimize it. **Placement**, **Layers**, **Nets** and **Links** in the
 compact viewport row open native tool windows too. The viewport reserves one
@@ -60,11 +60,11 @@ window. Selecting **2D layout** or **3D placement** updates the main viewport
 while the setup window and its draft stay open. Native close requests check for
 unsaved setup or connector drafts.
 
-**MCAD assembly → Board instances and harnesses → Open multi-board workspace**
+**MCAD assembly > Board instances and harnesses > Open multi-board workspace**
 opens the same setup window. Setup forms are owned by that window. The MCAD
 panel keeps its own mechanical part controls.
 
-## ECAD–MCAD collaboration workspace
+## ECAD-MCAD collaboration workspace
 
 The workspace groups work into **Boards & organization**, **Placement & mechanics**,
 **Connector links & harnesses**, and **Coupled studies**. Changing stages preserves
@@ -129,6 +129,15 @@ and percentage opacity. Physical dielectric rows show their material/stack data
 without drawable controls. These actions apply only to the board chosen above
 the manager; bulk actions are one native update and preserve other boards.
 
+Imported board geometry is addressed by physical surface and board side before
+batching. Mask, silkscreen, copper and board-body eyes and opacity do not gate
+one another or replace the whole imported board. Shared exporter materials are
+separated by layer within each occurrence. Combined copper meshes are separated
+into front, back and through-plating triangle ranges. Retained geometry covers
+layers not represented in the import, including internal copper. Unclassified
+imported surfaces are withheld rather than overriding a hidden layer. Resolved
+component models remain independent of footprint layer eyes.
+
 Assembly **Nets** uses the original imported net catalog with name search,
 selection, active-row highlighting, object/layer counts, compact rows and table
 keyboard navigation. Counts use the selected retained design's canonical
@@ -157,7 +166,7 @@ Check the version in the status bar: the dedicated workspace is in v0.3.0.
 An older installed executable or file association can still open v0.2.13.
 For a checkout preview, build the frontend with `npm.cmd run build` in `app`,
 then `cargo build --features custom-protocol` in `app/src-tauri`. Run
-`app/src-tauri/target/debug/spike-desktop.exe`, then **Home → Open** your project.
+`app/src-tauri/target/debug/spike-desktop.exe`, then **Home > Open** your project.
 This embeds the frontend but uses the checkout's Python worker and installed
 dependencies; it is a development preview, not a redistributable installer.
 After a second board instance is added, the **Link Manager** appears in that
@@ -200,6 +209,9 @@ and reuses that source geometry for each occurrence. Board copper and available
 component models render for active and retained designs; a per-design diagnostic
 reports missing or malformed source identity, failed visual stages and unresolved
 component models. Placeholder geometry remains where source models are absent.
+Once a component model resolves for an occurrence, its stand-in stays hidden
+through layer, opacity and selection updates. Other occurrences retain their
+own fallback state.
 KiCad plots use a local page origin; the assembly view centers that page on the
 source board envelope before applying occurrence transforms. Packing includes
 the complete plot page, and duplicate source outline edges are joined once
@@ -241,6 +253,13 @@ see [coupled workflow](MULTIBOARD_COUPLED_ANALYSIS.md). These interacting models
 remain experimental/approximate. Plans retain direct connector mates separately from harnesses.
 Thermal plans retain contacts and parts; EMI plans retain
 electrical bonds and parts. Their presence in a plan is not a solved effect.
+
+The planning status describes only the selected domain and scope. **Independent
+board plan is ready. No analysis has run.** means the graph can be scheduled as
+separate board jobs; it does not load or invalidate saved coupled-study results.
+Changing the domain or scope clears the previous planning status. Numerical
+results saved inside the open `.spike` are available from **Results**, where
+each retained study has a direct result button.
 
 ## Harness authoring
 
@@ -298,7 +317,7 @@ The bounded FreeCAD adapter retains the original STEP alongside its derived
 visual GLB. Numeric placement, parent-frame hierarchy, material assignment and
 the existing exact-shape extraction tools remain available for imported parts.
 
-The FreeCAD workbench now includes **SPIKE → Export SPIKE Assembly…**. Select
+The FreeCAD workbench now includes **SPIKE > Export SPIKE Assembly...**. Select
 assembly roots or parts, export `.spikeassembly`, and import that file in SPIKE.
 Nested App::Part/groups retain their hierarchy and placements. STEP geometry
 is separated from occurrence placement; repeated instances remain separately
@@ -360,3 +379,32 @@ Implementation: `assembly_exchange.py`, `service_assembly_import.py`,
 `assembly_export.py`. The exporter uses the documented FreeCAD
 [TopoShape STEP export](https://github.com/FreeCAD/FreeCAD-documentation/blob/main/wiki/TopoShape_API.md)
 and [hierarchical placement API](https://freecad.github.io/API/d7/d75/classApp_1_1GeoFeature.html).
+
+### Net identity and link recovery
+
+Each board occurrence owns its net selection, even when several occurrences
+reuse the same retained design. The viewport net list, 2D copper picks, 3D
+copper picks and assembly net manager use retained canonical net IDs internally;
+the displayed names do not establish electrical connections. Parser-local IDs
+are rebound to retained nets before component traversal. Component pads may
+refer to a retained component ID or its reference.
+
+Only saved connector pin mappings and harness links propagate highlighting.
+Canonical pin net IDs take precedence over legacy name aliases. Ambiguous
+names and unresolved retained pin mappings remain unresolved; geometry fallback
+must not silently repair an explicitly invalid mapping. Select valid retained
+nets for both pins before applying or saving a link. Removing a link recomputes
+the selection against the remaining graph. Pass-through component selection
+excludes ground and stops at the next component boundary.
+
+Regression checks: `app/scripts/test-assembly-net-highlight.mjs`,
+`test-assembly-board-managers.mjs` and `test-board-viewport-net-legend.mjs`.
+
+### Combined movement handles
+
+Enable Move or Rotate for a selected board or mechanical part to show both
+local translation arrows and rotation rings at its pivot. Drag an arrow to
+translate or a ring to rotate. Clicking a handle opens numeric delta entry:
+translation uses millimetres and rotation uses degrees. Enter applies the delta;
+Escape cancels it. A pointer gesture owns only one handle, and arrows take
+priority where their hit regions cross a ring.

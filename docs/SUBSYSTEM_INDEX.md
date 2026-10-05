@@ -5,6 +5,13 @@ experiments may remain in the repository but are not supported launch paths.
 
 ## Desktop UI
 
+Embedded coupled results in the main Results panel are owned by
+`app/src/SavedAssemblyResults.tsx`: the open assembly inventories saved studies,
+and the worker validates each result on selection. `CoupledStudyResultTables.tsx`
+shares numerical tables with the model editor. External file selection is only
+the fallback for missing results. See the
+[curated multi-board walkthroughs](../examples/multiboard/README.md).
+
 Context-aware unsaved script drafts are owned by `app/src/contextScript.ts`,
 `ActionContextMenu.tsx`, `contextMenuTrigger.ts` and `tableContext.ts`. They retain
 source scope and open editor tabs without executing code; see
@@ -61,7 +68,7 @@ inventory/reduction live in `si_network_workflow.py`, `si_passives.py` and
 | `app/src/FlexBoardManager.tsx`, `FlexBoardManager.css` | Flex bend/region inspection, KiKakuka annotation copy and definition export | Flat fabrication reference; imported bends do not establish folded solver geometry |
 | `app/src/plotInteraction.ts`, `reportPlotInteraction.ts` | Shared chart wheel/axis navigation and offline report SVG view transforms | Anchored axis coordinates, subplot identity and retained source samples; print restores full figures |
 | `app/src/AssemblyConnectorLinks.tsx`, `assemblyConnectorLinks.css` | Graphical connector pin link cards, search and responsive endpoint layouts | Controlled drafts and canonical validation remain owned by `AssemblyBoardManagers.tsx` and `assemblyBoardManagerModel.ts` |
-| `app/src/assemblyGizmoGesture.ts`, `assemblyGizmoNumericInput.ts` | Local-axis mm/degree gesture transaction and anchored numeric entry | Physical preview/commit contract; cancel restores gesture origin |
+| `app/src/assemblyGizmoGesture.ts`, `assemblyGizmoNumericInput.ts`, `assemblyMovementControls.ts` | Local-axis mm/degree gesture transaction, combined arrows/rings and anchored numeric entry | Exclusive pointer owner; physical preview/commit contract; cancel restores gesture origin |
 | `app/src/resultsToolSnapshots.ts` | Pure detached Results/Probe presentation snapshots | Reuses probe calculations and result analytics; no state authority |
 | `app/src/detachedTracePayload.ts` | Bounded display-only trace-window result projection | Preserves retained sample topology; never replaces authoritative results |
 | `app/src/App.tsx` | Current application composition root | Legacy oversized module; extract workflows incrementally |
@@ -111,9 +118,10 @@ package migration passes integration checks.
 | File | Responsibility | Notes |
 |---|---|---|
 | `app/src/BoardViewport.tsx` | Three.js 3D scene and interaction | Legacy oversized; split scene, picking, overlays, controls |
+| `app/src/assemblyNetIdentity.ts`, `assemblyNetHighlight.ts`, `python/spike_core/assembly_linked_nets.py` | Retained occurrence net identity, explicit pin traversal and component boundaries | Parser aliases resolve only against the owning board; ambiguous or invalid mappings stay unresolved |
 | `app/src/ViewportNetViewer.tsx`, `viewportNetViewerModel.ts` | Collapsible searchable viewport net list and selected occurrence scope | Uses canonical per-board IDs and existing explicit-link selection callbacks |
 | `app/src/minimizedTools.ts`, `ToolRestoreShelf.tsx`, `toolRestoreShelf.css` | Bottom dock restore registry, bounded controls and retry handling for minimized tools | Owners retain tool state; no collapsed panels or backdrops remain over the viewport |
-| `app/src/assemblySceneInputs.ts`, `assemblyImportedBatches.ts`, `boardSurfaceMaterials.ts`, `componentSceneIndex.ts`, `webGLRecovery.ts` | Stable assembly geometry inputs, imported mesh batching, shared material policy, indexed component metadata and recoverable GPU context lifecycle | Preserve exact source picking, occurrence material isolation and cache resource ownership |
+| `app/src/assemblySceneInputs.ts`, `assemblyImportedBatches.ts`, `boardSurfaceMaterials.ts`, `importedBoardLayers.ts`, `componentSceneIndex.ts`, `webGLRecovery.ts` | Stable assembly geometry inputs, imported mesh batching, shared material policy, independently addressed imported surfaces, indexed component metadata and recoverable GPU context lifecycle | Preserve exact source picking, occurrence material isolation and cache resource ownership |
 | `app/src/ViewportNotifications.tsx`, `viewportNotifications.css` | Bounded corner notice chips and requested full diagnostics in the application notification center | Import details remain available from the status bar; no automatic expanded canvas messages |
 | `app/src/assemblyViewportInteraction.ts` | Assembly 2D SVG pointer-coordinate conversion, anchored zoom, pan threshold and selection framing | Honors SVG uniform scaling and letterbox margins; physical assembly transforms remain untouched |
 | `app/src/AssemblyWorkspace.tsx`, `AssemblyQuickBar.tsx`, `assemblyBoardDraft.ts` | Dedicated multiboard entry, occurrence inventory, compact viewport controls and starter placement | Reuses retained assembly editor and scoped managers; preserves draft edits |

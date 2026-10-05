@@ -2,7 +2,7 @@
   "name": "spike-desktop",
   "license": "Apache-2.0",
   "private": true,
-  "version": "0.3.7",
+  "version": "0.3.8",
   "type": "module",
   "scripts": {
     "test:plot-interaction": "node scripts/test-plot-interaction.mjs && node scripts/test-plot-wheel-events.mjs && node scripts/test-report-plot-interaction.mjs",
@@ -79,11 +79,11 @@
     "test:resource-monitor": "node scripts/test-resource-monitor.mjs",
     "test:assembly-admission": "node scripts/test-assembly-admission.mjs",
     "test:harness-visualization": "node scripts/test-harness-visualization.mjs",
-    "test:assembly-layout": "node scripts/test-assembly-layout-viewport.mjs && node scripts/test-assembly-board-scene.mjs",
+    "test:assembly-layout": "node scripts/test-assembly-layout-viewport.mjs && node scripts/test-imported-board-layers.mjs && node scripts/test-assembly-board-scene.mjs",
     "test:assembly-board-managers": "node scripts/test-assembly-board-managers.mjs && node scripts/test-shared-board-managers.mjs && node scripts/test-focused-board-layers.mjs",
-    "test:assembly-workspace": "node scripts/test-assembly-workspace.mjs && node scripts/test-assembly-board-draft.mjs && node scripts/test-assembly-board-lifecycle.mjs && node scripts/test-assembly-board-editor.mjs",
-    "test:assembly-tools": "node scripts/test-assembly-tool-windows.mjs && node scripts/test-assembly-gizmo-numeric.mjs",
-    "test:assembly-structure-studies": "node scripts/test-multiboard-study-presentation.mjs && node scripts/test-multiboard-study-dirty.mjs && node scripts/test-assembly-mechanical-study-models.mjs",
+    "test:assembly-workspace": "node scripts/test-assembly-workspace.mjs && node scripts/test-saved-assembly-results.mjs && node scripts/test-assembly-board-draft.mjs && node scripts/test-assembly-board-lifecycle.mjs && node scripts/test-assembly-board-editor.mjs",
+    "test:assembly-tools": "node scripts/test-assembly-tool-windows.mjs && node scripts/test-assembly-gizmo-numeric.mjs && node scripts/test-assembly-movement-controls.mjs",
+    "test:assembly-structure-studies": "node scripts/test-multiboard-study-presentation.mjs && node scripts/test-multiboard-study-dirty.mjs && node scripts/test-multiboard-study-domain-switch.mjs && node scripts/test-assembly-mechanical-study-models.mjs && node scripts/test-automatic-worker-queue.mjs",
     "test:assembly-field-study": "node scripts/test-assembly-field-study.mjs",
     "test:assembly-handling": "node scripts/test-assembly-placement-controls.mjs && node scripts/test-assembly-snap-targets.mjs && node scripts/test-assembly-display-state.mjs && node scripts/test-assembly-result-overlays.mjs && node scripts/test-assembly-emi-snapshot.mjs",
     "test:connector-pin-editor": "node scripts/test-connector-pin-editor.mjs",
@@ -98,7 +98,7 @@
     "test:emi-chamber": "node scripts/test-emi-chamber.mjs",
     "test:thermal-coordinates": "node scripts/test-thermal-coordinates.mjs",
     "test:thermal-rendering": "node scripts/test-thermal-field-rendering.mjs && node scripts/test-thermal-coordinates.mjs",
-    "bundle:windows": "powershell -ExecutionPolicy Bypass -File ../scripts/build_windows_installer.ps1",
+    "bundle:windows": "python ../scripts/prepare_release_resources.py --config-output ../build/tauri.release.json && powershell -ExecutionPolicy Bypass -File ../scripts/build_windows_installer.ps1 -ResourceConfig ../build/tauri.release.json",
     "tauri": "tauri",
     "test:normalized-board": "node scripts/test-normalized-board.mjs",
     "test:trace-plots": "node scripts/test-trace-result-plots.mjs",
@@ -110,7 +110,8 @@
     "test:emerge-updates": "node scripts/test-emerge-runtime-updates.mjs",
     "test:emerge-gerber": "node scripts/test-emerge-gerber-ui.mjs",
     "test:context-menus": "node scripts/test-context-menus.mjs",
-    "test:script-viewport": "node scripts/test-script-result-viewport.mjs && node scripts/test-script-viewport-import.mjs"
+    "test:script-viewport": "node scripts/test-script-result-viewport.mjs && node scripts/test-script-viewport-import.mjs",
+    "test:assembly-nets": "node scripts/test-assembly-net-highlight.mjs && node scripts/test-assembly-board-managers.mjs && node scripts/test-board-viewport-net-legend.mjs"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.5.0",

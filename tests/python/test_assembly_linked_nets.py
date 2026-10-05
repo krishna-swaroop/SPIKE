@@ -33,6 +33,51 @@ class LinkedAssemblyNetTests(unittest.TestCase):
         self.assertEqual(len(result["nodes"]), 1)
         self.assertEqual(len(result["unresolved_pin_links"]), 1)
 
+    def test_retained_design_pads_resolve_links_without_duplicate_connector_mappings(self):
+        raw = self.request()
+        raw["assembly"]["connector_mappings"] = []
+        raw["designs"]["same-layout"].update({
+            "components": [{"id": "component-j", "reference": "J"}],
+            "pins": [{"id": "pin-1", "number": "1"}, {"id": "pin-2", "number": "2"}],
+            "pads": [
+                {"id": "pad-1", "component_id": "component-j", "pin_id": "pin-1", "net_id": "power"},
+                {"id": "pad-2", "component_id": "component-j", "pin_id": "pin-2", "net_id": "return"},
+            ],
+        })
+        result = linked_assembly_nets(raw)
+        self.assertEqual(
+            [(node["board_id"], node["net_id"]) for node in result["nodes"]],
+            [("a", "power"), ("b", "power")],
+        )
+        self.assertEqual(result["unresolved_pin_links"], [])
+
+    def test_explicit_mapping_overrides_retained_pad_fallback_and_unresolved_stays_local(self):
+        raw = self.request()
+        raw["designs"]["same-layout"].update({
+            "components": [{"id": "component-j", "reference": "J"}],
+            "pins": [{"id": "pin-1", "number": "1"}],
+            "pads": [{"id": "pad-1", "component_id": "component-j", "pin_id": "pin-1", "net_id": "return"}],
+        })
+        raw["assembly"]["connector_mappings"][1]["data"]["pins"]["1"] = "unknown"
+        result = linked_assembly_nets(raw)
+        self.assertEqual([(node["board_id"], node["net_id"]) for node in result["nodes"]], [("a", "power")])
+        self.assertEqual(len(result["unresolved_pin_links"]), 1)
+
+    def test_conflicting_retained_pad_ownership_does_not_guess_a_net(self):
+        raw = self.request()
+        raw["assembly"]["connector_mappings"] = []
+        raw["designs"]["same-layout"].update({
+            "components": [{"id": "component-j", "reference": "J"}],
+            "pins": [{"id": "pin-1", "number": "1"}],
+            "pads": [
+                {"component_id": "component-j", "pin_id": "pin-1", "net_id": "power"},
+                {"component_id": "component-j", "pin_id": "pin-1", "net_id": "return"},
+            ],
+        })
+        result = linked_assembly_nets(raw)
+        self.assertEqual([(node["board_id"], node["net_id"]) for node in result["nodes"]], [("a", "power")])
+        self.assertEqual(len(result["unresolved_pin_links"]), 2)
+
     def test_worker_route(self):
         from python.spike_core.service import handle
         result = handle({"id": "linked", "method": "linked_assembly_nets", "params": {"request": self.request()}})

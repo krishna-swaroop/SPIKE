@@ -70,7 +70,8 @@ export function connectorOccurrences(assembly: AssemblyIr, designs: AssemblyDesi
       name: text(data.name ?? mapping.name) || connectorId,
       pins: Object.entries(pins).map(([id, value]) => {
         const identity = text(value);
-        const matches = boardNets.filter(net => net.netId === identity || net.name === identity);
+        const exact = boardNets.find(net => net.netId === identity);
+        const matches = exact ? [exact] : boardNets.filter(net => net.name === identity);
         return { id, net: matches.length === 1 ? matches[0] : null };
       }) });
   }
@@ -113,12 +114,16 @@ export function replaceExplicitNetLink(assembly: AssemblyIr, original: ExplicitN
   if (replacement.endpointA !== original.endpointA || replacement.endpointB !== original.endpointB) throw new Error("Connector endpoints belong to the saved harness or mate. Add a new explicit row to link different connectors.");
   if (original.sourceKind === "harness") return { ...assembly, harnesses: (assembly.harnesses ?? []).map(raw => {
     if (text(raw.id) !== original.sourceId) return raw;
-    const next = { ...(record(raw.pin_map) ?? {}) }; delete next[original.pinA]; next[replacement.pinA] = replacement.pinB;
+    const next = { ...(record(raw.pin_map) ?? {}) };
+    if (replacement.pinA !== original.pinA && Object.prototype.hasOwnProperty.call(next, replacement.pinA)) throw new Error("That source pin already has a mapping in this link. Edit its existing row instead.");
+    delete next[original.pinA]; next[replacement.pinA] = replacement.pinB;
     return { ...raw, pin_map: next };
   }) };
   return { ...assembly, connector_mappings: (assembly.connector_mappings ?? []).map(raw => {
     if (text(raw.id) !== original.sourceId) return raw;
-    const data = record(raw.data) ?? {}, next = { ...(record(data.pin_map) ?? {}) }; delete next[original.pinA]; next[replacement.pinA] = replacement.pinB;
+    const data = record(raw.data) ?? {}, next = { ...(record(data.pin_map) ?? {}) };
+    if (replacement.pinA !== original.pinA && Object.prototype.hasOwnProperty.call(next, replacement.pinA)) throw new Error("That source pin already has a mapping in this link. Edit its existing row instead.");
+    delete next[original.pinA]; next[replacement.pinA] = replacement.pinB;
     return { ...raw, data: { ...data, pin_map: next } };
   }) };
 }
@@ -138,4 +143,5 @@ export function validateExplicitNetLink(assembly: AssemblyIr, designs: AssemblyD
   if (!left || !right) throw new Error("Both connector occurrences must exist in retained AssemblyIR mappings.");
   if (left.boardId === right.boardId) throw new Error("An assembly net link must connect distinct board occurrences.");
   if (!left.pins.some(pin => pin.id === row.pinA) || !right.pins.some(pin => pin.id === row.pinB)) throw new Error("Choose retained pins from both connector occurrences; a stale pin cannot be linked.");
+  if (!left.pins.find(pin => pin.id === row.pinA)?.net || !right.pins.find(pin => pin.id === row.pinB)?.net) throw new Error("Both connector pins must resolve to retained board nets before saving a link.");
 }

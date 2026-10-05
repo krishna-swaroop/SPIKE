@@ -16,15 +16,16 @@ if str(ROOT) not in sys.path:
 from python.spike_core import __version__
 from python.spike_core.harness_authoring import discover_connectors, validate_harness_connections
 from python.spike_core.multiboard_circuit import run_multiboard_circuit
-from python.spike_core.multiboard_em import run_multiboard_em
 from python.spike_core.multiboard_thermal import run_multiboard_thermal
-from python.spike_core.project_package import _source_member_name, read_project, write_spike_package
+from python.spike_core.multiboard_identity import assembly_physics_digest
+from python.spike_core.project_package import read_project, write_spike_package
 from python.spike_core.service_project import import_design
 from python.spike_core.service_project_handlers import handle_project_request
 from python.spike_core.spider_v2 import AssemblyIRV1
 from scripts.build_arduino_shield_acceptance import _frame, _json, _pin_mapping, _transform_xy
 
-DEFAULT_OUTPUT = ROOT / "build/rpi-hat-acceptance-20261002"
+DEFAULT_OUTPUT = ROOT / "build/curated-multiboard-20261005/raspberry-pi"
+DEFAULT_SOURCE_DIR = ROOT / "build/rpi-hat-acceptance-20261002/sources/SH-RPi-hardware"
 CM4_ARCHIVE_SHA256 = "5ea867e17968cb9c117fbce7a982ea395d66a6ee605253a9a0879483bbfcb0aa"
 HAT_COMMIT = "e82e3c9823bbcf94091b22927dd2e0da9cdfac8c"
 HAT_BOARD_SHA256 = "d13c9adb68b25b2253ef61015362ed4f836d6d3488cd3e308427c239c1edc0ae"
@@ -50,17 +51,17 @@ def _hat_frame() -> list[float]:
     return [-1.,0.,0.,200.5, 0.,1.,0.,67.55, 0.,0.,-1.,14., 0.,0.,0.,1.]
 
 
-def _sources(output: Path) -> tuple[Path, Path, dict]:
+def _sources(output: Path, source_dir: Path) -> tuple[Path, Path, dict]:
     cm4_archive = ROOT / "build/arduino-shield-acceptance-20261002/pi-investigation/CM4IO-KiCAD.zip"
     cm4_board = ROOT / "build/arduino-shield-acceptance-20261002/pi-investigation/CM4IO-KiCAD/CM4IOv5.kicad_pcb"
-    hat_repo = output / "sources/SH-RPi-hardware"
+    hat_repo = source_dir
     hat_board = hat_repo / "SH-RPi.kicad_pcb"
     if not cm4_archive.exists() or not cm4_board.exists():
         raise FileNotFoundError("Download the official CM4IO-KiCAD archive locally; see validation documentation.")
     if _sha(cm4_archive) != CM4_ARCHIVE_SHA256:
         raise ValueError("Official CM4IO archive digest differs from the reviewed local input.")
     if not hat_board.exists():
-        raise FileNotFoundError("Clone the pinned SH-RPi-hardware repository under the output sources directory.")
+        raise FileNotFoundError("Provide the pinned SH-RPi-hardware checkout with --source-dir.")
     commit = subprocess.run(["git", "-C", str(hat_repo), "rev-parse", "HEAD"], text=True,
         capture_output=True, check=True).stdout.strip()
     if commit != HAT_COMMIT or _sha(hat_board) != HAT_BOARD_SHA256:
@@ -104,9 +105,55 @@ def _circuit(assembly: dict, domain: str) -> dict:
         "ground": {"board_id": base, "node": "J8:6"}, "analysis": analysis}
 
 
-def build(output: Path) -> dict:
+def _acceptance(results: dict) -> dict:
+    pi = results["pi"]
+    pi_data = pi["native_result"]["data"]
+    load_key = pi["element_map"]["sailor-hat"]["hat-load"]
+    actual_power = pi_data["element_power_w"][load_key]
+    expected_current = 5.0 / (12.5 + 0.012 + 0.012)
+    expected_power = expected_current**2 * 12.5
+    pi_relative_error = abs(actual_power - expected_power) / expected_power
+
+    si = results["si"]
+    si_data = si["native_result"]["data"]
+    frequencies = si_data["frequency_hz"]
+    signal_node = si_data["node_voltage_v"][si["node_map"]["sailor-hat"]["J501:3"]]
+    return_node = si_data["node_voltage_v"][si["node_map"]["sailor-hat"]["J501:6"]]
+    si_errors = []
+    for index, frequency in enumerate(frequencies):
+        omega = 2.0 * 3.141592653589793 * frequency
+        signal_path = complex(0.025, omega * 6e-9)
+        ground_path = complex(0.012, omega * 3e-9)
+        bias_return = complex(2e6 + 0.012, omega * 3e-9)
+        return_path = ground_path * bias_return / (ground_path + bias_return)
+        expected = 4700.0 / (4700.0 + signal_path + return_path)
+        observed = complex(signal_node["real"][index] - return_node["real"][index],
+                           signal_node["imaginary"][index] - return_node["imaginary"][index])
+        si_errors.append(abs(observed - expected))
+
+    thermal = results["thermal"]
+    thermal_residual = abs(thermal["summary"]["energy_balance_residual_w"])
+    evidence = {
+        "contract": "spike/curated-multiboard-acceptance/v1",
+        "pi": {"oracle": "5 V / (12.5 ohm load + two 0.012 ohm connector returns)",
+            "expected_load_power_w": expected_power, "actual_load_power_w": actual_power,
+            "relative_error": pi_relative_error, "tolerance": 1e-10, "passed": pi_relative_error <= 1e-10},
+        "si": {"oracle": "closed-form 4700 ohm divider through signal link and parallel ground/bias return paths",
+            "frequency_points": len(frequencies), "max_complex_voltage_error_v": max(si_errors),
+            "tolerance_v": 1e-10, "passed": max(si_errors) <= 1e-10},
+        "thermal": {"oracle": "solver-reported steady heat input equals ambient rejection",
+            "energy_balance_residual_w": thermal_residual, "tolerance_w": 1e-9,
+            "passed": thermal_residual <= 1e-9},
+    }
+    evidence["passed"] = all(evidence[key]["passed"] for key in ("pi", "si", "thermal"))
+    if not evidence["passed"]:
+        raise ValueError(f"Curated numerical acceptance failed: {evidence}")
+    return evidence
+
+
+def build(output: Path, source_dir: Path = DEFAULT_SOURCE_DIR) -> dict:
     output.mkdir(parents=True, exist_ok=True)
-    cm4_path, hat_path, provenance = _sources(output)
+    cm4_path, hat_path, provenance = _sources(output, source_dir)
     designs = {"cm4io": import_design(str(cm4_path), with_report=True)["design"],
                "hat": import_design(str(hat_path), with_report=True)["design"]}
     counts = {key: {"components": len(d["components"]), "pads": len(d["pads"]), "nets": len(d["nets"])}
@@ -116,10 +163,10 @@ def build(output: Path) -> dict:
         raise ValueError(f"Real-board import counts changed: {counts}")
     project = output / "cm4io-sailor-hat.spike"
     base = designs["cm4io"]
-    base["source"]["artifact_path"] = "package:" + _source_member_name(cm4_path.name, _sha(cm4_path))
+    base["source"].pop("artifact_path", None)
     manifest = write_spike_package(project, {"project": {"id": "rpi-hat-acceptance-20261002",
         "name": "Raspberry Pi CM4 IO plus Sailor Hat local acceptance"}, "design_ir": base},
-        source_artifacts={cm4_path.name: cm4_path.read_bytes()}, application_version=__version__)
+        application_version=__version__)
     response = handle_project_request("import_into_assembly_project", {"project_path": str(project),
         "source_paths": [str(hat_path)], "expected_manifest_payload_sha256": manifest["manifest_payload_sha256"]},
         request_id="rpi-hat-acceptance", application_version=__version__)
@@ -141,6 +188,9 @@ def build(output: Path) -> dict:
     raw["thermal_contacts"] = [{"id": "gpio-standoffs", "name": "assumed header and standoffs",
         "endpoint_a": ids[0], "endpoint_b": ids[1], "contact_type": "mechanical"}]
     assembly = AssemblyIRV1.from_dict(raw); validate_harness_connections(assembly); payload["assembly_ir"] = assembly.to_dict()
+    payload["design_ir"]["source"].pop("artifact_path", None)
+    for retained_design in payload["assembly_designs"]["designs"]:
+        retained_design["source"].pop("artifact_path", None)
     placement = {"contract": "spike/connector-aligned-placement-evidence/v1", "z_gap_mm": 14.0,
         "rotation": "proper 180 degree Y rotation", "matches": []}
     transforms = {b["id"]: b["frame"]["transform"] for b in raw["boards"]}
@@ -156,8 +206,8 @@ def build(output: Path) -> dict:
     payload["audit"] = [*(payload.get("audit") or []), {"event": "rpi_hat_local_acceptance",
         "cm4io_archive_sha256": CM4_ARCHIVE_SHA256, "hat_commit": HAT_COMMIT,
         "redistribution": "local build artifact only", "model_status": "experimental"}]
-    manifest = write_spike_package(project, payload, preserved_members=opened.members,
-        source_artifacts={hat_path.name: hat_path.read_bytes(), "SH-RPi-LICENSE.md": (hat_path.parent/"LICENSE.md").read_bytes()},
+    retained_members = {name: data for name, data in opened.members.items() if not name.startswith("sources/")}
+    manifest = write_spike_package(project, payload, preserved_members=retained_members,
         application_version=__version__)
     saved = read_project(project, include_members=True); results = {}
     for domain in ("pi", "si"):
@@ -180,27 +230,36 @@ def build(output: Path) -> dict:
             "emissivity": .85, "view_factors": {"cm4io-facing": reciprocal, "ambient": 1-reciprocal}}],
         "ambient_temperature_c": 25., "mode": "steady_state"}
     results["thermal"] = run_multiboard_thermal(thermal); _json(output/"thermal-request.json", thermal); _json(output/"thermal-result.json", results["thermal"])
-    em = {"contract": "spike/multiboard-em-request/v1", "assembly": saved.payload["assembly_ir"],
-        "loops": [{"loop_id": "cm4io-loop", "board_id": ids[0], "resistance_ohm": .4, "self_inductance_h": 1.4e-6,
-            "voltage_real_v": 1., "voltage_imag_v": 0.}, {"loop_id": "hat-loop", "board_id": ids[1],
-            "resistance_ohm": 1.5, "self_inductance_h": .9e-6, "voltage_real_v": 0., "voltage_imag_v": 0.}],
-        "mutual_inductances": [{"loop_a": "cm4io-loop", "loop_b": "hat-loop", "mutual_inductance_h": .12e-6}],
-        "frequency_hz": [1e3,1e4,1e5,1e6], "connector_models": []}
-    results["em"] = run_multiboard_em(em); _json(output/"em-request.json", em); _json(output/"em-result.json", results["em"])
+    acceptance = _acceptance(results); _json(output/"acceptance-evidence.json", acceptance)
+    digest = assembly_physics_digest(saved.payload["assembly_ir"])
+    current_manifest = manifest
+    for domain, request in (("pi", _circuit(saved.payload["assembly_ir"], "pi")),
+                            ("si", _circuit(saved.payload["assembly_ir"], "si")),
+                            ("thermal", thermal)):
+        setup = {key: value for key, value in request.items() if key != "assembly"}
+        response = handle_project_request("save_multiboard_study_in_project", {
+            "project_path": str(project), "expected_manifest_payload_sha256": current_manifest["manifest_payload_sha256"],
+            "domain": domain, "request": setup, "result": results[domain], "assembly_digest": digest,
+        }, request_id=f"rpi-hat-{domain}", application_version=__version__)
+        if not response or not response.get("ok"):
+            raise RuntimeError(f"Could not retain {domain} study: {response}")
+        current_manifest = response["result"]["manifest"]
     unsupported = {"full_wave_coupled_em": {"status": "unsupported", "reason": "No qualified general PCB field solve executed."},
         "far_field_radiation": {"status": "unsupported", "reason": "Reduced magnetic loops do not derive radiation from artwork."}}
     _json(output/"unsupported-em-capabilities.json", unsupported)
     summary = {"contract": "spike/rpi-hat-acceptance/v1", "project": project.name, "board_ids": ids,
-        "manifest_payload_sha256": manifest["manifest_payload_sha256"], "source_provenance": provenance,
+        "manifest_payload_sha256": current_manifest["manifest_payload_sha256"], "source_provenance": provenance,
         "design_counts": counts, "pre_link_equal_net_name": "GND (design-local until explicit GPIO mate)",
-        "placement_evidence": "placement-evidence.json",
+        "placement_evidence": "placement-evidence.json", "acceptance_evidence": "acceptance-evidence.json",
         "results": {k: f"{k}-result.json" for k in results}, "model_status": {k:v["model_status"] for k,v in results.items()},
         "production_qualified": {k:v["production_qualified"] for k,v in results.items()}, "unsupported": unsupported}
     _json(output/"summary.json", summary); return summary
 
 
 def main() -> int:
-    p=argparse.ArgumentParser(description=__doc__); p.add_argument("--output-dir",type=Path,default=DEFAULT_OUTPUT); a=p.parse_args()
-    print(json.dumps(build(a.output_dir.resolve()),indent=2)); return 0
+    p=argparse.ArgumentParser(description=__doc__); p.add_argument("--output-dir",type=Path,default=DEFAULT_OUTPUT)
+    p.add_argument("--source-dir", type=Path, default=DEFAULT_SOURCE_DIR,
+        help="Existing pinned SH-RPi-hardware checkout; it is read in place and is not copied into the output.")
+    a=p.parse_args(); print(json.dumps(build(a.output_dir.resolve(), a.source_dir.resolve()),indent=2)); return 0
 
 if __name__ == "__main__": raise SystemExit(main())

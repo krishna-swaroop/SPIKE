@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Cable, CircleHelp, Network, Plus, RefreshCw } from "./icons";
 import type { AssemblyDesigns, AssemblyIr } from "./mcadAssembly";
 import { ambiguousNets, graphConnectors, graphLinks, suggestedPairs, suggestionForPair, type GraphConnector } from "./connectorGraphModel";
 import DataTable from "./DataTable";
 import { runLocalWorker } from "./workerBridge";
+import { runSerializedAutomaticWorker } from "./automaticWorkerQueue";
 import "./connectorGraphEditor.css";
 
 type HarnessPlan = { harnesses: Array<Record<string, unknown>>; connector_mappings: Array<Record<string, unknown>>;
@@ -44,27 +45,38 @@ export default function ConnectorGraphEditor({ assembly, designs, version, onAdd
   const [manualConnector, setManualConnector] = useState("");
   const [manualPosition, setManualPosition] = useState("0, 0, 0");
   const [manualPins, setManualPins] = useState('{"1":"","2":""}');
+  const discoveryGeneration = useRef(0);
 
   const discoveryKey = JSON.stringify({ version, boards: assembly.boards.map(row => [row.id, row.design_id, row.frame]),
     mappings: assembly.connector_mappings, harnesses: (assembly.harnesses ?? []).map(row => [row.id, row.endpoint_a, row.endpoint_b, row.pin_map]),
     designIds: designs?.designs.map(row => row.design_id) });
-  const discover = async () => {
-    if (!designs || assembly.boards.length < 2) { setRawConnectors({}); return; }
+  const discover = async (isCurrent: () => boolean = () => true, automatic = false) => {
+    if (!designs || assembly.boards.length < 2) { setRawConnectors({}); setLoading(false); return; }
     setLoading(true);
     try {
-      const response = await runLocalWorker({ method: "plan_assembly_harnesses", params: { request: {
+      const request = { method: "plan_assembly_harnesses", params: { request: {
         assembly, designs: Object.fromEntries(designs.designs.map(row => [row.design_id, row])), pairs: [],
-      } } });
+      } } };
+      const response = automatic
+        ? await runSerializedAutomaticWorker(() => runLocalWorker(request), isCurrent)
+        : await runLocalWorker(request);
+      if (!response || !isCurrent()) return;
       if (!response.ok || !response.result) throw new Error(response.error ?? "Connector discovery failed.");
       const result = response.result as Record<string, unknown>;
       setRawConnectors(result.connectors && typeof result.connectors === "object" ? result.connectors as Record<string, unknown> : {});
       setDiagnostics(Array.isArray(result.diagnostics) ? result.diagnostics as Array<{ message: string }> : []);
     } catch (error) {
+      if (!isCurrent()) return;
       setRawConnectors({});
       onStatus(error instanceof Error ? `Connector discovery failed: ${error.message}` : "Connector discovery failed");
-    } finally { setLoading(false); }
+    } finally { if (isCurrent()) setLoading(false); }
   };
-  useEffect(() => { void discover(); }, [discoveryKey]);
+  useEffect(() => {
+    let active = true;
+    const token = ++discoveryGeneration.current;
+    void discover(() => active && token === discoveryGeneration.current, true);
+    return () => { active = false; discoveryGeneration.current++; };
+  }, [discoveryKey]);
 
   const connectors = useMemo(() => graphConnectors(rawConnectors, assembly), [rawConnectors, discoveryKey]);
   const links = useMemo(() => graphLinks(assembly), [discoveryKey]);

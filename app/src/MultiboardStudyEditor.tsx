@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 import { useEffect, useRef, useState } from "react";
-import DataTable from "./DataTable";
+import CoupledStudyResultTables from "./CoupledStudyResultTables";
 import AssemblyMechanicalStudyModels, { studyOwnerName } from "./AssemblyMechanicalStudyModels";
 import type { AssemblyIr } from "./mcadAssembly";
 import { openNativeTextFile, runLocalWorker, runNativeProjectWorker, saveNativeTextFile } from "./workerBridge";
-import { studyDraft, studyResultRows, studyResultSummary } from "./multiboardStudyPresentation";
+import { studyDraft } from "./multiboardStudyPresentation";
 import "./multiboardStudyEditor.css";
 
 type Row = Record<string, any>;
@@ -30,7 +30,6 @@ export default function MultiboardStudyEditor({ assembly, projectPath, manifestD
   const [physicalAssembly, setPhysicalAssembly] = useState<Row | null>(null);
   const [digest, setDigest] = useState("");
   const [result, setResult] = useState<Row | null>(null);
-  const [displayPoint, setDisplayPoint] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [rawDraft, setRawDraft] = useState("");
@@ -38,7 +37,6 @@ export default function MultiboardStudyEditor({ assembly, projectPath, manifestD
   const [pendingDomain, setPendingDomain] = useState<Domain | null>(null);
   const generation = useRef(0);
   const studyDirty = studyEditorStateDirty({ rawDraft, result }, baseline);
-  useEffect(() => { setDisplayPoint(0); }, [result]);
   useEffect(() => { onDirtyChange?.(studyDirty); }, [onDirtyChange, studyDirty]);
   useEffect(() => () => onDirtyChange?.(false), [onDirtyChange]);
   useEffect(() => {
@@ -122,15 +120,19 @@ export default function MultiboardStudyEditor({ assembly, projectPath, manifestD
     const restored = studyDraft(JSON.parse(baseline.rawDraft), domain);
     setDraft(restored); setRawDraft(baseline.rawDraft); setResult(baseline.result); setError(""); setPendingDomain(null);
   };
+  const switchDomain = (next: Domain) => {
+    generation.current++;
+    setDraft(null); setResult(null); setPhysicalAssembly(null); setDigest("");
+    setRawDraft(""); setBaseline(null); setError(""); setPendingDomain(null);
+    setDomain(next);
+  };
   const chooseDomain = (next: Domain) => {
     if (next === domain) return;
     if (studyDirty) setPendingDomain(next);
-    else setDomain(next);
+    else switchDomain(next);
   };
   const locked = disabled || busy;
   const unapplied = !!draft && rawDraft !== JSON.stringify(draft, null, 2);
-  const resultRows = result ? studyResultRows(result, domain, displayPoint) : [];
-  const resultFrequencies = result?.native_result?.data?.frequency_hz ?? result?.samples?.map((sample: Row) => sample.frequency_hz) ?? [];
   const number = (row: Row, field: string, label: string, change: (field: string, value: number | null) => void) =>
     <NumberField key={field} row={row} field={field} label={label} change={change} />;
   const linkFields = [["resistance_ohm", "Conductor R (Ω)"], ["inductance_h", "Conductor L (H)"],
@@ -139,8 +141,9 @@ export default function MultiboardStudyEditor({ assembly, projectPath, manifestD
   return <section className="multiboard-study"><h4>Coupled assembly analysis</h4>
     <p>Boards and physical mechanical structures share one reduced-model solve. Define measured or extracted properties for each occurrence and connection. Blank values require review; 0 explicitly means an ideal property. These models are experimental.</p>
     <label>Study <select disabled={busy} value={domain} onChange={event => chooseDomain(event.target.value as Domain)}>{Object.entries(labels).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>
-    {pendingDomain && <div className="multiboard-study-dirty-warning" role="alert"><span>Switching to {labels[pendingDomain]} will discard unsaved setup or result changes.</span><button type="button" onClick={() => setPendingDomain(null)}>Keep current study</button><button type="button" onClick={() => { const next = pendingDomain; setPendingDomain(null); setDomain(next); }}>Discard changes and switch</button></div>}
+    {pendingDomain && <div className="multiboard-study-dirty-warning" role="alert"><span>Switching to {labels[pendingDomain]} will discard unsaved setup or result changes.</span><button type="button" onClick={() => setPendingDomain(null)}>Keep current study</button><button type="button" onClick={() => switchDomain(pendingDomain)}>Discard changes and switch</button></div>}
     {studyDirty && <div className="multiboard-study-dirty-warning" role="status"><span>This study has unsaved setup or result changes.</span><button type="button" disabled={busy} onClick={resetStudy}>Reset to saved study</button></div>}
+    {result && <CoupledStudyResultTables assembly={assembly} result={result} domain={domain} />}
     {draft && <fieldset disabled={locked}>
       {(domain === "pi" || domain === "si") && <>
         <p>Use board-local terminal names <code>connector:pin</code> (for example <code>J1:2</code>). Model the supply, load, board copper and return explicitly. A node named 0 on another board is not automatically grounded.</p>
@@ -195,10 +198,6 @@ export default function MultiboardStudyEditor({ assembly, projectPath, manifestD
       <button disabled={locked || !result || unapplied || !projectPath || !manifestDigest} onClick={() => void save(true)}>Save study with results</button>
       <button disabled={locked || !draft || unapplied} onClick={() => void exportFile()}>Export setup / results file</button>
       <button disabled={locked || !digest} onClick={() => void load()}>Open setup / results file</button></div>
-    {result && <><p>Result: {String(result.status)} · {String(result.model_status)} · production qualified: {String(result.production_qualified)}</p>
-      {resultFrequencies.length > 0 && <label>Result frequency <select value={displayPoint} onChange={event => setDisplayPoint(Number(event.target.value))}>{resultFrequencies.map((frequency: number, i: number) => <option key={i} value={i}>{frequency} Hz</option>)}</select></label>}
-      <p>Full sweeps are retained in the project and exported study file.</p>
-      <DataTable label="Multiboard study results" className="data-table"><thead><tr><th>Board / structure</th><th>Node / loop</th><th>Value</th><th>Unit</th></tr></thead><tbody>{resultRows.map(row => <tr key={JSON.stringify([row.owner_kind ?? "board", row.board, row.node])}><td>{studyOwnerName(assembly, { [row.owner_kind === "part" ? "part_id" : "board_id"]: row.board })}</td><td>{row.node}</td><td>{row.value === undefined ? "Unavailable" : String(row.value)}</td><td>{row.unit}</td></tr>)}</tbody></DataTable>
-      <details><summary>Conservation, diagnostics and limitations</summary><pre>{JSON.stringify(studyResultSummary(result), null, 2)}</pre></details></>}
+
   </section>;
 }

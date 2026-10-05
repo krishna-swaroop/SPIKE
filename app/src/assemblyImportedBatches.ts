@@ -18,7 +18,7 @@ export function batchAssemblyImported(frame: THREE.Group) {
       || Array.isArray(object.material) || object.material.transparent || object.morphTargetInfluences?.length
       || new THREE.Matrix4().multiplyMatrices(inverse, object.matrixWorld).determinant() <= 0) return;
     const attributes = Object.entries(object.geometry.attributes as Record<string, THREE.BufferAttribute | THREE.InterleavedBufferAttribute>).map(([name, value]) => `${name}:${value.itemSize}:${value.normalized}`).sort().join(",");
-    const key = `${object.material.uuid}|${attributes}|${Boolean(object.geometry.index)}|${object.renderOrder}|${object.userData.componentMount ?? ""}|${object.userData.componentSide ?? ""}`;
+    const key = `${object.material.uuid}|${attributes}|${Boolean(object.geometry.index)}|${object.renderOrder}|${object.userData.componentMount ?? ""}|${object.userData.componentSide ?? ""}|${object.userData.importedBoardLayer ?? ""}|${object.userData.importedBoardSurface ?? ""}`;
     const meshes = buckets.get(key) ?? []; meshes.push(object); buckets.set(key, meshes);
   });
   const hidden = new THREE.MeshBasicMaterial({ visible: false, side: THREE.DoubleSide });

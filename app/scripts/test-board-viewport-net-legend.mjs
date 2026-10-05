@@ -44,3 +44,8 @@ assert.equal(minimized.get('viewport-board-nets').label,'Power B with a long occ
 minimized.get('viewport-board-nets').restore();assert.equal(nodes(render()).some(n=>n.type==='input'),true);
 const viewport=readFileSync(new URL('../src/BoardViewport.tsx',import.meta.url),'utf8');assert.match(viewport,/onAssemblyNetSelect\?\.\(netViewerScope\.occurrence\.id, row\.id\)/);
 console.log('Net viewer scoping, canonical IDs, complete inventory, search, row selection, bottom-shelf minimize/restore and accessible rendering passed');
+
+const parserBoard={...b,nets:{"1":"GND","2":"VCC","3":"ONLY_B"}};
+const retainedInstances=instances.map(row=>({...row,netNamesById:{n1:"GND",n2:"VCC",n3:row.id==='A'?'ONLY_A':'ONLY_B'},netIdsByName:{GND:"n1",VCC:"n2",ONLY_B:"n3"}}));
+const retainedScope=m.netViewerBoard(a,retainedInstances,{b:parserBoard},'B');
+assert.equal(m.viewportNetRows(retainedScope.board).find(row=>row.name==='VCC').id,'n2','assembly net viewer must submit retained IDs, not parser numeric IDs');

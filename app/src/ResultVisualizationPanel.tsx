@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import DataTable from "./DataTable";
+import SavedAssemblyResults from "./SavedAssemblyResults";
+import type { AssemblyIr } from "./mcadAssembly";
 import PlotlyChart from "./PlotlyChart";
 import { Activity, AlertTriangle, Download, Eye, EyeOff, Grid3X3, Layers3, Pause, Play, RadioTower, SlidersHorizontal, Waves, X } from "./icons";
 import type { ParsedBoard } from "./boardParser";
@@ -53,11 +55,13 @@ type Props = {
   onClose: () => void;
   onDetach?: () => void;
   onTracePlots?: () => void;
+  coupledAssembly?: AssemblyIr | null;
+  projectManifestDigest?: string | null;
 };
 
 export default function ResultVisualizationPanel({
   domain, board, selectedNet, result: rawResult, sourceResult: rawSourceResult, visualization, workerAvailable, parasiticsAvailable, riskAvailable, pdnReview, pdnReviewSourceId, densityLimitAMm2, dropLimitMv,
-  onVisualization, onConfigure, onRunParasitics, onRunRisk, onRunPdn, onExportAnimation, onClose, onDetach, onTracePlots,
+  onVisualization, onConfigure, onRunParasitics, onRunRisk, onRunPdn, onExportAnimation, onClose, onDetach, onTracePlots, coupledAssembly, projectManifestDigest,
 }: Props) {
   const result = rawResult?.status === "preview" || resultSolvedForPresentation(rawResult) ? rawResult : null;
   const sourceResult = resultSolvedForPresentation(rawSourceResult) ? rawSourceResult : null;
@@ -190,7 +194,7 @@ export default function ResultVisualizationPanel({
   const impedanceExtent = numericExtent(impedanceMagnitudes);
   const impedanceMinimum = impedanceExtent.count ? impedanceExtent.minimum : undefined;
   const impedanceMaximum = impedanceExtent.count ? impedanceExtent.maximum : undefined;
-  const resultLabel = !result ? rawResult ? `${rawResult.mode.toUpperCase()} / ${rawResult.status} / ${rawResult.model_status}` : "No solver result loaded"
+  const resultLabel = !result ? rawResult ? `${rawResult.mode.toUpperCase()} / ${rawResult.status} / ${rawResult.model_status}` : (coupledAssembly?.extensions as Record<string, unknown> | undefined)?.["spike.multiboard-studies"] ? "Saved assembly studies — select a result below" : "No solver result loaded"
     : result.status === "preview" ? `${result.mode.toUpperCase()} mesh preview / not solved`
       : `${result.mode.toUpperCase()} / ${result.model_status}`;
   const frameCount = sourceResult?.time_series.frames.length ?? 0;
@@ -218,7 +222,7 @@ export default function ResultVisualizationPanel({
     return `${number.toFixed(0)} B`;
   };
   return <section className={`floating-panel result-visualizer domain-${domain}`}>
-    <header className="floating-heading"><div><b>{domain === "pi" ? "PI RESULT VIEWER" : "SI / HF RESULT VIEWER"}</b><span>{resultLabel}</span></div>{onTracePlots && <button onClick={onTracePlots}>Trace plots</button>}{onDetach && <button onClick={onDetach} title="Move result controls and analytics to a separate desktop window">Detach</button>}<button onClick={onClose} aria-label="Close"><X size={17} /></button></header>
+    <header className="floating-heading"><div><b>{coupledAssembly && !result ? "PROJECT RESULTS" : domain === "pi" ? "PI RESULT VIEWER" : "SI / HF RESULT VIEWER"}</b><span>{resultLabel}</span></div>{onTracePlots && <button onClick={onTracePlots}>Trace plots</button>}{onDetach && <button onClick={onDetach} title="Move result controls and analytics to a separate desktop window">Detach</button>}<button onClick={onClose} aria-label="Close"><X size={17} /></button></header>
     <div className="result-visualizer-body">
       <nav className="result-mode-list">
         {visibleModes.map(({ id, label, icon: Icon }) => {
@@ -244,6 +248,7 @@ export default function ResultVisualizationPanel({
         })}
       </nav>
       <main>
+        {coupledAssembly && <SavedAssemblyResults assembly={coupledAssembly} manifestDigest={projectManifestDigest ?? null} />}
         <div className="result-toolbar">
           <button className={visualization.visible ? "selected" : ""} disabled={domain === "si" && visualization.mode === "impedance"} onClick={() => update({ visible: !visualization.visible })}>
             {visualization.visible ? <Eye size={14} /> : <EyeOff size={14} />} {visualization.visible ? "Overlay shown" : "Overlay hidden"}

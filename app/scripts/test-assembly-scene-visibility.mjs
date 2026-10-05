@@ -3,25 +3,47 @@ import assert from "node:assert/strict";
 import { readFileSync, writeFileSync, unlinkSync } from "node:fs";
 import ts from "typescript";
 import * as THREE from "three";
+const deps = ["importedBoardLayers", "boardSurfaceMaterials"];
 const target = new URL("./.test-assemblySceneVisibility.mjs", import.meta.url);
 try {
+  for (const name of deps) writeFileSync(new URL(`./.test-${name}.mjs`, import.meta.url), ts.transpileModule(readFileSync(new URL(`../src/${name}.ts`, import.meta.url), "utf8"), { compilerOptions: {module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022} }).outputText.replaceAll('"./boardSurfaceMaterials"', '"./.test-boardSurfaceMaterials.mjs"'));
   writeFileSync(target, ts.transpileModule(readFileSync(new URL("../src/assemblySceneVisibility.ts", import.meta.url), "utf8"), {
     compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 },
-  }).outputText);
+  }).outputText.replaceAll('"./importedBoardLayers"', '"./.test-importedBoardLayers.mjs"'));
   const { applyAssemblySceneVisibility, updateAssemblySceneSelection } = await import(target.href);
   function occurrence() {
     const root = new THREE.Group(), asset = new THREE.Group(); asset.userData.kiCadSceneKind = "board";
     const substrate = new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshStandardMaterial()); substrate.userData.sceneKind = "substrate";
     const copper = new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshStandardMaterial({ color: 0xc47b2b }));
     copper.userData = { sceneKind: "copper-track", layer: "F.Cu", canonicalNetId: "gnd" };
-    root.add(asset, substrate, copper); return { root, asset, substrate, copper };
+    const importedCopper = new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshStandardMaterial());
+    importedCopper.userData.importedBoardLayer = "F.Cu";
+    const importedBody = new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshStandardMaterial());
+    importedBody.userData.importedBoardLayer = "Board body";
+    const mask = new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshStandardMaterial({opacity: .76, transparent: true}));
+    mask.userData.importedBoardLayer = "B.Mask";
+    asset.add(importedCopper, importedBody, mask);
+    root.add(asset, substrate, copper); return { root, asset, substrate, copper, importedCopper, importedBody, mask };
   }
   const a = occurrence(), b = occurrence(), source = { layers: ["F.Cu", "B.Cu"], boardModelIncludesCopper: true };
   applyAssemblySceneVisibility(a.root, source, {}, {}, true);
   assert.equal(a.substrate.visible, false); assert.equal(a.asset.visible, true); assert.equal(a.copper.material.colorWrite, false);
   applyAssemblySceneVisibility(b.root, source, { "F.Cu": false }, {}, true);
-  assert.equal(b.asset.visible, false); assert.equal(b.substrate.visible, true); assert.equal(b.copper.visible, false);
+  assert.equal(b.asset.visible, true); assert.equal(b.substrate.visible, false); assert.equal(b.copper.visible, false); assert.equal(b.importedCopper.visible, false);
   assert.equal(a.copper.visible, true, "one board's hidden layer never hides another occurrence");
+  applyAssemblySceneVisibility(a.root, source, {"B.Mask": false}, {"B.Mask": .1}, true);
+  assert.equal(a.mask.visible, false);
+  assert.equal(a.importedCopper.visible, true, "mask never gates copper");
+  assert.equal(a.importedCopper.material.opacity, 1, "mask opacity never changes copper");
+  assert.equal(a.importedBody.visible, true, "mask never gates body");
+  applyAssemblySceneVisibility(a.root, source, {"Board body": false}, {}, true);
+  assert.equal(a.importedBody.visible, false); assert.equal(a.importedCopper.visible, true);
+  assert.equal(a.mask.visible, true, "body visibility never gates independent finish surfaces");
+  const exposedPadsOnly = occurrence();
+  applyAssemblySceneVisibility(exposedPadsOnly.root, {...source, boardModelIncludesCopper:false}, {}, {}, true);
+  assert.equal(exposedPadsOnly.importedCopper.visible,false,"pad-only imports cannot claim full copper layer coverage");
+  assert.equal(exposedPadsOnly.copper.material.colorWrite,true,"full retained tracks stay visible for pad-only imports");
+  assert.equal(exposedPadsOnly.importedBody.visible,true,"pad-only imports retain exact laminate");
   const geometry = a.copper.geometry;
   updateAssemblySceneSelection(a.root, true, ["gnd"]);
   applyAssemblySceneVisibility(a.root, source, {}, {}, true);
@@ -35,15 +57,16 @@ try {
   applyAssemblySceneVisibility(a.root, source, {}, settings, true);
   settings["F.Cu"] = .35;
   assert.ok(applyAssemblySceneVisibility(a.root, source, {}, settings, true) > 0, "in-place settings changes invalidate cached visibility");
-  assert.equal(a.copper.material.opacity, .35);
+  assert.equal(a.copper.material.opacity, 0, "unselected generated copper stays hidden behind its imported counterpart");
+  assert.equal(a.importedCopper.material.opacity, .35);
   assert.equal(a.copper.material.depthWrite, false);
   settings["F.Cu"] = Infinity; applyAssemblySceneVisibility(a.root, source, {}, settings, true);
-  assert.equal(a.copper.material.opacity, 1, "invalid opacity never produces a corrupt GPU material");
+  assert.equal(a.importedCopper.material.opacity, 1, "invalid opacity never produces a corrupt GPU material");
   settings["F.Cu"] = -2; applyAssemblySceneVisibility(a.root, source, {}, settings, true);
   assert.equal(a.copper.material.opacity, 0);
   const late = new THREE.Group(); late.userData.kiCadSceneKind = "board"; a.root.add(late);
   assert.ok(applyAssemblySceneVisibility(a.root, source, {}, {}, false) > 0, "late model mounts invalidate traversal caches");
-  assert.equal(late.visible, false, "hiding vias disables baked geometry with unfilterable vias");
+  assert.equal(late.visible, true, "hiding vias never disables independent baked surfaces");
   applyAssemblySceneVisibility(a.root, source, {}, {}, true); assert.equal(late.visible, true);
   console.log("Occurrence layer isolation, baked geometry fallback and selection reuse passed");
-} finally { unlinkSync(target); }
+} finally { unlinkSync(target); for (const name of deps) unlinkSync(new URL(`./.test-${name}.mjs`, import.meta.url)); }

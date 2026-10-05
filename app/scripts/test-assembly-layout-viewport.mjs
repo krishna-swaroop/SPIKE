@@ -24,7 +24,7 @@ const bounds = api.assemblyContentBounds([visual, secondOccurrence], { cpu: boar
 assert.ok(bounds.x < 70 && bounds.y < 10 && bounds.x + bounds.width > 110 && bounds.y + bounds.height > 50, "fit includes complete boards and harness routes");
 assert.equal(api.canonicalNetId(board, { VCC: "net-uuid-vcc" }, "VCC"), "net-uuid-vcc", "retained canonical net IDs take priority over parser IDs");
 assert.equal(api.canonicalNetId(board, undefined, "GND"), "19", "legacy parser IDs remain a bounded fallback");
-assert.equal(api.canonicalNetId(board, undefined, "LOCAL"), "LOCAL", "unmapped local names remain selectable");
+assert.equal(api.canonicalNetId(board, undefined, "LOCAL"), null, "unmapped geometry names cannot submit fabricated canonical IDs");
 const firstOccurrenceNetIds = { VCC: "same-canonical-id" };
 const secondOccurrenceNetIds = { VCC: "same-canonical-id" };
 assert.equal(api.assemblyNetIsSelected(board, firstOccurrenceNetIds, ["same-canonical-id"], "VCC"), true);
