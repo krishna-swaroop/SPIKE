@@ -8,8 +8,9 @@ const connectorSource = readFileSync(new URL("../src/ConnectorGraphEditor.tsx", 
 const fieldSource = readFileSync(new URL("../src/AssemblyFieldStudyEditor.tsx", import.meta.url), "utf8");
 assert.match(connectorSource, /runSerializedAutomaticWorker\(\(\) => runLocalWorker\(request\), isCurrent\)/,
   "automatic connector discovery uses the shared serial queue");
-assert.match(fieldSource, /await runSerializedAutomaticWorker\(async \(\) => \{/,
+assert.match(fieldSource, /entry\.read = runSerializedAutomaticWorker\(async \(\) => \{/,
   "automatic field read and handoff preparation share one queued operation");
+assert.match(fieldSource, /const loaded = await pending\.read;/, "effect replay awaits the shared manifest-bound operation");
 const pending = [];
 const calls = [];
 const deferred = () => {
